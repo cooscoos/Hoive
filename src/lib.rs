@@ -4,7 +4,7 @@ pub enum Team {
     White,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Animal {
     Ant,
     Spider,
@@ -15,17 +15,18 @@ pub enum Animal {
     Mosquito,
 }
 
-
-#[derive(Debug)]
-pub struct Piece {
+#[derive(Debug, Clone, Copy)]
+pub struct Piece<'a> {
+    name: &'a str,
     animal: Animal,
     team: Team,
     position: Option<(u8, u8, u8)>,
 }
 
-impl Piece {
-    pub fn default(animal: Animal, team: Team) -> Self {
+impl<'a> Piece<'a> {
+    pub fn default(name: &'a str, animal: Animal, team: Team) -> Self {
         Piece {
+            name,
             animal,
             team,
             position: None,
@@ -33,19 +34,19 @@ impl Piece {
     }
 }
 
-pub struct Player {
+pub struct Player<'a> {
     hitpoints: u8,
-    pieces: Vec<Piece>,
+    pieces: Vec<Piece<'a>>,
     team: Team,
 }
 
-impl Player {
+impl<'a> Player<'a> {
     pub fn default(team: Team) -> Self {
         // let's give new players two spiders and an ant
         let pieces = vec![
-            Piece::default(Animal::Spider, team),
-            Piece::default(Animal::Spider, team),
-            Piece::default(Animal::Ant, team),
+            Piece::default("s1", Animal::Spider, team),
+            Piece::default("s2", Animal::Spider, team),
+            Piece::default("a1", Animal::Ant, team),
         ];
 
         Player {
@@ -56,7 +57,7 @@ impl Player {
     }
 
     // Return the peices the player has in their hand
-    pub fn show_hand(self) -> Vec<Piece> {
+    pub fn show_hand(self) -> Vec<Piece<'a>> {
         self.pieces
             .into_iter()
             .filter(|c| c.position.is_none())
@@ -64,9 +65,10 @@ impl Player {
     }
 
     // Let the player place a piece
-    pub fn place(mut self, piece: Piece, coord: (u8,u8,u8)) {
-        
-        
-
+    pub fn place(&mut self, name: &str, coord: (u8, u8, u8)) {
+        self.pieces
+            .into_iter()
+            .filter(|c| c.name == name)
+            .for_each(|mut c| c.position = Some(coord));
     }
 }
