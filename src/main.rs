@@ -11,8 +11,12 @@ fn main() {
     // show the player's hand
     println!("{:?}", p1.show_hand());
 
+    // show all peices
+    println!("{:?}", p1.show_all());
+
     // let them place a piece at 0,0,0, use a command to show hand
-    
-    p1.place("s1", (0,0,0));
+    p1.place("s1", (0, 0, 0));
+
+    println!("{:?}", p1.show_all());
 
 }

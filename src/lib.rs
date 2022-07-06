@@ -32,8 +32,13 @@ impl<'a> Piece<'a> {
             position: None,
         }
     }
+
+    pub fn relocate(&mut self, new_position: (u8, u8, u8)) {
+        self.position = Some(new_position);
+    }
 }
 
+#[derive(Debug, Clone)]
 pub struct Player<'a> {
     hitpoints: u8,
     pieces: Vec<Piece<'a>>,
@@ -57,18 +62,23 @@ impl<'a> Player<'a> {
     }
 
     // Return the peices the player has in their hand
-    pub fn show_hand(self) -> Vec<Piece<'a>> {
+    pub fn show_hand(&self) -> Vec<Piece<'a>> {
         self.pieces
+            .clone()
             .into_iter()
             .filter(|c| c.position.is_none())
             .collect::<Vec<Piece>>()
     }
 
-    // Let the player place a piece
-    pub fn place(&mut self, name: &str, coord: (u8, u8, u8)) {
-        self.pieces
-            .into_iter()
-            .filter(|c| c.name == name)
-            .for_each(|mut c| c.position = Some(coord));
+
+    // Show all the pieces the player owns (on board and hand)
+    pub fn show_all(&self) -> Vec<Piece<'a>> {
+        self.pieces.clone()
     }
+
+    // Let the player place a piece
+    pub fn place(&mut self, name: &str, new_position: (u8, u8, u8)) {
+        self.pieces.iter_mut().filter(|c| c.name==name).for_each(|c| c.relocate(new_position))  
+    }
+    
 }
