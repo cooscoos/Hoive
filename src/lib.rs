@@ -4,7 +4,6 @@ use std::collections::HashMap;
 pub enum Team {
     Black,
     White,
-    Ghost, // Ghost is used for the first turn to overcome adjacent tile rules
 }
 
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
@@ -29,10 +28,6 @@ impl Chip {
     pub fn default(name: &'static str, animal: Animal, team: Team) -> Self {
         Chip { name, animal, team }
     }
-
-    pub fn relocate(&mut self, new_position: (u8, u8, u8)) {
-        //self.position = Some(new_position);
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -43,57 +38,28 @@ pub struct Player {
 
 impl Player {
     pub fn default(team: Team) -> Self {
-        // let's give new players two spiders and an ant
-        let pieces = vec![
-            Chip::default("s1", Animal::Spider, team),
-            Chip::default("s2", Animal::Spider, team),
-            Chip::default("a1", Animal::Ant, team),
-        ];
-
         Player { hitpoints: 6, team }
     }
-
-    // Return the peices the player has in their hand
-    //pub fn show_hand(&self) -> Vec<Piece<'a>> {
-    //    self.pieces
-    //        .clone()
-    //        .into_iter()
-    //        .filter(|c| c.position.is_none())
-    //        .collect::<Vec<Piece>>()
-    //}
-
-    // Show all the pieces the player owns (on board and hand)
-    //pub fn show_all(&self) -> Vec<Piece<'a>> {
-    //    self.pieces.clone()
-    //}
-
-    // Let the player place a piece
-    //pub fn place(&mut self, name: &str, new_position: (u8, u8, u8)) {
-    //    self.pieces.iter_mut().filter(|c| c.name==name).for_each(|c| c.relocate(new_position))
-    //}
 }
 
 pub struct Board {
-    pub chips: HashMap<Chip, Option<(u8, u8, u8)>>,
+    pub chips: HashMap<Chip, Option<(i8, i8, i8)>>,
+    turns: u32, // tracks the number of turns that have elapsed
 }
 
 impl Board {
     // Initialise all of the board pieces with position = None (in player hand)
     pub fn default() -> Self {
-        let chips: HashMap<Chip, Option<(u8, u8, u8)>> = HashMap::from([
+        let chips: HashMap<Chip, Option<(i8, i8, i8)>> = HashMap::from([
             // Black team's chips
             (Chip::default("s1", Animal::Spider, Team::Black), None),
             (Chip::default("s2", Animal::Spider, Team::Black), None),
             // White team's chips
             (Chip::default("s1", Animal::Spider, Team::White), None),
-            // The ghost chip, place adjacent to (0,0,0) in the first turn, and then deleted
-            (
-                Chip::default("ghost", Animal::Spider, Team::Ghost),
-                Some((0, 0, 1)),
-            ),
+            (Chip::default("s2", Animal::Spider, Team::White), None),
         ]);
 
-        Board { chips }
+        Board { chips, turns: 0 }
     }
 
     // List all chips belonging to a given team. If team == None, then show both teams' chips
@@ -107,29 +73,28 @@ impl Board {
     }
 
     // Move a chip of given name / team, to a new position
-    pub fn move_chip(&mut self, name: &'static str, team: Team, position: (u8, u8, u8)) {
-        // Get the chip's animal based on its name
-        let animal = Board::get_animal(name);
+    pub fn move_chip(&mut self, name: &'static str, team: Team, position: (i8, i8, i8)) {
+        let animal = Board::get_animal(name); // Get the chip's animal based on its name
+        let chip_select = Chip::default(name, animal, team); // Select that chip
 
-        // Select the right chip
-        let chip_select = Chip::default(name, animal, team);
-
-        // Use position of chip to decide whether we're placing the chip from the player's hand, or relocating it on the board
+        // Current position of chip tells us if we're placing chip from player's hand, or relocating it on the board
         match self.chips.get(&chip_select) {
             Some(p) => {
                 match p {
-                    Some(_) => self.relocate_chip(chip_select, position), // chip already has position, so we're relocating it
+                    Some(_) => self.relocate_chip(chip_select, position), // chip has a position, so we're relocating it
                     None => {
-                        self.place_chip(chip_select, position);
-                    } // chip's position == None (player hand), so we're placing it
+                        // chip's position == None (player hand), so we're placing it
+                        self.place_chip(chip_select, team, position);
+                    }
                 }
             }
             None => panic!("Chip does not exist"),
         }
+        self.turns += 1;
     }
 
+    // Figure out what animal a chip is based on the first char in its name
     fn get_animal(name: &str) -> Animal {
-        // Figure out what animal the chip is based on the first char in its name
         let animal;
         match name.chars().next() {
             Some(character) => {
@@ -149,27 +114,60 @@ impl Board {
         animal
     }
 
-    // Place a given chip on the board at given position
-    fn place_chip(&mut self, chip: Chip, position: (u8, u8, u8)) {
+    // Move chip from player's hand to the board at selected position
+    fn place_chip(&mut self, chip: Chip, team: Team, position: (i8, i8, i8)) {
         // Two constraints for placement of new chip:
-        // 1) can't be placed on top of another tile, and;
-        // 2) must be adjacent to another tile that is either ghost, or own colour
+        // Constraint 1) it can't be placed on top of another chip, and;
+        // Constraint 2) it must have at least one neighbour (after turn 1)
+        // Contraint 3) its neighbours must be the same team (after turn 2)
 
-        
+        // Any chips already on board at given position?
+        let constraint1 = self.get_placed().iter().any(|p| *p == position);
 
+        let neighbour_hex = Board::get_neighbours(position);
 
+        // Do we have at least one neighbour?
+        let constraint2 = !neighbour_hex
+            .into_iter()
+            .map(|p| self.get_team(p))
+            .any(|t| t.is_some());
 
-        self.chips.insert(chip, Some(position)); // Overwrite the position in the HashMap
+        // Are all chips neighbouring given position not on the same team as you?
+        let constraint3 = !neighbour_hex
+            .into_iter()
+            .map(|p| self.get_team(p))
+            .filter(|t| t.is_some())
+            .all(|t| t.unwrap() == team);
+
+        if constraint1 {
+            println!("Can't place chip in occupied position.");
+        } else if self.turns >= 1 && constraint2 {
+            println!("Can't place chip middle of nowhere");
+        } else if self.turns >= 2 && constraint3 {
+            println!("Can't place chip next to other team");
+        } else {
+            self.chips.insert(chip, Some(position)); // Overwrite the chip's position in the HashMap
+        }
     }
 
-    fn relocate_chip(&mut self, chip: Chip, position: (u8, u8, u8)) {
+
+    fn relocate_chip(&mut self, chip: Chip, position: (i8, i8, i8)) {
         // Constraints for a relocation:
-        // constraint 1: it must end up adjacent to another tile (or on top of one if beetle)
-        // constraint 2: it cannot break the hive in two
+        // Constraint 1) it must end up adjacent to another tile (or on top of one if beetle)
+        // Constraint 2) it cannot break the hive in two
+    }
+
+    // get co-ordinates of all chips that are already placed on the board
+    fn get_placed(&self) -> Vec<(i8, i8, i8)> {
+        self.chips
+            .values()
+            .filter(|p| p.is_some())
+            .map(|p| p.unwrap())
+            .collect()
     }
 
     // get HECS co-ordinates of the 6 neighbouring tiles
-    fn get_neighbours(position: (u8, u8, u8)) -> [(u8, u8, u8); 6] {
+    fn get_neighbours(position: (i8, i8, i8)) -> [(i8, i8, i8); 6] {
         let (a, r, c) = position;
 
         [
@@ -180,5 +178,16 @@ impl Board {
             (1 - a, r + a, c - (1 - a)),
             (1 - a, r + a, c + a),
         ]
+    }
+
+    // get the Team of chip at given position
+    fn get_team(&self, position: (i8, i8, i8)) -> Option<Team> {
+        self.chips.iter().find_map(|(c, p)| {
+            if *p == Some(position) {
+                Some(c.team)
+            } else {
+                None
+            }
+        })
     }
 }

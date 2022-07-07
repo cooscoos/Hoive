@@ -29,10 +29,23 @@ fn main() {
 
     let mut board = Board::default();
 
-    println!("Before:  {:?}", board.chips);
+    //println!("Before:  {:?}", board.chips);
 
     //board.place_chip("s1", Team::Black, (0,0,0));
-    board.move_chip("s1", Team::Black, (0, 0, 0));
+    println!("turn 1");
+    board.move_chip("s1", Team::Black, (0, 0, 2));
 
-    println!("After move:  {:?}", board.chips);
+    // try place a white chip next to it
+    println!("turn 2");
+    board.move_chip("s1", Team::White, (0, 0, 1));
+
+    // place black chip next to black chip (okay)
+    println!("turn 3");
+    board.move_chip("s2", Team::Black, (0, 0, 2));
+
+    // place white chip above black (not ok)
+    //board.move_chip("s2", Team::White, (0,0,-2));
+
+    // try do it twice
+    //board.move_chip("s2", Team::Black, (0, 0, 0));
 }
