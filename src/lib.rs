@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, hash::Hash, collections::HashSet};
+
 
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub enum Team {
@@ -54,9 +55,11 @@ impl Board {
             // Black team's chips
             (Chip::default("s1", Animal::Spider, Team::Black), None),
             (Chip::default("s2", Animal::Spider, Team::Black), None),
+            (Chip::default("s3", Animal::Spider, Team::Black), None),
             // White team's chips
             (Chip::default("s1", Animal::Spider, Team::White), None),
             (Chip::default("s2", Animal::Spider, Team::White), None),
+            (Chip::default("s3", Animal::Spider, Team::White), None),
         ]);
 
         Board { chips, turns: 0 }
@@ -78,10 +81,12 @@ impl Board {
         let chip_select = Chip::default(name, animal, team); // Select that chip
 
         // Current position of chip tells us if we're placing chip from player's hand, or relocating it on the board
-        match self.chips.get(&chip_select) {
+        match self.chips.clone().get(&chip_select) {
             Some(p) => {
                 match p {
-                    Some(_) => self.relocate_chip(chip_select, position), // chip has a position, so we're relocating it
+                    Some(current_position) => {
+                        self.relocate_chip(chip_select, position, current_position)
+                    } // chip has a position, so we're relocating it
                     None => {
                         // chip's position == None (player hand), so we're placing it
                         self.place_chip(chip_select, team, position);
@@ -115,16 +120,16 @@ impl Board {
     }
 
     // Move chip from player's hand to the board at selected position
-    fn place_chip(&mut self, chip: Chip, team: Team, position: (i8, i8, i8)) {
+    fn place_chip(&mut self, chip: Chip, team: Team, new_position: (i8, i8, i8)) {
         // Two constraints for placement of new chip:
         // Constraint 1) it can't be placed on top of another chip, and;
         // Constraint 2) it must have at least one neighbour (after turn 1)
-        // Contraint 3) its neighbours must be the same team (after turn 2)
+        // Constraint 3) its neighbours must be the same team (after turn 2)
 
         // Any chips already on board at given position?
-        let constraint1 = self.get_placed().iter().any(|p| *p == position);
+        let constraint1 = self.get_placed().iter().any(|p| *p == new_position);
 
-        let neighbour_hex = Board::get_neighbours(position);
+        let neighbour_hex = Board::neighbour_tiles(new_position);
 
         // Do we have at least one neighbour?
         let constraint2 = !neighbour_hex
@@ -146,15 +151,65 @@ impl Board {
         } else if self.turns >= 2 && constraint3 {
             println!("Can't place chip next to other team");
         } else {
-            self.chips.insert(chip, Some(position)); // Overwrite the chip's position in the HashMap
+            self.chips.insert(chip, Some(new_position)); // Overwrite the chip's position in the HashMap
         }
     }
 
-
-    fn relocate_chip(&mut self, chip: Chip, position: (i8, i8, i8)) {
+    fn relocate_chip(
+        &mut self,
+        chip: Chip,
+        new_position: (i8, i8, i8),
+        current_position: &(i8, i8, i8),
+    ) {
         // Constraints for a relocation:
-        // Constraint 1) it must end up adjacent to another tile (or on top of one if beetle)
-        // Constraint 2) it cannot break the hive in two
+        // Constraint 1) it cannot break the hive in two
+        // Constraint 2) it must end up adjacent to another tile (or on top of one if beetle)
+
+        // Constraint 1
+        // NEED TO THINK ABOUT THIS WITH PAPER
+        // One way to do this is to start with a single neighbour of the existing chip, and then
+        // iteratively look for its nearest neighbours and add them up. If they sum to the number
+        // of other peices on the board then we can be sure we aren't splitting the hive
+
+        // Find one random neighbour of the the chip's current position
+
+        //
+
+        // 1. start the current (initial) position
+        // 2. pick ONE neighbour only (doesn't matter which one), add it to the hashmap and then check its neighbouring chips, add them all to the hashmap (but never add the initial position)
+        // 3. for each new entry in the hashmap: select the neighbours and add them all to the hashmap (if they themsleves are new entries)
+        // 4. if the final hashmap should have N-1 entries, where N is number of chips on the board, then the hive will not be broken in two.
+
+        // create an empty hash set to store the locations
+        let mut store: HashSet<(i8,i8,i8)> = HashSet::new();
+
+        // flatter existing HashMap into a vector for the chips that are on the board only (p.is_some()), (a,r,c)
+        let mut flatvec = self.chips.iter().filter(|(_,p)| p.is_some()).map(|(_,p)| p.unwrap()).collect::<Vec<(i8,i8,i8)>>();
+
+        println!("before sort: {:?}",flatvec);
+
+        // TODO Figure out how to row scan a HECS grid... could be that we use 0 array then 1 array then 0 array...
+        // order them c descending, we'll start with the biggest c. the a and r value order doesn't matter (I hope...) if this doesn't work then we need to define row by row for HECS... mama mia.
+        flatvec.sort();
+
+        println!("after sort: {:?}",flatvec);
+
+        
+        let mut search_position = current_position;
+
+        // Get neighbouring tiles
+        let neighbour_tiles = Board::neighbour_tiles(*current_position);
+
+ 
+
+
+        let neighbour_hex = Board::neighbour_tiles(new_position);
+
+        // Do we have at least one neighbour in new desired position?
+        let constraint2 = !neighbour_hex
+            .into_iter()
+            .map(|p| self.get_team(p))
+            .any(|t| t.is_some());
     }
 
     // get co-ordinates of all chips that are already placed on the board
@@ -167,7 +222,7 @@ impl Board {
     }
 
     // get HECS co-ordinates of the 6 neighbouring tiles
-    fn get_neighbours(position: (i8, i8, i8)) -> [(i8, i8, i8); 6] {
+    fn neighbour_tiles(position: (i8, i8, i8)) -> [(i8, i8, i8); 6] {
         let (a, r, c) = position;
 
         [
@@ -189,5 +244,12 @@ impl Board {
                 None
             }
         })
+    }
+
+    // Return the chip at given location
+    fn get_chip(&self, position: (i8, i8, i8)) -> Option<Chip> {
+        self.chips
+            .iter()
+            .find_map(|(c, p)| if *p == Some(position) { Some(*c) } else { None })
     }
 }
