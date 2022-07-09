@@ -50,6 +50,9 @@ fn main() {
     println!("turn 5");
     board.move_chip("s3", Team::White, (1, 1, 1));
 
+    println!("turn 6");
+    board.move_chip("s4", Team::White, (0, 2, 0));
+
     // that's all the chips down, let's try move s3
     board.move_chip("s3", Team::White, (1,1,1));
 
