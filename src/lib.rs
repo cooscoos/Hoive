@@ -169,7 +169,7 @@ impl Board {
 
         // Constraint1
 
-        self.constraint1(current_position);
+        let constraint1 = self.constraint1(current_position);
         
         // Constraint2
         let neighbour_hex = Board::neighbour_tiles(new_position);
@@ -179,28 +179,60 @@ impl Board {
             .into_iter()
             .map(|p| self.get_team(p))
             .any(|t| t.is_some());
+
+        if constraint1 {
+            println!("This move would break the hive in two");
+        } else if constraint2 {
+            println!("Can't move chip middle of nowhere");
+        }
     }
 
-    fn constraint1(&self, current_position: &(i8, i8, i8)) {
+    fn constraint1(&self, current_position: &(i8, i8, i8)) -> bool {
         // create an empty hash set to store the locations
         let mut store: HashSet<(i8,i8,i8)> = HashSet::new();
 
         // Get the positions of chips on the  board as a flat sorted vector (raster scan)
-        let flat_vec = self.hecs_sort();
-
-        // now index by index, set the pixel to 0.. see a4 page
-
-
+        let mut flat_vec = self.rasterscan_board();
 
         
-        let mut search_position = current_position;
+        // Remove the current_position from the flat vector to simulate the move
+        flat_vec.retain(|&p| p!=*current_position);
 
-        // Get neighbouring tiles
-        let neighbour_tiles = Board::neighbour_tiles(*current_position);
+        // for each element in flat_vec
+
+
+        for position in flat_vec.clone() {
+            // find the neighbours
+            let neighbour_check = Board::neighbour_tiles(position);
+
+            // convert to vector
+            let neighbour_vec = neighbour_check.into_iter().collect::<Vec<(i8,i8,i8)>>();
+
+   
+            // if there are neighbours that appear in flat_vec then add them to the store hashset
+            for elem in neighbour_vec.iter() {
+                for elem2 in flat_vec.clone().iter() {
+                    if elem == elem2 {
+                        store.insert(*elem2);
+                    }
+                }
+            }
+
+            // remove the point we just checked
+            flat_vec.retain(|&p| p!=position);
+            
+        }
+
+        // the total elements in the store hashset should be N-2 if the hive has not broken in two
+        println!("initial size was {}, and store len is {}",self.rasterscan_board().len(),store.len());
+       
+        store.len() != self.rasterscan_board().len() - 2
+
+        
     }
 
     // Raster scans all chips on the board and returns their positions as a flat vector
-    fn hecs_sort(&self) -> Vec<(i8,i8,i8)> {
+    fn rasterscan_board(&self) -> Vec<(i8,i8,i8)> {
         // flatten existing HashMap into a vector for the chips that are on the board only (p.is_some()), (a,r,c)
         let mut flat_vec = self.chips.iter().filter(|(_,p)| p.is_some()).map(|(_,p)| p.unwrap()).collect::<Vec<(i8,i8,i8)>>();
 

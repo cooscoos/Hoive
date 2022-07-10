@@ -54,7 +54,7 @@ fn main() {
     board.move_chip("s4", Team::White, (0, 2, 0));
 
     // that's all the chips down, let's try move s3
-    board.move_chip("s3", Team::White, (1,1,1));
+    board.move_chip("s2", Team::Black, (0,1,1));
 
     // place white chip above black (not ok)
     //board.move_chip("s2", Team::White, (0,0,-2));
