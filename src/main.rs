@@ -8,7 +8,7 @@ fn main() {
     // initialise a player (pointless at the moment)
     // let mut p1 = Player::default(Team::Black);
 
-    // initialise a game board - it comes with 4 spiders for each time
+    // initialise a game board - it comes with 4 spiders for each team
     let mut board = Board::default();
 
     // show black player's chips only
