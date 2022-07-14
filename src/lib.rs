@@ -1,12 +1,13 @@
-use std::{collections::HashMap, hash::Hash, collections::HashSet};
+use std::{collections::HashMap, collections::HashSet, hash::Hash};
 
-
+// enum to keep track of team identities
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub enum Team {
     Black,
     White,
 }
 
+// enum to keep track of animal identities
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub enum Animal {
     Ant,
@@ -18,19 +19,36 @@ pub enum Animal {
     Mosquito,
 }
 
+// A "move" is defined as either a:
+// i) Placement: a new chip moves from player's hand to the board, i.e.: position = None --> position = Some(a, r, c);
+// ii) Relocation: a chip already on the board moves to somewhere else on board, i.e.: position = Some(a, r, c) --> position = Some(a', r', c').
+
+// Enum to return status of whether a move (i.e. new placement or relocation of a chip) was legal
+pub enum MoveStatus {
+    Success, // The placement/relocation of the chip was legal, the move was executed
+    // Following statuses are returned when move can't be executed because the target space...:
+    Occupied,     // is already occupied
+    Unconnected,  // is in the middle of nowhere
+    BadNeighbour, // is next to opposing team
+    HiveSplit,    // would split the hive in two
+}
+
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub struct Chip {
-    name: &'static str,
+    name: &'static str, // names help us distinguish between e.g. multiple black team spiders
     animal: Animal,
     team: Team,
 }
 
 impl Chip {
+    // Create new chip
     pub fn default(name: &'static str, animal: Animal, team: Team) -> Self {
         Chip { name, animal, team }
     }
 }
 
+// Player struct to keep track of hitpoints (number of bee edges that are untouched) and team
+// It's currently unused, and might end up being superfluous, but will keep for now
 #[derive(Debug, Clone)]
 pub struct Player {
     hitpoints: u8,
@@ -38,6 +56,7 @@ pub struct Player {
 }
 
 impl Player {
+    // Create new player
     pub fn default(team: Team) -> Self {
         Player { hitpoints: 6, team }
     }
@@ -45,11 +64,11 @@ impl Player {
 
 pub struct Board {
     pub chips: HashMap<Chip, Option<(i8, i8, i8)>>,
-    turns: u32, // tracks the number of turns that have elapsed
+    turns: u32, // tracks number of turns that have elapsed
 }
 
 impl Board {
-    // Initialise all of the board pieces with position = None (in player hand)
+    // At new game, initialise all of the chips for each team with position = None (in player hand)
     pub fn default() -> Self {
         let chips: HashMap<Chip, Option<(i8, i8, i8)>> = HashMap::from([
             // Black team's chips
@@ -62,7 +81,6 @@ impl Board {
             (Chip::default("s3", Animal::Spider, Team::White), None),
             (Chip::default("s4", Animal::Spider, Team::White), None),
         ]);
-
         Board { chips, turns: 0 }
     }
 
@@ -76,30 +94,54 @@ impl Board {
         }
     }
 
-    // Move a chip of given name / team, to a new position
-    pub fn move_chip(&mut self, name: &'static str, team: Team, position: (i8, i8, i8)) {
-        let animal = Board::get_animal(name); // Get the chip's animal based on its name
-        let chip_select = Chip::default(name, animal, team); // Select that chip
+    // For now, this guy handles the MoveStatus enum and provides some printscreen feedback
+    pub fn try_move(&mut self, name: &'static str, team: Team, position: (i8, i8, i8)) {
+        match self.move_chip(name, team, position) {
+            MoveStatus::Success => {
+                println!("Chip move was successful."); 
+                self.turns += 1;
+                // TODO: and then we need to code some logic to switch the active player
+            }
+            MoveStatus::BadNeighbour => println!("Can't place chip next to other team."),
+            MoveStatus::HiveSplit => println!("BAD BEE. This move would break my hive in twain."),
+            MoveStatus::Occupied => println!("Can't place chip in occupied position."),
+            MoveStatus::Unconnected => println!("Can't move chip to middle of nowhere."),
+        }
+    }
 
-        // Current position of chip tells us if we're placing chip from player's hand, or relocating it on the board
-        match self.chips.clone().get(&chip_select) {
+    // Try move a chip of given name / team, to a new position. Return MoveStatus to tell the main loop how successful the attempt was.
+    fn move_chip(
+        &mut self,
+        name: &'static str,
+        team: Team,
+        position: (i8, i8, i8),
+    ) -> MoveStatus {
+        let animal = Board::get_animal(name); // Get the chip's animal based on its name
+        let chip_select = Chip::default(name, animal, team); // Select the chip
+
+        // A chip's current position tells us if we're "placing" from player's hand, or "relocating" on board
+        let move_status = match self.chips.clone().get(&chip_select) {
             Some(p) => {
                 match p {
                     Some(current_position) => {
+                        // chip already has a position, so we must be relocating it
                         self.relocate_chip(chip_select, position, current_position)
-                    } // chip has a position, so we're relocating it
+                    }
                     None => {
-                        // chip's position == None (player hand), so we're placing it
-                        self.place_chip(chip_select, team, position);
+                        // chip's current position == None (player hand), so we must be placing it
+                        self.place_chip(chip_select, team, position)
                     }
                 }
             }
-            None => panic!("Chip does not exist"),
-        }
-        self.turns += 1;
+            None => panic!(
+                "Something went very wrong. The chip can't be moved because it doesn't exist."
+            ),
+        };
+        move_status
     }
 
     // Figure out what animal a chip is based on the first char in its name
+    // This is clunky and I don't like it. It sort of renders the Animal enum as pointless, but it works for now.
     fn get_animal(name: &str) -> Animal {
         let animal;
         match name.chars().next() {
@@ -112,33 +154,34 @@ impl Board {
                     'g' => Animal::Grasshopper,
                     'l' => Animal::Ladybird,
                     'm' => Animal::Mosquito,
-                    _ => panic!("Unknown chip"),
+                    _ => panic!("The chip's name field doesn't correspond to a known animal."),
                 }
             }
-            None => panic!("Invalid chip name"),
+            None => panic!("Chip has an invalid name field."),
         }
         animal
     }
 
-    // Move chip from player's hand to the board at selected position
-    fn place_chip(&mut self, chip: Chip, team: Team, new_position: (i8, i8, i8)) {
-        // Two constraints for placement of new chip:
-        // Constraint 1) it can't be placed on top of another chip, and;
-        // Constraint 2) it must have at least one neighbour (after turn 1)
-        // Constraint 3) its neighbours must be the same team (after turn 2)
+    // Move chip from player's hand to the board at selected position (the destination)
+    fn place_chip(&mut self, chip: Chip, team: Team, destination: (i8, i8, i8)) -> MoveStatus {
+        // There are three constraints for placement of new chip:
+        // Constraint 1) it can't be placed on top of another chip;
+        // Constraint 2) it must have at least one neighbour (after turn 1);
+        // Constraint 3) its neighbours must be on the same team (after turn 2).
 
-        // Any chips already on board at given position?
-        let constraint1 = self.get_placed().iter().any(|p| *p == new_position);
+        // Any chips already on board at the destination?
+        let constraint1 = self.get_placed().iter().any(|p| *p == destination);
 
-        let neighbour_hex = Board::neighbour_tiles(new_position);
+        // Get the (a,r,c) values of hexes neighbouring the destination
+        let neighbour_hex = Board::neighbour_tiles(destination);
 
-        // Do we have at least one neighbour?
+        // Do we have at least one neighbour at the destination?
         let constraint2 = !neighbour_hex
             .into_iter()
             .map(|p| self.get_team(p))
             .any(|t| t.is_some());
 
-        // Are all chips neighbouring given position not on the same team as you?
+        // This will return true if any of the chips neighbouring the destination are on a different team
         let constraint3 = !neighbour_hex
             .into_iter()
             .map(|p| self.get_team(p))
@@ -146,70 +189,76 @@ impl Board {
             .all(|t| t.unwrap() == team);
 
         if constraint1 {
-            println!("Can't place chip in occupied position.");
+            MoveStatus::Occupied
         } else if self.turns >= 1 && constraint2 {
-            println!("Can't place chip middle of nowhere");
+            MoveStatus::Unconnected
         } else if self.turns >= 2 && constraint3 {
-            println!("Can't place chip next to other team");
+            MoveStatus::BadNeighbour
         } else {
-            self.chips.insert(chip, Some(new_position)); // Overwrite the chip's position in the HashMap
+            self.chips.insert(chip, Some(destination)); // Overwrite the chip's position in the HashMap
+            MoveStatus::Success
         }
     }
 
+    // Relocate a chip on the board
     fn relocate_chip(
         &mut self,
         chip: Chip,
-        new_position: (i8, i8, i8),
+        destination: (i8, i8, i8),
         current_position: &(i8, i8, i8),
-    ) {
-        // Constraints for a relocation:
-        // Constraint 1) it cannot break the hive in two
-        // Constraint 2) it must end up adjacent to another tile (or on top of one if beetle)
+    ) -> MoveStatus {
+        // Two constraints for a relocation:
+        // Constraint 1) chip relocate cannot break the hive in two;
+        // Constraint 2) chip must end up adjacent to another tile (or on top of one if its a beetle, but we'll worry about this later)
 
+        // Does moving the chip away from current position cause the hive to split?
+        let constraint1 = self.hive_break_check(current_position);
 
-        // Constraint1
+        // Get hexes that neighbour the desired destination hex (a',r',c')
+        let neighbour_hex = Board::neighbour_tiles(destination);
 
-        let constraint1 = self.constraint1(current_position);
-        
-        // Constraint2
-        let neighbour_hex = Board::neighbour_tiles(new_position);
-
-        // Do we have at least one neighbour in new desired position?
+        // Do we have at least one neighbour at the destination?
         let constraint2 = !neighbour_hex
             .into_iter()
             .map(|p| self.get_team(p))
             .any(|t| t.is_some());
 
         if constraint1 {
-            println!("This move would break the hive in two");
+            MoveStatus::HiveSplit
         } else if constraint2 {
-            println!("Can't move chip middle of nowhere");
+            MoveStatus::Unconnected
+        } else {
+            self.chips.insert(chip, Some(destination)); // Overwrite the chip's position in the HashMap
+            MoveStatus::Success
         }
     }
 
-    fn constraint1(&self, current_position: &(i8, i8, i8)) -> bool {
-        // create an empty hash set to store the locations
-        let mut store: HashSet<(i8,i8,i8)> = HashSet::new();
+    // Check if moving a chip out of the current position splits the hive
+    fn hive_break_check(&self, current_position: &(i8, i8, i8)) -> bool {
+        // To achieve this, we need to do some connected component labelling.
+        // A "one-component-at-a-time" algorithm is one of the simplest ways to find connected components in a grid.
+        // More info: https://en.wikipedia.org/wiki/Connected-component_labeling?oldformat=true#Pseudocode_for_the_one-component-at-a-time_algorithm
 
-        // Get the positions of chips on the  board as a flat sorted vector (raster scan)
+        // Create an empty hash set to store the locations of all chips on the board that neighbour at least one other chip
+        // Why use a hash set? Because hash sets can't store duplicates: even if a chip neighbours several other chips, it only appears once in the hash set record
+        let mut store: HashSet<(i8, i8, i8)> = HashSet::new();
+
+        // Get the positions of chips on the board as a flat sorted vector (i.e. raster scan the board)
         let mut flat_vec = self.rasterscan_board();
 
-        
-        // Remove the current_position from the flat vector to simulate the move
-        flat_vec.retain(|&p| p!=*current_position);
+        // Remove the chip at our "current_position" from our flat vector. This simulates moving the chip somewhere else.
+        // I've thought about it for  whole 3 minutes, and I think there is no situation in which a hive can be broken and reconnected on the same turn.
+        // If I'm wrong then we'll need to pass this function a destination hex and add it in
+        flat_vec.retain(|&p| p != *current_position);
 
-        // for each element in flat_vec
-
-
+        // For each element in the raster scan
         for position in flat_vec.clone() {
-            // find the neighbours
-            let neighbour_check = Board::neighbour_tiles(position);
+            // Get the co-ordinates of neighbouring hexes as a vector
+            let neighbour_hexes = Board::neighbour_tiles(position);
+            let neighbour_vec = neighbour_hexes.into_iter().collect::<Vec<(i8, i8, i8)>>();
 
-            // convert to vector
-            let neighbour_vec = neighbour_check.into_iter().collect::<Vec<(i8,i8,i8)>>();
-
-   
-            // if there are neighbours that appear in flat_vec then add them to the store hashset
+            // If any of these neighbouring hex co-ordinates also appear in the remaining elements of the raster scan, it means they're a neighbouring chip
+            // We'll store all neighbouring chip co-ordinates in that "store" hashset that we defined earlier
             for elem in neighbour_vec.iter() {
                 for elem2 in flat_vec.clone().iter() {
                     if elem == elem2 {
@@ -218,30 +267,42 @@ impl Board {
                 }
             }
 
-            // remove the point we just checked
-            flat_vec.retain(|&p| p!=position);
-            
+            // We're done with checking this chip's neighbours, so delete it from the raster scan queue and move on to the next element
+            flat_vec.retain(|&p| p != position);
         }
 
-        // the total elements in the store hashset should be N-2 if the hive has not broken in two
-        println!("initial size was {}, and store len is {}",self.rasterscan_board().len(),store.len());
-       
-        store.len() != self.rasterscan_board().len() - 2
+        // The total elements in the final store hashset should be N-2 if the Hive has not broken in two
+        // println!(
+        //    "initial size was {}, and store len is {}",
+        //    self.rasterscan_board().len(),
+        //    store.len()
+        //);
 
-        
+        store.len() != self.rasterscan_board().len() - 2
     }
 
-    // Raster scans all chips on the board and returns their positions as a flat vector
-    fn rasterscan_board(&self) -> Vec<(i8,i8,i8)> {
-        // flatten existing HashMap into a vector for the chips that are on the board only (p.is_some()), (a,r,c)
-        let mut flat_vec = self.chips.iter().filter(|(_,p)| p.is_some()).map(|(_,p)| p.unwrap()).collect::<Vec<(i8,i8,i8)>>();
+    // Raster scan all chips on the board and returns their positions as a flat vector
+    fn rasterscan_board(&self) -> Vec<(i8, i8, i8)> {
+        // Flatten the board's HashMap into a vector that only counts chips on the board (i.e. p.is_some())
+        let mut flat_vec = self
+            .chips
+            .iter()
+            .filter(|(_, p)| p.is_some())
+            .map(|(_, p)| p.unwrap())
+            .collect::<Vec<(i8, i8, i8)>>();
 
-        // I think this does it, sorting (a,r,c) as by r descending first, then a descending, then c ascending
-        flat_vec.sort_by(|(a1,r1,c1),(a2,r2,c2)| (r2,a2,c1).partial_cmp(&(r1,a1,c2)).unwrap());
+        // Sort the hex co-ordinates (a,r,c) by:
+        // r descending first
+        // then a descending
+        // then c ascending
+        // This is equivalent to a raster scan in a HECS co-ordinate system
+        flat_vec
+            .sort_by(|(a1, r1, c1), (a2, r2, c2)| (r2, a2, c1).partial_cmp(&(r1, a1, c2)).unwrap());
+
         flat_vec
     }
 
-    // get co-ordinates of all chips that are already placed on the board
+    // Get co-ordinates of all chips that are already placed on the board
     fn get_placed(&self) -> Vec<(i8, i8, i8)> {
         self.chips
             .values()
@@ -250,7 +311,7 @@ impl Board {
             .collect()
     }
 
-    // get HECS co-ordinates of the 6 neighbouring tiles
+    // Get HECS co-ordinates of the 6 neighbouring tiles
     fn neighbour_tiles(position: (i8, i8, i8)) -> [(i8, i8, i8); 6] {
         let (a, r, c) = position;
 
@@ -264,7 +325,7 @@ impl Board {
         ]
     }
 
-    // get the Team of chip at given position
+    // Get the Team enum of the chip at the given position. Return None if the hex is empty.
     fn get_team(&self, position: (i8, i8, i8)) -> Option<Team> {
         self.chips.iter().find_map(|(c, p)| {
             if *p == Some(position) {
@@ -275,7 +336,7 @@ impl Board {
         })
     }
 
-    // Return the chip at given location
+    // Return the info on the Chip that is at a given location
     fn get_chip(&self, position: (i8, i8, i8)) -> Option<Chip> {
         self.chips
             .iter()
