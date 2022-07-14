@@ -1,5 +1,5 @@
 [package]
-name = "Hoive"
+name = "hoive"
 version = "0.1.0"
 edition = "2021"
 

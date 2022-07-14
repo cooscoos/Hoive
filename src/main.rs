@@ -1,49 +1,38 @@
-use std::collections::HashMap;
-
-use Hoive::{Animal, Board, Chip, MoveStatus, Player, Team};
+use hoive::{Board, Team};
+//use Hoive::Player;
 
 fn main() {
-    // Start with a 1 player game where we just place pieces correctly
-    // Add in a second player to place pieces correctly
-    // Then do movement
+    // Some code to show how to use some methods and functions coded so far
+    // See tests for more examples
 
-    // initialise a player
-    let mut p1 = Player::default(Team::Black);
+    // initialise a player (pointless at the moment)
+    // let mut p1 = Player::default(Team::Black);
 
-    // show the player's hand
-    //println!("{:?}", p1.show_hand());
-
-    // show all peices
-    //println!("{:?}", p1.show_all());
-
-    // let them place a piece at 0,0,0, use a command to show hand
-    //p1.place("s1", (0, 0, 0));
-
-    //println!("{:?}", p1.show_all());
-
-    // pieces should belong to a hashmap that belongs to nobody
-
-    // place another piece, but only at designated locations
-
-    // need a function (hashmap?) that returns the co-ords of all existing b & w pieces
-
+    // initialise a game board - it comes with 4 spiders for each time
     let mut board = Board::default();
 
-    //println!("Before:  {:?}", board.chips);
+    // show black player's chips only
+    println!(
+        "Black player's chips: {:?}",
+        board.list_chips(Some(Team::Black))
+    );
 
-    //board.place_chip("s1", Team::Black, (0,0,0));
+    // show all chips
+    println!("Both team's chips: {:?}", board.list_chips(None));
+
+    // Place black spider 1 at HECS position (1,0,0)
     println!("turn 1");
     board.try_move("s1", Team::Black, (1, 0, 0));
 
-    // try place a white chip next to it
+    // Place white spider 1 next to it
     println!("turn 2");
     board.try_move("s1", Team::White, (0, 1, 0));
 
-    // place black chip next to black chip (okay)
+    // place black spider 2 next to black spider 1
     println!("turn 3");
     board.try_move("s2", Team::Black, (0, 0, 0));
 
-    // place black chip next to black chip (okay)
+    // place white spider 2 next to white spider 1, and so on
     println!("turn 4");
     board.try_move("s2", Team::White, (1, 1, 0));
 
@@ -53,10 +42,25 @@ fn main() {
     println!("turn 6");
     board.try_move("s4", Team::White, (0, 2, 0));
 
-    // that's all the chips down, let's try move s3
-    board.try_move("s2", Team::Black, (0, 1, 1));
+    // That's all the chips placed, let's try move white spider 3 to the moon
+    println!("turn 6");
+    board.try_move("s2", Team::Black, (8, 8, 8));
 
-    // at this point, it'd be good to consolidate some code
-    // create tests
-    // and have a simple ascii interface before progressing further
+    // TODO:
+    // At this point, trying to visualise HECS in my head or on paper is getting cumbersome
+    // Would be good to have simple graphical representation of board before proceeding further
+    //
+    // The order to program animal move logic from simplest to most complex would be:
+    // spider, ant, bee first (same peice with diff no. moves)
+    // then ladybird and beetle (similar "on top of other animals" logic)
+    // then grashopper (mental logic)
+    // then mosquito (need all other animals first)
+    // then pillbug (if feeling brave)
+
+    // For ant, need to code up the thing to check if it can squeeze through small gaps
+    // I think the way to do this is to check each step of the ant one at a time and see if it ever moves
+    // from a position A to B where:
+    // position A) any two opposing edges of the hex are touching something
+    // position B) more than two edges of the hex are touching something
+    // Need to think about it more though
 }

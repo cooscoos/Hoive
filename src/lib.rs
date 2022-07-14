@@ -1,4 +1,5 @@
-use std::{collections::HashMap, collections::HashSet, hash::Hash};
+use std::collections::{HashMap, HashSet};
+use std::hash::Hash;
 
 // enum to keep track of team identities
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
@@ -19,25 +20,12 @@ pub enum Animal {
     Mosquito,
 }
 
-// A "move" is defined as either a:
-// i) Placement: a new chip moves from player's hand to the board, i.e.: position = None --> position = Some(a, r, c);
-// ii) Relocation: a chip already on the board moves to somewhere else on board, i.e.: position = Some(a, r, c) --> position = Some(a', r', c').
-
-// Enum to return status of whether a move (i.e. new placement or relocation of a chip) was legal
-pub enum MoveStatus {
-    Success, // The placement/relocation of the chip was legal, the move was executed
-    // Following statuses are returned when move can't be executed because the target space...:
-    Occupied,     // is already occupied
-    Unconnected,  // is in the middle of nowhere
-    BadNeighbour, // is next to opposing team
-    HiveSplit,    // would split the hive in two
-}
-
+// The Chips: the tokens that we use in a game of Hive
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub struct Chip {
     name: &'static str, // names help us distinguish between e.g. multiple black team spiders
     animal: Animal,
-    team: Team,
+    pub team: Team,
 }
 
 impl Chip {
@@ -51,17 +39,36 @@ impl Chip {
 // It's currently unused, and might end up being superfluous, but will keep for now
 #[derive(Debug, Clone)]
 pub struct Player {
-    hitpoints: u8,
-    team: Team,
+    _hitpoints: u8,
+    _team: Team,
 }
 
 impl Player {
     // Create new player
     pub fn default(team: Team) -> Self {
-        Player { hitpoints: 6, team }
+        Player {
+            _hitpoints: 6,
+            _team: team,
+        }
     }
 }
 
+// A "move" in Hive is defined as either a:
+// i) Placement: a new chip moves from player's hand to the board, i.e.: position = None --> position = Some(a, r, c);
+// ii) Relocation: a chip already on the board moves to somewhere else on board, i.e.: position = Some(a, r, c) --> position = Some(a', r', c').
+
+// We need an enum to return the status of whether a move (i.e. new placement or relocation of a chip) was legal
+#[derive(Debug, Eq, PartialEq)]
+pub enum MoveStatus {
+    Success, // The placement/relocation of the chip was legal, the move was executed
+    // Following statuses are returned when move can't be executed because the target space...:
+    Occupied,     // is already occupied
+    Unconnected,  // is in the middle of nowhere
+    BadNeighbour, // is next to opposing team
+    HiveSplit,    // would split the hive in two
+}
+
+// The board struct is the game and all of its logic
 pub struct Board {
     pub chips: HashMap<Chip, Option<(i8, i8, i8)>>,
     turns: u32, // tracks number of turns that have elapsed
@@ -95,10 +102,17 @@ impl Board {
     }
 
     // For now, this guy handles the MoveStatus enum and provides some printscreen feedback
-    pub fn try_move(&mut self, name: &'static str, team: Team, position: (i8, i8, i8)) {
-        match self.move_chip(name, team, position) {
+    pub fn try_move(
+        &mut self,
+        name: &'static str,
+        team: Team,
+        position: (i8, i8, i8),
+    ) -> MoveStatus {
+        let move_status = self.move_chip(name, team, position);
+
+        match move_status {
             MoveStatus::Success => {
-                println!("Chip move was successful."); 
+                println!("Chip move was successful.");
                 self.turns += 1;
                 // TODO: and then we need to code some logic to switch the active player
             }
@@ -107,15 +121,11 @@ impl Board {
             MoveStatus::Occupied => println!("Can't place chip in occupied position."),
             MoveStatus::Unconnected => println!("Can't move chip to middle of nowhere."),
         }
+        move_status
     }
 
     // Try move a chip of given name / team, to a new position. Return MoveStatus to tell the main loop how successful the attempt was.
-    fn move_chip(
-        &mut self,
-        name: &'static str,
-        team: Team,
-        position: (i8, i8, i8),
-    ) -> MoveStatus {
+    fn move_chip(&mut self, name: &'static str, team: Team, position: (i8, i8, i8)) -> MoveStatus {
         let animal = Board::get_animal(name); // Get the chip's animal based on its name
         let chip_select = Chip::default(name, animal, team); // Select the chip
 
@@ -143,22 +153,19 @@ impl Board {
     // Figure out what animal a chip is based on the first char in its name
     // This is clunky and I don't like it. It sort of renders the Animal enum as pointless, but it works for now.
     fn get_animal(name: &str) -> Animal {
-        let animal;
-        match name.chars().next() {
-            Some(character) => {
-                animal = match character {
-                    'a' => Animal::Ant,
-                    's' => Animal::Spider,
-                    'q' => Animal::Bee,
-                    'b' => Animal::Beetle,
-                    'g' => Animal::Grasshopper,
-                    'l' => Animal::Ladybird,
-                    'm' => Animal::Mosquito,
-                    _ => panic!("The chip's name field doesn't correspond to a known animal."),
-                }
-            }
+        let animal = match name.chars().next() {
+            Some(character) => match character {
+                'a' => Animal::Ant,
+                's' => Animal::Spider,
+                'q' => Animal::Bee,
+                'b' => Animal::Beetle,
+                'g' => Animal::Grasshopper,
+                'l' => Animal::Ladybird,
+                'm' => Animal::Mosquito,
+                _ => panic!("The chip's name field doesn't correspond to a known animal."),
+            },
             None => panic!("Chip has an invalid name field."),
-        }
+        };
         animal
     }
 
@@ -303,12 +310,15 @@ impl Board {
     }
 
     // Get co-ordinates of all chips that are already placed on the board
-    fn get_placed(&self) -> Vec<(i8, i8, i8)> {
-        self.chips
-            .values()
-            .filter(|p| p.is_some())
-            .map(|p| p.unwrap())
-            .collect()
+    pub fn get_placed(&self) -> Vec<(i8, i8, i8)> {
+        //self.chips
+        //    .values()
+        //    .filter(|p| p.is_some())
+        //    .map(|p| p.unwrap())
+        //    .collect()
+
+        // Clippy says that this is equivalent to the above
+        self.chips.values().flatten().copied().collect()
     }
 
     // Get HECS co-ordinates of the 6 neighbouring tiles
@@ -336,8 +346,8 @@ impl Board {
         })
     }
 
-    // Return the info on the Chip that is at a given location
-    fn get_chip(&self, position: (i8, i8, i8)) -> Option<Chip> {
+    // Return the info on the Chip that is at a given location (currently unused)
+    fn _get_chip(&self, position: (i8, i8, i8)) -> Option<Chip> {
         self.chips
             .iter()
             .find_map(|(c, p)| if *p == Some(position) { Some(*c) } else { None })
