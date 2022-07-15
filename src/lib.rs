@@ -1,8 +1,8 @@
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 
-mod hex_coord;
-use hex_coord::HECS::HECS;  // HECS co-ordinates
+pub mod coord;
+use coord::Coord;
 
 // enum to keep track of team identities
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
@@ -72,15 +72,18 @@ pub enum MoveStatus {
 }
 
 // The board struct is the game and all of its logic
-pub struct Board {
+pub struct Board<T: Coord> {
     pub chips: HashMap<Chip, Option<(i8, i8, i8)>>,
     turns: u32, // tracks number of turns that have elapsed
-    coord: HECS, // the co-ordinate system
+    coord: T,   // The coordinate sytem for the board e.g. HECS, Cube
 }
 
-impl Board {
+impl<T> Board<T>
+where
+    T: Coord,
+{
     // At new game, initialise all of the chips for each team with position = None (in player hand)
-    pub fn default() -> Self {
+    pub fn default(coord: T) -> Self {
         let chips: HashMap<Chip, Option<(i8, i8, i8)>> = HashMap::from([
             // Black team's chips
             (Chip::default("s1", Animal::Spider, Team::Black), None),
@@ -92,7 +95,12 @@ impl Board {
             (Chip::default("s3", Animal::Spider, Team::White), None),
             (Chip::default("s4", Animal::Spider, Team::White), None),
         ]);
-        Board { chips, turns: 0, coord: HECS::default() }
+
+        Board {
+            chips,
+            turns: 0,
+            coord,
+        }
     }
 
     // List all chips belonging to a given team. If team == None, then show both teams' chips
@@ -121,7 +129,7 @@ impl Board {
                 // TODO: and then we need to code some logic to switch the active player
             }
             MoveStatus::BadNeighbour => println!("Can't place chip next to other team."),
-            MoveStatus::HiveSplit => println!("BAD BEE. This move would break my hive in twain."),
+            MoveStatus::HiveSplit => println!("BAD BEE. This move would break ma hive in twain."),
             MoveStatus::Occupied => println!("Can't place chip in occupied position."),
             MoveStatus::Unconnected => println!("Can't move chip to middle of nowhere."),
         }
@@ -130,7 +138,7 @@ impl Board {
 
     // Try move a chip of given name / team, to a new position. Return MoveStatus to tell the main loop how successful the attempt was.
     fn move_chip(&mut self, name: &'static str, team: Team, position: (i8, i8, i8)) -> MoveStatus {
-        let animal = Board::get_animal(name); // Get the chip's animal based on its name
+        let animal = get_animal(name); // Get the chip's animal based on its name
         let chip_select = Chip::default(name, animal, team); // Select the chip
 
         // A chip's current position tells us if we're "placing" from player's hand, or "relocating" on board
@@ -154,25 +162,6 @@ impl Board {
         move_status
     }
 
-    // Figure out what animal a chip is based on the first char in its name
-    // This is clunky and I don't like it. It sort of renders the Animal enum as pointless, but it works for now.
-    fn get_animal(name: &str) -> Animal {
-        let animal = match name.chars().next() {
-            Some(character) => match character {
-                'a' => Animal::Ant,
-                's' => Animal::Spider,
-                'q' => Animal::Bee,
-                'b' => Animal::Beetle,
-                'g' => Animal::Grasshopper,
-                'l' => Animal::Ladybird,
-                'm' => Animal::Mosquito,
-                _ => panic!("The chip's name field doesn't correspond to a known animal."),
-            },
-            None => panic!("Chip has an invalid name field."),
-        };
-        animal
-    }
-
     // Move chip from player's hand to the board at selected position (the destination)
     fn place_chip(&mut self, chip: Chip, team: Team, destination: (i8, i8, i8)) -> MoveStatus {
         // There are three constraints for placement of new chip:
@@ -186,10 +175,6 @@ impl Board {
         // Get the (a,r,c) values of hexes neighbouring the destination
         //let neighbour_hex = Board::neighbour_tiles(destination);
         let neighbour_hex = self.coord.neighbour_tiles(destination);
-
-        
-
-        
 
         // Do we have at least one neighbour at the destination?
         let constraint2 = !neighbour_hex
@@ -312,7 +297,6 @@ impl Board {
         // sort the vector in raster_scan order
         self.coord.raster_scan(&mut flat_vec);
 
-
         flat_vec
     }
 
@@ -327,8 +311,6 @@ impl Board {
         // Clippy says that this is equivalent to the above
         self.chips.values().flatten().copied().collect()
     }
-
-
 
     // Get the Team enum of the chip at the given position. Return None if the hex is empty.
     fn get_team(&self, position: (i8, i8, i8)) -> Option<Team> {
@@ -347,4 +329,23 @@ impl Board {
             .iter()
             .find_map(|(c, p)| if *p == Some(position) { Some(*c) } else { None })
     }
+}
+
+// Figure out what animal a chip is based on the first char in its name
+// This is clunky and I don't like it. It sort of renders the Animal enum as pointless, but it works for now.
+pub fn get_animal(name: &str) -> Animal {
+    let animal = match name.chars().next() {
+        Some(character) => match character {
+            'a' => Animal::Ant,
+            's' => Animal::Spider,
+            'q' => Animal::Bee,
+            'b' => Animal::Beetle,
+            'g' => Animal::Grasshopper,
+            'l' => Animal::Ladybird,
+            'm' => Animal::Mosquito,
+            _ => panic!("The chip's name field doesn't correspond to a known animal."),
+        },
+        None => panic!("Chip has an invalid name field."),
+    };
+    animal
 }
