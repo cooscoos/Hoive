@@ -1,6 +1,9 @@
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 
+mod hex_coord;
+use hex_coord::HECS::HECS;  // HECS co-ordinates
+
 // enum to keep track of team identities
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub enum Team {
@@ -72,6 +75,7 @@ pub enum MoveStatus {
 pub struct Board {
     pub chips: HashMap<Chip, Option<(i8, i8, i8)>>,
     turns: u32, // tracks number of turns that have elapsed
+    coord: HECS, // the co-ordinate system
 }
 
 impl Board {
@@ -88,7 +92,7 @@ impl Board {
             (Chip::default("s3", Animal::Spider, Team::White), None),
             (Chip::default("s4", Animal::Spider, Team::White), None),
         ]);
-        Board { chips, turns: 0 }
+        Board { chips, turns: 0, coord: HECS::default() }
     }
 
     // List all chips belonging to a given team. If team == None, then show both teams' chips
@@ -180,7 +184,12 @@ impl Board {
         let constraint1 = self.get_placed().iter().any(|p| *p == destination);
 
         // Get the (a,r,c) values of hexes neighbouring the destination
-        let neighbour_hex = Board::neighbour_tiles(destination);
+        //let neighbour_hex = Board::neighbour_tiles(destination);
+        let neighbour_hex = self.coord.neighbour_tiles(destination);
+
+        
+
+        
 
         // Do we have at least one neighbour at the destination?
         let constraint2 = !neighbour_hex
@@ -222,7 +231,8 @@ impl Board {
         let constraint1 = self.hive_break_check(current_position);
 
         // Get hexes that neighbour the desired destination hex (a',r',c')
-        let neighbour_hex = Board::neighbour_tiles(destination);
+        //let neighbour_hex = Board::neighbour_tiles(destination);
+        let neighbour_hex = self.coord.neighbour_tiles(destination);
 
         // Do we have at least one neighbour at the destination?
         let constraint2 = !neighbour_hex
@@ -261,7 +271,8 @@ impl Board {
         // For each element in the raster scan
         for position in flat_vec.clone() {
             // Get the co-ordinates of neighbouring hexes as a vector
-            let neighbour_hexes = Board::neighbour_tiles(position);
+            //let neighbour_hexes = Board::neighbour_tiles(position);
+            let neighbour_hexes = self.coord.neighbour_tiles(position);
             let neighbour_vec = neighbour_hexes.into_iter().collect::<Vec<(i8, i8, i8)>>();
 
             // If any of these neighbouring hex co-ordinates also appear in the remaining elements of the raster scan, it means they're a neighbouring chip
@@ -298,13 +309,9 @@ impl Board {
             .map(|(_, p)| p.unwrap())
             .collect::<Vec<(i8, i8, i8)>>();
 
-        // Sort the hex co-ordinates (a,r,c) by:
-        // r descending first
-        // then a descending
-        // then c ascending
-        // This is equivalent to a raster scan in a HECS co-ordinate system
-        flat_vec
-            .sort_by(|(a1, r1, c1), (a2, r2, c2)| (r2, a2, c1).partial_cmp(&(r1, a1, c2)).unwrap());
+        // sort the vector in raster_scan order
+        self.coord.raster_scan(&mut flat_vec);
+
 
         flat_vec
     }
@@ -321,19 +328,7 @@ impl Board {
         self.chips.values().flatten().copied().collect()
     }
 
-    // Get HECS co-ordinates of the 6 neighbouring tiles
-    fn neighbour_tiles(position: (i8, i8, i8)) -> [(i8, i8, i8); 6] {
-        let (a, r, c) = position;
 
-        [
-            (1 - a, r - (1 - a), c - (1 - a)),
-            (1 - a, r - (1 - a), c + a),
-            (a, r, c - 1),
-            (a, r, c + 1),
-            (1 - a, r + a, c - (1 - a)),
-            (1 - a, r + a, c + a),
-        ]
-    }
 
     // Get the Team enum of the chip at the given position. Return None if the hex is empty.
     fn get_team(&self, position: (i8, i8, i8)) -> Option<Team> {
