@@ -74,23 +74,6 @@ fn hecs_split_hive() {
 }
 
 #[test]
-fn hecs_nosplit_hive() {
-    // Put down lots of chips and then do a move that doesn't split hive and is legal
-    let mut board = Board::default(Hecs);
-    board.try_move("s1", Team::Black, (1, 0, 0));
-    board.try_move("s1", Team::White, (0, 1, 0));
-    board.try_move("s2", Team::Black, (0, 0, 0));
-    board.try_move("s2", Team::White, (1, 1, 0));
-    board.try_move("s3", Team::White, (1, 1, -1));
-    board.try_move("s4", Team::White, (0, 2, 0));
-
-    assert_eq!(
-        MoveStatus::Success,
-        board.try_move("s3", Team::White, (1, 2, 0))
-    );
-}
-
-#[test]
 fn hecs_attack() {
     // Put down lots of chips and then relocate a white next to black after turn 6
     // We haven't coded logic for bee allowing move yet, so we'll need to rewrite this test then
@@ -107,3 +90,22 @@ fn hecs_attack() {
         board.try_move("s3", Team::White, (0, 0, 1))
     );
 }
+
+
+#[test]
+fn hecs_nosplit_hive() {
+    // Put down lots of chips and then do a move that doesn't split hive and is legal
+    let mut board = Board::default(Hecs);
+    board.try_move("s1", Team::Black, (1, 0, 0));
+    board.try_move("s1", Team::White, (0, 1, 0));
+    board.try_move("s2", Team::Black, (0, 0, 0));
+    board.try_move("s2", Team::White, (1, 1, 0));
+    board.try_move("s3", Team::White, (1, 1, -1));
+    board.try_move("s4", Team::White, (0, 2, 0));
+
+    assert_eq!(
+        MoveStatus::Success,
+        board.try_move("s3", Team::White, (1, 2, 0))
+    );
+}
+
