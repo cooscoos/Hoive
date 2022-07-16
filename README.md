@@ -18,4 +18,4 @@ Thoughts:
 * this would avoid needing to develop "path planning with obstacles" or move-by-move checks on the ant (could be inefficient). The ant just needs ghost tile guides before it moves.
 * (Later) spider and bee similar, but with movement range, see https://www.redblobgames.com/grids/hexagons/
 
-* Morphological dilation then erosion on the hexes (gap closing) works, but it's too aggressive on a low res hex grid and closes gaps too aggressively. Can it be done sub-pixel?
+* Morphological dilation then erosion on the hexes (gap closing) works, but it's too much on a low res hex grid and closes gaps too aggressively. Can it be done sub-pixel?
