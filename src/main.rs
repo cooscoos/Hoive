@@ -52,7 +52,7 @@ fn main() {
 
     // TODO:
     // Simple to complex moves:
-    // ant, spider, bee
+    // ant, bee, spider
     // ladybird
     // beetle
     // grashopper
@@ -63,15 +63,16 @@ fn main() {
 
     // ant, spider, bee
     // ant doesn't need path planning or movement logic, he just needs this squeeze gaps rule
-    // spider and bee can use movement range of https://www.redblobgames.com/grids/hexagons/
-    // path planning with obstacles
+    // bee can use "must move to neighbour" rule
+    // spider can use movement range https://www.redblobgames.com/grids/hexagons/
     // to prevent squeeze gaps, could fill gaps with ghost hexes that affect them (if hex surrounded by 5, then fill)
 
     // see size and spacing https://www.redblobgames.com/grids/hexagons/
-    // fill the gap with a ghost when the centroids are 1.73 widths away
+    // fill the gap with a ghost when the centroids of "one-over" neighbouring hexes are 1.73 widths away
     // centroids 2 widths away is ok, no ghost.
 
-    // need a way of finding a bridgeable gap
+    // need a way of finding a bridgeable gap or a "one-over" neighbour
+    // find the neighbours of blank spaces...
     // a bridgeable gap happens when opposing faces of a ghost hex would be touched
     // any easier way?
 
