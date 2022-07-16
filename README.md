@@ -6,7 +6,7 @@ The boardgame Hive, written in Rust.
 ### Ant (and the ant squeeze rule)
 
 Need a rule that prevents white ant from entering the pit shown in image
-![ant squeeze](/referece/ant_squeeze.jpg "ant squeeze")
+![ant squeeze](./referece/ant_squeeze.jpg "ant squeeze")
 
 This is about as complicated a situation as we'll ever see.
 
