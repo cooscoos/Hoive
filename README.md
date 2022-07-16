@@ -3,9 +3,17 @@ The boardgame Hive, written in Rust.
 
 ## To do
 
-### Ant path planning (and ant squeeze rule)
+### Ant (and the ant squeeze rule)
 
-* Player moves ant peice from A to B, game should generate a path or route.
-* Game then needs to check if every move along that path is legal
-* New constraint to add is don't let ants squeeze through tiny gaps
-* Ant, spider and bee all use "ant path planning" - just have different no. of moves
+Need a rule that prevents white ant from entering the pit shown in image
+![ant squeeze](/referece/ant_squeeze.jpg "ant squeeze")
+
+This is about as complicated a situation as we'll ever see.
+
+Thoughts:
+
+* to prevent squeeze, could bridge short gaps with ghost hexes, and then fill voids with ghost hexes
+* ghost hexes affect ant/spider/bee only
+* ant can then move based on existing constraints
+* this would avoid needing to develop "path planning with obstacles" or move-by-move checks on the ant (could be inefficient). The ant just needs ghost tile guides before it moves.
+* (Later) spider and bee similar, but with movement range, see https://www.redblobgames.com/grids/hexagons/

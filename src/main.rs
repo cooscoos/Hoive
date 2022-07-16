@@ -62,6 +62,8 @@ fn main() {
 
 
     // ant, spider, bee
+    // ant doesn't need path planning or movement logic, he just needs this squeeze gaps rule
+    // spider and bee can use movement range of https://www.redblobgames.com/grids/hexagons/
     // path planning with obstacles
     // to prevent squeeze gaps, could fill gaps with ghost hexes that affect them (if hex surrounded by 5, then fill)
 }
