@@ -66,4 +66,13 @@ fn main() {
     // spider and bee can use movement range of https://www.redblobgames.com/grids/hexagons/
     // path planning with obstacles
     // to prevent squeeze gaps, could fill gaps with ghost hexes that affect them (if hex surrounded by 5, then fill)
+
+    // see size and spacing https://www.redblobgames.com/grids/hexagons/
+    // fill the gap with a ghost when the centroids are 1.73 widths away
+    // centroids 2 widths away is ok, no ghost.
+
+    // need a way of finding a bridgeable gap
+    // a bridgeable gap happens when opposing faces of a ghost hex would be touched
+    // any easier way?
+
 }

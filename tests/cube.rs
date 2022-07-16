@@ -1,6 +1,6 @@
 // Tests that use cube co-ordinates: cargo test cube
 
-use hoive::coord::Cube;
+use hoive::coord::{Cube, Coord};
 use hoive::{Board, MoveStatus, Team};
 
 // basic tests that work with all co-ordinate systems
@@ -119,3 +119,8 @@ fn cube_nosplit_hive() {
     );
 }
 
+#[test]
+fn centroid_calc() {
+    let coord_sys = Cube;
+    assert_eq!(2.0, coord_sys.centroid_distance((0,0,0), (2,-2,-0)));
+}
