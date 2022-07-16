@@ -314,9 +314,12 @@ where
 
         let closed = morphops::close(&self.coord, flat_vec);
 
-        // TODO: Remove all with 5 edge or fewer
+        // TODO:
+        // Check this actually works with some tests
+        // Remove all with 5 edge or fewer
         // Should probably make a function called empty_neighbours which returns a list of empty neighbours, would be useful to count them or use them
         // Similarly a function called full_neighbours
+        // Should we be using a hashset for everything instead of vectors of (i8,i8,i8)?
 
         !unimplemented!()
         
