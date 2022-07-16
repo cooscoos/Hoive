@@ -51,20 +51,17 @@ fn main() {
     board.try_move("s2", Team::Black, (8, 8, 8));
 
     // TODO:
-    // At this point, trying to visualise HECS in my head or on paper is getting cumbersome
-    // Would be good to have simple graphical representation of board before proceeding further
-    //
-    // The order to program animal move logic from simplest to most complex would be:
-    // spider, ant, bee first (same peice with diff no. moves)
-    // then ladybird and beetle (similar "on top of other animals" logic)
-    // then grashopper (mental logic)
-    // then mosquito (need all other animals first)
-    // then pillbug (if feeling brave)
+    // Simple to complex moves:
+    // ant, spider, bee
+    // ladybird
+    // beetle
+    // grashopper
+    // pillbug
+    // mosquito
 
-    // For ant, need to code up the thing to check if it can squeeze through small gaps
-    // I think the way to do this is to check each step of the ant one at a time and see if it ever moves
-    // from a position A to B where:
-    // position A) any two opposing edges of the hex are touching something
-    // position B) more than two edges of the hex are touching something
-    // Need to think about it more though
+
+
+    // ant, spider, bee
+    // path planning with obstacles
+    // to prevent squeeze gaps, could fill gaps with ghost hexes that affect them (if hex surrounded by 5, then fill)
 }
