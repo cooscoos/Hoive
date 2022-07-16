@@ -21,4 +21,4 @@ Thoughts:
 To close gaps and voids, implement "not aggressive" morphological gap closing (where closing = dilation then erosion) 
 1) Dilate with ghosts
 2) Erode ghosts
-3) Delete ghosts that have 4 or fewer neighbours (this makes gap closing less aggressive)
+3) Recursively delete ghosts that have less than 5 neighbours until you can't delete any more (this reopens all gaps that an ant could fit through)
