@@ -117,27 +117,27 @@ where
         }
     }
 
-    pub fn parse_out(&self) {
+    pub fn parse_out(&self) -> HashMap<(i8, i8), Option<Chip>> {
+        //TODO: write a test for this
 
-        
-        // initialise a hashmap which is none for all hive hexes
-        // loop over all possible q,r,s on an 11x11 grid, initialising all to none
-        // This can be a separate function, it'll belong in the coord.rs file
+        // initialise a display hashmap which is none or "." for all hive hexes
+        let dheight_display = render::generate(5);
+        let mut dheight_hashmap = dheight_display
+            .iter()
+            .map(|xy| (*xy, None))
+            .collect::<HashMap<(i8, i8), Option<Chip>>>();
 
-
-
-
-        // Overwrite this hashmap based on vales of chips on the board
-        let board_hash = self
-            .chips
-            .clone()
+        let check_hexes = dheight_display
             .into_iter()
-            .filter(|(c, p)| p.is_some())
-            .map(|(c, p)| (c, p.unwrap()))
-            .collect::<HashMap<Chip, (i8, i8, i8)>>();
+            .map(|xy| self.coord.from_doubleheight(xy))
+            .collect::<HashSet<(i8, i8, i8)>>();
 
-        // Fill every othr position with None
+        // check check_hexes for chips, and put their names in dheight_hashmap
+        check_hexes.into_iter().for_each(|p| {
+            dheight_hashmap.insert(self.coord.to_doubleheight(p), self.get_chip(p));
+        });
 
+        dheight_hashmap
     }
 
     // For now, this guy handles the MoveStatus enum and provides some printscreen feedback
@@ -362,8 +362,8 @@ where
         })
     }
 
-    // Return the info on the Chip that is at a given location (currently unused)
-    fn _get_chip(&self, position: (i8, i8, i8)) -> Option<Chip> {
+    // Return the info on the Chip that is at a given location
+    fn get_chip(&self, position: (i8, i8, i8)) -> Option<Chip> {
         self.chips
             .iter()
             .find_map(|(c, p)| if *p == Some(position) { Some(*c) } else { None })

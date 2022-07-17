@@ -3,6 +3,8 @@ pub trait Coord {
     fn neighbour_tiles(&self, position: (i8, i8, i8)) -> [(i8, i8, i8); 6]; // a list of 6 neighbouring tiles
     fn raster_scan(&self, flat_vec: &mut Vec<(i8, i8, i8)>); // a method to logically raster scan through each tile
     fn centroid_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> f32; // calculate centroid distance between two hexes
+    fn to_doubleheight(&self, hex: (i8, i8, i8)) -> (i8, i8); // convert to and from doubleheight co-ords
+    fn from_doubleheight(&self, hex: (i8, i8)) -> (i8, i8, i8);
 }
 
 // Hexagonal Efficient Coordinate (HECS) co-ordinate system
@@ -35,6 +37,16 @@ impl Coord for Hecs {
 
     // Get centroid distance between two hexes
     fn centroid_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> f32 {
+        !unimplemented!();
+    }
+
+    fn to_doubleheight(&self, hex: (i8, i8, i8)) -> (i8, i8) {
+        // Convert from HECS to doubleheight
+        !unimplemented!();
+    }
+
+    fn from_doubleheight(&self, hex: (i8, i8)) -> (i8, i8, i8) {
+        // Convert from doubleheight to HECS
         !unimplemented!();
     }
 }
@@ -74,6 +86,23 @@ impl Coord for Cube {
         let sq_sum = vector_sqsum(&vector_distance);
 
         ((sq_sum as f32) / 2.0).powf(0.5)
+    }
+
+    fn to_doubleheight(&self, hex: (i8, i8, i8)) -> (i8, i8) {
+        // Convert from cube to doubleheight
+        let col = hex.0;
+        let row = 2 * hex.1 + hex.0;
+
+        (col, row)
+    }
+
+    fn from_doubleheight(&self, hex: (i8, i8)) -> (i8, i8, i8) {
+        // Convert from doubleheight to cube
+        let q = hex.0; // columns (x)
+        let r = (hex.1 - hex.0) / 2; // rows (y)
+        let s = -q - r;
+
+        (q, r, s)
     }
 }
 

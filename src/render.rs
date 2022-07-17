@@ -1,4 +1,7 @@
+use std::collections::BTreeMap;
 // An ascii renderer for the Hive board
+use std::collections::HashMap;
+use std::collections::HashSet;
 
 // Players will interact with the board using doubled offset co-ordinates
 // see: https://www.redblobgames.com/grids/hexagons/
@@ -8,20 +11,50 @@
 use crate::{Animal, Chip};
 
 // parse chips from a row into a string
-pub fn parse_row(chips: Vec<Option<Chip>>, row_no: i8) -> String {
-    // Odd or even decides if tab is first
-    let row_string = match row_no % 2 {
-        0 => chips
-            .into_iter()
-            .map(|c| format!("\t{}", chip_to_str(c)))
-            .collect::<String>(),
-        _ => chips
-            .into_iter()
-            .map(|c| format!("{}\t", chip_to_str(c)))
-            .collect::<String>(),
-    };
+pub fn parse_row(dheight_hashmap: HashMap<(i8, i8), Option<Chip>>) -> String {
+    
+    
+    // TODO: do this less crazy
+    let mut user_display = String::new();
 
-    row_string
+    // get all the chips for a row_no
+
+    // need a btreemap
+
+    // This a mental way of doing this but it probably works..
+
+    for ((_, the_row), _) in dheight_hashmap.clone() {
+
+
+        // make a btree for this row.
+        // use a btree because they're ordered
+        let dheight_btree = dheight_hashmap.clone()
+            .into_iter()
+            .filter(|((col_no, row_no), _)| *row_no == the_row)
+            .map(|((col_no, row_no), c)| (col_no,c))
+            .collect::<BTreeMap<i8,Option<Chip>>>();
+        
+        // Odd or even decides if tab is first
+        let row_string = match the_row % 2 {
+            0 => dheight_btree
+                .into_iter()
+                .map(|(_,c)| format!("\t{}", chip_to_str(c)))
+                .collect::<String>(),
+            _ => dheight_btree
+                .into_iter()
+                .map(|(_,c)| format!("{}\t", chip_to_str(c)))
+                .collect::<String>(),
+        };
+
+        let append_string = format!("{}\n\n\n", row_string);
+
+        user_display.push_str(&append_string);
+        
+    
+    }
+    
+
+    user_display
 }
 
 fn chip_to_str(chip: Option<Chip>) -> &'static str {
@@ -33,6 +66,21 @@ fn chip_to_str(chip: Option<Chip>) -> &'static str {
     };
     return_str
 }
+
+pub fn generate(n: i8) -> HashSet<(i8, i8)> {
+    // Generate a hashnet of doubleheight values to display
+    let mut dheight_display = HashSet::new();
+
+    // These 5s can be changed to a variable later which depends on board extremes
+    for col in -n..n + 1 {
+        for row in -n..n + 1 {
+            dheight_display.insert((col, row));
+        }
+    }
+
+    dheight_display
+}
+
 pub fn empty() -> &'static str {
     let label = "-5\t-4\t-3\t-2\t-1\t0\t1\t2\t3\t4\t5";
 
