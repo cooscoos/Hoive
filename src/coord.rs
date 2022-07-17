@@ -1,8 +1,8 @@
 // Hex coordinate systems we define need to have the following methods
 pub trait Coord {
-    fn neighbour_tiles(&self, position: (i8, i8, i8)) -> [(i8, i8, i8); 6];         // a list of 6 neighbouring tiles
-    fn raster_scan(&self, flat_vec: &mut Vec<(i8, i8, i8)>);                        // a method to logically raster scan through each tile
-    fn centroid_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> f32;     // calculate centroid distance between two hexes
+    fn neighbour_tiles(&self, position: (i8, i8, i8)) -> [(i8, i8, i8); 6]; // a list of 6 neighbouring tiles
+    fn raster_scan(&self, flat_vec: &mut Vec<(i8, i8, i8)>); // a method to logically raster scan through each tile
+    fn centroid_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> f32; // calculate centroid distance between two hexes
 }
 
 // Hexagonal Efficient Coordinate (HECS) co-ordinate system
@@ -37,8 +37,6 @@ impl Coord for Hecs {
     fn centroid_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> f32 {
         !unimplemented!();
     }
-
-    
 }
 
 // Cube coordinate system
@@ -71,23 +69,22 @@ impl Coord for Cube {
 
     // Get centroid distance between two hexes
     fn centroid_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> f32 {
-        
         // Squared sum of components of vector distance
-        let vector_distance = vector_subtract(&hex1,&hex2);
+        let vector_distance = vector_subtract(&hex1, &hex2);
         let sq_sum = vector_sqsum(&vector_distance);
 
-        ((sq_sum as f32)/2.0).powf(0.5)
+        ((sq_sum as f32) / 2.0).powf(0.5)
     }
-
 }
-
 
 // Subtract vectors
 pub fn vector_subtract(a: &(i8, i8, i8), b: &(i8, i8, i8)) -> (i8, i8, i8) {
-    (a.0-b.0, a.1-b.1, a.2-b.2)
+    (a.0 - b.0, a.1 - b.1, a.2 - b.2)
 }
 
 // Square sum of vector components
 pub fn vector_sqsum(a: &(i8, i8, i8)) -> u32 {
-    ((a.0).pow(2) + (a.1).pow(2) + (a.2).pow(2)).try_into().unwrap()
+    ((a.0).pow(2) + (a.1).pow(2) + (a.2).pow(2))
+        .try_into()
+        .unwrap()
 }

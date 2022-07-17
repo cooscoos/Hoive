@@ -4,6 +4,9 @@ use std::hash::Hash;
 pub mod coord;
 use coord::Coord;
 
+pub mod morphops;
+use morphops::close;
+
 // enum to keep track of team identities
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub enum Team {
@@ -298,6 +301,19 @@ where
         self.coord.raster_scan(&mut flat_vec);
 
         flat_vec
+    }
+
+    fn ant_close(&self, current_position: &(i8, i8, i8)) -> Vec<(i8, i8, i8)> {
+        // Get the positions of chips on the board as a flat sorted vector (i.e. raster scan the board)
+        // Doesn't need to be a raster scan for this function to work, but we have the method defined already
+        let mut flat_vec = self.rasterscan_board();
+
+        // Remove the chip at our "current_position" from our flat vector, we don't want it to be part of our dilation
+        flat_vec.retain(|&p| p != *current_position);
+
+        // Get and return the ghosts, ant can't go in these locations either
+        morphops::gap_closure(&self.coord, &flat_vec)
+
     }
 
     // Get co-ordinates of all chips that are already placed on the board

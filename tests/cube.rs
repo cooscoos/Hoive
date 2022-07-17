@@ -124,3 +124,4 @@ fn centroid_calc() {
     let coord_sys = Cube;
     assert_eq!(2.0, coord_sys.centroid_distance((0,0,0), (2,-2,-0)));
 }
+
