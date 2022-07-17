@@ -1,4 +1,4 @@
-use hoive::{Board, Team, render};
+use hoive::{render, Board, Team};
 
 //use Hoive::Player;
 
@@ -15,9 +15,7 @@ fn main() {
 
     let mut board = Board::default(coord);
 
-
-    println!("{}",render::empty());
-    
+    println!("{}", render::empty());
 
     // show black player's chips only
     println!(

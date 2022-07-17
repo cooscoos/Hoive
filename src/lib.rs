@@ -6,7 +6,6 @@ use coord::Coord;
 
 pub mod morphops;
 
-
 pub mod render;
 
 // enum to keep track of team identities
@@ -116,6 +115,29 @@ where
             Some(team) => chip_iter.filter(|c| c.team == team).collect::<Vec<Chip>>(),
             None => chip_iter.collect::<Vec<Chip>>(),
         }
+    }
+
+    pub fn parse_out(&self) {
+
+        
+        // initialise a hashmap which is none for all hive hexes
+        // loop over all possible q,r,s on an 11x11 grid, initialising all to none
+        // This can be a separate function, it'll belong in the coord.rs file
+
+
+
+
+        // Overwrite this hashmap based on vales of chips on the board
+        let board_hash = self
+            .chips
+            .clone()
+            .into_iter()
+            .filter(|(c, p)| p.is_some())
+            .map(|(c, p)| (c, p.unwrap()))
+            .collect::<HashMap<Chip, (i8, i8, i8)>>();
+
+        // Fill every othr position with None
+
     }
 
     // For now, this guy handles the MoveStatus enum and provides some printscreen feedback
@@ -315,7 +337,6 @@ where
 
         // Get and return the ghosts, ant can't go in these locations either
         morphops::gap_closure(&self.coord, &flat_vec)
-
     }
 
     // Get co-ordinates of all chips that are already placed on the board

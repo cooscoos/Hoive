@@ -6,7 +6,6 @@ use hoive::*;
 
 #[test]
 fn test_onerow() {
-
     let input = vec![
         None,
         Some(Chip::default("s2", Animal::Spider, Team::Black)),
@@ -17,10 +16,5 @@ fn test_onerow() {
         None,
     ];
 
-    
-
-    println!("{:?}",render::parse_row(input,-5));
-
-
-
+    println!("{:?}", render::parse_row(input, -4));
 }
