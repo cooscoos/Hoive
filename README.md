@@ -10,7 +10,7 @@ We now have ant_close, a function that has logic to prevent the white ant from e
 
 This is about as complicated a situation as we'll ever see.
 
-Now just need to tidy up what's been written, and apply this logic to the ant chips
+Now just need to tidy up what's been written, consider hashset vs vector, then apply this logic to the ant chips
 
 * (Later) spider and bee similar, but with movement range, see https://www.redblobgames.com/grids/hexagons/
 
