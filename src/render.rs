@@ -15,6 +15,7 @@ pub fn parse_row(dheight_hashmap: HashMap<(i8, i8), Option<Chip>>) -> String {
     
     
     // TODO: do this less crazy
+    // Sanity check the board.parse_out with some tests first.
     let mut user_display = String::new();
 
     // get all the chips for a row_no
