@@ -5,7 +5,9 @@ pub mod coord;
 use coord::Coord;
 
 pub mod morphops;
-use morphops::close;
+
+
+pub mod render;
 
 // enum to keep track of team identities
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
