@@ -1,10 +1,11 @@
 // Tests that use cube co-ordinates: cargo test cube
 
-use hoive::coord::{Coord, Cube};
+use hoive::coord::{Cube, Coord};
 use hoive::{Board, MoveStatus, Team};
 
 // basic tests that work with all co-ordinate systems
 mod basic;
+
 
 #[test]
 fn cube_first_turn() {
@@ -20,6 +21,9 @@ fn cube_occupied() {
 fn cube_to_the_moon() {
     basic::to_the_moon(&mut Board::default(Cube));
 }
+
+
+
 
 // These tests are hecs specific
 #[test]
@@ -69,6 +73,7 @@ fn cube_split_hive() {
     board.try_move("s2", Team::Black, (0, 1, -1));
     board.try_move("s2", Team::White, (0, 2, -2));
 
+
     assert_eq!(
         MoveStatus::HiveSplit,
         board.try_move("s1", Team::Black, (0, 2, -2))
@@ -87,11 +92,13 @@ fn cube_attack() {
     board.try_move("s1", Team::Black, (1, 1, -2));
     board.try_move("s3", Team::White, (0, -2, 2));
 
+
     assert_eq!(
         MoveStatus::Success,
-        board.try_move("s1", Team::Black, (1, -3, 2))
-    );
+        board.try_move("s1", Team::Black, (1, -3, 2)));
+        
 }
+
 
 #[test]
 fn cube_nosplit_hive() {
@@ -105,6 +112,7 @@ fn cube_nosplit_hive() {
     board.try_move("s3", Team::White, (0, -2, 2));
     board.try_move("s1", Team::Black, (1, -3, 2));
 
+
     assert_eq!(
         MoveStatus::Success,
         board.try_move("s3", Team::White, (-1, -1, 2))
@@ -114,5 +122,6 @@ fn cube_nosplit_hive() {
 #[test]
 fn centroid_calc() {
     let coord_sys = Cube;
-    assert_eq!(2.0, coord_sys.centroid_distance((0, 0, 0), (2, -2, -0)));
+    assert_eq!(2.0, coord_sys.centroid_distance((0,0,0), (2,-2,-0)));
 }
+

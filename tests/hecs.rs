@@ -91,7 +91,6 @@ fn hecs_attack() {
     );
 }
 
-
 #[test]
 fn hecs_nosplit_hive() {
     // Put down lots of chips and then do a move that doesn't split hive and is legal
@@ -108,4 +107,3 @@ fn hecs_nosplit_hive() {
         board.try_move("s3", Team::White, (1, 2, 0))
     );
 }
-

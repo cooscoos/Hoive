@@ -59,8 +59,6 @@ fn main() {
     // pillbug
     // mosquito
 
-
-
     // ant, spider, bee
     // ant doesn't need path planning or movement logic, he just needs this squeeze gaps rule
     // bee can use "must move to neighbour" rule
@@ -75,5 +73,4 @@ fn main() {
     // find the neighbours of blank spaces...
     // a bridgeable gap happens when opposing faces of a ghost hex would be touched
     // any easier way?
-
 }

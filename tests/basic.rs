@@ -1,7 +1,6 @@
 // These basic tests work for any triaxial co-ordinate system
 use hoive::coord::{Coord, Cube};
-use hoive::morphops::*;
-use hoive::{morphops, Board, MoveStatus, Team};
+use hoive::{Board, MoveStatus, Team, morphops};
 
 pub fn first_turn<T: Coord>(board: &mut Board<T>) {
     // Place spider s1 at any position on the first turn and it should be fine
@@ -24,3 +23,5 @@ pub fn to_the_moon<T: Coord>(board: &mut Board<T>) {
         board.try_move("s2", Team::Black, (0, 0, 8))
     );
 }
+
+
