@@ -311,16 +311,9 @@ where
         // Remove the chip at our "current_position" from our flat vector, we don't want it to be part of our dilation
         flat_vec.retain(|&p| p != *current_position);
 
-        let closed = morphops::close(&self.coord, &flat_vec);
+        // Get and return the ghosts, ant can't go in these locations either
+        morphops::gap_closure(&self.coord, &flat_vec)
 
-        // TODO:
-        // Check this actually works with some tests
-        // Remove all with 5 edge or fewer
-        // Should probably make a function called empty_neighbours which returns a list of empty neighbours, would be useful to count them or use them
-        // Similarly a function called full_neighbours
-        // Should we be using a hashset for everything instead of vectors of (i8,i8,i8)?
-
-        !unimplemented!()
     }
 
     // Get co-ordinates of all chips that are already placed on the board

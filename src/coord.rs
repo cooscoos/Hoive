@@ -77,8 +77,6 @@ impl Coord for Cube {
     }
 }
 
-
-
 // Subtract vectors
 pub fn vector_subtract(a: &(i8, i8, i8), b: &(i8, i8, i8)) -> (i8, i8, i8) {
     (a.0 - b.0, a.1 - b.1, a.2 - b.2)
