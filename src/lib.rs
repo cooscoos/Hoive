@@ -30,8 +30,8 @@ pub enum Animal {
 // The Chips: the tokens that we use in a game of Hive
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub struct Chip {
-    name: &'static str, // names help us distinguish between e.g. multiple black team spiders
-    animal: Animal,
+    pub name: &'static str, // names help us distinguish between e.g. multiple black team spiders
+    pub animal: Animal,
     pub team: Team,
 }
 
@@ -93,6 +93,7 @@ where
             (Chip::default("s1", Animal::Spider, Team::Black), None),
             (Chip::default("s2", Animal::Spider, Team::Black), None),
             (Chip::default("s3", Animal::Spider, Team::Black), None),
+            (Chip::default("s4", Animal::Spider, Team::Black), None),
             // White team's chips
             (Chip::default("s1", Animal::Spider, Team::White), None),
             (Chip::default("s2", Animal::Spider, Team::White), None),
@@ -117,11 +118,11 @@ where
         }
     }
 
-    pub fn parse_out(&self) -> HashMap<(i8, i8), Option<Chip>> {
+    pub fn parse_out(&self, size: i8) -> HashMap<(i8, i8), Option<Chip>> {
         //TODO: write a test for this
 
         // initialise a display hashmap which is none or "." for all hive hexes
-        let dheight_display = render::generate(5);
+        let dheight_display = render::generate(size);
         let mut dheight_hashmap = dheight_display
             .iter()
             .map(|xy| (*xy, None))

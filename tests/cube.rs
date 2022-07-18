@@ -1,7 +1,7 @@
 // Tests that use cube co-ordinates: cargo test cube
 
 use hoive::coord::{Coord, Cube};
-use hoive::{Board, MoveStatus, Team};
+use hoive::{render, Board, MoveStatus, Team};
 
 // basic tests that work with all co-ordinate systems
 mod basic;
@@ -115,4 +115,23 @@ fn cube_nosplit_hive() {
 fn centroid_calc() {
     let coord_sys = Cube;
     assert_eq!(2.0, coord_sys.centroid_distance((0, 0, 0), (2, -2, -0)));
+}
+
+#[test]
+fn test_to_doubleheight() {
+    // Test conversion from cube to doubleheight
+    let coord_sys = Cube;
+    let hex = (1, -1, 0); // up and right from the origin in cube coords
+
+    assert_eq!((1, -1), coord_sys.to_doubleheight(hex));
+}
+
+#[test]
+fn test_from_doubleheight() {
+    // Test conversion from doubleheight to cube
+
+    let coord_sys = Cube;
+    let hex = (-1, 1); // down and left from the origin in doubleheight coords
+
+    assert_eq!((-1, 1, 0), coord_sys.from_doubleheight(hex));
 }
