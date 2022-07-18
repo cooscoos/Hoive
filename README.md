@@ -3,6 +3,11 @@ The boardgame Hive, written in Rust.
 
 ## To do
 
+
+### Tidy up
+
+I need to refactor, code too messy after implementing ascii graphics.
+
 ### Ant (and the ant squeeze rule)
 
 We now have ant_close, a function that has logic to prevent the white ant from entering the pit shown in image
