@@ -50,10 +50,7 @@ pub fn parse_row(dheight_hashmap: HashMap<(i8, i8), Option<Chip>>, size: i8) -> 
         // Split the BTree at the row
         let remainder = dheight_tree.split_off(&(row_no, size + 1));
 
-        // do the parse on dheight_tree
-
         // This is the parsing bit
-        // Odd or even decides if tab is first
         let row_string = dheight_tree
             .into_iter()
             .map(|(_, c)| format!("{}\t\t", chip_to_str(c)))
