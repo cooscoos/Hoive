@@ -40,7 +40,6 @@ fn test_dilate_erode() {
     assert_eq!(vec, morphops::erode(&coord, &dilated));
 }
 
-
 #[test]
 fn test_close_reversible() {
     // Erosion should reverse dilation
@@ -51,7 +50,6 @@ fn test_close_reversible() {
 
     assert_eq!(vec, morphops::close(&coord, &vec));
 }
-
 
 #[test]
 fn test_close_closes() {
@@ -65,7 +63,7 @@ fn test_close_closes() {
         (0, 1, -1),
     ];
 
-    let mut expected =   vec![
+    let mut expected = vec![
         (0, -1, 1),
         (1, -1, 0),
         (-1, 0, 1),
@@ -86,7 +84,6 @@ fn test_close_closes() {
     assert_eq!(expected, closed_ring);
 }
 
-
 #[test]
 fn test_close_new() {
     // Close a gap in the centre of a ring
@@ -99,9 +96,7 @@ fn test_close_new() {
         (0, 1, -1),
     ];
 
-    let mut expected =   vec![
-        (0, 0, 0),
-    ];
+    let mut expected = vec![(0, 0, 0)];
 
     let coord = Cube;
 
@@ -114,24 +109,21 @@ fn test_close_new() {
     assert_eq!(expected, closed_ring);
 }
 
-
-
 #[test]
 fn test_gap_closure() {
-
     // Create a gap that an ant shouldn't be able to pass (see /reference/before_gap.png)
     let before_gap = vec![
-        (-1,3,-2),
-        (-1,2,-1),
-        (-1,1,0),
-        (0,0,0),
-        (1,-1,0),
-        (2,-1,-1),
-        (2,0,-2),
-        (2,1,-3),
-        (1,2,-3),
-        (-1,0,1),
-        (1,-2,1),
+        (-1, 3, -2),
+        (-1, 2, -1),
+        (-1, 1, 0),
+        (0, 0, 0),
+        (1, -1, 0),
+        (2, -1, -1),
+        (2, 0, -2),
+        (2, 1, -3),
+        (1, 2, -3),
+        (-1, 0, 1),
+        (1, -2, 1),
     ];
 
     // Create ghost hexes to close the gaap that the ant can't pass
@@ -139,17 +131,11 @@ fn test_gap_closure() {
     let mut ghosts = morphops::gap_closure(&coord, &before_gap);
 
     // Ghosts should appear at these locations
-    let mut expected = vec![
-        (0,1,-1),
-        (1,0,-1),
-        (0,2,-2),
-        (1,1,-2),
-    ];
+    let mut expected = vec![(0, 1, -1), (1, 0, -1), (0, 2, -2), (1, 1, -2)];
 
     // Raster scan both expected and ghosts to sort vector ordering
     coord.raster_scan(&mut ghosts);
     coord.raster_scan(&mut expected);
 
-    assert_eq!(expected,ghosts);
-
+    assert_eq!(expected, ghosts);
 }

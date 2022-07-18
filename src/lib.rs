@@ -5,7 +5,8 @@ pub mod coord;
 use coord::Coord;
 
 pub mod morphops;
-use morphops::close;
+
+pub mod render;
 
 // enum to keep track of team identities
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
@@ -29,8 +30,8 @@ pub enum Animal {
 // The Chips: the tokens that we use in a game of Hive
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub struct Chip {
-    name: &'static str, // names help us distinguish between e.g. multiple black team spiders
-    animal: Animal,
+    pub name: &'static str, // names help us distinguish between e.g. multiple black team spiders
+    pub animal: Animal,
     pub team: Team,
 }
 
@@ -92,6 +93,7 @@ where
             (Chip::default("s1", Animal::Spider, Team::Black), None),
             (Chip::default("s2", Animal::Spider, Team::Black), None),
             (Chip::default("s3", Animal::Spider, Team::Black), None),
+            (Chip::default("s4", Animal::Spider, Team::Black), None),
             // White team's chips
             (Chip::default("s1", Animal::Spider, Team::White), None),
             (Chip::default("s2", Animal::Spider, Team::White), None),
@@ -114,6 +116,29 @@ where
             Some(team) => chip_iter.filter(|c| c.team == team).collect::<Vec<Chip>>(),
             None => chip_iter.collect::<Vec<Chip>>(),
         }
+    }
+
+    pub fn parse_out(&self, size: i8) -> HashMap<(i8, i8), Option<Chip>> {
+        //TODO: write a test for this
+
+        // initialise a display hashmap which is none or "." for all hive hexes
+        let dheight_display = render::generate(size);
+        let mut dheight_hashmap = dheight_display
+            .iter()
+            .map(|xy| (*xy, None))
+            .collect::<HashMap<(i8, i8), Option<Chip>>>();
+
+        let check_hexes = dheight_display
+            .into_iter()
+            .map(|xy| self.coord.from_doubleheight(xy))
+            .collect::<HashSet<(i8, i8, i8)>>();
+
+        // check check_hexes for chips, and put their names in dheight_hashmap
+        check_hexes.into_iter().for_each(|p| {
+            dheight_hashmap.insert(self.coord.to_doubleheight(p), self.get_chip(p));
+        });
+
+        dheight_hashmap
     }
 
     // For now, this guy handles the MoveStatus enum and provides some printscreen feedback
@@ -313,7 +338,6 @@ where
 
         // Get and return the ghosts, ant can't go in these locations either
         morphops::gap_closure(&self.coord, &flat_vec)
-
     }
 
     // Get co-ordinates of all chips that are already placed on the board
@@ -339,8 +363,8 @@ where
         })
     }
 
-    // Return the info on the Chip that is at a given location (currently unused)
-    fn _get_chip(&self, position: (i8, i8, i8)) -> Option<Chip> {
+    // Return the info on the Chip that is at a given location
+    fn get_chip(&self, position: (i8, i8, i8)) -> Option<Chip> {
         self.chips
             .iter()
             .find_map(|(c, p)| if *p == Some(position) { Some(*c) } else { None })

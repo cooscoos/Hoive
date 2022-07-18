@@ -1,4 +1,4 @@
-use hoive::{Board, Team};
+use hoive::{render, Board, Team};
 
 //use Hoive::Player;
 
@@ -11,9 +11,11 @@ fn main() {
 
     // initialise a game board - it comes with 4 spiders for each team
 
-    let screen = hoive::coord::Hecs;
+    let coord = hoive::coord::Cube;
 
-    let mut board = Board::default(screen);
+    let mut board = Board::default(coord);
+
+    println!("{}", render::empty());
 
     // show black player's chips only
     println!(

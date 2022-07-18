@@ -49,15 +49,12 @@ pub fn erode<T: Coord>(coord: &T, flat_vec: &Vec<(i8, i8, i8)>) -> Vec<(i8, i8, 
             }
         }
 
-        if i!=6{
+        if i != 6 {
             store.remove(&position);
         }
-
     }
     store.into_iter().collect::<Vec<(i8, i8, i8)>>()
 }
-
-
 
 // Closing (dilate, then erode)
 pub fn close<T: Coord>(coord: &T, flat_vec: &Vec<(i8, i8, i8)>) -> Vec<(i8, i8, i8)> {
@@ -82,13 +79,11 @@ pub fn close_new<T: Coord>(coord: &T, flat_vec: &Vec<(i8, i8, i8)>) -> Vec<(i8, 
         store.remove(v);
     });
 
-    store.into_iter().collect::<Vec<(i8,i8,i8)>>()
-
+    store.into_iter().collect::<Vec<(i8, i8, i8)>>()
 }
 
 // Closing, and then deleting new additions which don't have 5 or more neighbours
 pub fn gap_closure<T: Coord>(coord: &T, flat_vec: &Vec<(i8, i8, i8)>) -> Vec<(i8, i8, i8)> {
-
     // get the ghost tiles from a closure
     let ghosts = close_new(coord, flat_vec);
 
@@ -107,8 +102,6 @@ pub fn gap_closure<T: Coord>(coord: &T, flat_vec: &Vec<(i8, i8, i8)>) -> Vec<(i8
         all.insert(*v);
     });
 
-
-
     for position in ghosts.clone() {
         // Get the co-ordinates of neighbouring hexes
         let neighbour_hexes = coord.neighbour_tiles(position);
@@ -124,16 +117,10 @@ pub fn gap_closure<T: Coord>(coord: &T, flat_vec: &Vec<(i8, i8, i8)>) -> Vec<(i8
             }
         }
 
-        println!("Position {:?} has {} neighbours",position,i);
-        if i<5{
-            
+        println!("Position {:?} has {} neighbours", position, i);
+        if i < 5 {
             store.remove(&position);
         }
-
     }
     store.into_iter().collect::<Vec<(i8, i8, i8)>>()
-
-
-
-
 }
