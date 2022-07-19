@@ -1,7 +1,7 @@
 // Tests that use cube co-ordinates: cargo test cube
 
 use hoive::coord::{Coord, Cube};
-use hoive::{render, Board, MoveStatus, Team};
+use hoive::{draw, Board, MoveStatus, Team};
 
 // basic tests that work with all co-ordinate systems
 mod basic;

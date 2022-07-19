@@ -1,7 +1,7 @@
 // Test the renderer operations
 
 use hoive::coord::{Coord, Cube};
-use hoive::render;
+use hoive::draw;
 use hoive::*;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
@@ -88,7 +88,7 @@ fn test_parseout() {
     let dheight_hashmap = board.parse_out(size);
 
     // pass to the parser
-    let print_string = render::parse_row(dheight_hashmap, size);
+    let print_string = draw::parse_row(dheight_hashmap, size);
 
 
     // run cargo test -- --nocapture to see if the board looks correct

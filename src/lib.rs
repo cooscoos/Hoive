@@ -6,7 +6,7 @@ use coord::Coord;
 
 pub mod morphops;
 
-pub mod render;
+pub mod draw;
 
 // enum to keep track of team identities
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
@@ -122,7 +122,7 @@ where
         //TODO: write a test for this
 
         // initialise a display hashmap which is none or "." for all hive hexes
-        let dheight_display = render::generate(size);
+        let dheight_display = draw::generate(size);
         let mut dheight_hashmap = dheight_display
             .iter()
             .map(|xy| (*xy, None))
