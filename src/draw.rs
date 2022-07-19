@@ -113,6 +113,7 @@ pub fn team_string(team: Team) -> &'static str {
 
 // List all chips belonging to a given team that are in their hand. If team == None, then show both teams' chips
 pub fn list_chips<T: Coord>(board: &Board<T>, team: Team) -> String {
+
     // Filter out the chips that are hand of given team (in hand  position = None)
     let mut chip_list = board
         .chips
@@ -121,12 +122,11 @@ pub fn list_chips<T: Coord>(board: &Board<T>, team: Team) -> String {
         .filter(|(c, p)| (p.is_none()) & (c.team == team))
         .map(|(c, _)| chip_to_str(Some(c)))
         .collect::<Vec<String>>();
-
-        
+    
     // sort alphabetically
     chip_list.sort();
 
-    // Create a list
+    // Create a single tring to return
     let mut chip_string = chip_list.iter().map(|c| format!(" {},", c)).collect::<String>();
 
     // Delete the trailing comma
