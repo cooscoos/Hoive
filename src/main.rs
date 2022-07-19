@@ -1,43 +1,31 @@
 use hoive::game::comps::Team;
-use rand::Rng; // To randomise which player goes first
 
 use hoive::game::board::Board;
+use hoive::pmoore;
 
 fn main() {
     // Initialise a game board using a cube co-ordinate system for hexes
     // The game board comes with 4 spiders, s1,s2,...,s4 for each team
-
-    // gamemaster is the interface between the players and the board
-
     let coord = hoive::maths::coord::Cube;
     let mut board = Board::default(coord);
 
-    println!(
-        "
-    ░█░█░█▀█░▀█▀░█░█░█▀▀
-    ░█▀█░█░█░░█░░▀▄▀░█▀▀
-    ░▀░▀░▀▀▀░▀▀▀░░▀░░▀▀▀"
-    );
+    // Say hello and tell the player who is going first
+    let first = pmoore::intro();
 
-    // Select a random team to go first
-    let mut rand = rand::thread_rng();
-    let first = match rand.gen() {
-        true => "\x1b[34;1mBlack\x1b[0m",
-        false => "\x1b[35;1mWhite\x1b[0m",
-    };
+    // Game loop
+    pmoore::turn(board, first);
 
-    println!("Welcome to Hoive. {first} team goes first.");
-
-    println!("Select a tile to place or move. Type t to see list of tiles");
-
+    // repeat, will all be integrated soon
+    let coord = hoive::maths::coord::Cube;
+    let mut board = Board::default(coord);
     // show black player's chips only
-    println!(
-        "Black player's chips: {:?}",
-        board.list_chips(Some(Team::Black))
-    );
+    // println!(
+    //     "Black player's chips: {:?}",
+    //     board.list_chips(Some(Team::Black))
+    // );
 
-    // show all chips
-    println!("Both team's chips: {:?}", board.list_chips(None));
+    // // show all chips
+    // println!("Both team's chips: {:?}", board.list_chips(None));
 
     // Place black spider 1 at HECS position (1,0,0)
     println!("turn 1");

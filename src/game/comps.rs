@@ -7,6 +7,15 @@ pub enum Team {
     White,
 }
 
+// Probably a better way of doing this, but this works.
+// Tell me who the other team are
+pub fn other_team(team: Team) -> Team {
+    match team {
+        Team::Black => Team::White,
+        Team::White => Team::Black,
+    }
+}
+
 // Struct for tiles/chips in a game
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub struct Chip {

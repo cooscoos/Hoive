@@ -1,5 +1,7 @@
 // An ascii renderer for the Hive board
+use crate::game::board::Board;
 use crate::game::comps::{Chip, Team};
+use crate::maths::coord::Coord;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 // Players will interact with the hex grid using "double-height offset co-ordinates"
@@ -99,4 +101,36 @@ pub fn empty(n: i8) -> HashMap<(i8, i8), Option<Chip>> {
         .iter()
         .map(|xy| (*xy, None))
         .collect::<HashMap<(i8, i8), Option<Chip>>>()
+}
+
+// Convert team to a pretty string
+pub fn team_string(team: Team) -> &'static str {
+    match team {
+        Team::Black => "\x1b[34;1mBlack\x1b[0m",
+        Team::White => "\x1b[35;1mWhite\x1b[0m",
+    }
+}
+
+// List all chips belonging to a given team that are in their hand. If team == None, then show both teams' chips
+pub fn list_chips<T: Coord>(board: &Board<T>, team: Team) -> String {
+    // Filter out the chips that are hand of given team (in hand  position = None)
+    let mut chip_list = board
+        .chips
+        .clone()
+        .into_iter()
+        .filter(|(c, p)| (p.is_none()) & (c.team == team))
+        .map(|(c, _)| chip_to_str(Some(c)))
+        .collect::<Vec<String>>();
+
+        
+    // sort alphabetically
+    chip_list.sort();
+
+    // Create a list
+    let mut chip_string = chip_list.iter().map(|c| format!(" {},", c)).collect::<String>();
+
+    // Delete the trailing comma
+    chip_string.pop();
+
+    chip_string
 }

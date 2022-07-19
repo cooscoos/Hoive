@@ -24,8 +24,8 @@ pub enum MoveStatus {
 // The board struct is the game and all of its logic
 pub struct Board<T: Coord> {
     pub chips: HashMap<Chip, Option<(i8, i8, i8)>>,
-    turns: u32, // tracks number of turns that have elapsed
-    coord: T,   // The coordinate sytem for the board e.g. HECS, Cube
+    pub turns: u32, // tracks number of turns that have elapsed
+    coord: T,       // The coordinate sytem for the board e.g. HECS, Cube
 }
 
 impl<T> Board<T>
@@ -51,16 +51,6 @@ where
             chips,
             turns: 0,
             coord,
-        }
-    }
-
-    // List all chips belonging to a given team. If team == None, then show both teams' chips
-    pub fn list_chips(&self, team: Option<Team>) -> Vec<Chip> {
-        let chip_iter = self.chips.clone().into_iter().map(|(c, _)| c);
-
-        match team {
-            Some(team) => chip_iter.filter(|c| c.team == team).collect::<Vec<Chip>>(),
-            None => chip_iter.collect::<Vec<Chip>>(),
         }
     }
 
