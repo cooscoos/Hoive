@@ -1,7 +1,6 @@
 // Test morphological operations
 
-use hoive::coord::{Coord, Cube};
-use hoive::morphops;
+use hoive::maths::{coord::Coord, coord::Cube, morphops};
 
 #[test]
 fn test_dilate() {

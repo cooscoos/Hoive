@@ -1,6 +1,6 @@
 // Morphological operations. All require a co-ordinate system to know what they're doing.
 
-use crate::coord::Coord;
+use super::coord::Coord;
 use std::{collections::HashSet, hash::Hash};
 
 // Dilation

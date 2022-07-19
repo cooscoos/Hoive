@@ -1,8 +1,11 @@
 // Tests that use HECS co-ordinates: cargo test hecs
 
-use hoive::coord::Hecs;
-use hoive::{Board, MoveStatus, Team};
+use hoive::maths::{coord::Coord, coord::Hecs, morphops};
+
 mod basic; // basic tests that work with all co-ordinate systems
+
+use hoive::game::board::*;
+use hoive::game::comps::Team;
 
 #[test]
 fn hecs_first_turn() {

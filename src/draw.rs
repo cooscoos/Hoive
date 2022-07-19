@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
-use std::ops::ControlFlow;
+
 // An ascii renderer for the Hive board
-use crate::Team;
+use crate::game::comps::Team;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
@@ -10,14 +10,14 @@ use std::collections::HashSet;
 // This results in a grid which is likely to be more familiar to human-people.
 // Offset co-ordinate systems are easy to interpret, but they're a nighmare to work maths on,
 // so we'll need to map from our cube (or other) co-ordinate system.
-use crate::{Chip};
+use crate::game::comps::Chip;
 
 // parse chips from a row into a string
 pub fn parse_row(dheight_hashmap: HashMap<(i8, i8), Option<Chip>>, size: i8) -> String {
     // TODO: do this less crazy
     // Sanity check the board.parse_out with some tests first.
 
-    if size%2 == 0{
+    if size % 2 == 0 {
         panic!("The size of the ascii board render must be an odd number")
     }
 
@@ -38,11 +38,10 @@ pub fn parse_row(dheight_hashmap: HashMap<(i8, i8), Option<Chip>>, size: i8) -> 
     //
 
     let mut header = String::new();
-    for col_no in -size..size+1{
+    for col_no in -size..size + 1 {
         header.push_str(&format!("{col_no}\t"));
     }
     let fin_header = format!("\n\nBOARD\t\t[col→]:\n\n[row↓]\t\t{header}\n\n");
-
 
     user_display.push_str(&fin_header);
     // row_no will be our counter that increments to +size in a loop
@@ -86,77 +85,27 @@ fn chip_to_str(chip: Option<Chip>) -> String {
     return_str
 }
 
-pub fn generate(n: i8) -> HashSet<(i8, i8)> {
-    // Generate a hashnet of doubleheight values to display
+pub fn empty(n: i8) -> HashMap<(i8, i8), Option<Chip>> {
+    // Generate an HashMap k, v, where:
+    // k = chip positions in doubleheight co-ordinates
+    // v = None, so the board is empty
+
+    // Start with a HashSet for the tile positions
     let mut dheight_display = HashSet::new();
 
-
+    // Generate tile positions over the range n: the size of the board
     for col in -n..n + 1 {
         for row in -n..n + 1 {
-            // if both col row share oddness or evenness
-            if ((row%2 == 0) & (col%2 ==0)) | ((row%2 != 0) & (col%2 !=0)) {
+            // if both col row share oddness or evenness (this defines doubleheight coords)
+            if ((row % 2 == 0) & (col % 2 == 0)) | ((row % 2 != 0) & (col % 2 != 0)) {
                 dheight_display.insert((col, row));
             }
         }
     }
+
+    // Initialise the empty hashmap, None for all hexes
     dheight_display
+        .iter()
+        .map(|xy| (*xy, None))
+        .collect::<HashMap<(i8, i8), Option<Chip>>>()
 }
-
-pub fn empty() -> &'static str {
-    let label = "-5\t-4\t-3\t-2\t-1\t0\t1\t2\t3\t4\t5";
-
-    // 26 tiles in a game of hive, so the highest or widest the board will ever be is 26
-    // The board is very likely to be confined to 11 x 11, so we'll make a vector of 11 entries
-
-    //empty_odd = ".\t.\t.\t.\t.\t.";
-    //empty_even="\t.\t.\t.\t.\t.";
-
-    "
-   -5\t-4\t-3\t-2\t-1\t0\t1\t2\t3\t4\t5
-
--5  .		.		.		.		.		.
-
-
-
--4      .		.		.		.		.
-
-
-
--3  .		.		.		.		.		.
-
-
-
--2      .		.		.		.		.
-
-
-
--1  .		.		.		.		.		.
-
-
-
-0	    .		.		o		.		.
-
-
-
-1   .		.		.		.		.		.
-
-
-
-2       .		.		.		.		.
-
-
-
-3   .		.		.		.		.		.
-
-
-
-4       .		.		.		.		.
-
-
-
-5   .		.		.		.		.		.
-
-"
-}
-
-// todo: render an ant in space 0,0

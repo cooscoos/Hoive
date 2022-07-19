@@ -1,10 +1,13 @@
 // Test the renderer operations
 
-use hoive::coord::{Coord, Cube};
 use hoive::draw;
+use hoive::maths::{coord::Coord, coord::Cube, morphops};
 use hoive::*;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
+
+use hoive::game::board::*;
+use hoive::game::comps::{Chip, Team};
 
 #[test]
 fn test_doubleheight_converter() {
@@ -16,7 +19,7 @@ fn test_doubleheight_converter() {
     board.try_move("s3", Team::Black, (1, -2, 1)); // up from that
 
     // We'll test if the program parses this to a doubleheight coordinate HashMap correctly
-    let dheight_hashmap = board.parse_out(5);
+    let dheight_hashmap = board.to_dheight(5);
 
     // We'll ignore hex positions with None values, and just get where the chips are
     let dheight_ignorenone = dheight_hashmap
@@ -81,17 +84,14 @@ fn test_parseout() {
     board.try_move("s1", Team::White, (-1, 1, 0)); // down and left
     board.try_move("s2", Team::Black, (1, -1, 0)); // up and right
 
-
     let size = 3;
-    
+
     // Create dheight hashmap
-    let dheight_hashmap = board.parse_out(size);
+    let dheight_hashmap = board.to_dheight(size);
 
     // pass to the parser
     let print_string = draw::parse_row(dheight_hashmap, size);
 
-
     // run cargo test -- --nocapture to see if the board looks correct
     println!("{print_string}");
-
 }
