@@ -10,7 +10,7 @@ use std::collections::HashSet;
 // This results in a grid which is likely to be more familiar to human-people.
 // Offset co-ordinate systems are easy to interpret, but they're a nighmare to work maths on,
 // so we'll need to map from our cube (or other) co-ordinate system.
-use crate::{Animal, Chip};
+use crate::{Chip};
 
 // parse chips from a row into a string
 pub fn parse_row(dheight_hashmap: HashMap<(i8, i8), Option<Chip>>, size: i8) -> String {
@@ -75,11 +75,11 @@ fn chip_to_str(chip: Option<Chip>) -> String {
 
     let return_str = match chip {
         Some(value) => {
-            let prechar = match value.team {
-                Team::Black => 'b',
-                Team::White => 'w',
+            let colour_char = match value.team {
+                Team::Black => '4', // black chips coloured blue
+                Team::White => '5', // white chips coloured magenta
             };
-            format!("{}{}", prechar, value.name)
+            format!("\x1b[3{}m{}\x1b[0m", colour_char, value.name)
         }
         None => ".".to_string(),
     };

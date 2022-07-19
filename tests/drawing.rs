@@ -37,7 +37,7 @@ fn test_doubleheight_converter() {
         (0, 0),
         Chip {
             name: "s1",
-            animal: Animal::Spider,
+            //animal: Animal::Spider,
             team: Team::Black,
         },
     ); // centre
@@ -45,7 +45,7 @@ fn test_doubleheight_converter() {
         (-1, 1),
         Chip {
             name: "s1",
-            animal: Animal::Spider,
+            //animal: Animal::Spider,
             team: Team::White,
         },
     ); // down and left
@@ -53,7 +53,7 @@ fn test_doubleheight_converter() {
         (1, -1),
         Chip {
             name: "s2",
-            animal: Animal::Spider,
+            //animal: Animal::Spider,
             team: Team::Black,
         },
     ); // up and right
@@ -61,7 +61,7 @@ fn test_doubleheight_converter() {
         (1, -3),
         Chip {
             name: "s3",
-            animal: Animal::Spider,
+            //animal: Animal::Spider,
             team: Team::Black,
         },
     ); // up from that

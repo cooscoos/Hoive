@@ -16,29 +16,34 @@ pub enum Team {
 }
 
 // enum to keep track of animal identities
-#[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
-pub enum Animal {
-    Ant,
-    Spider,
-    Bee,
-    Beetle,
-    Grasshopper,
-    Ladybird,
-    Mosquito,
-}
+// This ended up being pointless because we can just use chars for each
+// #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
+// pub enum Animal {
+//     Ant,
+//     Spider,
+//     Bee,
+//     Beetle,
+//     Grasshopper,
+//     Ladybird,
+//     Mosquito,
+// }
 
 // The Chips: the tokens that we use in a game of Hive
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub struct Chip {
     pub name: &'static str, // names help us distinguish between e.g. multiple black team spiders
-    pub animal: Animal,
+    //pub animal: Animal,
     pub team: Team,
 }
 
 impl Chip {
     // Create new chip
-    pub fn default(name: &'static str, animal: Animal, team: Team) -> Self {
-        Chip { name, animal, team }
+    pub fn default(name: &'static str,
+    //animal: Animal,
+    team: Team) -> Self {
+        Chip { name,
+            //animal,
+            team }
     }
 }
 
@@ -89,16 +94,30 @@ where
     // At new game, initialise all of the chips for each team with position = None (in player hand)
     pub fn default(coord: T) -> Self {
         let chips: HashMap<Chip, Option<(i8, i8, i8)>> = HashMap::from([
+            // // Black team's chips
+            // (Chip::default("s1", Animal::Spider, Team::Black), None),
+            // (Chip::default("s2", Animal::Spider, Team::Black), None),
+            // (Chip::default("s3", Animal::Spider, Team::Black), None),
+            // (Chip::default("s4", Animal::Spider, Team::Black), None),
+            // // White team's chips
+            // (Chip::default("s1", Animal::Spider, Team::White), None),
+            // (Chip::default("s2", Animal::Spider, Team::White), None),
+            // (Chip::default("s3", Animal::Spider, Team::White), None),
+            // (Chip::default("s4", Animal::Spider, Team::White), None),
+
+
             // Black team's chips
-            (Chip::default("s1", Animal::Spider, Team::Black), None),
-            (Chip::default("s2", Animal::Spider, Team::Black), None),
-            (Chip::default("s3", Animal::Spider, Team::Black), None),
-            (Chip::default("s4", Animal::Spider, Team::Black), None),
+            (Chip::default("s1", Team::Black), None),
+            (Chip::default("s2", Team::Black), None),
+            (Chip::default("s3", Team::Black), None),
+            (Chip::default("s4", Team::Black), None),
             // White team's chips
-            (Chip::default("s1", Animal::Spider, Team::White), None),
-            (Chip::default("s2", Animal::Spider, Team::White), None),
-            (Chip::default("s3", Animal::Spider, Team::White), None),
-            (Chip::default("s4", Animal::Spider, Team::White), None),
+            (Chip::default("s1", Team::White), None),
+            (Chip::default("s2", Team::White), None),
+            (Chip::default("s3", Team::White), None),
+            (Chip::default("s4", Team::White), None),
+
+
         ]);
 
         Board {
@@ -166,8 +185,11 @@ where
 
     // Try move a chip of given name / team, to a new position. Return MoveStatus to tell the main loop how successful the attempt was.
     fn move_chip(&mut self, name: &'static str, team: Team, position: (i8, i8, i8)) -> MoveStatus {
-        let animal = get_animal(name); // Get the chip's animal based on its name
-        let chip_select = Chip::default(name, animal, team); // Select the chip
+        // let animal = get_animal(name); // Get the chip's animal based on its name
+        // let chip_select = Chip::default(name, animal, team); // Select the chip
+
+        let chip_select = Chip::default(name, team); // Select the chip
+
 
         // A chip's current position tells us if we're "placing" from player's hand, or "relocating" on board
         let move_status = match self.chips.clone().get(&chip_select) {
@@ -373,19 +395,19 @@ where
 
 // Figure out what animal a chip is based on the first char in its name
 // This is clunky and I don't like it. It sort of renders the Animal enum as pointless, but it works for now.
-pub fn get_animal(name: &str) -> Animal {
-    let animal = match name.chars().next() {
-        Some(character) => match character {
-            'a' => Animal::Ant,
-            's' => Animal::Spider,
-            'q' => Animal::Bee,
-            'b' => Animal::Beetle,
-            'g' => Animal::Grasshopper,
-            'l' => Animal::Ladybird,
-            'm' => Animal::Mosquito,
-            _ => panic!("The chip's name field doesn't correspond to a known animal."),
-        },
-        None => panic!("Chip has an invalid name field."),
-    };
-    animal
-}
+// pub fn get_animal(name: &str) -> Animal {
+//     let animal = match name.chars().next() {
+//         Some(character) => match character {
+//             'a' => Animal::Ant,
+//             's' => Animal::Spider,
+//             'q' => Animal::Bee,
+//             'b' => Animal::Beetle,
+//             'g' => Animal::Grasshopper,
+//             'l' => Animal::Ladybird,
+//             'm' => Animal::Mosquito,
+//             _ => panic!("The chip's name field doesn't correspond to a known animal."),
+//         },
+//         None => panic!("Chip has an invalid name field."),
+//     };
+//     animal
+// }
