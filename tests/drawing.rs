@@ -90,7 +90,7 @@ fn test_parseout() {
     let dheight_hashmap = board.to_dheight(size);
 
     // pass to the parser
-    let print_string = draw::parse_row(dheight_hashmap, size);
+    let print_string = draw::parse_to_ascii(dheight_hashmap, size);
 
     // run cargo test -- --nocapture to see if the board looks correct
     println!("{print_string}");

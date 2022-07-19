@@ -1,88 +1,79 @@
-use std::collections::BTreeMap;
-
 // An ascii renderer for the Hive board
-use crate::game::comps::Team;
-use std::collections::HashMap;
-use std::collections::HashSet;
+use crate::game::comps::{Chip, Team};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
-// Players will interact with the board using doubled offset co-ordinates
-// see: https://www.redblobgames.com/grids/hexagons/
-// This results in a grid which is likely to be more familiar to human-people.
-// Offset co-ordinate systems are easy to interpret, but they're a nighmare to work maths on,
-// so we'll need to map from our cube (or other) co-ordinate system.
-use crate::game::comps::Chip;
+// Players will interact with the hex grid using "double-height offset co-ordinates"
+// See: https://www.redblobgames.com/grids/hexagons/
 
-// parse chips from a row into a string
-pub fn parse_row(dheight_hashmap: HashMap<(i8, i8), Option<Chip>>, size: i8) -> String {
-    // TODO: do this less crazy
-    // Sanity check the board.parse_out with some tests first.
+// You can interact with these using familiar (x,y) or grid co-ordinate params.
 
-    if size % 2 == 0 {
-        panic!("The size of the ascii board render must be an odd number")
+// Offset co-ordinate systems are easy for human-people to interpret, but they're a nighmare to do maths with.
+// We therefore need to map to and from the cube (or other) co-ordinate system that the game logic uses.
+
+// Parse a doubleheight hashmap of chips into an ascii string to print board to terminal
+pub fn parse_to_ascii(dheight_hashmap: HashMap<(i8, i8), Option<Chip>>, size: i8) -> String {
+    // Display size of ascii board should be 3, 5, 7,...
+    if (size % 2 == 0) | (size == 1) {
+        panic!("The size of the ascii board render must be an odd number > 1.")
     }
 
-    // Stuffing HashMaps into BTreeMaps will sort them based on the value of the key
+    let mut ascii_board = String::new();
+
+    // Stuffing HashMaps into BTreeMaps sorts them based on the value of the key.
     // We'll switch col and row co-ordinates so that the BTree sorts by rows first
     let mut dheight_tree: BTreeMap<(i8, i8), Option<Chip>> = dheight_hashmap
         .into_iter()
         .map(|((col, row), c)| ((row, col), c))
         .collect();
 
-    // You can surmise what the size of this dheight_tree is based on the value of the first key. It'll be (-size, -size)
-    // But it's better just to pass this renderer a size to render, that way we can zoom in/out later
-
-    // split off at (-size, + size), then (-size+1, +size), all the way to (+size, +size)
-
-    let mut user_display = String::new();
-
-    //
-
-    let mut header = String::new();
+    // Make a header for the ascii board
+    let mut header_info = String::new();
     for col_no in -size..size + 1 {
-        header.push_str(&format!("{col_no}\t"));
+        header_info.push_str(&format!("{col_no}\t"));
     }
-    let fin_header = format!("\n\nBOARD\t\t[col→]:\n\n[row↓]\t\t{header}\n\n");
+    let header = format!("\n\nBOARD\t\t[col→]\n\n[row↓]\t\t{header_info}\n\n");
+    ascii_board.push_str(&header);
 
-    user_display.push_str(&fin_header);
-    // row_no will be our counter that increments to +size in a loop
+    // Parse the BTree into formatted text row by row
     for row_no in -size..size + 1 {
-        // Split the BTree at the row
+        // Split the BTree at this row
         let remainder = dheight_tree.split_off(&(row_no, size + 1));
 
-        // This is the parsing bit
+        // Parse this row into ascii text
         let row_string = dheight_tree
             .into_iter()
             .map(|(_, c)| format!("{}\t\t", chip_to_str(c)))
             .collect::<String>();
 
-        let append_string = match row_no % 2 {
+        // Even rows get an extra tab to offset them to make a hexagonal grid
+        let push_row = match row_no % 2 {
             0 => format!("{row_no}\t\t\t{row_string}\n\n"), // even, extra tab
             _ => format!("{row_no}\t\t{row_string}\n\n"),   // odd, no extra tab
         };
 
-        user_display.push_str(&append_string);
+        ascii_board.push_str(&push_row);
 
-        // overwrite dheight_tree with the remainder for the next loop
+        // overwrite BTree with its remaining unparsed section ready for the next loop
         dheight_tree = remainder;
     }
 
-    user_display
+    ascii_board
 }
 
 fn chip_to_str(chip: Option<Chip>) -> String {
-    // Convert chip to char (if none then the char is .)
+    // Convert chip to a string character (if None then display as ".")
 
-    let return_str = match chip {
+    let return_string = match chip {
         Some(value) => {
             let colour_char = match value.team {
                 Team::Black => '4', // black chips coloured blue
                 Team::White => '5', // white chips coloured magenta
             };
-            format!("\x1b[3{}m{}\x1b[0m", colour_char, value.name)
+            format!("\x1b[3{}m{}\x1b[0m", colour_char, value.name) // uses hex colour for terminal
         }
         None => ".".to_string(),
     };
-    return_str
+    return_string
 }
 
 pub fn empty(n: i8) -> HashMap<(i8, i8), Option<Chip>> {
