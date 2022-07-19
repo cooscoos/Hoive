@@ -1,7 +1,8 @@
-// Morphological operations. All require a co-ordinate system to know what they're doing.
+// Morphological operations.
+
+use std::collections::HashSet;
 
 use super::coord::Coord;
-use std::{collections::HashSet, hash::Hash};
 
 // Dilation
 pub fn dilate<T: Coord>(coord: &T, flat_vec: &Vec<(i8, i8, i8)>) -> Vec<(i8, i8, i8)> {
@@ -25,7 +26,7 @@ pub fn dilate<T: Coord>(coord: &T, flat_vec: &Vec<(i8, i8, i8)>) -> Vec<(i8, i8,
 }
 
 // Erosion
-pub fn erode<T: Coord>(coord: &T, flat_vec: &Vec<(i8, i8, i8)>) -> Vec<(i8, i8, i8)> {
+pub fn erode<T: Coord>(coord: &T, flat_vec: &[(i8,i8,i8)]) -> Vec<(i8, i8, i8)> {
     //Hashset for keeping track of chip locations
     let mut store: HashSet<(i8, i8, i8)> = HashSet::new();
 
@@ -34,15 +35,15 @@ pub fn erode<T: Coord>(coord: &T, flat_vec: &Vec<(i8, i8, i8)>) -> Vec<(i8, i8, 
         store.insert(*v);
     });
 
-    for position in flat_vec.clone() {
+    for position in flat_vec {
         // Get the co-ordinates of neighbouring hexes
-        let neighbour_hexes = coord.neighbour_tiles(position);
+        let neighbour_hexes = coord.neighbour_tiles(*position);
 
         // if it doesn't have all six neighbours, then it gets removed from the hashset
         // this is erosion
         let mut i = 0;
         for elem in neighbour_hexes.iter() {
-            for elem2 in flat_vec.clone().iter() {
+            for elem2 in flat_vec.iter() {
                 if elem == elem2 {
                     i += 1;
                 }
@@ -50,7 +51,7 @@ pub fn erode<T: Coord>(coord: &T, flat_vec: &Vec<(i8, i8, i8)>) -> Vec<(i8, i8, 
         }
 
         if i != 6 {
-            store.remove(&position);
+            store.remove(position);
         }
     }
     store.into_iter().collect::<Vec<(i8, i8, i8)>>()
@@ -102,12 +103,14 @@ pub fn gap_closure<T: Coord>(coord: &T, flat_vec: &Vec<(i8, i8, i8)>) -> Vec<(i8
         all.insert(*v);
     });
 
-    for position in ghosts.clone() {
+    for position in ghosts {
         // Get the co-ordinates of neighbouring hexes
         let neighbour_hexes = coord.neighbour_tiles(position);
 
         // if it doesn't have all five or more neighbours, then it gets removed from the hashset
-        // this is light erosion
+        // this is light additional erosion
+
+        // Count the neighbours
         let mut i = 0;
         for elem in neighbour_hexes.iter() {
             for elem2 in all.clone().iter() {
@@ -117,7 +120,7 @@ pub fn gap_closure<T: Coord>(coord: &T, flat_vec: &Vec<(i8, i8, i8)>) -> Vec<(i8
             }
         }
 
-        println!("Position {:?} has {} neighbours", position, i);
+        // Delete if less than 5
         if i < 5 {
             store.remove(&position);
         }

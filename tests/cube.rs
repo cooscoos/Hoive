@@ -123,7 +123,7 @@ fn test_to_doubleheight() {
     let coord_sys = Cube;
     let hex = (1, -1, 0); // up and right from the origin in cube coords
 
-    assert_eq!((1, -1), coord_sys.to_doubleheight(hex));
+    assert_eq!((1, -1), coord_sys.mapto_doubleheight(hex));
 }
 
 #[test]
@@ -133,5 +133,5 @@ fn test_from_doubleheight() {
     let coord_sys = Cube;
     let hex = (-1, 1); // down and left from the origin in doubleheight coords
 
-    assert_eq!((-1, 1, 0), coord_sys.from_doubleheight(hex));
+    assert_eq!((-1, 1, 0), coord_sys.mapfrom_doubleheight(hex));
 }

@@ -1,6 +1,4 @@
 // All of the game's logic and rules
-// TODO: modularise, maybe branch the rules out to another module
-// TODO: make it robust to use of non 3-coordinate system
 
 use std::collections::{HashMap, HashSet};
 
@@ -74,12 +72,12 @@ where
         // Translate doubleheight co-ordinates to the current coord system being used by the board
         let board_coords = dheight_hashmap
             .iter()
-            .map(|(xy, _)| self.coord.from_doubleheight(*xy))
+            .map(|(xy, _)| self.coord.mapfrom_doubleheight(*xy))
             .collect::<HashSet<(i8, i8, i8)>>();
 
         // Check all board_coords for chips, and put the chips in dheight_hashmap if found
         board_coords.into_iter().for_each(|p| {
-            dheight_hashmap.insert(self.coord.to_doubleheight(p), self.get_chip(p));
+            dheight_hashmap.insert(self.coord.mapto_doubleheight(p), self.get_chip(p));
         });
 
         dheight_hashmap
