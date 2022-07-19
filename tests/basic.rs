@@ -1,6 +1,7 @@
 // These basic tests work for any triaxial co-ordinate system
-use hoive::coord::{Coord, Cube};
-use hoive::{morphops, Board, MoveStatus, Team};
+use hoive::game::board::*;
+use hoive::game::comps::Team;
+use hoive::maths::{coord::Coord, coord::Cube, morphops};
 
 pub fn first_turn<T: Coord>(board: &mut Board<T>) {
     // Place spider s1 at any position on the first turn and it should be fine

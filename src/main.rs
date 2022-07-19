@@ -1,21 +1,34 @@
-use hoive::{draw, Board, Team};
+use hoive::game::comps::Team;
+use rand::Rng; // To randomise which player goes first
 
-//use Hoive::Player;
+use hoive::game::board::Board;
 
 fn main() {
-    // Some code to show how to use some methods and functions coded so far
-    // See tests for more examples
+    // Initialise a game board using a cube co-ordinate system for hexes
+    // The game board comes with 4 spiders, s1,s2,...,s4 for each team
 
-    // initialise a player (pointless at the moment)
-    // let mut p1 = Player::default(Team::Black);
+    // gamemaster is the interface between the players and the board
 
-    // initialise a game board - it comes with 4 spiders for each team
-
-    let coord = hoive::coord::Cube;
-
+    let coord = hoive::maths::coord::Cube;
     let mut board = Board::default(coord);
 
-    println!("{}", draw::empty());
+    println!(
+        "
+    ░█░█░█▀█░▀█▀░█░█░█▀▀
+    ░█▀█░█░█░░█░░▀▄▀░█▀▀
+    ░▀░▀░▀▀▀░▀▀▀░░▀░░▀▀▀"
+    );
+
+    // Select a random team to go first
+    let mut rand = rand::thread_rng();
+    let first = match rand.gen() {
+        true => "\x1b[34;1mBlack\x1b[0m",
+        false => "\x1b[35;1mWhite\x1b[0m",
+    };
+
+    println!("Welcome to Hoive. {first} team goes first.");
+
+    println!("Select a tile to place or move. Type t to see list of tiles");
 
     // show black player's chips only
     println!(
