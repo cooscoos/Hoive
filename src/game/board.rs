@@ -25,7 +25,7 @@ pub enum MoveStatus {
 pub struct Board<T: Coord> {
     pub chips: HashMap<Chip, Option<(i8, i8, i8)>>,
     pub turns: u32, // tracks number of turns that have elapsed
-    coord: T,       // The coordinate sytem for the board e.g. HECS, Cube
+    pub coord: T,       // The coordinate sytem for the board e.g. HECS, Cube
 }
 
 impl<T> Board<T>
@@ -73,31 +73,9 @@ where
         dheight_hashmap
     }
 
-    // For now, this guy handles the MoveStatus enum and provides some printscreen feedback
-    pub fn try_move(
-        &mut self,
-        name: &'static str,
-        team: Team,
-        position: (i8, i8, i8),
-    ) -> MoveStatus {
-        let move_status = self.move_chip(name, team, position);
-
-        match move_status {
-            MoveStatus::Success => {
-                println!("Chip move was successful.");
-                self.turns += 1;
-                // TODO: and then we need to code some logic to switch the active player
-            }
-            MoveStatus::BadNeighbour => println!("Can't place chip next to other team."),
-            MoveStatus::HiveSplit => println!("BAD BEE. This move would break ma hive in twain."),
-            MoveStatus::Occupied => println!("Can't place chip in occupied position."),
-            MoveStatus::Unconnected => println!("Can't move chip to middle of nowhere."),
-        }
-        move_status
-    }
 
     // Try move a chip of given name / team, to a new position. Return MoveStatus to tell the main loop how successful the attempt was.
-    fn move_chip(&mut self, name: &'static str, team: Team, position: (i8, i8, i8)) -> MoveStatus {
+    pub fn move_chip(&mut self, name: &'static str, team: Team, position: (i8, i8, i8)) -> MoveStatus {
         let chip_select = Chip::new(name, team); // Select the chip
 
         // A chip's current position tells us if we're "placing" from player's hand, or "relocating" on board
@@ -286,4 +264,8 @@ where
             .iter()
             .find_map(|(c, p)| if *p == Some(position) { Some(*c) } else { None })
     }
+
+
+
+
 }

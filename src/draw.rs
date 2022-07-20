@@ -12,8 +12,20 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 // Offset co-ordinate systems are easy for human-people to interpret, but they're a nighmare to do maths with.
 // We therefore need to map to and from the cube (or other) co-ordinate system that the game logic uses.
 
+// Draw the board / table
+pub fn show_board<T: Coord>(board: &Board<T>, size: i8) -> String {
+
+    // Create dheight hashmap
+    let dheight_hashmap = board.to_dheight(size);
+
+    // pass to the parser
+    parse_to_ascii(dheight_hashmap, size)
+
+}
+
+
 // Parse a doubleheight hashmap of chips into an ascii string to print board to terminal
-pub fn parse_to_ascii(dheight_hashmap: HashMap<(i8, i8), Option<Chip>>, size: i8) -> String {
+fn parse_to_ascii(dheight_hashmap: HashMap<(i8, i8), Option<Chip>>, size: i8) -> String {
     // Display size of ascii board should be 3, 5, 7,...
     if (size % 2 == 0) | (size == 1) {
         panic!("The size of the ascii board render must be an odd number > 1.")
@@ -111,7 +123,7 @@ pub fn team_string(team: Team) -> &'static str {
     }
 }
 
-// List all chips belonging to a given team that are in their hand. If team == None, then show both teams' chips
+// List all chips belonging to a given team that are in their hand. Return a colourful single string for display.
 pub fn list_chips<T: Coord>(board: &Board<T>, team: Team) -> String {
 
     // Filter out the chips that are hand of given team (in hand  position = None)
@@ -134,3 +146,4 @@ pub fn list_chips<T: Coord>(board: &Board<T>, team: Team) -> String {
 
     chip_string
 }
+
