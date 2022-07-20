@@ -26,7 +26,7 @@ pub fn dilate<T: Coord>(coord: &T, flat_vec: &Vec<(i8, i8, i8)>) -> Vec<(i8, i8,
 }
 
 // Erosion
-pub fn erode<T: Coord>(coord: &T, flat_vec: &[(i8,i8,i8)]) -> Vec<(i8, i8, i8)> {
+pub fn erode<T: Coord>(coord: &T, flat_vec: &[(i8, i8, i8)]) -> Vec<(i8, i8, i8)> {
     //Hashset for keeping track of chip locations
     let mut store: HashSet<(i8, i8, i8)> = HashSet::new();
 

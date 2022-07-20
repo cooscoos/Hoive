@@ -6,6 +6,7 @@ mod basic; // basic tests that work with all co-ordinate systems
 
 use hoive::game::board::*;
 use hoive::game::comps::Team;
+use hoive::pmoore;
 
 #[test]
 fn hecs_first_turn() {
@@ -27,10 +28,10 @@ fn hecs_to_the_moon() {
 fn hecs_second_turn_neighbour() {
     // Place a white chip next to a black chip but on the second turn (should be okay)
     let mut board = Board::default(Hecs);
-    board.try_move("s1", Team::Black, (1, 0, 0));
+    pmoore::try_move(&mut board, "s1", Team::Black, (1, 0, 0));
     assert_eq!(
         MoveStatus::Success,
-        board.try_move("s1", Team::White, (0, 1, 0))
+        pmoore::try_move(&mut board, "s1", Team::White, (0, 1, 0))
     );
 }
 
@@ -38,11 +39,11 @@ fn hecs_second_turn_neighbour() {
 fn hecs_third_turn_badneighbour() {
     // Place a white chip next to a black chip on the third turn (that's illegal)
     let mut board = Board::default(Hecs);
-    board.try_move("s1", Team::Black, (1, 0, 0));
-    board.try_move("s1", Team::White, (0, 1, 0));
+    pmoore::try_move(&mut board, "s1", Team::Black, (1, 0, 0));
+    pmoore::try_move(&mut board, "s1", Team::White, (0, 1, 0));
     assert_eq!(
         MoveStatus::BadNeighbour,
-        board.try_move("s2", Team::White, (1, 0, 1))
+        pmoore::try_move(&mut board, "s2", Team::White, (1, 0, 1))
     );
 }
 
@@ -50,14 +51,14 @@ fn hecs_third_turn_badneighbour() {
 fn hecs_fifth_turn_badneighbour() {
     // Do a bunch of legal stuff with a BadNeighbour move at the end
     let mut board = Board::default(Hecs);
-    board.try_move("s1", Team::Black, (1, 0, 0));
-    board.try_move("s1", Team::White, (0, 1, 0));
-    board.try_move("s2", Team::Black, (0, 0, 0));
-    board.try_move("s2", Team::White, (1, 1, 0));
+    pmoore::try_move(&mut board, "s1", Team::Black, (1, 0, 0));
+    pmoore::try_move(&mut board, "s1", Team::White, (0, 1, 0));
+    pmoore::try_move(&mut board, "s2", Team::Black, (0, 0, 0));
+    pmoore::try_move(&mut board, "s2", Team::White, (1, 1, 0));
 
     assert_eq!(
         MoveStatus::BadNeighbour,
-        board.try_move("s3", Team::Black, (1, 1, 1))
+        pmoore::try_move(&mut board, "s3", Team::Black, (1, 1, 1))
     );
 }
 
@@ -65,14 +66,14 @@ fn hecs_fifth_turn_badneighbour() {
 fn hecs_split_hive() {
     // Put down four chips and then split the hive by moving a white spider from the middle
     let mut board = Board::default(Hecs);
-    board.try_move("s1", Team::Black, (1, 0, 0));
-    board.try_move("s1", Team::White, (0, 1, 0));
-    board.try_move("s2", Team::Black, (0, 0, 0));
-    board.try_move("s2", Team::White, (1, 1, 0));
+    pmoore::try_move(&mut board, "s1", Team::Black, (1, 0, 0));
+    pmoore::try_move(&mut board, "s1", Team::White, (0, 1, 0));
+    pmoore::try_move(&mut board, "s2", Team::Black, (0, 0, 0));
+    pmoore::try_move(&mut board, "s2", Team::White, (1, 1, 0));
 
     assert_eq!(
         MoveStatus::HiveSplit,
-        board.try_move("s1", Team::White, (1, 1, 1))
+        pmoore::try_move(&mut board, "s1", Team::White, (1, 1, 1))
     );
 }
 
@@ -81,16 +82,16 @@ fn hecs_attack() {
     // Put down lots of chips and then relocate a white next to black after turn 6
     // We haven't coded logic for bee allowing move yet, so we'll need to rewrite this test then
     let mut board = Board::default(Hecs);
-    board.try_move("s1", Team::Black, (1, 0, 0));
-    board.try_move("s1", Team::White, (0, 1, 0));
-    board.try_move("s2", Team::Black, (0, 0, 0));
-    board.try_move("s2", Team::White, (1, 1, 0));
-    board.try_move("s3", Team::White, (1, 1, -1));
-    board.try_move("s4", Team::White, (0, 2, 0));
+    pmoore::try_move(&mut board, "s1", Team::Black, (1, 0, 0));
+    pmoore::try_move(&mut board, "s1", Team::White, (0, 1, 0));
+    pmoore::try_move(&mut board, "s2", Team::Black, (0, 0, 0));
+    pmoore::try_move(&mut board, "s2", Team::White, (1, 1, 0));
+    pmoore::try_move(&mut board, "s3", Team::White, (1, 1, -1));
+    pmoore::try_move(&mut board, "s4", Team::White, (0, 2, 0));
 
     assert_eq!(
         MoveStatus::Success,
-        board.try_move("s3", Team::White, (0, 0, 1))
+        pmoore::try_move(&mut board, "s3", Team::White, (0, 0, 1))
     );
 }
 
@@ -98,15 +99,15 @@ fn hecs_attack() {
 fn hecs_nosplit_hive() {
     // Put down lots of chips and then do a move that doesn't split hive and is legal
     let mut board = Board::default(Hecs);
-    board.try_move("s1", Team::Black, (1, 0, 0));
-    board.try_move("s1", Team::White, (0, 1, 0));
-    board.try_move("s2", Team::Black, (0, 0, 0));
-    board.try_move("s2", Team::White, (1, 1, 0));
-    board.try_move("s3", Team::White, (1, 1, -1));
-    board.try_move("s4", Team::White, (0, 2, 0));
+    pmoore::try_move(&mut board, "s1", Team::Black, (1, 0, 0));
+    pmoore::try_move(&mut board, "s1", Team::White, (0, 1, 0));
+    pmoore::try_move(&mut board, "s2", Team::Black, (0, 0, 0));
+    pmoore::try_move(&mut board, "s2", Team::White, (1, 1, 0));
+    pmoore::try_move(&mut board, "s3", Team::White, (1, 1, -1));
+    pmoore::try_move(&mut board, "s4", Team::White, (0, 2, 0));
 
     assert_eq!(
         MoveStatus::Success,
-        board.try_move("s3", Team::White, (1, 2, 0))
+        pmoore::try_move(&mut board, "s3", Team::White, (1, 2, 0))
     );
 }

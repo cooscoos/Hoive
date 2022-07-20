@@ -13,10 +13,10 @@ use hoive::game::comps::{Chip, Team};
 fn test_doubleheight_converter() {
     //put down lots of chips in Cube co-ords
     let mut board = Board::default(Cube);
-    board.try_move("s1", Team::Black, (0, 0, 0)); // centre
-    board.try_move("s1", Team::White, (-1, 1, 0)); // down and left
-    board.try_move("s2", Team::Black, (1, -1, 0)); // up and right
-    board.try_move("s3", Team::Black, (1, -2, 1)); // up from that
+    pmoore::try_move(&mut board, "s1", Team::Black, (0, 0, 0)); // centre
+    pmoore::try_move(&mut board, "s1", Team::White, (-1, 1, 0)); // down and left
+    pmoore::try_move(&mut board, "s2", Team::Black, (1, -1, 0)); // up and right
+    pmoore::try_move(&mut board, "s3", Team::Black, (1, -2, 1)); // up from that
 
     // We'll test if the program parses this to a doubleheight coordinate HashMap correctly
     let dheight_hashmap = board.to_dheight(5);
@@ -80,17 +80,15 @@ fn test_doubleheight_converter() {
 fn test_parseout() {
     //put down lots of chips in Cube co-ords
     let mut board = Board::default(Cube);
-    board.try_move("s1", Team::Black, (0, 0, 0)); // centre
-    board.try_move("s1", Team::White, (-1, 1, 0)); // down and left
-    board.try_move("s2", Team::Black, (1, -1, 0)); // up and right
+    pmoore::try_move(&mut board, "s1", Team::Black, (0, 0, 0)); // centre
+    pmoore::try_move(&mut board, "s1", Team::White, (-1, 1, 0)); // down and left
+    pmoore::try_move(&mut board, "s2", Team::Black, (1, -1, 0)); // up and right
 
+    // Size of the board
     let size = 3;
 
-    // Create dheight hashmap
-    let dheight_hashmap = board.to_dheight(size);
-
-    // pass to the parser
-    let print_string = draw::parse_to_ascii(dheight_hashmap, size);
+    // Draw the board
+    let print_string = draw::show_board(&board, size);
 
     // run cargo test -- --nocapture to see if the board looks correct
     println!("{print_string}");

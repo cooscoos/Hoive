@@ -1,5 +1,7 @@
 // An ascii renderer for the Hive board
+use crate::game::board::Board;
 use crate::game::comps::{Chip, Team};
+use crate::maths::coord::Coord;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 // Players will interact with the hex grid using "double-height offset co-ordinates"
@@ -10,8 +12,17 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 // Offset co-ordinate systems are easy for human-people to interpret, but they're a nighmare to do maths with.
 // We therefore need to map to and from the cube (or other) co-ordinate system that the game logic uses.
 
+// Draw the board / table
+pub fn show_board<T: Coord>(board: &Board<T>, size: i8) -> String {
+    // Create dheight hashmap
+    let dheight_hashmap = board.to_dheight(size);
+
+    // pass to the parser
+    parse_to_ascii(dheight_hashmap, size)
+}
+
 // Parse a doubleheight hashmap of chips into an ascii string to print board to terminal
-pub fn parse_to_ascii(dheight_hashmap: HashMap<(i8, i8), Option<Chip>>, size: i8) -> String {
+fn parse_to_ascii(dheight_hashmap: HashMap<(i8, i8), Option<Chip>>, size: i8) -> String {
     // Display size of ascii board should be 3, 5, 7,...
     if (size % 2 == 0) | (size == 1) {
         panic!("The size of the ascii board render must be an odd number > 1.")
@@ -99,4 +110,38 @@ pub fn empty(n: i8) -> HashMap<(i8, i8), Option<Chip>> {
         .iter()
         .map(|xy| (*xy, None))
         .collect::<HashMap<(i8, i8), Option<Chip>>>()
+}
+
+// Convert team to a pretty string
+pub fn team_string(team: Team) -> &'static str {
+    match team {
+        Team::Black => "\x1b[34;1mBlack\x1b[0m",
+        Team::White => "\x1b[35;1mWhite\x1b[0m",
+    }
+}
+
+// List all chips belonging to a given team that are in their hand. Return a colourful single string for display.
+pub fn list_chips<T: Coord>(board: &Board<T>, team: Team) -> String {
+    // Filter out the chips that are hand of given team (in hand  position = None)
+    let mut chip_list = board
+        .chips
+        .clone()
+        .into_iter()
+        .filter(|(c, p)| (p.is_none()) & (c.team == team))
+        .map(|(c, _)| chip_to_str(Some(c)))
+        .collect::<Vec<String>>();
+
+    // sort alphabetically
+    chip_list.sort();
+
+    // Create a single tring to return
+    let mut chip_string = chip_list
+        .iter()
+        .map(|c| format!(" {},", c))
+        .collect::<String>();
+
+    // Delete the trailing comma
+    chip_string.pop();
+
+    chip_string
 }
