@@ -25,7 +25,7 @@ pub enum MoveStatus {
 pub struct Board<T: Coord> {
     pub chips: HashMap<Chip, Option<(i8, i8, i8)>>,
     pub turns: u32, // tracks number of turns that have elapsed
-    pub coord: T,       // The coordinate sytem for the board e.g. HECS, Cube
+    pub coord: T,   // The coordinate sytem for the board e.g. HECS, Cube
 }
 
 impl<T> Board<T>
@@ -73,9 +73,13 @@ where
         dheight_hashmap
     }
 
-
     // Try move a chip of given name / team, to a new position. Return MoveStatus to tell the main loop how successful the attempt was.
-    pub fn move_chip(&mut self, name: &'static str, team: Team, position: (i8, i8, i8)) -> MoveStatus {
+    pub fn move_chip(
+        &mut self,
+        name: &'static str,
+        team: Team,
+        position: (i8, i8, i8),
+    ) -> MoveStatus {
         let chip_select = Chip::new(name, team); // Select the chip
 
         // A chip's current position tells us if we're "placing" from player's hand, or "relocating" on board
@@ -264,8 +268,4 @@ where
             .iter()
             .find_map(|(c, p)| if *p == Some(position) { Some(*c) } else { None })
     }
-
-
-
-
 }

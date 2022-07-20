@@ -14,15 +14,12 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 
 // Draw the board / table
 pub fn show_board<T: Coord>(board: &Board<T>, size: i8) -> String {
-
     // Create dheight hashmap
     let dheight_hashmap = board.to_dheight(size);
 
     // pass to the parser
     parse_to_ascii(dheight_hashmap, size)
-
 }
-
 
 // Parse a doubleheight hashmap of chips into an ascii string to print board to terminal
 fn parse_to_ascii(dheight_hashmap: HashMap<(i8, i8), Option<Chip>>, size: i8) -> String {
@@ -125,7 +122,6 @@ pub fn team_string(team: Team) -> &'static str {
 
 // List all chips belonging to a given team that are in their hand. Return a colourful single string for display.
 pub fn list_chips<T: Coord>(board: &Board<T>, team: Team) -> String {
-
     // Filter out the chips that are hand of given team (in hand  position = None)
     let mut chip_list = board
         .chips
@@ -134,16 +130,18 @@ pub fn list_chips<T: Coord>(board: &Board<T>, team: Team) -> String {
         .filter(|(c, p)| (p.is_none()) & (c.team == team))
         .map(|(c, _)| chip_to_str(Some(c)))
         .collect::<Vec<String>>();
-    
+
     // sort alphabetically
     chip_list.sort();
 
     // Create a single tring to return
-    let mut chip_string = chip_list.iter().map(|c| format!(" {},", c)).collect::<String>();
+    let mut chip_string = chip_list
+        .iter()
+        .map(|c| format!(" {},", c))
+        .collect::<String>();
 
     // Delete the trailing comma
     chip_string.pop();
 
     chip_string
 }
-

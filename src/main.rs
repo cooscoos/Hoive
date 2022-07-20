@@ -1,5 +1,3 @@
-use hoive::game::comps::Team;
-
 use hoive::game::board::Board;
 use hoive::pmoore;
 
@@ -13,13 +11,9 @@ fn main() {
     let first = pmoore::intro();
 
     // Game loop
-    pmoore::turn(board, first);
-
-
-
-
-
-
+    loop {
+        pmoore::turn(&mut board, first);
+    }
 
     // TODO:
     // Simple to complex moves:
