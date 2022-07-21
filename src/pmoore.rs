@@ -8,7 +8,7 @@ use crate::game::board::{Board, MoveStatus};
 use crate::game::comps::{other_team, Team};
 use crate::maths::coord::Coord;
 
-// Say hello and define who goes first
+// Introduction: say hello and define who goes first
 pub fn intro() -> Team {
     println!(
         "
@@ -33,6 +33,7 @@ The boardgame Hive, in Rust.
 
 // The game loop
 pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) {
+
     let active_team = match board.turns % 2 {
         0 => first,
         _ => other_team(first),
@@ -41,12 +42,12 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) {
     println!("{} team's turn.\n", draw::team_string(active_team));
 
     // Ask player to select chip
-    let mut list = None;
-    while list == None {
-        list = chip_select(board, active_team)
+    let mut chip_selection = None;
+    while chip_selection == None {
+        chip_selection = chip_select(board, active_team)
     }
 
-    let value = list.unwrap();
+    let chip_name = chip_selection.unwrap();
 
     let mut coord = None;
     while coord == None {
@@ -63,7 +64,7 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) {
     let game_hex = board.coord.mapfrom_doubleheight(select_hex);
 
     // Try execute the move, if it works then show the board. The function try_move will increment the turn itself if move=success
-    match try_move(board, value, active_team, game_hex) {
+    match try_move(board, chip_name, active_team, game_hex) {
         MoveStatus::Success =>     println!("{}\n", draw::show_board(board, 5)),
         _ => (),
     }
@@ -72,13 +73,14 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) {
 }
 
 // Return the str of the chip if it matches the query
-pub fn match_chip<T: Coord>(board: &Board<T>, team: Team, name: String) -> Option<&'static str> {
-    // Filter out the chips that are hand of given team (in hand  position = None)
+fn match_chip<T: Coord>(board: &Board<T>, team: Team, name: String) -> Option<&'static str> {
+
+    // Filter out the chips that belong to a given
     let list = board
         .chips
         .clone()
         .into_iter()
-        .filter(|(c, p)| (p.is_none()) & (c.team == team))
+        .filter(|(c, _)| c.team == team)
         .map(|(c, _)| c.name)
         .collect::<Vec<&str>>();
 
@@ -92,7 +94,7 @@ pub fn match_chip<T: Coord>(board: &Board<T>, team: Team, name: String) -> Optio
 
 // Select a chip and return its static str. Returns None if user input invalid.
 fn chip_select<T: Coord>(board: &Board<T>, active_team: Team) -> Option<&'static str> {
-    println!("Select a tile to place or move. Type enter to see the board and your hand.");
+    println!("Select a tile from the board or your hand to move. Hit enter to see the board and your hand.");
 
     let textin = get_usr_input();
 
@@ -142,7 +144,7 @@ fn coord_select() -> Option<(bool, i8, i8)> {
     }
 }
 
-// For now, this guy handles the MoveStatus enum and provides some printscreen feedback
+// Try execute a move and provide printscreen feedback
 pub fn try_move<T: Coord>(
     board: &mut Board<T>,
     name: &'static str,
@@ -175,7 +177,7 @@ fn get_usr_input() -> String {
     textin.trim().to_string()
 }
 
-// Parse comma separated values in a str to a doubleheight co-ordinate
+// Parse comma separated values in a string to a doubleheight co-ordinate
 fn coord_from_string(str: String) -> Vec<Option<i8>> {
     str.trim()
         .split(',')
