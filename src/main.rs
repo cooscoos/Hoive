@@ -12,7 +12,7 @@ fn main() {
 
     // Game loop
     loop {
-        pmoore::turn(&mut board, first);
+        pmoore::take_turn(&mut board, first);
     }
 
     // TODO:
