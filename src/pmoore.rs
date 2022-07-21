@@ -62,9 +62,13 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) {
     // Convert from doubleheight to the game's co-ordinate system
     let game_hex = board.coord.mapfrom_doubleheight(select_hex);
 
-    // Try execute the move, if it works then it's the end of the turn
-    try_move(board, value, active_team, game_hex);
-    println!("{}\n", draw::show_board(board, 5));
+    // Try execute the move, if it works then show the board. The function try_move will increment the turn itself if move=success
+    match try_move(board, value, active_team, game_hex) {
+        MoveStatus::Success =>     println!("{}\n", draw::show_board(board, 5)),
+        _ => (),
+    }
+    
+
 }
 
 // Return the str of the chip if it matches the query
@@ -152,10 +156,10 @@ pub fn try_move<T: Coord>(
             println!("Chip move was successful.");
             board.turns += 1;
         }
-        MoveStatus::BadNeighbour => println!("Can't place a new chip next to other team."),
-        MoveStatus::HiveSplit => println!("No: this move would split the hive in two."),
-        MoveStatus::Occupied => println!("Can't move this chip to an occupied position."),
-        MoveStatus::Unconnected => println!("Can't move your chip to an unconnected position."),
+        MoveStatus::BadNeighbour => println!("\n\x1b[31;1m<< Can't place a new chip next to other team >>\x1b[0m\n"),
+        MoveStatus::HiveSplit => println!("\n\x1b[31;1m<< No: this move would split the hive in two >>\x1b[0m\n"),
+        MoveStatus::Occupied => println!("\n\x1b[31;1m<< Can't move this chip to an occupied position >>\x1b[0m\n"),
+        MoveStatus::Unconnected => println!("\n\x1b[31;1m<< Can't move your chip to an unconnected position  >>\x1b[0m\n"),
     }
     move_status
 }
