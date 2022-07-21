@@ -9,7 +9,6 @@ The boardgame Hive, written in Rust.
 Finish coding terminal interface so that we can play simple game and start playtesting a bit.
 
 * I think there's a bug with placement adjacency resulting from doubleheight to cube co-ords conversion
-* the thread is panicking when it gets rubbish inputs for co-ordinates, need to handle these calmly
 * Need to allow moves of existing tiles on board
 
 ### Tidy up

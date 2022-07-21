@@ -1,4 +1,4 @@
-// Patrick Moore is the GamesMaster: the human-readable interface between players and the game
+// Patrick Moore is the GamesMaster: the human-readable interface between players and the game logic
 
 use rand::Rng; // To randomise which player goes first
 use std::io; // For parsing player inputs
@@ -6,7 +6,7 @@ use std::io; // For parsing player inputs
 use crate::draw;
 use crate::game::board::{Board, MoveStatus};
 use crate::game::comps::{other_team, Team};
-use crate::maths::coord::{self, Coord};
+use crate::maths::coord::Coord;
 
 // Say hello and define who goes first
 pub fn intro() -> Team {
@@ -32,7 +32,7 @@ The boardgame Hive, in Rust.
 }
 
 // The game loop
-pub fn turn<T: Coord>(board: &mut Board<T>, first: Team) {
+pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) {
     let active_team = match board.turns % 2 {
         0 => first,
         _ => other_team(first),
@@ -40,39 +40,31 @@ pub fn turn<T: Coord>(board: &mut Board<T>, first: Team) {
 
     println!("{} team's turn.\n", draw::team_string(active_team));
 
-    println!("Select a tile to place or move. Type enter to see the board and your hand.");
-
-    let textin = get_usr_input();
-
-    match textin {
-        _ if textin == "" => println!("{}\n Hand:{}\n", draw::show_board(&board, 5),draw::list_chips(&board, active_team)), // hard-coded 5 here but can adapt based on game extremeties later
-        _ if textin == "xylophone" => xylophone(),
-        c => {
-            let list = match_chip(&board, active_team, c); // get the available chips
-
-            match list {
-                Some(value) => {
-                    // move on
-                    println!("Select a co-ordinate to move to. Input column then row, separated by a comma, e.g.: 0, 0. Type enter to abort this move.");
-
-                    let textin2 = get_usr_input();
-                    if textin2 == "" {
-                        return ();
-                    }; // escape this function and start again
-
-                    let usr_hex = coord_from_string(textin2);
-
-                    // use doubleheight to cubic converter
-                    let game_hex = board.coord.mapfrom_doubleheight(usr_hex);
-
-                    // Try execute the move, if it works then it's the end of the turn
-                    try_move(board, value, active_team, game_hex);
-                    println!("{}\n", draw::show_board(&board, 5));
-                }
-                None => println!("You don't have this tile in your hand."),
-            }
-        }
+    // Ask player to select chip
+    let mut list = None;
+    while list == None {
+        list = chip_select(board, active_team)
     }
+
+    let value = list.unwrap();
+
+    let mut coord = None;
+    while coord == None {
+        coord = coord_select();
+    }
+
+    // If the user wants to abort coord selecton and switch pieces, go back to the start
+    let select_hex = match coord.unwrap().0 {
+        true => return (),
+        false => (coord.unwrap().1, coord.unwrap().2),
+    };
+
+    // Convert from doubleheight to the game's co-ordinate system
+    let game_hex = board.coord.mapfrom_doubleheight(select_hex);
+
+    // Try execute the move, if it works then it's the end of the turn
+    try_move(board, value, active_team, game_hex);
+    println!("{}\n", draw::show_board(board, 5));
 }
 
 // Return the str of the chip if it matches the query
@@ -92,6 +84,58 @@ pub fn match_chip<T: Coord>(board: &Board<T>, team: Team, name: String) -> Optio
         }
     }
     None
+}
+
+// Select a chip and return its static str. Returns None if user input invalid.
+fn chip_select<T: Coord>(board: &Board<T>, active_team: Team) -> Option<&'static str> {
+    println!("Select a tile to place or move. Type enter to see the board and your hand.");
+
+    let textin = get_usr_input();
+
+    match textin {
+        _ if textin.is_empty() => {
+            println!(
+                "{}\n Hand:{}\n",
+                draw::show_board(board, 5),
+                draw::list_chips(board, active_team)
+            );
+            None
+        } // hard-coded 5 here but can adapt based on game extremeties later
+        _ if textin == "xylophone" => {
+            xylophone();
+            None
+        }
+        c => {
+            let list = match_chip(board, active_team, c); // get the available chips
+
+            match list {
+                Some(value) => Some(value),
+                None => {
+                    println!("You don't have this tile in your hand.");
+                    None
+                }
+            }
+        }
+    }
+}
+
+// Return a co-ordinate (i8,i8). Returns (true, 0, 0) if we want to abort co-ordinate select. None if user input invalid.
+fn coord_select() -> Option<(bool, i8, i8)> {
+    println!("Select a co-ordinate to move to. Input column then row, separated by a comma, e.g.: 0, 0. Type enter to abort this move.");
+    let textin = get_usr_input();
+    if textin.is_empty() {
+        return Some((true, 0, 0));
+    }; // escape this function and start again
+
+    let usr_hex = coord_from_string(textin);
+
+    match usr_hex[..] {
+        [Some(x), Some(y)] => Some((false, x, y)),
+        _ => {
+            println!("Enter two numbers separated by a comma for co-ordinates.");
+            None
+        }
+    }
 }
 
 // For now, this guy handles the MoveStatus enum and provides some printscreen feedback
@@ -128,13 +172,14 @@ fn get_usr_input() -> String {
 }
 
 // Parse comma separated values in a str to a doubleheight co-ordinate
-fn coord_from_string(str: String) -> (i8, i8) {
-    let coord_vec: Vec<i8> = str
-        .trim()
+fn coord_from_string(str: String) -> Vec<Option<i8>> {
+    str.trim()
         .split(',')
-        .map(|c| c.parse::<i8>().expect("Input numbers!"))
-        .collect();
-    (coord_vec[0], coord_vec[1])
+        .map(|c| match c.parse::<i8>() {
+            Ok(value) => Some(value),
+            Err(_) => None,
+        })
+        .collect::<Vec<Option<i8>>>()
 }
 
 fn xylophone() {
