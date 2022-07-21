@@ -6,7 +6,7 @@ The boardgame Hive, written in Rust.
 ### Bugs
 
 This move should be legal but is getting reported as a hive split.
-![legal move](/reference/bug.jpeg "legal move bug")
+![legal move](/reference/bug.png "legal move bug")
 
 Could be an issue with janky display of doubleheight in terminal vs the actual gameboard in the background.
 * Write a test to emulate this move in cube co-ords so that we know game logic is sound
