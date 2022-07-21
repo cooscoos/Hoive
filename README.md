@@ -3,6 +3,15 @@ The boardgame Hive, written in Rust.
 
 ## To do
 
+### Bugs
+
+This move should be legal but is getting reported as a hive split.
+![legal move](/reference/bug.jpeg "legal move bug")
+
+Could be an issue with janky display of doubleheight in terminal vs the actual gameboard in the background.
+* Write a test to emulate this move in cube co-ords so that we know game logic is sound
+* Write a test to report doubleheight co-ordinates and cubic co-ordinates of the chips in this image to make sure this is okay
+
 ### Tidy up
 
 #### morphops.rs, board.rs, game.rs
