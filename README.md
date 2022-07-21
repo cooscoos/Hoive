@@ -3,14 +3,6 @@ The boardgame Hive, written in Rust.
 
 ## To do
 
-
-### Terminal interface
-
-Finish coding terminal interface so that we can play simple game and start playtesting a bit.
-
-* I think there's a bug with placement adjacency resulting from doubleheight to cube co-ords conversion
-* Need to allow moves of existing tiles on board
-
 ### Tidy up
 
 #### morphops.rs, board.rs, game.rs
@@ -35,3 +27,7 @@ Now just need to make the board run this at the start of every turn and keep not
 
 * (Later) spider and bee similar, but with movement range, see https://www.redblobgames.com/grids/hexagons/
 
+
+### Don't forget to
+
+* Prohibit movement before bee is placed
