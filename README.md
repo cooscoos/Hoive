@@ -5,12 +5,15 @@ The boardgame Hive, written in Rust.
 
 ### Bugs
 
-This move should be legal but is getting reported as a hive split.
+This move should be legal on white player's turn but is getting reported as a hive split.
 ![legal move](/reference/bug.png "legal move bug")
+
+
 
 Could be an issue with janky display of doubleheight in terminal vs the actual gameboard in the background.
 * Write a test to emulate this move in cube co-ords so that we know game logic is sound
 * Write a test to report doubleheight co-ordinates and cubic co-ordinates of the chips in this image to make sure this is okay
+* Could it be that the code thinks the active_player is black team?
 
 ### Tidy up
 
