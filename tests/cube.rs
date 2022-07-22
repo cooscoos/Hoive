@@ -76,6 +76,9 @@ fn cube_split_hive() {
     );
 }
 
+
+
+
 #[test]
 fn cube_attack() {
     // Put down lots of chips and then relocate a black next to black after turn 6
@@ -111,6 +114,71 @@ fn cube_nosplit_hive() {
         pmoore::try_move(&mut board, "s3", Team::White, (-1, -1, 2))
     );
 }
+
+
+#[test]
+fn cube_no_split_hive2() {
+    // Put down chips in doubleheight co-ords and then do a move that doesn't split hive and is legal
+    // This emulates a bug (hehe) that was found when doing the following:
+    // ws1 to 0,0
+    // bs1 to 0,-2
+    // ws2 to 1,1
+    // bs2 to 1,-3
+    // ws3 to -1,1
+    // bs3 to -1,-3
+    // ws4 to 0,2
+    // bs4 to 0,-4
+    // ws3 to 2,-4
+    // bs3 to 0,4
+    // check ws2 to 3,-5
+    
+    let mut board = Board::default(Cube);
+
+    let moves_list: [(i8,i8);11] = [
+        (0,0),
+        (0,-2),
+        (1,1),
+        (1,-3),
+        (-1,1),
+        (-1,-3),
+        (0,2),
+        (0,-4),
+        (2,-4),
+        (0,4),
+        (3,-5),
+    ];
+
+
+
+    // map all of these to hex
+    let hex_moves = moves_list.iter().map(|xy| board.coord.mapfrom_doubleheight(*xy)).collect::<Vec<(i8,i8,i8)>>();
+
+    // do the moves on the board
+
+    pmoore::try_move(&mut board, "s1", Team::White, hex_moves[0]);
+    pmoore::try_move(&mut board, "s1", Team::Black, hex_moves[1]);
+
+    pmoore::try_move(&mut board, "s2", Team::White, hex_moves[2]);
+    pmoore::try_move(&mut board, "s2", Team::Black, hex_moves[3]);
+    
+    pmoore::try_move(&mut board, "s3", Team::White, hex_moves[4]);
+    pmoore::try_move(&mut board, "s3", Team::Black, hex_moves[5]);
+
+    pmoore::try_move(&mut board, "s4", Team::White, hex_moves[6]);
+    pmoore::try_move(&mut board, "s4", Team::Black, hex_moves[7]);
+
+    pmoore::try_move(&mut board, "s3", Team::White, hex_moves[8]);
+    pmoore::try_move(&mut board, "s3", Team::Black, hex_moves[9]);
+
+
+    assert_eq!(
+        MoveStatus::Success,
+        pmoore::try_move(&mut board, "s2", Team::White, hex_moves[10])
+    );
+}
+
+
+
 
 #[test]
 fn centroid_calc() {
