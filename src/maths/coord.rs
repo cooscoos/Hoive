@@ -45,7 +45,8 @@ impl Coord for Cube {
         // For cube co-ordinates, one way to raster scan (q,r,s) is:
         // r ascending first
         // then s descending
-        // then q descending
+        // then q ascending
+        // This gives a top to bottom, right to left scan
         flat_vec
             .sort_by(|(q1, r1, s1), (q2, r2, s2)| (r1, s2, q2).partial_cmp(&(r2, s1, q1)).unwrap());
     }

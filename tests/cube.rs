@@ -116,23 +116,63 @@ fn cube_nosplit_hive() {
 }
 
 
+
 #[test]
-fn cube_no_split_hive2() {
-    // Put down chips in doubleheight co-ords and then do a move that doesn't split hive and is legal
-    // This emulates a bug (hehe) that was found when doing the following:
-    // ws1 to 0,0
-    // bs1 to 0,-2
-    // ws2 to 1,1
-    // bs2 to 1,-3
-    // ws3 to -1,1
-    // bs3 to -1,-3
-    // ws4 to 0,2
-    // bs4 to 0,-4
-    // ws3 to 2,-4
-    // bs3 to 0,4
-    // check ws2 to 3,-5
-    
-    let mut board = Board::default(Cube);
+fn test_simple_dheight_to_cube() {
+    let board = Board::default(Cube);
+    let dheight = (0,-4);
+
+    let cubehex = board.coord.mapfrom_doubleheight(dheight);
+
+    assert_eq!((0,-2,2), cubehex);
+
+}
+
+
+#[test]
+fn test_dheight_to_cube_conversion() {
+    let board = Board::default(Cube);
+
+    // generate a bunch of co-ords in dheight to simulate bug1.png
+    let moves_list: [(i8,i8);8] = [
+        (0,0),
+        (0,-2),
+        (1,1),
+        (1,-3),
+        (0,2),
+        (0,-4),
+        (2,-4),
+        (0,4),
+    ];
+
+    // map all of these to hex
+    let mut hex_moves = moves_list.iter().map(|xy| board.coord.mapfrom_doubleheight(*xy)).collect::<Vec<(i8,i8,i8)>>();
+
+    // raster scan them
+    board.coord.raster_scan(&mut hex_moves);
+
+    // we'd expect the output to be
+    let mut expected = vec![
+        (0,0,0),
+        (0,-1,1),
+        (0,-2,2),
+        (1,-2,1),
+        (2,-3,1),
+        (1,0,-1),
+        (0,1,-1),
+        (0,2,-2),
+    ];
+
+
+    board.coord.raster_scan(&mut expected);
+
+
+    assert_eq!(expected, hex_moves);
+
+}
+
+// This fn gets run by some of the next tests
+fn doubleheight_to_cube<T: Coord>(board: &mut Board<T>) -> Vec<(i8,i8,i8)> {
 
     let moves_list: [(i8,i8);11] = [
         (0,0),
@@ -148,13 +188,24 @@ fn cube_no_split_hive2() {
         (3,-5),
     ];
 
-
-
     // map all of these to hex
     let hex_moves = moves_list.iter().map(|xy| board.coord.mapfrom_doubleheight(*xy)).collect::<Vec<(i8,i8,i8)>>();
 
-    // do the moves on the board
+    hex_moves
+}
 
+
+#[test]
+fn test_cube_no_split_hive2() {
+    // Put down chips in doubleheight co-ords and then do a move that doesn't split hive and is legal
+    // This emulates a bug that was found when doing the following:
+    
+    let mut board = Board::default(Cube);
+
+    // Generate a bunch of moves
+    let hex_moves = doubleheight_to_cube(&mut board);
+    
+    // do these moves on the board
     pmoore::try_move(&mut board, "s1", Team::White, hex_moves[0]);
     pmoore::try_move(&mut board, "s1", Team::Black, hex_moves[1]);
 
@@ -168,16 +219,106 @@ fn cube_no_split_hive2() {
     pmoore::try_move(&mut board, "s4", Team::Black, hex_moves[7]);
 
     pmoore::try_move(&mut board, "s3", Team::White, hex_moves[8]);
-    pmoore::try_move(&mut board, "s3", Team::Black, hex_moves[9]);
+    
+    assert_eq!(
+        MoveStatus::Success,
+        pmoore::try_move(&mut board, "s3", Team::Black, hex_moves[9])
+    );
+
+
+//    assert_eq!(
+//        MoveStatus::Success,
+//        pmoore::try_move(&mut board, "s2", Team::White, hex_moves[10])
+//    );
+}
+
+
+fn big_game_1() -> Board<Cube>{
+    let mut board = Board::default(Cube);
+    let hex_moves: [(i8,i8,i8);9] = [
+        (0,0,0),
+        (0,-1,1),
+        (1,0,-1),
+        (1,-2,1),
+        (-1,1,0),
+        (-1,-1,2),
+        (0,1,-1),
+        (0,-2,2),
+        (2,-3,1),
+        //(0,2,-2),
+    ];
+
+    // do these moves on the board
+    pmoore::try_move(&mut board, "s1", Team::White, hex_moves[0]);
+    pmoore::try_move(&mut board, "s1", Team::Black, hex_moves[1]);
+
+    pmoore::try_move(&mut board, "s2", Team::White, hex_moves[2]);
+    pmoore::try_move(&mut board, "s2", Team::Black, hex_moves[3]);
+    
+    pmoore::try_move(&mut board, "s3", Team::White, hex_moves[4]);
+    pmoore::try_move(&mut board, "s3", Team::Black, hex_moves[5]);
+
+    pmoore::try_move(&mut board, "s4", Team::White, hex_moves[6]);
+    pmoore::try_move(&mut board, "s4", Team::Black, hex_moves[7]);
+
+    pmoore::try_move(&mut board, "s3", Team::White, hex_moves[8]);
+    //let checker = pmoore::try_move(&mut board, "s3", Team::Black, hex_moves[9]);
+
+    //println!("Second bs3 move was:{:?}", checker);
+
+    board
+}
+
+
+#[test]
+fn test_check_rasterscan_order(){
+    // Make sure raster scan is behaving
+    // Do a bug2.png game
+    let snapshot = big_game_1();
+
+    // Ask the code to raster scan this
+    let code_raster = snapshot.rasterscan_board();
+
+
+    // expected raster output should be (top to bottom, left to right)
+    let expected = vec![
+        (2,-3,1),
+        (0,-2,2),
+        (1,-2,1),
+        (-1,-1,2), 
+        (0,-1,1),
+        (0,0,0),
+        (1,0,-1),
+        (0,1,-1),
+    ];
+
+
+    println!("Code's rasterscan:\n{:?}\n\nManual rasterscan:\n{:?}",code_raster,expected);
+    assert_eq!(expected,code_raster);
+
+
+}
+
+
+
+#[test]
+fn test_cube_no_split_hive3(){
+    // Run the same game again in pure cube co-ords to see if the bug persists 
+
+    // Get board into bug1.png snapshot
+    let mut snapshot = big_game_1();
 
 
     assert_eq!(
         MoveStatus::Success,
-        pmoore::try_move(&mut board, "s2", Team::White, hex_moves[10])
+        pmoore::try_move(&mut snapshot, "s3", Team::Black, (0,2,-2))
     );
+
+    //assert_eq!(
+    //    MoveStatus::Success,
+    //    pmoore::try_move(&mut snapshot, "s2", Team::White, (2,-3,1))
+    //);
 }
-
-
 
 
 #[test]

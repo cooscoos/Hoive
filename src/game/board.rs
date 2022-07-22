@@ -218,7 +218,9 @@ where
     }
 
     // Raster scan all chips on the board and returns their positions as a flat vector
-    fn rasterscan_board(&self) -> Vec<(i8, i8, i8)> {
+    pub fn rasterscan_board(&self) -> Vec<(i8, i8, i8)> {
+        
+        //TODO: Could this just call fn get_placed??
         // Flatten the board's HashMap into a vector that only counts chips on the board (i.e. p.is_some())
         let mut flat_vec = self
             .chips
@@ -246,7 +248,7 @@ where
     }
 
     // Get co-ordinates of all chips that are already placed on the board
-    fn get_placed(&self) -> Vec<(i8, i8, i8)> {
+    pub fn get_placed(&self) -> Vec<(i8, i8, i8)> {
         self.chips.values().flatten().copied().collect()
     }
 
