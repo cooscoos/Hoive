@@ -176,8 +176,13 @@ where
         }
     }
 
+
     // Check if moving a chip out of the current position splits the hive
     fn hive_break_check(&self, current_position: &(i8, i8, i8)) -> bool {
+        
+        // TODO: I'M DOING THIS WRONG
+
+
         // To achieve this, we need to do some connected component labelling.
         // A "one-component-at-a-time" algorithm is one of the simplest ways to find connected components in a grid.
         // More info: https://en.wikipedia.org/wiki/Connected-component_labeling?oldformat=true#Pseudocode_for_the_one-component-at-a-time_algorithm
@@ -199,7 +204,6 @@ where
         for position in flat_vec.clone() {
 
 
-            // I'M DOING THIS WRONG
             // Add yourself in???
             //store.insert(position);
             //println!("I've added myself at {:?}", position);
