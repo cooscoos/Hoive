@@ -62,17 +62,17 @@ fn cube_fifth_turn_badneighbour() {
 }
 
 #[test]
-fn cube_split_hive() {
+fn what_cube_split_hive() {
     // Put down four chips and then split the hive by moving a white spider from the middle
     let mut board = Board::default(Cube);
     pmoore::try_move(&mut board, "s1", Team::Black, (0, 0, 0));
     pmoore::try_move(&mut board, "s1", Team::White, (0, -1, 1));
     pmoore::try_move(&mut board, "s2", Team::Black, (0, 1, -1));
-    pmoore::try_move(&mut board, "s2", Team::White, (0, 2, -2));
+    pmoore::try_move(&mut board, "s2", Team::White, (0, -2, 2));
 
     assert_eq!(
         MoveStatus::HiveSplit,
-        pmoore::try_move(&mut board, "s1", Team::Black, (0, 2, -2))
+        pmoore::try_move(&mut board, "s1", Team::Black, (0, -3, 3))
     );
 }
 
@@ -302,7 +302,7 @@ fn test_check_rasterscan_order(){
 
 
 #[test]
-fn test_cube_no_split_hive3(){
+fn pure_test_cube_no_split_hive3(){
     // Run the same game again in pure cube co-ords to see if the bug persists 
 
     // Get board into bug1.png snapshot

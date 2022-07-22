@@ -194,12 +194,21 @@ where
         // If I'm wrong then we'll need to pass this function a destination hex and add it in
         flat_vec.retain(|&p| p != *current_position);
 
+
         // For each element in the raster scan
         for position in flat_vec.clone() {
+
+
+            // I'M DOING THIS WRONG
+            // Add yourself in???
+            //store.insert(position);
+            //println!("I've added myself at {:?}", position);
+            
             // Get the co-ordinates of neighbouring hexes as a vector
             //let neighbour_hexes = Board::neighbour_tiles(position);
             let neighbour_hexes = self.coord.neighbour_tiles(position);
             let neighbour_vec = neighbour_hexes.into_iter().collect::<Vec<(i8, i8, i8)>>();
+
 
             // If any of these neighbouring hex co-ordinates also appear in the remaining elements of the raster scan, it means they're a neighbouring chip
             // We'll store all neighbouring chip co-ordinates in that "store" hashset that we defined earlier
@@ -214,7 +223,11 @@ where
             // We're done with checking this chip's neighbours, so delete it from the raster scan queue and move on to the next element
             flat_vec.retain(|&p| p != position);
         }
-        store.len() != self.rasterscan_board().len() - 2
+
+        println!("The final store is {:?}", store);
+
+        // The number of items stored should be all of the chips on the board minus the one we're moving
+        store.len() != self.rasterscan_board().len() - 1
     }
 
     // Raster scan all chips on the board and returns their positions as a flat vector

@@ -14,8 +14,9 @@ Could be an issue with janky display of doubleheight in terminal vs the actual g
 * Write a test to emulate this move automatically =FAILED=.
 * Write a test to output the cube co-ordinates to check they're correct =PASSED=
 * Write a test to emulate this move in cube co-ords so that we know game logic is sound =FAILED=
-* If not, manually work through the hive-split algo on paper -- are there issues with raster scan?
-* Write a test to report doubleheight co-ordinates and cubic co-ordinates of the chips in this image to make sure this is okay
+* are there issues with raster scan? =PASSED=
+* Write a test to report doubleheight co-ordinates and cubic co-ordinates of the chips in this image to make sure this is okay = PASSED=
+* If not, manually work through the hive_break_check algo on paper
 * Could it be that the code thinks the active_player is black team?
 
 ### Tidy up
