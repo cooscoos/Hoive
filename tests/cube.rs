@@ -168,7 +168,7 @@ fn cube_from_dheight_complicated() {
 // This fn gets run by some of the next tests
 fn doubleheight_to_cube<T: Coord>(board: &mut Board<T>) -> Vec<(i8, i8, i8)> {
     // Here's a big list of moves that simulates the game shown in /reference/tests/bug2.png using doubleheight co-ords
-    let moves_list: [(i8, i8); 9] = [
+    let moves_list: [(i8, i8); 10] = [
         (0, 0),
         (0, -2),
         (1, 1),
@@ -178,6 +178,7 @@ fn doubleheight_to_cube<T: Coord>(board: &mut Board<T>) -> Vec<(i8, i8, i8)> {
         (0, 2),
         (0, -4),
         (2, -4),
+        (0,4),
     ];
 
     // Map all of these to hex

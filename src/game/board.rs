@@ -151,13 +151,14 @@ where
     ) -> MoveStatus {
         // Two constraints for a relocation:
         // Constraint 1) chip relocate cannot break the hive in two;
-        // Constraint 2) chip must end up adjacent to another tile (or on top of one if its a beetle, but we'll worry about this later)
+        // Constraint 2) chip must end up adjacent to other tiles
+        // Constraint 3) chip can't end up on top of another chip (unless beetle, but we'll worry about this later...)
 
-        // Does moving the chip away from current position cause the hive to split?
-        let constraint1 = self.hive_break_check(current_position, &destination);
 
-        // Get hexes that neighbour the desired destination hex (a',r',c')
-        //let neighbour_hex = Board::neighbour_tiles(destination);
+        // Any chips already on board at the destination?
+        let constraint1 = self.get_placed().iter().any(|p| *p == destination);
+
+        // Get hexes that neighbour the desired destination hex
         let neighbour_hex = self.coord.neighbour_tiles(destination);
 
         // Do we have at least one neighbour at the destination?
@@ -166,10 +167,16 @@ where
             .map(|p| self.get_team(p))
             .any(|t| t.is_some());
 
-        // check constraint2 first because all unconnected moves are also hive splits, and we want to return useful error messages
-        if constraint2 {
+        // Does moving the chip away from current position cause the hive to split?
+        let constraint3 = self.hive_break_check(current_position, &destination);
+
+
+        // check constraints in this order because all unconnected moves are also hive splits, and we want to return useful error messages
+        if constraint1 {
+            MoveStatus::Occupied
+        } else if constraint2 {
             MoveStatus::Unconnected
-        } else if constraint1 {
+        } else if constraint3 {
             MoveStatus::HiveSplit
         } else {
             self.chips.insert(chip, Some(destination)); // Overwrite the chip's position in the HashMap
@@ -183,6 +190,8 @@ where
         current_position: &(i8, i8, i8),
         destination: &(i8, i8, i8),
     ) -> bool {
+        // This function might fail tests when we introduce beetles later, so will need to edit then.
+
         // To achieve this, we need to do some connected component labelling.
         // A "one-component-at-a-time" algorithm is one of the simplest ways to find connected components in a grid.
         // More info: https://en.wikipedia.org/wiki/Connected-component_labeling?oldformat=true#Pseudocode_for_the_one-component-at-a-time_algorithm
@@ -230,7 +239,7 @@ where
 
     // Raster scan all chips on the board and returns their positions as a flat vector
     pub fn rasterscan_board(&self) -> Vec<(i8, i8, i8)> {
-        //TODO: Could this just call fn get_placed??
+        // TODO: Could this just call fn get_placed??
         // Flatten the board's HashMap into a vector that only counts chips on the board (i.e. p.is_some())
         let mut flat_vec = self
             .chips
@@ -239,6 +248,7 @@ where
             .map(|(_, p)| p.unwrap())
             .collect::<Vec<(i8, i8, i8)>>();
 
+        let mut flat_vec = self.get_placed();
         // sort the vector in raster_scan order
         self.coord.raster_scan(&mut flat_vec);
 

@@ -5,9 +5,7 @@ The boardgame Hive, written in Rust.
 
 ### Tidy up
 
-#### tests
-
-tests are messy, tidy them
+Always -
 
 #### morphops.rs, board.rs, game.rs
 
