@@ -166,10 +166,11 @@ where
             .map(|p| self.get_team(p))
             .any(|t| t.is_some());
 
-        if constraint1 {
-            MoveStatus::HiveSplit
-        } else if constraint2 {
+        // check constraint2 first because all unconnected moves are also hive splits, and we want to return useful error messages
+        if constraint2 {
             MoveStatus::Unconnected
+        } else if constraint1 { 
+            MoveStatus::HiveSplit
         } else {
             self.chips.insert(chip, Some(destination)); // Overwrite the chip's position in the HashMap
             MoveStatus::Success
