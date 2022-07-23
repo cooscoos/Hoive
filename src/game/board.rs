@@ -207,7 +207,7 @@ where
 
                     // If any of these neighbouring hex co-ordinates also appear in the flat_vec, it means they're a neighbouring chip
                     // If they're a new entry, add them to the queue and the hashset, otherwise ignore them and move on
-                    // Double for loop with an if doesn't seem very rusty, but it works.
+                    // Double for loop with an if doesn't seem very rusty, but it works for now.
                     for elem in neighbour_hexes.iter() {
                         for elem2 in flat_vec.clone().iter() {
                             if (elem == elem2) & (!store.contains(elem2)) {
