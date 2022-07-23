@@ -22,6 +22,7 @@ pub enum MoveStatus {
 
     // Following statuses are specific to animals / groups of animals
     SmallGap,     // gap is too small for an ant/spider/bee to access
+    TooFar(u32),       // too far for this animal to travel
 }
 
 // The board struct is the game and all of its logic
@@ -308,13 +309,15 @@ where
 
         // Match on chip animal (first character of chipname)
         match self.get_chip(*current_position).unwrap().name.chars().next().unwrap() {
-            'a' | 's' | 'q' => self.ant_close(current_position, destination),   // ants, spiders and bees
+            'a' => self.ant_check(current_position, destination),          // ants
+            's' => self.spider_check(current_position, destination, 3), // spiders
+            'q' => self.spider_check(current_position, destination, 1), // queens
             _ => MoveStatus::Success,   // todo, other animals
         }
 
     }
 
-    fn ant_close(&self, current_position: &(i8, i8, i8), destination: &(i8, i8, i8)) -> MoveStatus {
+    fn ant_check(&self, current_position: &(i8, i8, i8), destination: &(i8, i8, i8)) -> MoveStatus {
 
         // Get positions of hexes that are inaccessible to ants, bees and spiders
         // Achieve this by morphological closing of a binary image of the board: i.e. dilation followed by erosion
@@ -335,6 +338,23 @@ where
             true => MoveStatus::SmallGap,
             false => MoveStatus::Success,
         }
+    }
+
+    fn spider_check(&self, current_position: &(i8, i8, i8), destination: &(i8, i8, i8), stamina: u32) -> MoveStatus {
+    // spider_check does an ant_check plus move distance =stamina (the distance this peice can move)
+    match self.ant_check(current_position, destination){
+        MoveStatus::SmallGap => MoveStatus::SmallGap,
+        MoveStatus::Success => {
+            // Check if the distance is within this animal's travel range (its stamina)
+            match self.coord.hex_distance(*current_position, *destination) <= stamina {
+                true => MoveStatus::Success,
+                false => MoveStatus::TooFar(stamina),
+            }
+        },
+        _ => unreachable!()
+    }
+
+
     }
 
     // Get co-ordinates of all chips that are already placed on the board

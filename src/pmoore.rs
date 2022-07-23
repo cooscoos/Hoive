@@ -169,6 +169,9 @@ pub fn try_move<T: Coord>(
         MoveStatus::SmallGap => {
             println!("\n\x1b[31;1m<< Gap too small for this piece to move into  >>\x1b[0m\n")
         }
+        MoveStatus::TooFar(value) => {
+            println!("\n\x1b[31;1m<< Too far: peice can only travel {value} spaces  >>\x1b[0m\n")
+        }
     }
     move_status
 }
