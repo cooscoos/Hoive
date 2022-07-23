@@ -154,7 +154,7 @@ where
         // Constraint 2) chip must end up adjacent to another tile (or on top of one if its a beetle, but we'll worry about this later)
 
         // Does moving the chip away from current position cause the hive to split?
-        let constraint1 = self.hive_break_check(current_position);
+        let constraint1 = self.hive_break_check(current_position, &destination);
 
         // Get hexes that neighbour the desired destination hex (a',r',c')
         //let neighbour_hex = Board::neighbour_tiles(destination);
@@ -166,59 +166,71 @@ where
             .map(|p| self.get_team(p))
             .any(|t| t.is_some());
 
-        if constraint1 {
-            MoveStatus::HiveSplit
-        } else if constraint2 {
+        // check constraint2 first because all unconnected moves are also hive splits, and we want to return useful error messages
+        if constraint2 {
             MoveStatus::Unconnected
+        } else if constraint1 { 
+            MoveStatus::HiveSplit
         } else {
             self.chips.insert(chip, Some(destination)); // Overwrite the chip's position in the HashMap
             MoveStatus::Success
         }
     }
 
+
     // Check if moving a chip out of the current position splits the hive
-    fn hive_break_check(&self, current_position: &(i8, i8, i8)) -> bool {
+    fn hive_break_check(&self, current_position: &(i8, i8, i8), destination: &(i8, i8, i8)) -> bool {
+        
         // To achieve this, we need to do some connected component labelling.
         // A "one-component-at-a-time" algorithm is one of the simplest ways to find connected components in a grid.
         // More info: https://en.wikipedia.org/wiki/Connected-component_labeling?oldformat=true#Pseudocode_for_the_one-component-at-a-time_algorithm
 
         // Create an empty hash set to store the locations of all chips on the board that neighbour at least one other chip
-        // Why use a hash set? Because hash sets can't store duplicates: even if a chip neighbours several other chips, it only appears once in the hash set record
         let mut store: HashSet<(i8, i8, i8)> = HashSet::new();
 
-        // Get the positions of chips on the board as a flat sorted vector (i.e. raster scan the board)
+        // Get the positions of all the chips on the board
         let mut flat_vec = self.rasterscan_board();
 
-        // Remove the chip at our "current_position" from our flat vector. This simulates moving the chip somewhere else.
-        // I've thought about it for  whole 3 minutes, and I think there is no situation in which a hive can be broken and reconnected on the same turn.
-        // If I'm wrong then we'll need to pass this function a destination hex and add it in
-        flat_vec.retain(|&p| p != *current_position);
+        // Remove chip at our "current_position", and add to destination to simulate its move.
+        flat_vec.retain(|&p| p != *current_position);   // remove
+        flat_vec.push(*destination);                                  // add
 
-        // For each element in the raster scan
-        for position in flat_vec.clone() {
-            // Get the co-ordinates of neighbouring hexes as a vector
-            //let neighbour_hexes = Board::neighbour_tiles(position);
-            let neighbour_hexes = self.coord.neighbour_tiles(position);
-            let neighbour_vec = neighbour_hexes.into_iter().collect::<Vec<(i8, i8, i8)>>();
+        // The destination hex is as good a place as anywhere to start connected component labelling
+        let mut queue = vec![*destination];
+        
+        // Keep searching for neighbours until the queue is empty
+        loop{
+            match queue.pop() {
+                Some(position) => {
+                    
+                    // Pop an element out of the queue and get the co-ordinates of neighbouring hexes
+                    let neighbour_hexes = self.coord.neighbour_tiles(position);
 
-            // If any of these neighbouring hex co-ordinates also appear in the remaining elements of the raster scan, it means they're a neighbouring chip
-            // We'll store all neighbouring chip co-ordinates in that "store" hashset that we defined earlier
-            for elem in neighbour_vec.iter() {
-                for elem2 in flat_vec.clone().iter() {
-                    if elem == elem2 {
-                        store.insert(*elem2);
+                    // If any of these neighbouring hex co-ordinates also appear in the flat_vec, it means they're a neighbouring chip
+                    // If they're a new entry, add them to the queue and the hashset, otherwise ignore them and move on
+                    // Double for loop with an if doesn't seem very rusty, but it works for now.
+                    for elem in neighbour_hexes.iter() {
+                        for elem2 in flat_vec.clone().iter() {
+                            if (elem == elem2) & (!store.contains(elem2)) {
+                                store.insert(*elem2);   // add the neighbour to the hashset                                
+                                queue.push(*elem2);     // also add it to the queue
+                            }
+                        }
                     }
-                }
+                },
+                None => break,  // stop labelling if the queue is empty
             }
-
-            // We're done with checking this chip's neighbours, so delete it from the raster scan queue and move on to the next element
-            flat_vec.retain(|&p| p != position);
         }
-        store.len() != self.rasterscan_board().len() - 2
-    }
+        
+        // The number of items stored should be all of the chips on the board.
+        // If it's not then the move has created two hives, which is illegal.
+        store.len() != self.rasterscan_board().len()
+}
 
     // Raster scan all chips on the board and returns their positions as a flat vector
-    fn rasterscan_board(&self) -> Vec<(i8, i8, i8)> {
+    pub fn rasterscan_board(&self) -> Vec<(i8, i8, i8)> {
+        
+        //TODO: Could this just call fn get_placed??
         // Flatten the board's HashMap into a vector that only counts chips on the board (i.e. p.is_some())
         let mut flat_vec = self
             .chips
@@ -246,7 +258,7 @@ where
     }
 
     // Get co-ordinates of all chips that are already placed on the board
-    fn get_placed(&self) -> Vec<(i8, i8, i8)> {
+    pub fn get_placed(&self) -> Vec<(i8, i8, i8)> {
         self.chips.values().flatten().copied().collect()
     }
 

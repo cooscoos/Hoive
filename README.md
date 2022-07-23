@@ -9,12 +9,8 @@ This move should be legal on white player's turn but is getting reported as a hi
 ![legal move](/reference/bug.png "legal move bug")
 
 
+I've discovered the issue is a bug in hive_break_check. My connected component labelling method isn't robust. Probably doing it wrong. Implement properly. Once it passes the new tests I've written, it'll be good.
 
-Could be an issue with janky display of doubleheight in terminal vs the actual gameboard in the background.
-* Write a test to emulate this move in cube co-ords so that we know game logic is sound
-* If not, manually work through the hive-split algo on paper -- are there issues with raster scan?
-* Write a test to report doubleheight co-ordinates and cubic co-ordinates of the chips in this image to make sure this is okay
-* Could it be that the code thinks the active_player is black team?
 
 ### Tidy up
 
