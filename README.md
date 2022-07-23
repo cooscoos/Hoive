@@ -3,6 +3,22 @@ The boardgame Hive, written in Rust.
 
 ## To do
 
+### Spider and bee
+
+* Code spider and bee movement ranges, see https://www.redblobgames.com/grids/hexagons/
+* Prohibit player movement of existing chips before bee is placed
+* Code a win state if opponent's bee has 6 neighbours at the end of your turn
+
+### Other animals
+
+This order seems sensible: 
+
+* ladybird
+* beetle
+* grashopper
+* pillbug
+* mosquito
+
 ### Tidy up
 
 Always. Once everything is working I want to make this as efficient as it can be.
@@ -17,21 +33,5 @@ Functions are using a variety of vectors, HashSets, HashMaps, BTrees and sorting
 
 #### tests
 
-Writing a test that does a conversion from X co-ord to cube successfully should be enough to show that the game can run in that new co-ordinate system
+* Scale back the number of new tests we need to write for new co-ord systems. Writing a test that does a conversion from X co-ord to cube successfully should do a lot to show that the game can run in that new co-ordinate system.
 
-
-### Ant (and the ant squeeze rule)
-
-We now have ant_close, a function that has logic to prevent the white ant from entering the pit shown in image
-![ant squeeze](/reference/ant_squeeze.jpeg "ant squeeze")
-
-This is about as complicated a situation as we'll ever see.
-
-Now just need to make the board run this at the start of every turn and keep note of what to block off for ants.
-
-* (Later) spider and bee similar, but with movement range, see https://www.redblobgames.com/grids/hexagons/
-
-
-### Don't forget to
-
-* Prohibit movement before bee is placed

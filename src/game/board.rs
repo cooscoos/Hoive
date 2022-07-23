@@ -39,15 +39,50 @@ where
     pub fn default(coord: T) -> Self {
         let chips: HashMap<Chip, Option<(i8, i8, i8)>> = HashMap::from([
             // Black team's chips
+            // 1 bee, 2 spiders, 2 beetles, 3 grasshoppers, 3 ants, 1 each of mosquito, ladybug, pill bug
             (Chip::new("s1", Team::Black), None),
             (Chip::new("s2", Team::Black), None),
-            (Chip::new("s3", Team::Black), None),
-            (Chip::new("s4", Team::Black), None),
+            (Chip::new("a1", Team::Black), None),
+            (Chip::new("a2", Team::Black), None),
+            (Chip::new("a3", Team::Black), None),
+            (Chip::new("q1", Team::Black), None),
             // White team's chips
             (Chip::new("s1", Team::White), None),
             (Chip::new("s2", Team::White), None),
-            (Chip::new("s3", Team::White), None),
-            (Chip::new("s4", Team::White), None),
+            (Chip::new("a1", Team::White), None),
+            (Chip::new("a2", Team::White), None),
+            (Chip::new("a3", Team::White), None),
+            (Chip::new("q1", Team::White), None),
+        ]);
+
+        Board {
+            chips,
+            turns: 0,
+            coord,
+        }
+    }
+
+    // During tests we want lots of pieces that move freely, so give each team 8 ants
+    pub fn test_board(coord: T) -> Self {
+        let chips: HashMap<Chip, Option<(i8, i8, i8)>> = HashMap::from([
+            // Black team's chips
+            (Chip::new("a1", Team::Black), None),
+            (Chip::new("a2", Team::Black), None),
+            (Chip::new("a3", Team::Black), None),
+            (Chip::new("a4", Team::Black), None),
+            (Chip::new("a5", Team::Black), None),
+            (Chip::new("a6", Team::Black), None),
+            (Chip::new("a7", Team::Black), None),
+            (Chip::new("a8", Team::Black), None),
+            // White team's chips
+            (Chip::new("a1", Team::White), None),
+            (Chip::new("a2", Team::White), None),
+            (Chip::new("a3", Team::White), None),
+            (Chip::new("a4", Team::White), None),
+            (Chip::new("a5", Team::White), None),
+            (Chip::new("a6", Team::White), None),
+            (Chip::new("a7", Team::White), None),
+            (Chip::new("a8", Team::White), None),
         ]);
 
         Board {

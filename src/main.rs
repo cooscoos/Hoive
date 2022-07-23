@@ -15,12 +15,5 @@ fn main() {
         pmoore::take_turn(&mut board, first);
     }
 
-    // TODO:
-    // Simple to complex moves:
-    // ant, bee, spider
-    // ladybird
-    // beetle
-    // grashopper
-    // pillbug
-    // mosquito
+
 }
