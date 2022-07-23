@@ -154,7 +154,7 @@ where
         // Constraint 2) chip must end up adjacent to another tile (or on top of one if its a beetle, but we'll worry about this later)
 
         // Does moving the chip away from current position cause the hive to split?
-        let constraint1 = self.hive_break_check(current_position);
+        let constraint1 = self.hive_break_check(current_position, &destination);
 
         // Get hexes that neighbour the desired destination hex (a',r',c')
         //let neighbour_hex = Board::neighbour_tiles(destination);
@@ -178,9 +178,14 @@ where
 
 
     // Check if moving a chip out of the current position splits the hive
-    fn hive_break_check(&self, current_position: &(i8, i8, i8)) -> bool {
+    fn hive_break_check(&self, current_position: &(i8, i8, i8), destination: &(i8, i8, i8)) -> bool {
         
         // TODO: I'M DOING THIS WRONG
+        // Instead need to start anywhere, check neigbours, add new neighbours to a queue, check their neighbours
+        // have a seperate hash set to keep the neighbours, and one (vector?) to delete them from
+        // the new bit is this queue that gets popped.
+        // add to the queue if it doesn't appear in the hashset already
+
 
 
         // To achieve this, we need to do some connected component labelling.
@@ -188,51 +193,51 @@ where
         // More info: https://en.wikipedia.org/wiki/Connected-component_labeling?oldformat=true#Pseudocode_for_the_one-component-at-a-time_algorithm
 
         // Create an empty hash set to store the locations of all chips on the board that neighbour at least one other chip
-        // Why use a hash set? Because hash sets can't store duplicates: even if a chip neighbours several other chips, it only appears once in the hash set record
+        // Hash sets can't store duplicates, which is ideal for this task
         let mut store: HashSet<(i8, i8, i8)> = HashSet::new();
 
         // Get the positions of chips on the board as a flat sorted vector (i.e. raster scan the board)
         let mut flat_vec = self.rasterscan_board();
 
-        // Remove the chip at our "current_position" from our flat vector. This simulates moving the chip somewhere else.
-        // I've thought about it for  whole 3 minutes, and I think there is no situation in which a hive can be broken and reconnected on the same turn.
-        // If I'm wrong then we'll need to pass this function a destination hex and add it in
-        flat_vec.retain(|&p| p != *current_position);
+        // Remove the chip at our "current_position" from our flat vector, and instead add it to the destination.
+        // This simulates moving the chip somewhere else.
+        flat_vec.retain(|&p| p != *current_position);   // remove
+        flat_vec.push(*destination);                                  // add
 
+        // may as well start scanning at the destination, it's as good as anywhere
+        let mut queue = vec![*destination];
+        
+        // Keep searching for neighbours until the queue is empty
+        loop{
+            match queue.pop() {
+                Some(position) => {
+                    // Get the co-ordinates of neighbouring hexes
+                    let neighbour_hexes = self.coord.neighbour_tiles(position);
+                    // let neighbour_vec = neighbour_hexes.into_iter().collect::<Vec<(i8, i8, i8)>>(); // is this pointless?
 
-        // For each element in the raster scan
-        for position in flat_vec.clone() {
-
-
-            // Add yourself in???
-            //store.insert(position);
-            //println!("I've added myself at {:?}", position);
-            
-            // Get the co-ordinates of neighbouring hexes as a vector
-            //let neighbour_hexes = Board::neighbour_tiles(position);
-            let neighbour_hexes = self.coord.neighbour_tiles(position);
-            let neighbour_vec = neighbour_hexes.into_iter().collect::<Vec<(i8, i8, i8)>>();
-
-
-            // If any of these neighbouring hex co-ordinates also appear in the remaining elements of the raster scan, it means they're a neighbouring chip
-            // We'll store all neighbouring chip co-ordinates in that "store" hashset that we defined earlier
-            for elem in neighbour_vec.iter() {
-                for elem2 in flat_vec.clone().iter() {
-                    if elem == elem2 {
-                        store.insert(*elem2);
+                    // If any of these neighbouring hex co-ordinates also appear in the flat_vec, it means they're a neighbouring chip
+                    // If they're a new entry, add them to the queue and the hashset, otherwise ignore them and move on
+                    for elem in neighbour_hexes.iter() {
+                        for elem2 in flat_vec.clone().iter() {
+                            if (elem == elem2) & (!store.contains(elem2)) {
+                                
+                                store.insert(*elem2);   // add the neighbour to the hashset                                
+                                queue.push(*elem2);     // add it to the queue
+                            }
+                        }
                     }
-                }
+
+
+                },
+                None => break,
             }
-
-            // We're done with checking this chip's neighbours, so delete it from the raster scan queue and move on to the next element
-            flat_vec.retain(|&p| p != position);
         }
-
+        
         println!("The final store is {:?}", store);
 
-        // The number of items stored should be all of the chips on the board minus the one we're moving
-        store.len() != self.rasterscan_board().len() - 1
-    }
+        // The number of items stored should be all of the chips on the board
+        store.len() != self.rasterscan_board().len()
+}
 
     // Raster scan all chips on the board and returns their positions as a flat vector
     pub fn rasterscan_board(&self) -> Vec<(i8, i8, i8)> {
