@@ -361,3 +361,15 @@ fn cube_ant_squeeze() {
     );
 
 }
+
+#[test]
+fn cube_hex_distance(){
+
+    // Make sure the hex distance calc is working
+    let board = Board::test_board(Cube);
+
+    let pos1 = (0,0,0);
+    let pos2 = (-3,2,1);
+
+    assert_eq!(3, board.coord.hex_distance(pos1, pos2));
+}

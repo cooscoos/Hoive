@@ -13,11 +13,17 @@ fn vector_sqsum(a: &(i8, i8, i8)) -> u32 {
         .unwrap()
 }
 
+// Manhattan distance (sum of abs of each component)
+fn manhattan(a: &(i8, i8, i8)) -> u32 {
+    ((a.0).abs() + (a.1).abs() + (a.2).abs()).try_into().unwrap()
+}
+
 // Hex coordinate systems we define need to have the following methods
 pub trait Coord {
     fn neighbour_tiles(&self, position: (i8, i8, i8)) -> [(i8, i8, i8); 6]; // a list of 6 neighbouring tiles
     fn raster_scan(&self, flat_vec: &mut Vec<(i8, i8, i8)>); // a method to logically raster scan through each tile
     fn centroid_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> f32; // calculate centroid distance between two hexes
+    fn hex_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> u32; // calculate distance between two hexes
     fn mapto_doubleheight(&self, hex: (i8, i8, i8)) -> (i8, i8); // convert to and from doubleheight co-ords for the ascii renderer
     fn mapfrom_doubleheight(&self, hex: (i8, i8)) -> (i8, i8, i8);
 }
@@ -49,6 +55,12 @@ impl Coord for Cube {
         // This gives a top to bottom, right to left scan
         flat_vec
             .sort_by(|(q1, r1, s1), (q2, r2, s2)| (r1, s2, q2).partial_cmp(&(r2, s1, q1)).unwrap());
+    }
+
+    fn hex_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> u32 {
+        let vector_distance = vector_subtract(&hex1, &hex2);
+        // Get absolute sum of each component divided by 2
+        manhattan(&vector_distance)/2
     }
 
     // Get centroid distance between two hexes
@@ -94,6 +106,10 @@ impl Coord for Hecs {
             (1 - a, r + a, c - (1 - a)),
             (1 - a, r + a, c + a),
         ]
+    }
+
+    fn hex_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> u32 {
+        !unimplemented!();
     }
 
     // Sort flat vector of co-ordinates (a,r,c) in raster scan order:
