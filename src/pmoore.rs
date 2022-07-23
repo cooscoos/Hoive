@@ -166,6 +166,9 @@ pub fn try_move<T: Coord>(
         MoveStatus::Unconnected => {
             println!("\n\x1b[31;1m<< Can't move your chip to an unconnected position  >>\x1b[0m\n")
         }
+        MoveStatus::SmallGap => {
+            println!("\n\x1b[31;1m<< Gap too small for this piece to move into  >>\x1b[0m\n")
+        }
     }
     move_status
 }

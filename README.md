@@ -5,17 +5,19 @@ The boardgame Hive, written in Rust.
 
 ### Tidy up
 
-Always -
+Always. Once everything is working I want to make this as efficient as it can be.
 
 #### morphops.rs, board.rs, game.rs
 
-* Functions are using a variety of vectors, HashSets, HashMaps, BTrees and sorting. Can we use and stick to one if converting between these is inefficient? Need to read up on memory usage.
-
+Functions are using a variety of vectors, HashSets, HashMaps, BTrees and sorting. Can we use and stick to one if converting between these is inefficient? Need to read up on memory usage.
 
 #### board.rs
 * modularise, maybe branch the rules out to another module
 * make methods compatible with non 3-coordinate systems
 
+#### tests
+
+Writing a test that does a conversion from X co-ord to cube successfully should be enough to show that the game can run in that new co-ordinate system
 
 
 ### Ant (and the ant squeeze rule)
