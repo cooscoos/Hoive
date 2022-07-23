@@ -12,11 +12,11 @@ use hoive::game::comps::{Chip, Team};
 #[test]
 fn test_doubleheight_converter() {
     //put down lots of chips in Cube co-ords
-    let mut board = Board::default(Cube);
-    pmoore::try_move(&mut board, "s1", Team::Black, (0, 0, 0)); // centre
-    pmoore::try_move(&mut board, "s1", Team::White, (-1, 1, 0)); // down and left
-    pmoore::try_move(&mut board, "s2", Team::Black, (1, -1, 0)); // up and right
-    pmoore::try_move(&mut board, "s3", Team::Black, (1, -2, 1)); // up from that
+    let mut board = Board::test_board(Cube);
+    pmoore::try_move(&mut board, "a1", Team::Black, (0, 0, 0)); // centre
+    pmoore::try_move(&mut board, "a1", Team::White, (-1, 1, 0)); // down and left
+    pmoore::try_move(&mut board, "a2", Team::Black, (1, -1, 0)); // up and right
+    pmoore::try_move(&mut board, "a3", Team::Black, (1, -2, 1)); // up from that
 
     // We'll test if the program parses this to a doubleheight coordinate HashMap correctly
     let dheight_hashmap = board.to_dheight(5);
@@ -39,7 +39,7 @@ fn test_doubleheight_converter() {
     expected_map.insert(
         (0, 0),
         Chip {
-            name: "s1",
+            name: "a1",
             //animal: Animal::Spider,
             team: Team::Black,
         },
@@ -47,7 +47,7 @@ fn test_doubleheight_converter() {
     expected_map.insert(
         (-1, 1),
         Chip {
-            name: "s1",
+            name: "a1",
             //animal: Animal::Spider,
             team: Team::White,
         },
@@ -55,7 +55,7 @@ fn test_doubleheight_converter() {
     expected_map.insert(
         (1, -1),
         Chip {
-            name: "s2",
+            name: "a2",
             //animal: Animal::Spider,
             team: Team::Black,
         },
@@ -63,7 +63,7 @@ fn test_doubleheight_converter() {
     expected_map.insert(
         (1, -3),
         Chip {
-            name: "s3",
+            name: "a3",
             //animal: Animal::Spider,
             team: Team::Black,
         },
@@ -79,10 +79,10 @@ fn test_doubleheight_converter() {
 #[test]
 fn test_parseout() {
     //put down lots of chips in Cube co-ords
-    let mut board = Board::default(Cube);
-    pmoore::try_move(&mut board, "s1", Team::Black, (0, 0, 0)); // centre
-    pmoore::try_move(&mut board, "s1", Team::White, (-1, 1, 0)); // down and left
-    pmoore::try_move(&mut board, "s2", Team::Black, (1, -1, 0)); // up and right
+    let mut board = Board::test_board(Cube);
+    pmoore::try_move(&mut board, "a1", Team::Black, (0, 0, 0)); // centre
+    pmoore::try_move(&mut board, "a1", Team::White, (-1, 1, 0)); // down and left
+    pmoore::try_move(&mut board, "a2", Team::Black, (1, -1, 0)); // up and right
 
     // Size of the board
     let size = 3;

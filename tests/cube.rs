@@ -9,70 +9,70 @@ mod basic;
 
 #[test]
 fn cube_first_turn() {
-    basic::first_turn(&mut Board::default(Cube));
+    basic::first_turn(&mut Board::test_board(Cube));
 }
 
 #[test]
 fn cube_occupied() {
-    basic::occupied(&mut Board::default(Cube));
+    basic::occupied(&mut Board::test_board(Cube));
 }
 
 #[test]
 fn cube_to_the_moon() {
-    basic::to_the_moon(&mut Board::default(Cube));
+    basic::to_the_moon(&mut Board::test_board(Cube));
 }
 
 // These tests are hecs specific
 #[test]
 fn cube_second_turn_neighbour() {
     // Place a white chip next to a black chip but on the second turn (should be okay)
-    let mut board = Board::default(Cube);
-    pmoore::try_move(&mut board, "s1", Team::Black, (0, 0, 0));
+    let mut board = Board::test_board(Cube);
+    pmoore::try_move(&mut board, "a1", Team::Black, (0, 0, 0));
     assert_eq!(
         MoveStatus::Success,
-        pmoore::try_move(&mut board, "s1", Team::White, (1, 0, -1))
+        pmoore::try_move(&mut board, "a1", Team::White, (1, 0, -1))
     );
 }
 
 #[test]
 fn cube_third_turn_badneighbour() {
     // Place a white chip next to a black chip on the third turn (that's illegal)
-    let mut board = Board::default(Cube);
-    pmoore::try_move(&mut board, "s1", Team::Black, (0, 0, 0));
-    pmoore::try_move(&mut board, "s1", Team::White, (1, 0, -1));
+    let mut board = Board::test_board(Cube);
+    pmoore::try_move(&mut board, "a1", Team::Black, (0, 0, 0));
+    pmoore::try_move(&mut board, "a1", Team::White, (1, 0, -1));
     assert_eq!(
         MoveStatus::BadNeighbour,
-        pmoore::try_move(&mut board, "s2", Team::White, (-1, 0, 1))
+        pmoore::try_move(&mut board, "a2", Team::White, (-1, 0, 1))
     );
 }
 
 #[test]
 fn cube_fifth_turn_badneighbour() {
     // Do a bunch of legal stuff with a BadNeighbour move at the end
-    let mut board = Board::default(Cube);
-    pmoore::try_move(&mut board, "s1", Team::Black, (0, 0, 0));
-    pmoore::try_move(&mut board, "s1", Team::White, (0, -1, 1));
-    pmoore::try_move(&mut board, "s2", Team::Black, (0, 1, -1));
-    pmoore::try_move(&mut board, "s2", Team::White, (0, -2, 2));
+    let mut board = Board::test_board(Cube);
+    pmoore::try_move(&mut board, "a1", Team::Black, (0, 0, 0));
+    pmoore::try_move(&mut board, "a1", Team::White, (0, -1, 1));
+    pmoore::try_move(&mut board, "a2", Team::Black, (0, 1, -1));
+    pmoore::try_move(&mut board, "a2", Team::White, (0, -2, 2));
 
     assert_eq!(
         MoveStatus::BadNeighbour,
-        pmoore::try_move(&mut board, "s3", Team::Black, (1, -3, 2))
+        pmoore::try_move(&mut board, "a3", Team::Black, (1, -3, 2))
     );
 }
 
 #[test]
 fn cube_split_hive() {
     // Put down four chips and then split the hive by moving a black spider from the middle
-    let mut board = Board::default(Cube);
-    pmoore::try_move(&mut board, "s1", Team::Black, (0, 0, 0));
-    pmoore::try_move(&mut board, "s1", Team::White, (0, -1, 1));
-    pmoore::try_move(&mut board, "s2", Team::Black, (0, 1, -1));
-    pmoore::try_move(&mut board, "s2", Team::White, (0, -2, 2));
+    let mut board = Board::test_board(Cube);
+    pmoore::try_move(&mut board, "a1", Team::Black, (0, 0, 0));
+    pmoore::try_move(&mut board, "a1", Team::White, (0, -1, 1));
+    pmoore::try_move(&mut board, "a2", Team::Black, (0, 1, -1));
+    pmoore::try_move(&mut board, "a2", Team::White, (0, -2, 2));
 
     assert_eq!(
         MoveStatus::HiveSplit,
-        pmoore::try_move(&mut board, "s1", Team::Black, (0, -3, 3))
+        pmoore::try_move(&mut board, "a1", Team::Black, (0, -3, 3))
     );
 }
 
@@ -80,42 +80,42 @@ fn cube_split_hive() {
 fn cube_attack() {
     // Put down lots of chips and then relocate a black next to black after turn 6
     // We haven't coded logic for first bee placement allowing moves yet, so we'll need to rewrite this test then
-    let mut board = Board::default(Cube);
-    pmoore::try_move(&mut board, "s1", Team::Black, (0, 0, 0));
-    pmoore::try_move(&mut board, "s1", Team::White, (0, -1, 1));
-    pmoore::try_move(&mut board, "s1", Team::Black, (0, 1, -1));
-    pmoore::try_move(&mut board, "s2", Team::White, (1, -2, 1));
-    pmoore::try_move(&mut board, "s1", Team::Black, (1, 1, -2));
-    pmoore::try_move(&mut board, "s3", Team::White, (0, -2, 2));
+    let mut board = Board::test_board(Cube);
+    pmoore::try_move(&mut board, "a1", Team::Black, (0, 0, 0));
+    pmoore::try_move(&mut board, "a1", Team::White, (0, -1, 1));
+    pmoore::try_move(&mut board, "a1", Team::Black, (0, 1, -1));
+    pmoore::try_move(&mut board, "a2", Team::White, (1, -2, 1));
+    pmoore::try_move(&mut board, "a1", Team::Black, (1, 1, -2));
+    pmoore::try_move(&mut board, "a3", Team::White, (0, -2, 2));
 
     assert_eq!(
         MoveStatus::Success,
-        pmoore::try_move(&mut board, "s1", Team::Black, (1, -3, 2))
+        pmoore::try_move(&mut board, "a1", Team::Black, (1, -3, 2))
     );
 }
 
 #[test]
 fn cube_nosplit_hive() {
     // Put down lots of chips and then do a move that doesn't split hive and is legal
-    let mut board = Board::default(Cube);
-    pmoore::try_move(&mut board, "s1", Team::Black, (0, 0, 0));
-    pmoore::try_move(&mut board, "s1", Team::White, (0, -1, 1));
-    pmoore::try_move(&mut board, "s1", Team::Black, (0, 1, -1));
-    pmoore::try_move(&mut board, "s2", Team::White, (1, -2, 1));
-    pmoore::try_move(&mut board, "s1", Team::Black, (1, 1, -2));
-    pmoore::try_move(&mut board, "s3", Team::White, (0, -2, 2));
-    pmoore::try_move(&mut board, "s1", Team::Black, (1, -3, 2));
+    let mut board = Board::test_board(Cube);
+    pmoore::try_move(&mut board, "a1", Team::Black, (0, 0, 0));
+    pmoore::try_move(&mut board, "a1", Team::White, (0, -1, 1));
+    pmoore::try_move(&mut board, "a1", Team::Black, (0, 1, -1));
+    pmoore::try_move(&mut board, "a2", Team::White, (1, -2, 1));
+    pmoore::try_move(&mut board, "a1", Team::Black, (1, 1, -2));
+    pmoore::try_move(&mut board, "a3", Team::White, (0, -2, 2));
+    pmoore::try_move(&mut board, "a1", Team::Black, (1, -3, 2));
 
     assert_eq!(
         MoveStatus::Success,
-        pmoore::try_move(&mut board, "s3", Team::White, (-1, -1, 2))
+        pmoore::try_move(&mut board, "a3", Team::White, (-1, -1, 2))
     );
 }
 
 #[test]
 fn cube_from_dheight_once() {
     // Convert from doubleheight to cube co-ordinates once
-    let board = Board::default(Cube);
+    let board = Board::test_board(Cube);
     let dheight = (0, -4);
 
     let cubehex = board.coord.mapfrom_doubleheight(dheight);
@@ -128,7 +128,7 @@ fn cube_from_dheight_complicated() {
     // Convert from doubleheight to cube co-ordinates a lot
 
     // Do a bunch of moves in dheight co-ords to simulate the game shownn in /reference/tests/bug1.png
-    let board = Board::default(Cube);
+    let board = Board::test_board(Cube);
     let moves_list: [(i8, i8); 8] = [
         (0, 0),
         (0, -2),
@@ -193,34 +193,34 @@ fn doubleheight_to_cube<T: Coord>(board: &mut Board<T>) -> Vec<(i8, i8, i8)> {
 #[test]
 fn cube_no_split_hive2() {
     // Put down chips in doubleheight co-ords and then do a move that doesn't split hive and is legal
-    let mut board = Board::default(Cube);
+    let mut board = Board::test_board(Cube);
     let hex_moves = doubleheight_to_cube(&mut board);
 
     // Apply these moves on the board
-    pmoore::try_move(&mut board, "s1", Team::White, hex_moves[0]);
-    pmoore::try_move(&mut board, "s1", Team::Black, hex_moves[1]);
+    pmoore::try_move(&mut board, "a1", Team::White, hex_moves[0]);
+    pmoore::try_move(&mut board, "a1", Team::Black, hex_moves[1]);
 
-    pmoore::try_move(&mut board, "s2", Team::White, hex_moves[2]);
-    pmoore::try_move(&mut board, "s2", Team::Black, hex_moves[3]);
+    pmoore::try_move(&mut board, "a2", Team::White, hex_moves[2]);
+    pmoore::try_move(&mut board, "a2", Team::Black, hex_moves[3]);
 
-    pmoore::try_move(&mut board, "s3", Team::White, hex_moves[4]);
-    pmoore::try_move(&mut board, "s3", Team::Black, hex_moves[5]);
+    pmoore::try_move(&mut board, "a3", Team::White, hex_moves[4]);
+    pmoore::try_move(&mut board, "a3", Team::Black, hex_moves[5]);
 
-    pmoore::try_move(&mut board, "s4", Team::White, hex_moves[6]);
-    pmoore::try_move(&mut board, "s4", Team::Black, hex_moves[7]);
+    pmoore::try_move(&mut board, "a4", Team::White, hex_moves[6]);
+    pmoore::try_move(&mut board, "a4", Team::Black, hex_moves[7]);
 
-    pmoore::try_move(&mut board, "s3", Team::White, hex_moves[8]);
+    pmoore::try_move(&mut board, "a3", Team::White, hex_moves[8]);
 
     assert_eq!(
         MoveStatus::Success,
-        pmoore::try_move(&mut board, "s3", Team::Black, hex_moves[9])
+        pmoore::try_move(&mut board, "a3", Team::Black, hex_moves[9])
     );
 }
 
 fn bug2_game_cube() -> Board<Cube> {
     // This function is called by a few subsequent tests
     // Run the game shown in /referenece/tests/bug2.png using cube co-ordinates
-    let mut board = Board::default(Cube);
+    let mut board = Board::test_board(Cube);
     let hex_moves: [(i8, i8, i8); 9] = [
         (0, 0, 0),
         (0, -1, 1),
@@ -234,19 +234,19 @@ fn bug2_game_cube() -> Board<Cube> {
     ];
 
     // Do these moves on the board
-    pmoore::try_move(&mut board, "s1", Team::White, hex_moves[0]);
-    pmoore::try_move(&mut board, "s1", Team::Black, hex_moves[1]);
+    pmoore::try_move(&mut board, "a1", Team::White, hex_moves[0]);
+    pmoore::try_move(&mut board, "a1", Team::Black, hex_moves[1]);
 
-    pmoore::try_move(&mut board, "s2", Team::White, hex_moves[2]);
-    pmoore::try_move(&mut board, "s2", Team::Black, hex_moves[3]);
+    pmoore::try_move(&mut board, "a2", Team::White, hex_moves[2]);
+    pmoore::try_move(&mut board, "a2", Team::Black, hex_moves[3]);
 
-    pmoore::try_move(&mut board, "s3", Team::White, hex_moves[4]);
-    pmoore::try_move(&mut board, "s3", Team::Black, hex_moves[5]);
+    pmoore::try_move(&mut board, "a3", Team::White, hex_moves[4]);
+    pmoore::try_move(&mut board, "a3", Team::Black, hex_moves[5]);
 
-    pmoore::try_move(&mut board, "s4", Team::White, hex_moves[6]);
-    pmoore::try_move(&mut board, "s4", Team::Black, hex_moves[7]);
+    pmoore::try_move(&mut board, "a4", Team::White, hex_moves[6]);
+    pmoore::try_move(&mut board, "a4", Team::Black, hex_moves[7]);
 
-    pmoore::try_move(&mut board, "s3", Team::White, hex_moves[8]);
+    pmoore::try_move(&mut board, "a3", Team::White, hex_moves[8]);
 
     board
 }
@@ -282,7 +282,7 @@ fn cube_no_split_hive3() {
 
     assert_eq!(
         MoveStatus::Success,
-        pmoore::try_move(&mut snapshot, "s3", Team::Black, (0, 2, -2))
+        pmoore::try_move(&mut snapshot, "a3", Team::Black, (0, 2, -2))
     );
 }
 
@@ -310,4 +310,54 @@ fn cube_from_doubleheight() {
     let hex = (-1, 1); // down and left from the origin in doubleheight coords
 
     assert_eq!((-1, 1, 0), coord_sys.mapfrom_doubleheight(hex));
+}
+
+#[test]
+fn cube_ant_squeeze() {
+    // Set up the board as shown in /reference/tests/ant_squeeze.jpeg, but with all ants
+    // Try and move into the small gap, should be illegal
+    let mut board = Board::test_board(Cube);
+
+    // In doubleheight
+    let moves_list: Vec<(i8,i8)> = vec![
+        // Placement of two white pieces and a black
+        (-2,4), // wa2
+        (-2,2), // ba1
+        (-1,5), // wa1
+        // Placement of remaining black pieces
+        (-2,0),
+        (-2,-2),
+        (-1,-3),
+        (0,-2),
+        (1,-1),
+        (1,1),
+        (0,2),
+        // movement of wa1 into the small gap
+        (-1,1),
+    ];
+
+    // Convert to cube
+    let hex_moves = moves_list
+    .iter()
+    .map(|xy| board.coord.mapfrom_doubleheight(*xy))
+    .collect::<Vec<(i8, i8, i8)>>();
+
+
+    pmoore::try_move(&mut board, "a2", Team::White, hex_moves[0]);
+    pmoore::try_move(&mut board, "a1", Team::Black, hex_moves[1]);
+    pmoore::try_move(&mut board, "a1", Team::White, hex_moves[2]);
+    pmoore::try_move(&mut board, "a2", Team::Black, hex_moves[3]);
+    pmoore::try_move(&mut board, "a3", Team::Black, hex_moves[4]);
+    pmoore::try_move(&mut board, "a4", Team::Black, hex_moves[5]);
+    pmoore::try_move(&mut board, "a5", Team::Black, hex_moves[6]);
+    pmoore::try_move(&mut board, "a6", Team::Black, hex_moves[7]);
+    pmoore::try_move(&mut board, "a7", Team::Black, hex_moves[8]);
+    pmoore::try_move(&mut board, "a8", Team::Black, hex_moves[9]);
+
+    // Now try move a1 into a small gap
+    assert_eq!(
+        MoveStatus::SmallGap,
+        pmoore::try_move(&mut board, "a1", Team::White, hex_moves[10])
+    );
+
 }
