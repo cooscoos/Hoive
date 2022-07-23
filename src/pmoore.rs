@@ -33,7 +33,6 @@ The boardgame Hive, in Rust.
 
 // The game loop
 pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) {
-
     let active_team = match board.turns % 2 {
         0 => first,
         _ => other_team(first),
@@ -65,16 +64,13 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) {
 
     // Try execute the move, if it works then show the board. The function try_move will increment the turn itself if move=success
     match try_move(board, chip_name, active_team, game_hex) {
-        MoveStatus::Success =>     println!("{}\n", draw::show_board(board, 5)),
+        MoveStatus::Success => println!("{}\n", draw::show_board(board, 5)),
         _ => (),
     }
-    
-
 }
 
 // Return the str of the chip if it matches the query
 fn match_chip<T: Coord>(board: &Board<T>, team: Team, name: String) -> Option<&'static str> {
-
     // Filter out the chips that belong to a given
     let list = board
         .chips
@@ -158,10 +154,18 @@ pub fn try_move<T: Coord>(
             println!("Chip move was successful.");
             board.turns += 1;
         }
-        MoveStatus::BadNeighbour => println!("\n\x1b[31;1m<< Can't place a new chip next to other team >>\x1b[0m\n"),
-        MoveStatus::HiveSplit => println!("\n\x1b[31;1m<< No: this move would split the hive in two >>\x1b[0m\n"),
-        MoveStatus::Occupied => println!("\n\x1b[31;1m<< Can't move this chip to an occupied position >>\x1b[0m\n"),
-        MoveStatus::Unconnected => println!("\n\x1b[31;1m<< Can't move your chip to an unconnected position  >>\x1b[0m\n"),
+        MoveStatus::BadNeighbour => {
+            println!("\n\x1b[31;1m<< Can't place a new chip next to other team >>\x1b[0m\n")
+        }
+        MoveStatus::HiveSplit => {
+            println!("\n\x1b[31;1m<< No: this move would split the hive in two >>\x1b[0m\n")
+        }
+        MoveStatus::Occupied => {
+            println!("\n\x1b[31;1m<< Can't move this chip to an occupied position >>\x1b[0m\n")
+        }
+        MoveStatus::Unconnected => {
+            println!("\n\x1b[31;1m<< Can't move your chip to an unconnected position  >>\x1b[0m\n")
+        }
     }
     move_status
 }

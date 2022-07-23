@@ -169,7 +169,7 @@ where
         // check constraint2 first because all unconnected moves are also hive splits, and we want to return useful error messages
         if constraint2 {
             MoveStatus::Unconnected
-        } else if constraint1 { 
+        } else if constraint1 {
             MoveStatus::HiveSplit
         } else {
             self.chips.insert(chip, Some(destination)); // Overwrite the chip's position in the HashMap
@@ -177,10 +177,12 @@ where
         }
     }
 
-
     // Check if moving a chip out of the current position splits the hive
-    fn hive_break_check(&self, current_position: &(i8, i8, i8), destination: &(i8, i8, i8)) -> bool {
-        
+    fn hive_break_check(
+        &self,
+        current_position: &(i8, i8, i8),
+        destination: &(i8, i8, i8),
+    ) -> bool {
         // To achieve this, we need to do some connected component labelling.
         // A "one-component-at-a-time" algorithm is one of the simplest ways to find connected components in a grid.
         // More info: https://en.wikipedia.org/wiki/Connected-component_labeling?oldformat=true#Pseudocode_for_the_one-component-at-a-time_algorithm
@@ -192,17 +194,16 @@ where
         let mut flat_vec = self.rasterscan_board();
 
         // Remove chip at our "current_position", and add to destination to simulate its move.
-        flat_vec.retain(|&p| p != *current_position);   // remove
-        flat_vec.push(*destination);                                  // add
+        flat_vec.retain(|&p| p != *current_position); // remove
+        flat_vec.push(*destination); // add
 
         // The destination hex is as good a place as anywhere to start connected component labelling
         let mut queue = vec![*destination];
-        
+
         // Keep searching for neighbours until the queue is empty
-        loop{
+        loop {
             match queue.pop() {
                 Some(position) => {
-                    
                     // Pop an element out of the queue and get the co-ordinates of neighbouring hexes
                     let neighbour_hexes = self.coord.neighbour_tiles(position);
 
@@ -212,24 +213,23 @@ where
                     for elem in neighbour_hexes.iter() {
                         for elem2 in flat_vec.clone().iter() {
                             if (elem == elem2) & (!store.contains(elem2)) {
-                                store.insert(*elem2);   // add the neighbour to the hashset                                
-                                queue.push(*elem2);     // also add it to the queue
+                                store.insert(*elem2); // add the neighbour to the hashset
+                                queue.push(*elem2); // also add it to the queue
                             }
                         }
                     }
-                },
-                None => break,  // stop labelling if the queue is empty
+                }
+                None => break, // stop labelling if the queue is empty
             }
         }
-        
+
         // The number of items stored should be all of the chips on the board.
         // If it's not then the move has created two hives, which is illegal.
         store.len() != self.rasterscan_board().len()
-}
+    }
 
     // Raster scan all chips on the board and returns their positions as a flat vector
     pub fn rasterscan_board(&self) -> Vec<(i8, i8, i8)> {
-        
         //TODO: Could this just call fn get_placed??
         // Flatten the board's HashMap into a vector that only counts chips on the board (i.e. p.is_some())
         let mut flat_vec = self

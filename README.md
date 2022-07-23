@@ -3,16 +3,11 @@ The boardgame Hive, written in Rust.
 
 ## To do
 
-### Bugs
-
-This move should be legal on white player's turn but is getting reported as a hive split.
-![legal move](/reference/bug.png "legal move bug")
-
-
-I've discovered the issue is a bug in hive_break_check. My connected component labelling method isn't robust. Probably doing it wrong. Implement properly. Once it passes the new tests I've written, it'll be good.
-
-
 ### Tidy up
+
+#### tests
+
+tests are messy, tidy them
 
 #### morphops.rs, board.rs, game.rs
 
