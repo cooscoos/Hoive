@@ -5,8 +5,7 @@ The boardgame Hive, written in Rust.
 
 ### Spider and bee
 
-* Prohibit player movement of existing chips before bee is placed
-* Ensure bee is played on or before player's turn 3 (i.e. if turn N for first_player or N+ for not first_player, check if bee's position is None. If it is, then must play bee)
+* Have to place bee by turn 5, prohibit player movement of existing chips before bee is placed
 * Code a win state if opponent's bee has 6 neighbours at the end of your turn
 * Write tests for the above
 

@@ -4,14 +4,14 @@ use hoive::game::comps::Team;
 use hoive::maths::{coord::Coord, coord::Cube};
 use hoive::pmoore;
 
-mod readyboards;
-use readyboards::snapshot_2;
+mod game_snapshots;
+use game_snapshots::game_snapshot_2;
 
 
 #[test]
 fn spider_move_ok() {
     // Try move a spider 3 spaces (okay).
-    let mut board = snapshot_2();
+    let mut board = game_snapshot_2();
 
     // Place a spider down at (0,2)
     let placement = board.coord.mapfrom_doubleheight((0,2));
@@ -33,7 +33,7 @@ fn spider_move_ok() {
 #[test]
 fn spider_move_toofar() {
     // Try move a spider 4 spaces (too far).
-    let mut board = snapshot_2();
+    let mut board = game_snapshot_2();
 
     // Place a spider down at (0,2)
     let placement = board.coord.mapfrom_doubleheight((0,2));

@@ -7,6 +7,10 @@ use hoive::pmoore;
 // basic tests that work with all co-ordinate systems
 mod basic;
 
+// Half played games of Hive
+mod game_snapshots;
+use game_snapshots::game_snapshot_1;
+
 #[test]
 fn cube_first_turn() {
     basic::first_turn(&mut Board::test_board(Cube));
@@ -50,8 +54,8 @@ fn cube_third_turn_badneighbour() {
 fn cube_fifth_turn_badneighbour() {
     // Do a bunch of legal stuff with a BadNeighbour move at the end
     let mut board = Board::test_board(Cube);
-    pmoore::try_move(&mut board, "a1", Team::Black, (0, 0, 0));
-    pmoore::try_move(&mut board, "a1", Team::White, (0, -1, 1));
+    pmoore::try_move(&mut board, "q1", Team::Black, (0, 0, 0));
+    pmoore::try_move(&mut board, "q1", Team::White, (0, -1, 1));
     pmoore::try_move(&mut board, "a2", Team::Black, (0, 1, -1));
     pmoore::try_move(&mut board, "a2", Team::White, (0, -2, 2));
 
@@ -63,11 +67,11 @@ fn cube_fifth_turn_badneighbour() {
 
 #[test]
 fn cube_split_hive() {
-    // Put down four chips and then split the hive by moving a black spider from the middle
+    // Put down four chips and then split the hive by moving a black chip from the middle
     let mut board = Board::test_board(Cube);
     pmoore::try_move(&mut board, "a1", Team::Black, (0, 0, 0));
-    pmoore::try_move(&mut board, "a1", Team::White, (0, -1, 1));
-    pmoore::try_move(&mut board, "a2", Team::Black, (0, 1, -1));
+    pmoore::try_move(&mut board, "q1", Team::White, (0, -1, 1));
+    pmoore::try_move(&mut board, "q1", Team::Black, (0, 1, -1));
     pmoore::try_move(&mut board, "a2", Team::White, (0, -2, 2));
 
     assert_eq!(
@@ -78,11 +82,10 @@ fn cube_split_hive() {
 
 #[test]
 fn cube_attack() {
-    // Put down lots of chips and then relocate a black next to black after turn 6
-    // We haven't coded logic for first bee placement allowing moves yet, so we'll need to rewrite this test then
+    // Put down chips and then move them about a lot
     let mut board = Board::test_board(Cube);
-    pmoore::try_move(&mut board, "a1", Team::Black, (0, 0, 0));
-    pmoore::try_move(&mut board, "a1", Team::White, (0, -1, 1));
+    pmoore::try_move(&mut board, "q1", Team::Black, (0, 0, 0));
+    pmoore::try_move(&mut board, "q1", Team::White, (0, -1, 1));
     pmoore::try_move(&mut board, "a1", Team::Black, (0, 1, -1));
     pmoore::try_move(&mut board, "a2", Team::White, (1, -2, 1));
     pmoore::try_move(&mut board, "a1", Team::Black, (1, 1, -2));
@@ -98,8 +101,8 @@ fn cube_attack() {
 fn cube_nosplit_hive() {
     // Put down lots of chips and then do a move that doesn't split hive and is legal
     let mut board = Board::test_board(Cube);
-    pmoore::try_move(&mut board, "a1", Team::Black, (0, 0, 0));
-    pmoore::try_move(&mut board, "a1", Team::White, (0, -1, 1));
+    pmoore::try_move(&mut board, "q1", Team::Black, (0, 0, 0));
+    pmoore::try_move(&mut board, "q1", Team::White, (0, -1, 1));
     pmoore::try_move(&mut board, "a1", Team::Black, (0, 1, -1));
     pmoore::try_move(&mut board, "a2", Team::White, (1, -2, 1));
     pmoore::try_move(&mut board, "a1", Team::Black, (1, 1, -2));
@@ -197,8 +200,8 @@ fn cube_no_split_hive2() {
     let hex_moves = doubleheight_to_cube(&mut board);
 
     // Apply these moves on the board
-    pmoore::try_move(&mut board, "a1", Team::White, hex_moves[0]);
-    pmoore::try_move(&mut board, "a1", Team::Black, hex_moves[1]);
+    pmoore::try_move(&mut board, "q1", Team::White, hex_moves[0]);
+    pmoore::try_move(&mut board, "q1", Team::Black, hex_moves[1]);
 
     pmoore::try_move(&mut board, "a2", Team::White, hex_moves[2]);
     pmoore::try_move(&mut board, "a2", Team::Black, hex_moves[3]);
@@ -217,45 +220,12 @@ fn cube_no_split_hive2() {
     );
 }
 
-fn bug2_game_cube() -> Board<Cube> {
-    // This function is called by a few subsequent tests
-    // Run the game shown in /referenece/tests/bug2.png using cube co-ordinates
-    let mut board = Board::test_board(Cube);
-    let hex_moves: [(i8, i8, i8); 9] = [
-        (0, 0, 0),
-        (0, -1, 1),
-        (1, 0, -1),
-        (1, -2, 1),
-        (-1, 1, 0),
-        (-1, -1, 2),
-        (0, 1, -1),
-        (0, -2, 2),
-        (2, -3, 1),
-    ];
-
-    // Do these moves on the board
-    pmoore::try_move(&mut board, "a1", Team::White, hex_moves[0]);
-    pmoore::try_move(&mut board, "a1", Team::Black, hex_moves[1]);
-
-    pmoore::try_move(&mut board, "a2", Team::White, hex_moves[2]);
-    pmoore::try_move(&mut board, "a2", Team::Black, hex_moves[3]);
-
-    pmoore::try_move(&mut board, "a3", Team::White, hex_moves[4]);
-    pmoore::try_move(&mut board, "a3", Team::Black, hex_moves[5]);
-
-    pmoore::try_move(&mut board, "a4", Team::White, hex_moves[6]);
-    pmoore::try_move(&mut board, "a4", Team::Black, hex_moves[7]);
-
-    pmoore::try_move(&mut board, "a3", Team::White, hex_moves[8]);
-
-    board
-}
 
 #[test]
 fn cube_check_rasterscan_order() {
     // Make sure raster scan is behaving properly
     // Do a /referenece/tests/bug2.png game
-    let snapshot = bug2_game_cube();
+    let snapshot = game_snapshot_1();
 
     // Get a raster scan of this game
     let code_raster = snapshot.rasterscan_board();
@@ -278,7 +248,7 @@ fn cube_check_rasterscan_order() {
 #[test]
 fn cube_no_split_hive3() {
     // Run the /reference/tests/bug2.png game and do a legal move
-    let mut snapshot = bug2_game_cube();
+    let mut snapshot = game_snapshot_1();
 
     assert_eq!(
         MoveStatus::Success,
@@ -314,17 +284,17 @@ fn cube_from_doubleheight() {
 
 #[test]
 fn cube_ant_squeeze() {
-    // Set up the board as shown in /reference/tests/ant_squeeze.jpeg, but with all ants
+    // Set up the board as shown in /reference/tests/ant_squeeze.jpeg, but with all ants (and one bee)
     // Try and move into the small gap, should be illegal
     let mut board = Board::test_board(Cube);
 
     // In doubleheight
     let moves_list: Vec<(i8, i8)> = vec![
         // Placement of two white pieces and a black
-        (-2, 4), // wa2
-        (-2, 2), // ba1
+        (-2, 4), // wq1 place queen bees first
+        (-2, 2), // bq1
         (-1, 5), // wa1
-        // Placement of remaining black pieces
+        // Placement of remaining black pieces (all ants)
         (-2, 0),
         (-2, -2),
         (-1, -3),
@@ -342,8 +312,8 @@ fn cube_ant_squeeze() {
         .map(|xy| board.coord.mapfrom_doubleheight(*xy))
         .collect::<Vec<(i8, i8, i8)>>();
 
-    pmoore::try_move(&mut board, "a2", Team::White, hex_moves[0]);
-    pmoore::try_move(&mut board, "a1", Team::Black, hex_moves[1]);
+    pmoore::try_move(&mut board, "q1", Team::White, hex_moves[0]);
+    pmoore::try_move(&mut board, "q1", Team::Black, hex_moves[1]);
     pmoore::try_move(&mut board, "a1", Team::White, hex_moves[2]);
     pmoore::try_move(&mut board, "a2", Team::Black, hex_moves[3]);
     pmoore::try_move(&mut board, "a3", Team::Black, hex_moves[4]);

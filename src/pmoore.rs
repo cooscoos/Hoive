@@ -172,6 +172,12 @@ pub fn try_move<T: Coord>(
         MoveStatus::TooFar(value) => {
             println!("\n\x1b[31;1m<< Too far: peice can only travel {value} spaces  >>\x1b[0m\n")
         }
+        MoveStatus::NoBee => {
+            println!("\n\x1b[31;1m<< Can't move existing chips until you've placed your bee  >>\x1b[0m\n")
+        }
+        MoveStatus::BeeNeed => {
+            println!("\n\x1b[31;1m<< It's your third turn, you must place your bee now  >>\x1b[0m\n")
+        }
     }
     move_status
 }
