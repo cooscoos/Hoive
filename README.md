@@ -11,8 +11,6 @@ Need to write a test for that then figure out how to make it pass.
 
 ### Tests for bee and win state
 
-
-
 Otherwise all coded up. Write tests for the below:
 * Have to place bee by turn 5, prohibit player movement of existing chips before bee is placed
 * Win state if opponent's bee has 6 neighbours at the end of your turn
