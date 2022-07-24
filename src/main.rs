@@ -1,4 +1,4 @@
-use hoive::game::board::Board;
+use hoive::game::board::{Board, MoveStatus};
 use hoive::pmoore;
 
 fn main() {
@@ -12,6 +12,10 @@ fn main() {
 
     // Game loop
     loop {
-        pmoore::take_turn(&mut board, first);
+        match pmoore::take_turn(&mut board, first) {
+            MoveStatus::Win(_) => break,        // end the game if a team won
+            _ => (),
+        };
     }
+    
 }

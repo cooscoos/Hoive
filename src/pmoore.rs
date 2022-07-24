@@ -32,7 +32,7 @@ The boardgame Hive, in Rust.
 }
 
 // The game loop
-pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) {
+pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
     let active_team = match board.turns % 2 {
         0 => first,
         _ => other_team(first),
@@ -55,7 +55,7 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) {
 
     // If the user wants to abort coord selecton and switch pieces, go back to the start
     let select_hex = match coord.unwrap().0 {
-        true => return (),
+        true => return MoveStatus::Nothing,
         false => (coord.unwrap().1, coord.unwrap().2),
     };
 
@@ -63,10 +63,20 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) {
     let game_hex = board.coord.mapfrom_doubleheight(select_hex);
 
     // Try execute the move, if it works then show the board. The function try_move will increment the turn itself if move=success
-    match try_move(board, chip_name, active_team, game_hex) {
+    let return_status = try_move(board, chip_name, active_team, game_hex);
+    
+    match return_status {
         MoveStatus::Success => println!("{}\n", draw::show_board(board, 5)),
+        MoveStatus::Win(team) => {
+            println!("{}\n", draw::show_board(board, 5));
+            let team_str = draw::team_string(team);
+            println!("\n << Team {team_str} wins. Well done!  >> \n");
+        }
         _ => (),
-    }
+    };
+
+    return_status
+
 }
 
 // Return the str of the chip if it matches the query
@@ -171,6 +181,20 @@ pub fn try_move<T: Coord>(
         }
         MoveStatus::TooFar(value) => {
             println!("\n\x1b[31;1m<< Too far: peice can only travel {value} spaces  >>\x1b[0m\n")
+        }
+        MoveStatus::NoBee => {
+            println!("\n\x1b[31;1m<< Can't move existing chips until you've placed your bee  >>\x1b[0m\n")
+        }
+        MoveStatus::BeeNeed => {
+            println!(
+                "\n\x1b[31;1m<< It's your third turn, you must place your bee now  >>\x1b[0m\n"
+            )
+        }
+        MoveStatus::Win(_) => {
+
+        }
+        MoveStatus::Nothing => {
+            
         }
     }
     move_status

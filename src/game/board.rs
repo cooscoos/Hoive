@@ -2,7 +2,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use super::comps::{Chip, Team};
+use super::comps::{other_team, Chip, Team};
 use crate::draw;
 use crate::maths::{coord::Coord, morphops}; // Coord trait applies to all hex co-ordinate systems
 
@@ -23,6 +23,14 @@ pub enum MoveStatus {
     // Following statuses are specific to animals / groups of animals
     SmallGap,    // gap is too small for an ant/spider/bee to access
     TooFar(u32), // too far for this animal to travel
+
+    // Following statuses are returned early game
+    NoBee,      // You can't move existing chips because not placed bee yet
+    BeeNeed,    // You need to place your bee on this turn
+
+    // Finally
+    Win(Team),        // You won the game
+    Nothing,    // You did nothing this turn
 }
 
 // The board struct is the game and all of its logic
@@ -63,7 +71,7 @@ where
         }
     }
 
-    // During tests we want lots of pieces that move freely, so give each team 8 ants
+    // During tests we want lots of pieces that move freely, so give each team 8 ants and one bee
     pub fn test_board(coord: T) -> Self {
         let chips: HashMap<Chip, Option<(i8, i8, i8)>> = HashMap::from([
             // Black team's chips
@@ -75,6 +83,7 @@ where
             (Chip::new("a6", Team::Black), None),
             (Chip::new("a7", Team::Black), None),
             (Chip::new("a8", Team::Black), None),
+            (Chip::new("q1", Team::Black), None),
             // White team's chips
             (Chip::new("a1", Team::White), None),
             (Chip::new("a2", Team::White), None),
@@ -84,6 +93,7 @@ where
             (Chip::new("a6", Team::White), None),
             (Chip::new("a7", Team::White), None),
             (Chip::new("a8", Team::White), None),
+            (Chip::new("q1", Team::White), None),
         ]);
 
         Board {
@@ -131,7 +141,7 @@ where
                     }
                     None => {
                         // chip's current position == None (player hand), so we must be placing it
-                        self.place_chip(chip_select, team, position)
+                        self.place_chip(chip_select, position)
                     }
                 }
             }
@@ -143,14 +153,28 @@ where
     }
 
     // Move chip from player's hand to the board at selected position (the destination)
-    fn place_chip(&mut self, chip: Chip, team: Team, destination: (i8, i8, i8)) -> MoveStatus {
+    fn place_chip(&mut self, chip: Chip, destination: (i8, i8, i8)) -> MoveStatus {
         // There are three constraints for placement of new chip:
+        // Constraint 0) team must have placed their bee (only need to check on players' turn 3, board turns 4 and 5)
         // Constraint 1) it can't be placed on top of another chip;
         // Constraint 2) it must have at least one neighbour (after turn 1);
         // Constraint 3) its neighbours must be on the same team (after turn 2).
 
+        let team = chip.team;
+
+        // If turn number is 4 or 5, if this player hasn't placed their bee and isn't trying to, throw a fit.
+        if (self.turns == 4) | (self.turns == 5) {
+            let placed_chips = self.get_placed_chips(team);
+            if !placed_chips.iter().any(|c| c.name == "q1") & (chip.name != "q1") {
+                return MoveStatus::BeeNeed;
+            }
+        }
+
         // Any chips already on board at the destination?
-        let constraint1 = self.get_placed().iter().any(|p| *p == destination);
+        let constraint1 = self
+            .get_placed_positions()
+            .iter()
+            .any(|p| *p == destination);
 
         // Get the (a,r,c) values of hexes neighbouring the destination
         //let neighbour_hex = Board::neighbour_tiles(destination);
@@ -189,13 +213,27 @@ where
         current_position: &(i8, i8, i8),
     ) -> MoveStatus {
         // Constraints for a relocation:
+        // Constraint 0) player must have placed their bee (only need to check prior to board turn 6)
         // Constraint 1) chip relocate cannot break the hive in two;
         // Constraint 2) chip must end up adjacent to other tiles
         // Constraint 3) chip can't end up on top of another chip (unless beetle, but we'll worry about this later...)
         // And then there are animal-specific constraints
 
+        let team = chip.team;
+
+        // If turn number is 5 or less, if this player hasn't placed their bee, they can't move pieces.
+        if self.turns <= 5 {
+            let placed_chips = self.get_placed_chips(team);
+            if !placed_chips.iter().any(|c| c.name == "q1") {
+                return MoveStatus::NoBee;
+            }
+        }
+
         // Any chips already on board at the destination?
-        let constraint1 = self.get_placed().iter().any(|p| *p == destination);
+        let constraint1 = self
+            .get_placed_positions()
+            .iter()
+            .any(|p| *p == destination);
 
         // Get hexes that neighbour the desired destination hex
         let neighbour_hex = self.coord.neighbour_tiles(destination);
@@ -222,8 +260,19 @@ where
         } else if constraint4 != MoveStatus::Success {
             constraint4
         } else {
+
+
             self.chips.insert(chip, Some(destination)); // Overwrite the chip's position in the HashMap
-            MoveStatus::Success
+
+            // Relocation of a peice could result in the game being won.
+            if self.bee_neighbours(other_team(team)) == 6{
+                MoveStatus::Win(team)               // does the opponent's bee have 6 neighbours?
+            } else if self.bee_neighbours(team) == 6 {
+                MoveStatus::Win(other_team(team))  // does my bee have 6 neighbours?!
+            } else {
+                MoveStatus::Success
+            }
+            
         }
     }
 
@@ -284,14 +333,14 @@ where
     pub fn rasterscan_board(&self) -> Vec<(i8, i8, i8)> {
         // TODO: Could this just call fn get_placed??
         // Flatten the board's HashMap into a vector that only counts chips on the board (i.e. p.is_some())
-        let mut flat_vec = self
-            .chips
-            .iter()
-            .filter(|(_, p)| p.is_some())
-            .map(|(_, p)| p.unwrap())
-            .collect::<Vec<(i8, i8, i8)>>();
+        // let mut flat_vec = self
+        //     .chips
+        //     .iter()
+        //     .filter(|(_, p)| p.is_some())
+        //     .map(|(_, p)| p.unwrap())
+        //     .collect::<Vec<(i8, i8, i8)>>();
 
-        let mut flat_vec = self.get_placed();
+        let mut flat_vec = self.get_placed_positions();
         // sort the vector in raster_scan order
         self.coord.raster_scan(&mut flat_vec);
 
@@ -364,8 +413,17 @@ where
     }
 
     // Get co-ordinates of all chips that are already placed on the board
-    pub fn get_placed(&self) -> Vec<(i8, i8, i8)> {
+    fn get_placed_positions(&self) -> Vec<(i8, i8, i8)> {
         self.chips.values().flatten().copied().collect()
+    }
+
+    // Get the chips that are already placed on the board by a given team
+    fn get_placed_chips(&self, team: Team) -> Vec<Chip> {
+        self.chips
+            .iter()
+            .filter(|(c, p)| (p.is_some()) & (c.team == team))
+            .map(|(c, _)| *c)
+            .collect()
     }
 
     // Get the Team enum of the chip at the given position. Return None if the hex is empty.
@@ -385,5 +443,38 @@ where
         self.chips
             .iter()
             .find_map(|(c, p)| if *p == Some(position) { Some(*c) } else { None })
+    }
+
+    // How many neighbours does this team's queen bee have?
+    fn bee_neighbours(&self, team: Team) -> usize {
+        let neighbours = self
+            .chips
+            .iter()
+            .filter(|(c, p)| (c.name == "q1") & (p.is_some()))
+            .map(|(_, p)| self.count_neighbours(p.unwrap()))
+            .collect::<Vec<usize>>();
+
+        neighbours[0]
+    }
+
+    fn count_neighbours(&self, position: (i8, i8, i8)) -> usize {
+        let mut store = HashSet::new();
+
+        // Get the co-ordinates of neighbouring hexes
+        let neighbour_hexes = self.coord.neighbour_tiles(position);
+
+        // If any of these neighbouring hex co-ordinates also appear in the board's list of chips, it means they're a neighbouring chip
+        let flat_vec = self.rasterscan_board();
+
+        // Add them to the hashset
+        for elem in neighbour_hexes.iter() {
+            for elem2 in flat_vec.clone().iter() {
+                if (elem == elem2) & (!store.contains(elem2)) {
+                    store.insert(*elem2); // add the neighbour to the hashset
+                }
+            }
+        }
+
+        store.len()
     }
 }
