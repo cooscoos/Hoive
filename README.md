@@ -24,6 +24,10 @@ This order seems sensible:
 
 Always. Once everything is working I want to make this as efficient as it can be.
 
+#### Non-existent hex in doubleheight
+
+Prevent player from choosing hexes which don't exist in pmoore (e.g. 0,-5). Could make megabugs.
+
 #### morphops.rs, board.rs, game.rs
 
 Functions are using a variety of vectors, HashSets, HashMaps, BTrees and sorting. Can we use and stick to one if converting between these is inefficient? Need to read up on memory usage.

@@ -15,7 +15,9 @@ fn vector_sqsum(a: &(i8, i8, i8)) -> u32 {
 
 // Manhattan distance (sum of abs of each component)
 fn manhattan(a: &(i8, i8, i8)) -> u32 {
-    ((a.0).abs() + (a.1).abs() + (a.2).abs()).try_into().unwrap()
+    ((a.0).abs() + (a.1).abs() + (a.2).abs())
+        .try_into()
+        .unwrap()
 }
 
 // Hex coordinate systems we define need to have the following methods
@@ -60,7 +62,7 @@ impl Coord for Cube {
     fn hex_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> u32 {
         let vector_distance = vector_subtract(&hex1, &hex2);
         // Get absolute sum of each component divided by 2
-        manhattan(&vector_distance)/2
+        manhattan(&vector_distance) / 2
     }
 
     // Get centroid distance between two hexes

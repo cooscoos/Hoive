@@ -178,7 +178,7 @@ fn doubleheight_to_cube<T: Coord>(board: &mut Board<T>) -> Vec<(i8, i8, i8)> {
         (0, 2),
         (0, -4),
         (2, -4),
-        (0,4),
+        (0, 4),
     ];
 
     // Map all of these to hex
@@ -319,29 +319,28 @@ fn cube_ant_squeeze() {
     let mut board = Board::test_board(Cube);
 
     // In doubleheight
-    let moves_list: Vec<(i8,i8)> = vec![
+    let moves_list: Vec<(i8, i8)> = vec![
         // Placement of two white pieces and a black
-        (-2,4), // wa2
-        (-2,2), // ba1
-        (-1,5), // wa1
+        (-2, 4), // wa2
+        (-2, 2), // ba1
+        (-1, 5), // wa1
         // Placement of remaining black pieces
-        (-2,0),
-        (-2,-2),
-        (-1,-3),
-        (0,-2),
-        (1,-1),
-        (1,1),
-        (0,2),
+        (-2, 0),
+        (-2, -2),
+        (-1, -3),
+        (0, -2),
+        (1, -1),
+        (1, 1),
+        (0, 2),
         // movement of wa1 into the small gap
-        (-1,1),
+        (-1, 1),
     ];
 
     // Convert to cube
     let hex_moves = moves_list
-    .iter()
-    .map(|xy| board.coord.mapfrom_doubleheight(*xy))
-    .collect::<Vec<(i8, i8, i8)>>();
-
+        .iter()
+        .map(|xy| board.coord.mapfrom_doubleheight(*xy))
+        .collect::<Vec<(i8, i8, i8)>>();
 
     pmoore::try_move(&mut board, "a2", Team::White, hex_moves[0]);
     pmoore::try_move(&mut board, "a1", Team::Black, hex_moves[1]);
@@ -359,17 +358,15 @@ fn cube_ant_squeeze() {
         MoveStatus::SmallGap,
         pmoore::try_move(&mut board, "a1", Team::White, hex_moves[10])
     );
-
 }
 
 #[test]
-fn cube_hex_distance(){
-
+fn cube_hex_distance() {
     // Make sure the hex distance calc is working
     let board = Board::test_board(Cube);
 
-    let pos1 = (0,0,0);
-    let pos2 = (-3,2,1);
+    let pos1 = (0, 0, 0);
+    let pos2 = (-3, 2, 1);
 
     assert_eq!(3, board.coord.hex_distance(pos1, pos2));
 }

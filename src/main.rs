@@ -14,6 +14,4 @@ fn main() {
     loop {
         pmoore::take_turn(&mut board, first);
     }
-
-
 }
