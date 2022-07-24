@@ -1,7 +1,7 @@
 // These basic tests work for any triaxial co-ordinate system
 use hoive::game::board::*;
 use hoive::game::comps::Team;
-use hoive::maths::{coord::Coord, coord::Cube, morphops};
+use hoive::maths::coord::Coord;
 use hoive::pmoore;
 
 pub fn first_turn<T: Coord>(board: &mut Board<T>) {
