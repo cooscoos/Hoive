@@ -5,7 +5,7 @@ The boardgame Hive, written in Rust.
 
 ### Spiderbug
 
-Spider can possibly move 3 spaces through other tiles, because distance calc doesn't account for obstacles. Bad.
+Spider can probably move 3 spaces through other tiles, because distance calc doesn't account for obstacles. Bad.
 
 Need to write a test for that then figure out how to make it pass.
 
