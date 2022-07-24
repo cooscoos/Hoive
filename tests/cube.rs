@@ -220,7 +220,6 @@ fn cube_no_split_hive2() {
     );
 }
 
-
 #[test]
 fn cube_check_rasterscan_order() {
     // Make sure raster scan is behaving properly

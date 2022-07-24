@@ -4,7 +4,6 @@ use hoive::game::comps::Team;
 use hoive::maths::{coord::Coord, coord::Cube};
 use hoive::pmoore;
 
-
 pub fn game_snapshot_1() -> Board<Cube> {
     // This function is called by a few subsequent tests
     // Run the game shown in /referenece/tests/bug2.png using cube co-ordinates
@@ -39,19 +38,15 @@ pub fn game_snapshot_1() -> Board<Cube> {
     board
 }
 
-
-
 pub fn game_snapshot_2() -> Board<Cube> {
-
     // Set up a gameboard for some spider and bee tests
 
     let mut board = Board::default(Cube);
 
-
     let moves_list = vec![
-        (0,0),  // wq1
-        (0,-2), // bq1
-        (0,-4),
+        (0, 0),  // wq1
+        (0, -2), // bq1
+        (0, -4),
     ];
 
     // Convert to cube
@@ -64,8 +59,5 @@ pub fn game_snapshot_2() -> Board<Cube> {
     pmoore::try_move(&mut board, "q1", Team::Black, hex_moves[1]);
     pmoore::try_move(&mut board, "a2", Team::Black, hex_moves[2]);
 
-
     board
-
-
 }

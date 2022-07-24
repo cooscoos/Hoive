@@ -3,11 +3,13 @@ The boardgame Hive, written in Rust.
 
 ## To do
 
-### Spider and bee
+### Tests for bee and win state
 
+All coded up. Write tests for the below:
 * Have to place bee by turn 5, prohibit player movement of existing chips before bee is placed
-* Code a win state if opponent's bee has 6 neighbours at the end of your turn
-* Write tests for the above
+* Win state if opponent's bee has 6 neighbours at the end of your turn
+* Win state for opponent if your bee has 6 neighbours (sepuku)
+
 
 ### Other animals
 
