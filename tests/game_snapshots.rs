@@ -61,3 +61,34 @@ pub fn game_snapshot_2() -> Board<Cube> {
 
     board
 }
+
+
+pub fn game_snapshot_3() -> Board<Cube> {
+    // Spider and ladybird test - barrier
+
+    let mut board = Board::default(Cube);
+
+    let moves_list = vec![
+        (0, 0),  // wq1
+        (1, -1), // bq1
+        (2, -2), // ba1
+        (-1,-1), // wa1
+        (-2,-2), // wa2
+        (0,2),   // ws1
+    ];
+
+    // Convert to cube
+    let hex_moves = moves_list
+        .iter()
+        .map(|xy| board.coord.mapfrom_doubleheight(*xy))
+        .collect::<Vec<(i8, i8, i8)>>();
+
+    pmoore::try_move(&mut board, "q1", Team::White, hex_moves[0]);
+    pmoore::try_move(&mut board, "q1", Team::Black, hex_moves[1]);
+    pmoore::try_move(&mut board, "a1", Team::Black, hex_moves[2]);
+    pmoore::try_move(&mut board, "a1", Team::White, hex_moves[3]);
+    pmoore::try_move(&mut board, "a2", Team::White, hex_moves[4]);
+    pmoore::try_move(&mut board, "s1", Team::White, hex_moves[5]);
+
+    board
+}
