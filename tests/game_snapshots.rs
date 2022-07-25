@@ -62,19 +62,18 @@ pub fn game_snapshot_2() -> Board<Cube> {
     board
 }
 
-
 pub fn game_snapshot_3() -> Board<Cube> {
     // Spider and ladybird test - barrier
 
     let mut board = Board::default(Cube);
 
     let moves_list = vec![
-        (0, 0),  // wq1
-        (1, -1), // bq1
-        (2, -2), // ba1
-        (-1,-1), // wa1
-        (-2,-2), // wa2
-        (0,2),   // ws1
+        (0, 0),   // wq1
+        (1, -1),  // bq1
+        (2, -2),  // ba1
+        (-1, -1), // wa1
+        (-2, -2), // wa2
+        (0, 2),   // ws1
     ];
 
     // Convert to cube

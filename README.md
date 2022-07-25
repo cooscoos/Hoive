@@ -5,11 +5,11 @@ The boardgame Hive, written in Rust.
 
 ### Spiderbug
 
-Spider can move 3 spaces through other tiles, because distance calc doesn't account for obstacles. Bad.
-
-Figure out how to sort this out.
-
+dist_lim_floodfill seems to be working, write a test
+add this behaviour to spider
 Test Spider_through_barrier should then pass. Are other tests needed?
+tidy up
+
 
 ### Tests for bee and win state
 
@@ -33,9 +33,10 @@ This order seems sensible:
 
 Always. Once everything is working I want to make this as efficient as it can be.
 
-#### Non-existent hex in doubleheight
+#### Non-existent hex in doubleheight, rasterscan
 
-Prevent player from choosing hexes which don't exist in pmoore (e.g. 0,-5). Could make megabugs.
+* Do we ever need rasterscan anymore, is get_placed_positions adequate?
+* Prevent player from choosing hexes which don't exist in pmoore (e.g. 0,-5). Could make megabugs.
 
 #### morphops.rs, board.rs, game.rs
 

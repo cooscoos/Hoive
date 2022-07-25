@@ -1,6 +1,7 @@
 // All of the game's logic and rules
 
 use std::collections::{HashMap, HashSet};
+use std::hash::Hash;
 
 use super::comps::{other_team, Chip, Team};
 use crate::draw;
@@ -25,12 +26,12 @@ pub enum MoveStatus {
     TooFar(u32), // too far for this animal to travel
 
     // Following statuses are returned early game
-    NoBee,      // You can't move existing chips because not placed bee yet
-    BeeNeed,    // You need to place your bee on this turn
+    NoBee,   // You can't move existing chips because not placed bee yet
+    BeeNeed, // You need to place your bee on this turn
 
     // Finally
-    Win(Team),        // You won the game
-    Nothing,    // You did nothing this turn
+    Win(Team), // You won the game
+    Nothing,   // You did nothing this turn
 }
 
 // The board struct is the game and all of its logic
@@ -260,19 +261,16 @@ where
         } else if constraint4 != MoveStatus::Success {
             constraint4
         } else {
-
-
             self.chips.insert(chip, Some(destination)); // Overwrite the chip's position in the HashMap
 
             // Relocation of a peice could result in the game being won.
-            if self.bee_neighbours(other_team(team)) == 6{
-                MoveStatus::Win(team)               // does the opponent's bee have 6 neighbours?
+            if self.bee_neighbours(other_team(team)) == 6 {
+                MoveStatus::Win(team) // does the opponent's bee have 6 neighbours?
             } else if self.bee_neighbours(team) == 6 {
-                MoveStatus::Win(other_team(team))  // does my bee have 6 neighbours?!
+                MoveStatus::Win(other_team(team)) // does my bee have 6 neighbours?!
             } else {
                 MoveStatus::Success
             }
-            
         }
     }
 
@@ -331,15 +329,6 @@ where
 
     // Raster scan all chips on the board and returns their positions as a flat vector
     pub fn rasterscan_board(&self) -> Vec<(i8, i8, i8)> {
-        // TODO: Could this just call fn get_placed??
-        // Flatten the board's HashMap into a vector that only counts chips on the board (i.e. p.is_some())
-        // let mut flat_vec = self
-        //     .chips
-        //     .iter()
-        //     .filter(|(_, p)| p.is_some())
-        //     .map(|(_, p)| p.unwrap())
-        //     .collect::<Vec<(i8, i8, i8)>>();
-
         let mut flat_vec = self.get_placed_positions();
         // sort the vector in raster_scan order
         self.coord.raster_scan(&mut flat_vec);
@@ -410,6 +399,65 @@ where
             }
             _ => unreachable!(),
         }
+    }
+
+    pub fn dist_lim_floodfill(
+        &self,
+        current_position: &(i8, i8, i8),
+        stamina: u32,
+    ) -> HashSet<(i8, i8, i8)> {
+        // Distance-limited flood fill for movement ranges around obstacles
+        // See: https://www.redblobgames.com/grids/hexagons/#distances
+
+        // This will return all of the hexes that it is possible for this chip to visit given its stamina
+        // Useful for spider.
+
+        // We'll store visited hexes in this empty vec. Use a vec because it has the iter_mut
+        let mut visited = HashSet::new();
+
+        // Add starting position to the vector
+        visited.insert(*current_position);
+
+        // We'll store fringes in this hashmap.
+        // A fringe is a list of all hexes that can be reached in k steps
+        let mut fringes = HashMap::new();
+
+        // Add the current position to fringes. It can be reached in k = 0 steps.
+        fringes.insert(*current_position, 0);
+
+        // Also need the position of existing chips on the board
+        let obstacles = self.get_placed_positions();
+
+        for k in 1..=stamina {
+            // Get a list of hexes in fringes that have values of k-1
+            let check_hexes = fringes
+                .iter()
+                .filter(|(p, v)| **v == k - 1)
+                .map(|(p, v)| *p)
+                .collect::<Vec<(i8, i8, i8)>>();
+
+            // For each of those hexes
+            for check_hex in check_hexes {
+                // Get the 6 neighbours
+                let neighbours = self.coord.neighbour_tiles(check_hex);
+
+                // Collect up neighbours (n) that aren't in visited (v) and aren't blocked by an obstacle (o)
+                // We can't zip because all of the iterators have different lengths. Use for loops.
+                // We don't need to worry about visited duplicates because we're using hashsets
+                // but it does save a bit of work if we filter them out
+
+                for neighbour in neighbours.iter() {
+                    if !obstacles.contains(neighbour) & !visited.contains(neighbour) {
+                        //let printy = self.coord.mapto_doubleheight(*neighbour);
+                        //println!("On k={}, we added hex {:?}", k, printy);
+                        visited.insert(*neighbour);
+                        fringes.insert(*neighbour, k);
+                    }
+                }
+            }
+        }
+
+        visited
     }
 
     // Get co-ordinates of all chips that are already placed on the board

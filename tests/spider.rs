@@ -43,6 +43,25 @@ fn spider_move_toofar() {
     );
 }
 
+#[test]
+fn spider_distlim_floodfill() {
+    // See how far a spider can travel given a barrier
+    let mut board = game_snapshot_3();
+
+    // Spider is already at (0,2) in doubleheight, which is this in cube co-ordinates:
+    let cube_pos = board.coord.mapfrom_doubleheight((0, 2));
+
+    // Find the hexes within 3 spaces
+    let cube_withinrange = board.dist_lim_floodfill(&cube_pos, 3);
+
+    // Convert back to doubleheight for easier inperpretation
+    let d_withinrange = cube_withinrange
+        .into_iter()
+        .map(|p| board.coord.mapto_doubleheight(p))
+        .collect::<Vec<(i8, i8)>>();
+
+    println!("Hexes within range 3 are {:?}", d_withinrange);
+}
 
 #[test]
 fn spider_through_barrier() {
