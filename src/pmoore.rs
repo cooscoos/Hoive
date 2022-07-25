@@ -64,7 +64,7 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
 
     // Try execute the move, if it works then show the board. The function try_move will increment the turn itself if move=success
     let return_status = try_move(board, chip_name, active_team, game_hex);
-    
+
     match return_status {
         MoveStatus::Success => println!("{}\n", draw::show_board(board, 5)),
         MoveStatus::Win(team) => {
@@ -76,7 +76,6 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
     };
 
     return_status
-
 }
 
 // Return the str of the chip if it matches the query
@@ -190,12 +189,8 @@ pub fn try_move<T: Coord>(
                 "\n\x1b[31;1m<< It's your third turn, you must place your bee now  >>\x1b[0m\n"
             )
         }
-        MoveStatus::Win(_) => {
-
-        }
-        MoveStatus::Nothing => {
-            
-        }
+        MoveStatus::Win(_) => {}
+        MoveStatus::Nothing => {}
     }
     move_status
 }
