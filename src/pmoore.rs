@@ -73,7 +73,7 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
             match teamopt {
                 Some(team) => {
                     let team_str = draw::team_string(team);
-                    println!("\n << Team {team_str} wins. Well done!  >> \n");
+                    println!("\n << {team_str} team wins. Well done!  >> \n");
                 }
                 None => {
                     println!("\n << Draw. Both teams have suffered defeat! >> \n");
