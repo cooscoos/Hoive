@@ -3,16 +3,14 @@ The boardgame Hive, written in Rust.
 
 ## To do
 
-
-
 ### Other animals
 
 This order seems sensible: 
 
-* ladybird
+* ladybird - similar to spider distance floodfill but with different rules for each k
+* pillbug - forcing other player's move but with limited checks (still need hive breakcheck), plus update pmoore for sumo list and sumo action
+* grashopper - line drawing - then a check to see if it's straight and only goes over occupied hexes
 * beetle
-* grashopper
-* pillbug
 * mosquito
 
 ### Tidy up
