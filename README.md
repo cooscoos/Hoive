@@ -1,7 +1,20 @@
 # Hoive
+
 The boardgame Hive, written in Rust.
 
+Done so far:
+* play the game in terminal with cargo run
+* basic rules working
+* ants, spiders and bees
+
+![snapshot](/reference/snapshot.png "snapshot of game")
+
+
 ## To do
+
+### Spider correction
+
+I forgot, the spider HAS to move 3 spaces, not up to 3. Rejig its ruleset.
 
 ### Other animals
 
