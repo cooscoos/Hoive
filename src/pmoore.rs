@@ -186,8 +186,8 @@ pub fn try_move<T: Coord>(
         MoveStatus::SmallGap => {
             println!("\n\x1b[31;1m<< Gap too small for this piece to move into  >>\x1b[0m\n")
         }
-        MoveStatus::TooFar(value) => {
-            println!("\n\x1b[31;1m<< Too far: peice can only travel {value} spaces  >>\x1b[0m\n")
+        MoveStatus::BadDistance(value) => {
+            println!("\n\x1b[31;1m<<  No: this peice must move {value} space(s)  >>\x1b[0m\n")
         }
         MoveStatus::NoBee => {
             println!("\n\x1b[31;1m<< Can't move existing chips until you've placed your bee  >>\x1b[0m\n")

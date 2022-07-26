@@ -40,7 +40,7 @@ fn spider_move_toofar() {
     let illegal_move = board.coord.mapfrom_doubleheight((0, -6));
 
     assert_eq!(
-        MoveStatus::TooFar(3),
+        MoveStatus::BadDistance(3),
         pmoore::try_move(&mut board, "s1", Team::White, illegal_move)
     );
 }
@@ -77,7 +77,7 @@ fn spider_through_barrier() {
     let illegal_move = board.coord.mapfrom_doubleheight((0, -2));
 
     assert_eq!(
-        MoveStatus::TooFar(3),
+        MoveStatus::BadDistance(3),
         pmoore::try_move(&mut board, "s1", Team::White, illegal_move)
     );
 }

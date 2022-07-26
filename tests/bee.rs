@@ -34,7 +34,7 @@ fn bee_move_toofar() {
     let illegal_move = board.coord.mapfrom_doubleheight((1, -3));
 
     assert_eq!(
-        MoveStatus::TooFar(1),
+        MoveStatus::BadDistance(1),
         pmoore::try_move(&mut board, "q1", Team::White, illegal_move)
     );
 }

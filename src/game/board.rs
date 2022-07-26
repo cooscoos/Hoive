@@ -22,7 +22,7 @@ pub enum MoveStatus {
 
     // Following statuses are specific to animals / groups of animals
     SmallGap,    // gap is too small for an ant/spider/bee to access
-    TooFar(u32), // too far for this animal to travel
+    BadDistance(u32), // wrong distance for this animal to travel
 
     // Following statuses are returned early game
     NoBee,   // You can't move existing chips because not placed bee yet

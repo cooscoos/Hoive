@@ -43,7 +43,7 @@ pub fn bee_check<T: Coord>(
             let neighbours = board.coord.neighbour_tiles(*source);
             match neighbours.contains(dest) {
                 true => MoveStatus::Success,
-                false => MoveStatus::TooFar(1),
+                false => MoveStatus::BadDistance(1),
             }
         }
         _ => unreachable!(), // this chip can't return other movestatus types
@@ -61,9 +61,11 @@ pub fn spider_check<T: Coord>(
         MoveStatus::Success => {
             // Get list of hexes spider can visit within 3 moves (including around obstacles)
             let visitable = dist_lim_floodfill(board, source, 3);
-            match visitable.contains(dest) {
+
+            // If the source and destination are visitable and are exactly 3 hexes apart, the move is good.
+            match visitable.contains(dest) & (board.coord.hex_distance(*source, *dest) == 3) {
                 true => MoveStatus::Success,
-                false => MoveStatus::TooFar(3),
+                false => MoveStatus::BadDistance(3),
             }
         }
         _ => unreachable!(), // this chip can't return other movestatus types

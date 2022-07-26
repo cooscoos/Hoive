@@ -12,10 +12,6 @@ Done so far:
 
 ## To do
 
-### Spider correction
-
-I forgot, the spider HAS to move 3 spaces, not up to 3. Rejig its ruleset.
-
 ### Other animals
 
 This order seems sensible: 
