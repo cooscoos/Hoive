@@ -144,8 +144,8 @@ pub fn game_snapshot_5() -> Board<Cube> {
         (0, -2),  // ws1
         (-1, 3),  // ba2
         (0, -4),  // wa3
-        (0,4),    // ba3
-        (1,3),    // bs1
+        (0, 4),   // ba3
+        (1, 3),   // bs1
                   // can now move wa3 to (1,1) to defeat both teams
     ];
 
@@ -169,4 +169,3 @@ pub fn game_snapshot_5() -> Board<Cube> {
 
     board
 }
-

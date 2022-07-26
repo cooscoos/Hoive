@@ -12,10 +12,29 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 // Offset co-ordinate systems are easy for human-people to interpret, but they're a nighmare to do maths with.
 // We therefore need to map to and from the cube (or other) co-ordinate system that the game logic uses.
 
+// Parse the board out into doubleheight hex co-ordinates (a grid format more readable to humans)
+pub fn to_dheight<T: Coord>(board: &Board<T>, size: i8) -> HashMap<(i8, i8), Option<Chip>> {
+    // Initialise an empty doubleheight hashmap to store chips at each co-ordinate
+    let mut dheight_hashmap = empty(size);
+
+    // Translate doubleheight co-ordinates to the current coord system being used by the board
+    let board_coords = dheight_hashmap
+        .iter()
+        .map(|(xy, _)| board.coord.mapfrom_doubleheight(*xy))
+        .collect::<HashSet<(i8, i8, i8)>>();
+
+    // Check all board_coords for chips, and put the chips in dheight_hashmap if found
+    board_coords.into_iter().for_each(|p| {
+        dheight_hashmap.insert(board.coord.mapto_doubleheight(p), board.get_chip(p));
+    });
+
+    dheight_hashmap
+}
+
 // Draw the board / table
 pub fn show_board<T: Coord>(board: &Board<T>, size: i8) -> String {
     // Create dheight hashmap
-    let dheight_hashmap = board.to_dheight(size);
+    let dheight_hashmap = to_dheight(board, size);
 
     // pass to the parser
     parse_to_ascii(dheight_hashmap, size)
