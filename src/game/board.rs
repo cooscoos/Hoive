@@ -30,7 +30,7 @@ pub enum MoveStatus {
     BeeNeed, // You need to place your bee on this turn
 
     // Finally
-    Win(Team), // You won the game
+    Win(Option<Team>), // You won the game
     Nothing,   // You did nothing this turn
 }
 
@@ -263,23 +263,31 @@ where
         } else {
             self.chips.insert(chip, Some(destination)); // Overwrite the chip's position in the HashMap
 
-            // Relocation of a peice could result in the game being won.
-            if self.bee_neighbours(other_team(team)) == 6 {
-                MoveStatus::Win(team) // does the opponent's bee have 6 neighbours?
-            } else if self.bee_neighbours(team) == 6 {
-                MoveStatus::Win(other_team(team)) // does my bee have 6 neighbours?!
-            } else {
-                MoveStatus::Success
-            }
+            println!("My {:?} bee has {} neighbours", team ,self.bee_neighbours(team));
+            println!("My opponent's {:?} bee has {} neighbours", other_team(team) ,self.bee_neighbours(other_team(team)));
+
+            // Relocation of a peice could result in the game being won (or drawn)
+            // This will simply return MoveStatus::Success if nobody won (i.e. game should continue)
+            self.check_win_state(team)
+        }
+    }
+
+
+    fn check_win_state(&self, team: Team) -> MoveStatus {
+        // Checks the board to see if any bees are surrounded by 6 neighbours
+        if (self.bee_neighbours(team) == 6) & (self.bee_neighbours(other_team(team)) == 6) {
+            MoveStatus::Win(None)                   // both teams' bees have 6 neighbours, it's a draw
+        } else if self.bee_neighbours(other_team(team)) == 6 {
+            MoveStatus::Win(Some(team))             // opponent's bee has 6 neighbours, you win
+        } else if self.bee_neighbours(team) == 6 {
+            MoveStatus::Win(Some(other_team(team))) // your own bee has 6 neighbours, you lose
+        } else {
+            MoveStatus::Success                     // nothing happened, continue the game
         }
     }
 
     // Check if moving a chip out of the current position splits the hive
-    fn hive_break_check(
-        &self,
-        source: &(i8, i8, i8),
-        destination: &(i8, i8, i8),
-    ) -> bool {
+    fn hive_break_check(&self, source: &(i8, i8, i8), destination: &(i8, i8, i8)) -> bool {
         // This function might fail tests when we introduce beetles later, so will need to edit then.
 
         // To achieve this, we need to do some connected component labelling.
@@ -336,26 +344,15 @@ where
         flat_vec
     }
 
-    fn animal_constraint(
-        &self,
-        source: &(i8, i8, i8),
-        destination: &(i8, i8, i8),
-    ) -> MoveStatus {
+    fn animal_constraint(&self, source: &(i8, i8, i8), destination: &(i8, i8, i8)) -> MoveStatus {
         // Check if any animal-specific constraints prevent the move
 
         // Match on chip animal (first character of chipname)
-        match self
-            .get_chip(*source)
-            .unwrap()
-            .name
-            .chars()
-            .next()
-            .unwrap()
-        {
-            'a' => self.ant_check(source, destination), // ants
+        match self.get_chip(*source).unwrap().name.chars().next().unwrap() {
+            'a' => self.ant_check(source, destination),       // ants
             's' => self.spider_check(source, destination, 3), // spiders
-            'q' => self.bee_check(source, destination, 1), // queens
-            _ => MoveStatus::Success,                             // todo, other animals
+            'q' => self.bee_check(source, destination, 1),    // queens
+            _ => MoveStatus::Success,                         // todo, other animals
         }
     }
 
@@ -398,12 +395,16 @@ where
                     false => MoveStatus::TooFar(stamina),
                 }
             }
-            _ => unreachable!(),    // this chip can't return other movestatus types
+            _ => unreachable!(), // this chip can't return other movestatus types
         }
     }
 
-    fn spider_check(&self, source: &(i8, i8, i8), destination: &(i8, i8, i8), stamina: u32) -> MoveStatus {
-
+    fn spider_check(
+        &self,
+        source: &(i8, i8, i8),
+        destination: &(i8, i8, i8),
+        stamina: u32,
+    ) -> MoveStatus {
         // Do an ant check first
         match self.ant_check(source, destination) {
             MoveStatus::SmallGap => MoveStatus::SmallGap,
@@ -411,21 +412,16 @@ where
                 // Check if the spider can reach the hex with a distance-limited floot fill
                 // check if destination appears within list of visitable hexes
                 let visitable = self.dist_lim_floodfill(source, stamina);
-                match visitable.contains(destination){
+                match visitable.contains(destination) {
                     true => MoveStatus::Success,
                     false => MoveStatus::TooFar(stamina),
                 }
             }
-            _ => unreachable!(),    // this chip can't return other movestatus types
+            _ => unreachable!(), // this chip can't return other movestatus types
         }
-
     }
 
-    pub fn dist_lim_floodfill(
-        &self,
-        source: &(i8, i8, i8),
-        stamina: u32,
-    ) -> HashSet<(i8, i8, i8)> {
+    pub fn dist_lim_floodfill(&self, source: &(i8, i8, i8), stamina: u32) -> HashSet<(i8, i8, i8)> {
         // Distance-limited flood fill for movement ranges around obstacles
         // See: https://www.redblobgames.com/grids/hexagons/#distances
 
@@ -511,7 +507,7 @@ where
         let neighbours = self
             .chips
             .iter()
-            .filter(|(c, p)| (c.name == "q1") & (p.is_some()))
+            .filter(|(c, p)| (c.team == team) & (c.name == "q1") & (p.is_some()))
             .map(|(_, p)| self.count_neighbours(p.unwrap()))
             .collect::<Vec<usize>>();
 

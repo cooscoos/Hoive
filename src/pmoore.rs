@@ -67,10 +67,19 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
 
     match return_status {
         MoveStatus::Success => println!("{}\n", draw::show_board(board, 5)),
-        MoveStatus::Win(team) => {
+        MoveStatus::Win(teamopt) => {
             println!("{}\n", draw::show_board(board, 5));
-            let team_str = draw::team_string(team);
-            println!("\n << Team {team_str} wins. Well done!  >> \n");
+
+            match teamopt {
+                Some(team) => {
+                    let team_str = draw::team_string(team);
+                    println!("\n << Team {team_str} wins. Well done!  >> \n");
+                }
+                None => {
+                    println!("\n << Draw. Both teams have suffered defeat! >> \n");
+                }
+            }
+
         }
         _ => (),
     };

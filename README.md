@@ -3,12 +3,6 @@ The boardgame Hive, written in Rust.
 
 ## To do
 
-### Tests for bee and win state
-
-Otherwise all coded up. Tidy up then write tests for the below:
-* Have to place bee by turn 5, prohibit player movement of existing chips before bee is placed
-* Win state if opponent's bee has 6 neighbours at the end of your turn
-* Win state for opponent if your bee has 6 neighbours (sepuku)
 
 
 ### Other animals
@@ -23,7 +17,7 @@ This order seems sensible:
 
 ### Tidy up
 
-Always. Once everything is working I want to make this as efficient as it can be.
+Always.
 
 #### Non-existent hex in doubleheight, rasterscan
 
