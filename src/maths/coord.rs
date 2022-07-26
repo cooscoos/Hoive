@@ -94,48 +94,51 @@ impl Coord for Cube {
 
 // Hexagonal Efficient Coordinate (HECS) co-ordinate system
 // https://en.wikipedia.org/wiki/Hexagonal_Efficient_Coordinate_System
-pub struct Hecs;
-impl Coord for Hecs {
-    // Get 6 neighbouring tile co-ordinates in HECS
-    fn neighbour_tiles(&self, position: (i8, i8, i8)) -> [(i8, i8, i8); 6] {
-        let (a, r, c) = position;
 
-        [
-            (1 - a, r - (1 - a), c - (1 - a)),
-            (1 - a, r - (1 - a), c + a),
-            (a, r, c - 1),
-            (a, r, c + 1),
-            (1 - a, r + a, c - (1 - a)),
-            (1 - a, r + a, c + a),
-        ]
-    }
+// Reached the end of its usefulness. Doesn't present any obvious benefits.
 
-    fn hex_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> u32 {
-        !unimplemented!();
-    }
+// pub struct Hecs;
+// impl Coord for Hecs {
+//     // Get 6 neighbouring tile co-ordinates in HECS
+//     fn neighbour_tiles(&self, position: (i8, i8, i8)) -> [(i8, i8, i8); 6] {
+//         let (a, r, c) = position;
 
-    // Sort flat vector of co-ordinates (a,r,c) in raster scan order:
-    fn raster_scan(&self, flat_vec: &mut Vec<(i8, i8, i8)>) {
-        // For HECS, one way to raster scan (a,r,c) is:
-        // r descending first
-        // then a descending
-        // then c ascending
-        flat_vec
-            .sort_by(|(a1, r1, c1), (a2, r2, c2)| (r2, a2, c1).partial_cmp(&(r1, a1, c2)).unwrap());
-    }
+//         [
+//             (1 - a, r - (1 - a), c - (1 - a)),
+//             (1 - a, r - (1 - a), c + a),
+//             (a, r, c - 1),
+//             (a, r, c + 1),
+//             (1 - a, r + a, c - (1 - a)),
+//             (1 - a, r + a, c + a),
+//         ]
+//     }
 
-    // Get centroid distance between two hexes
-    fn centroid_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> f32 {
-        !unimplemented!();
-    }
+//     fn hex_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> u32 {
+//         !unimplemented!();
+//     }
 
-    fn mapto_doubleheight(&self, hex: (i8, i8, i8)) -> (i8, i8) {
-        // Convert from HECS to doubleheight
-        !unimplemented!();
-    }
+//     // Sort flat vector of co-ordinates (a,r,c) in raster scan order:
+//     fn raster_scan(&self, flat_vec: &mut Vec<(i8, i8, i8)>) {
+//         // For HECS, one way to raster scan (a,r,c) is:
+//         // r descending first
+//         // then a descending
+//         // then c ascending
+//         flat_vec
+//             .sort_by(|(a1, r1, c1), (a2, r2, c2)| (r2, a2, c1).partial_cmp(&(r1, a1, c2)).unwrap());
+//     }
 
-    fn mapfrom_doubleheight(&self, hex: (i8, i8)) -> (i8, i8, i8) {
-        // Convert from doubleheight to HECS
-        !unimplemented!();
-    }
-}
+//     // Get centroid distance between two hexes
+//     fn centroid_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> f32 {
+//         !unimplemented!();
+//     }
+
+//     fn mapto_doubleheight(&self, hex: (i8, i8, i8)) -> (i8, i8) {
+//         // Convert from HECS to doubleheight
+//         !unimplemented!();
+//     }
+
+//     fn mapfrom_doubleheight(&self, hex: (i8, i8)) -> (i8, i8, i8) {
+//         // Convert from doubleheight to HECS
+//         !unimplemented!();
+//     }
+// }

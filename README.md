@@ -19,7 +19,6 @@ Always.
 
 #### Non-existent hex in doubleheight, rasterscan
 
-* Do we ever need rasterscan anymore, is get_placed_positions adequate?
 * Prevent player from choosing hexes which don't exist in pmoore (e.g. 0,-5). Could make megabugs.
 
 #### morphops.rs, board.rs, game.rs

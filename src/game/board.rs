@@ -244,7 +244,7 @@ where
         let mut blobs: HashSet<(i8, i8, i8)> = HashSet::new();
 
         // Get the positions of all the chips on the board
-        let mut chip_positions = self.rasterscan_board();
+        let mut chip_positions = self.get_placed_positions();
 
         // Move current chip from source to dest to simulate its relocation.
         chip_positions.retain(|&p| p != *source); // remove
@@ -279,7 +279,7 @@ where
 
         // The no. of chips in blobs should equal no. of chips on the board.
         // If it's not then the move has created two blobs (split hive): illegal.
-        blobs.len() != self.rasterscan_board().len()
+        blobs.len() != self.get_placed_positions().len()
     }
 
     fn animal_constraint(
@@ -305,6 +305,7 @@ where
     }
 
     // Raster scan chips on the board to return sorted positions
+    // Not used much if at all during game, but is useful for tests
     pub fn rasterscan_board(&self) -> Vec<(i8, i8, i8)> {
         let mut chip_positions = self.get_placed_positions();
         self.coord.raster_scan(&mut chip_positions);
