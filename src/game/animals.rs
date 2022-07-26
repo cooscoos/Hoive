@@ -55,7 +55,7 @@ pub fn spider_check<T: Coord>(
     source: &(i8, i8, i8),
     dest: &(i8, i8, i8),
 ) -> MoveStatus {
-    // Do an ant check and then check the spider is moving <=3 places (around obstacles)
+    // Do an ant check and then check the spider is moving exactly 3 places (around obstacles)
     match ant_check(board, source, dest) {
         MoveStatus::SmallGap => MoveStatus::SmallGap,
         MoveStatus::Success => {
