@@ -36,7 +36,7 @@ pub fn bee_check<T: Coord>(
     dest: &(i8, i8, i8),
 ) -> MoveStatus {
     // Do an ant_check plus make sure dest is a neighbour of source (bee moves 1)
-    match ant_check(&board, source, dest) {
+    match ant_check(board, source, dest) {
         MoveStatus::SmallGap => MoveStatus::SmallGap,
         MoveStatus::Success => {
             // Check if the distance is within the bee's travel range (its neighbours)
@@ -56,11 +56,11 @@ pub fn spider_check<T: Coord>(
     dest: &(i8, i8, i8),
 ) -> MoveStatus {
     // Do an ant check and then check the spider is moving <=3 places (around obstacles)
-    match ant_check(&board, source, dest) {
+    match ant_check(board, source, dest) {
         MoveStatus::SmallGap => MoveStatus::SmallGap,
         MoveStatus::Success => {
             // Get list of hexes spider can visit within 3 moves (including around obstacles)
-            let visitable = dist_lim_floodfill(&board, source, 3);
+            let visitable = dist_lim_floodfill(board, source, 3);
             match visitable.contains(dest) {
                 true => MoveStatus::Success,
                 false => MoveStatus::TooFar(3),
@@ -98,8 +98,8 @@ pub fn dist_lim_floodfill<T: Coord>(
         // Get the list of hexes within fringes that have values of k-1
         let check_hexes = fringes
             .iter()
-            .filter(|(p, v)| **v == k - 1)
-            .map(|(p, v)| *p)
+            .filter(|(_, v)| **v == k - 1)
+            .map(|(p, _)| *p)
             .collect::<Vec<(i8, i8, i8)>>();
 
         // For each of those hexes

@@ -12,9 +12,8 @@ fn main() {
 
     // Game loop
     loop {
-        match pmoore::take_turn(&mut board, first) {
-            MoveStatus::Win(_) => break, // end the game if a team won
-            _ => (),
-        };
+        if let MoveStatus::Win(_) = pmoore::take_turn(&mut board, first) {
+            break;
+        }
     }
 }

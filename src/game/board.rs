@@ -2,11 +2,8 @@
 
 use std::collections::{HashMap, HashSet};
 
-use super::comps::{other_team, Chip, Team}; // Game components
-
-use crate::draw; // For drawing on terminal screen
+use super::comps::{other_team, starting_chips, test_chips, Chip, Team}; // Game components
 use crate::game::animals; // Animal movement logic
-use crate::game::comps;
 use crate::maths::coord::Coord; // Coord trait applies to all hex co-ordinate systems
 
 // A "move" in Hive is defined as either a:
@@ -49,7 +46,7 @@ where
 {
     pub fn default(coord: T) -> Self {
         // At new game, initialise all of the chips for each team with position = None (in player hand)
-        let chips = comps::starting_chips();
+        let chips = starting_chips();
 
         Board {
             chips,
@@ -60,7 +57,7 @@ where
 
     pub fn test_board(coord: T) -> Self {
         // During testing we often want lots of pieces that move freely, so give each team 8 ants and one bee
-        let chips = comps::test_chips();
+        let chips = test_chips();
 
         Board {
             chips,
@@ -254,29 +251,23 @@ where
         let mut queue = vec![*dest];
 
         // Keep searching for neighbours until the queue is empty
-        loop {
-            match queue.pop() {
-                Some(position) => {
-                    // Pop an element out of the queue and get the co-ordinates of neighbouring hexes
-                    let neighbour_hexes = self.coord.neighbour_tiles(position);
+        while let Some(position) = queue.pop() {
+            // Pop an element out of the queue and get the co-ordinates of neighbouring hexes
+            let neighbour_hexes = self.coord.neighbour_tiles(position);
 
-                    // If any of these neighbour hexes co-ordinates also appear in the chip_positions, it means they're a neighbouring chip
-                    // If they're a new entry, add them to the queue and the hashset, otherwise ignore them and move on
-                    // We have a double for loop with an if statement to try and find common elements in two vectors.
-                    // This is likely inefficient, and doesn't feel very rusty, but it works for now.
-                    for elem in neighbour_hexes.iter() {
-                        for elem2 in chip_positions.clone().iter() {
-                            if (elem == elem2) & (!blobs.contains(elem2)) {
-                                blobs.insert(*elem2);
-                                queue.push(*elem2);
-                            }
-                        }
+            // If any of these neighbour hexes co-ordinates also appear in the chip_positions, it means they're a neighbouring chip
+            // If they're a new entry, add them to the queue and the hashset, otherwise ignore them and move on
+            // We have a double for loop with an if statement to try and find common elements in two vectors.
+            // This is likely inefficient, and doesn't feel very rusty, but it works for now.
+            for elem in neighbour_hexes.iter() {
+                for elem2 in chip_positions.clone().iter() {
+                    if (elem == elem2) & (!blobs.contains(elem2)) {
+                        blobs.insert(*elem2);
+                        queue.push(*elem2);
                     }
                 }
-                None => break, // stop labelling if the queue is empty
             }
         }
-
         // The no. of chips in blobs should equal no. of chips on the board.
         // If it's not then the move has created two blobs (split hive): illegal.
         blobs.len() != self.get_placed_positions().len()
@@ -292,10 +283,10 @@ where
 
         // Match on chip animal (first character of chipname)
         match chip.name.chars().next().unwrap() {
-            'a' => animals::ant_check(&self, source, dest), // ants
-            's' => animals::spider_check(&self, source, dest), // spiders
-            'q' => animals::bee_check(&self, source, dest), // queens
-            _ => MoveStatus::Success,                       // todo, other animals
+            'a' => animals::ant_check(self, source, dest), // ants
+            's' => animals::spider_check(self, source, dest), // spiders
+            'q' => animals::bee_check(self, source, dest), // queens
+            _ => MoveStatus::Success,                      // todo, other animals
         }
     }
 

@@ -3,6 +3,7 @@ use crate::game::board::Board;
 use crate::game::comps::{Chip, Team};
 use crate::maths::coord::Coord;
 use std::collections::{BTreeMap, HashMap, HashSet};
+use std::fmt::Write as _; // import without risk of name clash
 
 // Players will interact with the hex grid using "double-height offset co-ordinates"
 // See: https://www.redblobgames.com/grids/hexagons/
@@ -59,7 +60,9 @@ fn parse_to_ascii(dheight_hashmap: HashMap<(i8, i8), Option<Chip>>, size: i8) ->
     // Make a header for the ascii board
     let mut header_info = String::new();
     for col_no in -size..size + 1 {
-        header_info.push_str(&format!("{col_no}\t"));
+        let mut s = String::new();
+        let _ = write!(s, "{}\t", col_no);
+        header_info.push_str(&s);
     }
     let header = format!("\n\nBOARD\t\t[col→]\n\n[row↓]\t\t{header_info}\n\n");
     ascii_board.push_str(&header);
