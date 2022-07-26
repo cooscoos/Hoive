@@ -1,5 +1,7 @@
 // Components of a game: the two teams and chips/tiles
 
+use std::collections::HashMap;
+
 // Enum for two teams
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub enum Team {
@@ -30,21 +32,50 @@ impl Chip {
     }
 }
 
-// Player struct to keep track of hitpoints (number of bee edges that are untouched) and team
-// It's currently unused, and will likely end up being superfluous
-// As bee edge touches can be tracked by the Board struct
-// #[derive(Debug, Clone)]
-// pub struct Player {
-//     _hitpoints: u8,
-//     _team: Team,
-// }
+pub fn starting_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
+    // Give each team:
+    // 1 bee, 2 spiders, 3 ants,
+    // 2 beetles, 3 grasshoppers, 1 each of mosquito, ladybug, pill bug
+    HashMap::from([
+        // Black team's chips
+        (Chip::new("s1", Team::Black), None),
+        (Chip::new("s2", Team::Black), None),
+        (Chip::new("a1", Team::Black), None),
+        (Chip::new("a2", Team::Black), None),
+        (Chip::new("a3", Team::Black), None),
+        (Chip::new("q1", Team::Black), None),
+        // White team's chips
+        (Chip::new("s1", Team::White), None),
+        (Chip::new("s2", Team::White), None),
+        (Chip::new("a1", Team::White), None),
+        (Chip::new("a2", Team::White), None),
+        (Chip::new("a3", Team::White), None),
+        (Chip::new("q1", Team::White), None),
+    ])
+}
 
-// impl Player {
-//     // Create new player
-//     pub fn default(team: Team) -> Self {
-//         Player {
-//             _hitpoints: 6,
-//             _team: team,
-//         }
-//     }
-// }
+pub fn test_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
+    // During tests we want lots of pieces that move freely, so give each team 8 ants and one bee
+    HashMap::from([
+        // Black team's chips
+        (Chip::new("a1", Team::Black), None),
+        (Chip::new("a2", Team::Black), None),
+        (Chip::new("a3", Team::Black), None),
+        (Chip::new("a4", Team::Black), None),
+        (Chip::new("a5", Team::Black), None),
+        (Chip::new("a6", Team::Black), None),
+        (Chip::new("a7", Team::Black), None),
+        (Chip::new("a8", Team::Black), None),
+        (Chip::new("q1", Team::Black), None),
+        // White team's chips
+        (Chip::new("a1", Team::White), None),
+        (Chip::new("a2", Team::White), None),
+        (Chip::new("a3", Team::White), None),
+        (Chip::new("a4", Team::White), None),
+        (Chip::new("a5", Team::White), None),
+        (Chip::new("a6", Team::White), None),
+        (Chip::new("a7", Team::White), None),
+        (Chip::new("a8", Team::White), None),
+        (Chip::new("q1", Team::White), None),
+    ])
+}

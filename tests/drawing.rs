@@ -19,7 +19,7 @@ fn test_doubleheight_converter() {
     pmoore::try_move(&mut board, "a3", Team::Black, (1, -2, 1)); // up from that
 
     // We'll test if the program parses this to a doubleheight coordinate HashMap correctly
-    let dheight_hashmap = board.to_dheight(5);
+    let dheight_hashmap = draw::to_dheight(&board, 5);
 
     // We'll ignore hex positions with None values, and just get where the chips are
     let dheight_ignorenone = dheight_hashmap

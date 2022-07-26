@@ -1,4 +1,5 @@
 // Tests for the spider
+use hoive::game::animals;
 use hoive::game::board::*;
 use hoive::game::comps::Team;
 use hoive::maths::coord::Coord;
@@ -46,13 +47,13 @@ fn spider_move_toofar() {
 #[test]
 fn spider_distlim_floodfill() {
     // See how far a spider can travel given a barrier
-    let mut board = game_snapshot_3();
+    let board = game_snapshot_3();
 
     // Spider is already at (0,2) in doubleheight, which is this in cube co-ordinates:
     let cube_pos = board.coord.mapfrom_doubleheight((0, 2));
 
     // Find the hexes within 3 spaces
-    let cube_withinrange = board.dist_lim_floodfill(&cube_pos, 3);
+    let cube_withinrange = animals::dist_lim_floodfill(&board, &cube_pos, 3);
 
     // Convert back to doubleheight for easier inperpretation
     let d_withinrange = cube_withinrange

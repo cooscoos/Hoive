@@ -79,7 +79,6 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
                     println!("\n << Draw. Both teams have suffered defeat! >> \n");
                 }
             }
-
         }
         _ => (),
     };
