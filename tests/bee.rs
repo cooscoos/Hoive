@@ -4,8 +4,8 @@ use hoive::game::comps::Team;
 use hoive::maths::coord::{Coord, Cube};
 use hoive::pmoore;
 
-mod game_snapshots;
-use game_snapshots::{game_snapshot_2, game_snapshot_4, game_snapshot_5};
+mod common;
+use common::games::{game_snapshot_2, game_snapshot_4, game_snapshot_5};
 
 #[test]
 fn bee_move_ok() {

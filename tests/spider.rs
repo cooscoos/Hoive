@@ -5,8 +5,9 @@ use hoive::game::comps::Team;
 use hoive::maths::coord::Coord;
 use hoive::pmoore;
 
-mod game_snapshots;
-use game_snapshots::{game_snapshot_2, game_snapshot_3};
+mod common;
+use common::games::{game_snapshot_2, game_snapshot_3};
+
 
 #[test]
 fn spider_move_ok() {

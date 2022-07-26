@@ -1,7 +1,7 @@
 // Test the renderer operations
 
 use hoive::draw;
-use hoive::maths::{coord::Coord, coord::Cube, morphops};
+use hoive::maths::coord::Cube;
 use hoive::*;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
@@ -24,7 +24,7 @@ fn test_doubleheight_converter() {
     // We'll ignore hex positions with None values, and just get where the chips are
     let dheight_ignorenone = dheight_hashmap
         .into_iter()
-        .filter(|(p, c)| c.is_some())
+        .filter(|(_, c)| c.is_some())
         .map(|(p, c)| (p, c.unwrap()))
         .collect::<HashMap<(i8, i8), Chip>>();
 
