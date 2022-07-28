@@ -53,8 +53,10 @@ fn spider_distlim_floodfill() {
     // Spider is already at (0,2) in doubleheight, which is this in cube co-ordinates:
     let cube_pos = board.coord.mapfrom_doubleheight((0, 2));
 
+    // Movement rules for a spider are "can it go on top of other obstacles this move?" The answer is always false.
+    let move_rules = vec![false, false, false];
     // Find the hexes within 3 spaces
-    let cube_withinrange = animals::dist_lim_floodfill(&board, &cube_pos, 3);
+    let cube_withinrange = animals::mod_dist_lim_floodfill(&board, &cube_pos, move_rules);
 
     // Convert back to doubleheight for easier inperpretation
     let d_withinrange = cube_withinrange
