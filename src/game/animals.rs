@@ -60,7 +60,9 @@ pub fn spider_check<T: Coord>(
         MoveStatus::SmallGap => MoveStatus::SmallGap,
         MoveStatus::Success => {
             // Get list of hexes spider can visit within 3 moves (including around obstacles)
-            let visitable = dist_lim_floodfill(board, source, 3);
+            // let visitable = dist_lim_floodfill(board, source, 3);
+            let move_rules = vec![false, false, false];
+            let visitable = mod_dist_lim_floodfill(board, source, move_rules);
 
             // If the source and destination are visitable and are exactly 3 hexes apart, the move is good.
             match visitable.contains(dest) & (board.coord.hex_distance(*source, *dest) == 3) {
@@ -71,6 +73,33 @@ pub fn spider_check<T: Coord>(
         _ => unreachable!(), // this chip can't return other movestatus types
     }
 }
+
+
+
+pub fn ladybird_check<T: Coord>(
+    board: &Board<T>,
+    source: &(i8, i8, i8),
+    dest: &(i8, i8, i8),
+) -> MoveStatus {
+    // Do an ant check and then check the lady is moving 3 places (over 2 chips and then into an empty space)
+    // Rules check for later: can ladybird move over beetle on top of other chip?
+    match ant_check(board, source, dest) {
+        MoveStatus::SmallGap => MoveStatus::SmallGap,
+        MoveStatus::Success => {
+            // Get list of hexes ladybird can visit within 3 moves 
+            let move_rules = vec![true, true, false];   // over, over, around
+            let visitable = mod_dist_lim_floodfill(board, source, move_rules);
+
+            // If the source and destination are visitable and are exactly 3 hexes apart, the move is good.
+            match visitable.contains(dest) & (board.coord.hex_distance(*source, *dest) == 3) {
+                true => MoveStatus::Success,
+                false => MoveStatus::BadDistance(3),
+            }
+        }
+        _ => unreachable!(), // this chip can't return other movestatus types
+    }
+}
+
 
 pub fn dist_lim_floodfill<T: Coord>(
     board: &Board<T>,
@@ -112,6 +141,65 @@ pub fn dist_lim_floodfill<T: Coord>(
             // These neighbours are visitable if they aren't blocked by an obstacle (and for efficiency, aren't already listed as visitable)
             neighbours.iter().for_each(|n| {
                 if !obstacles.contains(n) & !visitable.contains(n) {
+                    visitable.insert(*n);
+                    fringes.insert(*n, k);
+                }
+            });
+        }
+    }
+    visitable
+}
+
+
+pub fn mod_dist_lim_floodfill<T: Coord>(
+    board: &Board<T>,
+    source: &(i8, i8, i8),
+    move_rules: Vec<bool>
+) -> HashSet<(i8, i8, i8)> {
+    // A modified distance-limited flood fill which can find movement ranges around and over obstacles
+    // See: https://www.redblobgames.com/grids/hexagons/#distances
+    // Returns all hexes that this chip could visit, given its movement range=move_rules.len()
+    // Each element of the move_rules vector can be:
+    // false: the chip must move somewhere which is not occupied by other chips on this move (e.g. spider, ladybird turn 3)
+    // true: the chip must move somewhere which *is* occupied by another chip (e.g. ladybird turn 1,2)
+
+    // Store visitable hexes here
+    let mut visitable = HashSet::new();
+
+    // And add our current starting position
+    visitable.insert(*source);
+
+    // Store fringes: a list of all hexes that can be reached within k steps
+    let mut fringes = HashMap::new();
+
+    // Add the current position to fringes. It can be reached in k = 0 steps.
+    fringes.insert(*source, 0);
+
+    // Also need the position of existing chips on the board
+    let obstacles = board.get_placed_positions();
+
+    for k in 1..=move_rules.len() {
+        // Get the list of hexes within fringes that have values of k-1
+        let check_hexes = fringes
+            .iter()
+            .filter(|(_, v)| **v == k - 1)
+            .map(|(p, _)| *p)
+            .collect::<Vec<(i8, i8, i8)>>();
+
+        // For each of those hexes
+        for check_hex in check_hexes {
+            // Get the 6 neighbours
+            let neighbours = board.coord.neighbour_tiles(check_hex);
+
+            // These neighbours are visitable if they aren't blocked by an obstacle (and for efficiency, aren't already listed as visitable)
+            neighbours.iter().for_each(|n| {
+        
+                let obstacool = match move_rules[k-1] { // match on k-1 because of how vectors are indexed
+                    true => obstacles.contains(n),      // if it's true then it needs to have an obstacle 
+                    false => !obstacles.contains(n),    // if it's false then it shouldn't have an obstacle
+                };
+
+                if obstacool & !visitable.contains(n) {
                     visitable.insert(*n);
                     fringes.insert(*n, k);
                 }
