@@ -286,6 +286,7 @@ where
             'a' => animals::ant_check(self, source, dest), // ants
             's' => animals::spider_check(self, source, dest), // spiders
             'q' => animals::bee_check(self, source, dest), // queens
+            'l' => animals::ladybird_check(self, source, dest),    // ladybirds
             _ => MoveStatus::Success,                      // todo, other animals
         }
     }

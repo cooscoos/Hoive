@@ -35,7 +35,7 @@ impl Chip {
 pub fn starting_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
     // Give each team:
     // 1 bee, 2 spiders, 3 ants,
-    // 2 beetles, 3 grasshoppers, 1 each of mosquito, ladybug, pill bug
+    // 2 beetles, 3 grasshoppers, 1 each of mosquito, ladybird, pill bug
     HashMap::from([
         // Black team's chips
         (Chip::new("s1", Team::Black), None),
@@ -44,6 +44,7 @@ pub fn starting_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
         (Chip::new("a2", Team::Black), None),
         (Chip::new("a3", Team::Black), None),
         (Chip::new("q1", Team::Black), None),
+        (Chip::new("l1", Team::Black), None),
         // White team's chips
         (Chip::new("s1", Team::White), None),
         (Chip::new("s2", Team::White), None),
@@ -51,6 +52,7 @@ pub fn starting_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
         (Chip::new("a2", Team::White), None),
         (Chip::new("a3", Team::White), None),
         (Chip::new("q1", Team::White), None),
+        (Chip::new("l1", Team::White), None),
     ])
 }
 
