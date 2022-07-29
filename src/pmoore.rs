@@ -149,7 +149,11 @@ fn coord_select() -> Option<(bool, i8, i8)> {
     let usr_hex = coord_from_string(textin);
 
     match usr_hex[..] {
-        [Some(x), Some(y)] => Some((false, x, y)),
+        [Some(x), Some(y)] => {
+            match (x+y)%2 { // The sum of doubleheight coords should always be an even no.
+                0 => {return Some((false, x, y));},
+                _ => {println!("Enter valid co-ordinates."); return None;},
+                }},
         _ => {
             println!("Enter two numbers separated by a comma for co-ordinates.");
             None

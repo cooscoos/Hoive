@@ -12,8 +12,6 @@ Done so far:
 
 ## To do
 
-* Prevent player from choosing hexes which don't exist in pmoore (e.g. 0,-5). Could make megabugs.
-
 ### Other animals
 
 This order seems sensible: 
