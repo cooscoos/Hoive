@@ -243,7 +243,8 @@ fn xylophone() {
 fn help_me() -> &'static str {
 "
 ----------------------------------------------------------------\n
-= How to play =\n\nEach player starts the game with:\n
+= How to play =\n
+Each player starts the game with the following peices in their hand:\n
 - 1 bee (q1)
 - 2 spiders (s1, s2)
 - 3 ants (a1, a2, a3)
