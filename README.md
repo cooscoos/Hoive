@@ -22,9 +22,11 @@ Done so far:
 This order seems sensible: 
 
 * pillbug - forcing other player's move but with limited checks (still need hive breakcheck), plus update pmoore for sumo list and sumo action
-* grashopper - line drawing - then a check to see if it's straight and only goes over occupied hexes
 * beetle
+* then back to pillbug to capture the beetle gate rule
+* grashopper - line drawing - then a check to see if it's straight and only goes over occupied hexes
 * mosquito
+
 
 ### "House rules"
 

@@ -146,6 +146,7 @@ where
         }
     }
 
+
     // Relocate a chip on the board
     fn relocate_chip(
         &mut self,
@@ -160,6 +161,7 @@ where
         // Constraint 3) chip can't end up on top of another chip (unless beetle, but we'll worry about this later...)
         // Constraint N) then there are animal-specific constraints
 
+
         let team = chip.team;
 
         // Constraint 0: team can't relocate chips if they haven't placed bee.
@@ -169,6 +171,35 @@ where
                 return MoveStatus::NoBee;
             }
         }
+
+        // Constraints 1-3 are checked using method base_constraints
+        let basic_constraints = self.basic_constraints(dest, source);
+
+        // Check animal-specific constraints of the move
+        let constraint_4 = self.animal_constraint(chip, source, &dest);
+
+        if basic_constraints != MoveStatus::Success{
+            basic_constraints
+        } else if constraint_4 != MoveStatus::Success {
+            constraint_4
+        } else {
+            self.chips.insert(chip, Some(dest)); // Overwrite the chip's position in the HashMap
+
+            // Relocation of chip could result in the game end
+            self.check_win_state(team) // Returns MoveStatus::Success if nobody won (game continues)
+        }
+    }
+
+    pub fn basic_constraints(
+        &mut self,
+        dest: (i8,i8,i8),
+        source: &(i8,i8,i8),
+    ) -> MoveStatus {
+        // Basic constraints are checked during all player moves, but also when a pillbug forces
+        // another chip to move. When pillbug forces move, only cons1-3 need checking.
+        // Constraint 1) chip relocate cannot break the hive in two;
+        // Constraint 2) chip must end up adjacent to other tiles
+        // Constraint 3) chip can't end up on top of another chip
 
         // Any chips already on board at the dest?
         let constraint1 = self.get_placed_positions().iter().any(|p| *p == dest);
@@ -185,9 +216,6 @@ where
         // Does moving the chip away from current position cause the hive to split?
         let constraint3 = self.hive_break_check(source, &dest);
 
-        // Check animal-specific constraints of the move
-        let constraint4 = self.animal_constraint(chip, source, &dest);
-
         // check constraints in this order because all unconnected moves are also hive splits, and we want to return useful error messages
         if constraint1 {
             MoveStatus::Occupied
@@ -195,14 +223,10 @@ where
             MoveStatus::Unconnected
         } else if constraint3 {
             MoveStatus::HiveSplit
-        } else if constraint4 != MoveStatus::Success {
-            constraint4
         } else {
-            self.chips.insert(chip, Some(dest)); // Overwrite the chip's position in the HashMap
-
-            // Relocation of chip could result in the game end
-            self.check_win_state(team) // Returns MoveStatus::Success if nobody won (game continues)
+            MoveStatus::Success
         }
+
     }
 
     fn check_win_state(&self, team: Team) -> MoveStatus {
