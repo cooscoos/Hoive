@@ -12,7 +12,6 @@ Done so far:
 
 ## To do
 
-* Write tests for ladybird, including it going back on itself. Use bug3.png.
 * Prevent player from choosing hexes which don't exist in pmoore (e.g. 0,-5). Could make megabugs.
 
 ### Other animals
