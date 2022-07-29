@@ -23,6 +23,7 @@ pub enum MoveStatus {
     // Following statuses are specific to animals / groups of animals
     SmallGap,    // gap is too small for an ant/spider/bee to access
     BadDistance(u32), // wrong distance for this animal to travel
+    RecentMove(Chip),   // chip moved too recently for its special move to be executed
 
     // Following statuses are returned early game
     NoBee,   // You can't move existing chips because not placed bee yet
@@ -200,6 +201,8 @@ where
         // Constraint 1) chip relocate cannot break the hive in two;
         // Constraint 2) chip must end up adjacent to other tiles
         // Constraint 3) chip can't end up on top of another chip
+        // Constraint 2 will always be true for a pillbug, but we need to check constraints 1-3 in that order
+        // so that we can return error messages that make sense.
 
         // Any chips already on board at the dest?
         let constraint1 = self.get_placed_positions().iter().any(|p| *p == dest);
@@ -354,6 +357,18 @@ where
         self.chips
             .iter()
             .find_map(|(c, p)| if *p == Some(position) { Some(*c) } else { None })
+    }
+
+    // Return a chip's position based on its name and team
+    pub fn get_position_byname(&self, team: Team, name: &'static str) -> Option<(i8,i8,i8)> {
+        let chip_select = Chip::new(name, team); // Select the chip
+
+        // Get its location
+        match self.chips.get(&chip_select) {
+            Some(value) => *value,
+            None => panic!("Something went very wrong, the chip doesn't exist."),
+        }
+    
     }
 
     fn count_neighbours(&self, position: (i8, i8, i8)) -> usize {

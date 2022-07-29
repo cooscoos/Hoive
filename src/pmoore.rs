@@ -4,6 +4,7 @@ use rand::Rng; // To randomise which player goes first
 use std::io; // For parsing player inputs
 
 use crate::draw;
+use crate::game::{animals, specials};
 use crate::game::board::{Board, MoveStatus};
 use crate::game::comps::{other_team, Team};
 use crate::maths::coord::Coord;
@@ -47,6 +48,16 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
     }
 
     let chip_name = chip_selection.unwrap();
+
+
+    // If we selected a pillbug or mosquito, and it's already on the board, then we need to have the option to do a special move
+    if (chip_name == "p1" || chip_name == "m1") && board.get_position_byname(active_team, chip_name).is_some() {
+        match ask_special_move() {  // ask the player if they want to do the special move
+            // This will either return success and end the turn (by incrementing board.turn), or it'll return a useful error and start this turn again
+            true => {println!("SPECIAL");return try_special(board, chip_name);}, 
+            false => (), // do nothing, proceed to movement
+        }
+    }
 
     let mut coord = None;
     while coord == None {
@@ -205,11 +216,44 @@ pub fn try_move<T: Coord>(
                 "\n\x1b[31;1m<< It's your third turn, you must place your bee now  >>\x1b[0m\n"
             )
         }
-        MoveStatus::Win(_) => {}
-        MoveStatus::Nothing => {}
+        MoveStatus::RecentMove(chip) => {
+            println!("\n\x1b[31;1m<< Can't do that this turn because chip {} moved last turn  >>\x1b[0m\n", chip.name)
+        }
+        MoveStatus::Win(_) => {},
+        MoveStatus::Nothing => {},
     }
     move_status
 }
+
+// Ask player if they want to do a special move
+fn ask_special_move() -> bool {
+    println!("Type s to try and execute this chip's special move, or enter to move the chip.");
+    let textin = get_usr_input();
+    !textin.is_empty() // try execute a special if the user inputs anything
+}
+
+// Handles the attempt at doing a special move.
+pub fn try_special<T: Coord>(board: &mut Board<T>, chip_name: &'static str) -> MoveStatus {
+    // Find out if we're dealing with a mosquito or pillbug and lead the player through the prompts
+
+
+    // Pillbug, p1
+    // Select a neighbouring chip from this list (present options 1-6 for white and black team chips), return source to fn
+    // Select a location to sumo to (write to dest)
+    // let move_status = pillbug_toss(board, source, dest);
+    // if it's success, increment board turns by 1
+    // return the movestatus directly
+        
+
+    let move_status = specials::pillbug_toss(board, source, dest);
+
+    board.turns += 1;
+    MoveStatus::Success
+
+    // mosquito todo, m1
+
+} 
+
 
 // Request user input into terminal
 fn get_usr_input() -> String {
