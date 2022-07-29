@@ -26,7 +26,7 @@ This order seems sensible:
 * beetle
 * mosquito
 
-### Get creative
+### "House rules"
 
 Then it might be fun to add new animals in a non-standard version of the game e.g.:
 
