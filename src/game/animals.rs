@@ -36,6 +36,7 @@ pub fn bee_check<T: Coord>(
     dest: &(i8, i8, i8),
 ) -> MoveStatus {
     // Do an ant_check plus make sure dest is a neighbour of source (bee moves 1)
+    // Bee move check is also used for pillbug moves as it has the same relocation rules
     match ant_check(board, source, dest) {
         MoveStatus::SmallGap => MoveStatus::SmallGap,
         MoveStatus::Success => {

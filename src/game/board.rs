@@ -283,11 +283,11 @@ where
 
         // Match on chip animal (first character of chipname)
         match chip.name.chars().next().unwrap() {
-            'a' => animals::ant_check(self, source, dest), // ants
-            's' => animals::spider_check(self, source, dest), // spiders
-            'q' => animals::bee_check(self, source, dest), // queens
-            'l' => animals::ladybird_check(self, source, dest),    // ladybirds
-            _ => MoveStatus::Success,                      // todo, other animals
+            'a' => animals::ant_check(self, source, dest),       // ants
+            's' => animals::spider_check(self, source, dest),    // spiders
+            'q' | 'p' => animals::bee_check(self, source, dest), // bees and pillbugs
+            'l' => animals::ladybird_check(self, source, dest),  // ladybirds
+            _ => MoveStatus::Success,                                  // todo, other animals
         }
     }
 
