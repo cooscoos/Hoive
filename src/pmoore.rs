@@ -107,7 +107,7 @@ fn match_chip<T: Coord>(board: &Board<T>, team: Team, name: String) -> Option<&'
 
 // Select a chip and return its static str. Returns None if user input invalid.
 fn chip_select<T: Coord>(board: &Board<T>, active_team: Team) -> Option<&'static str> {
-    println!("Select a tile from the board or your hand to move. Hit enter to see the board and your hand.");
+    println!("Select a tile from the board or your hand to move. Hit enter to see the board and your hand, or h for help.");
 
     let textin = get_usr_input();
 
@@ -122,6 +122,10 @@ fn chip_select<T: Coord>(board: &Board<T>, active_team: Team) -> Option<&'static
         } // hard-coded 5 here but can adapt based on game extremeties later
         _ if textin == "xylophone" => {
             xylophone();
+            None
+        }
+        _ if textin == "h" => {
+            println!("{}", help_me());
             None
         }
         c => {
@@ -229,7 +233,33 @@ fn coord_from_string(str: String) -> Vec<Option<i8>> {
         .collect::<Vec<Option<i8>>>()
 }
 
+// OooOoooh
 fn xylophone() {
     let egg = "                                     \n    ....,,..                        \n    .......',;cllllooll:'.                     \n  ..;cccccodxxkkkOkkkxxxol;.                   \n .:ooooooddxkkkkOOOOOOOkxxdl,                  \n.cdddoooddxxkkkkOO0000OOOOkkx:.                \n'loddolooddxkkOOO00000000OOOO0x.                \n.;ldxdlllodxxkOO000KKKK0000OOO0x'                \n,codo::clodxkOO00KKKKKKKK00Okkk:                \n.,::;,;cldxkkOO00000KKK0000OkkOl.               \n.','.';:ldxxkOOO0000OO000O0OOkxo,               \n....',;:loxxkkkkOOkkOO00O0OOkxxd'              \n.....';cclodkkOkkkkOOO00OOOOkxxd'              \n .  ...,:looodkkkxxxkkkkkkkkxxxo.              \n .   .'';ldoodoolloddddddddoxxxo.              \n     ....,,',,;;::ldollccldxOkxo.              \n    .....'',::c::ox0OkdxxkOO0Oxl.              \n    ..'';:cllddc:lx0OOOOOO0Okxdl.              \n   ....';clcldl,;lx0OkxkOOOkdddc.              \n  ..   ..,cool'.;ld0Okdoddxxxxdl.              \n  .. ....':c:,...,:ldxkkdlodxxxo'              \n  .......',,,,....':dkOOkxdxxdxl.              \n  ......,::,.''';:coooddddddddd,.              \n  .......,cc,',,,,;:ccldxdllll;.               \n............','.,;::cloodddoc:c:.                \n.;;;'..''........',::clcclllooxo'                .\n.oxddl,.','''.......''''',:ldOKO:                 .\n.d0000ko;',:c;.    .....,ldOKNWNd.                 .\n.oKKXKX0kkcco;. ......;:;,oXWWMNk;.                 .\n.o00KKXX0O00Od,...''cxKNNXkldXWWO:'.                  \n'd00000KXKKXKkc.....c0NWWMWNK0X0x:,;.                  \n,d000KKKXXXXOl.',. .oXNNWWMWXXXKd'':;.                  \n.:OKKXXXXXNX0l.  ....:KWNWWWWWNX0d;.;:,.                  \n.o0XKXXXXXXKo'      .;ONNNWWWWNXKx:.,;;'.                  \n,xXXXXXXXKxl'   ..   .dNNNNNWNXXKkc'',''.                   \nOXXXXXXXk, ...   .    ;kKXNNNNXXKx,......                   \n0KKKXNXKd.   ...     ..cdxk0KNNN0l. ..',.                   \nkkxkkO00Ol.       ...  .lkxddddl,....:k0l.                  \n..';ldxx0k, .      .'.  :0Ol'. ..'. ;OXXx.";
     println!("{egg}");
+}
+
+// Returns info on how to play
+fn help_me() -> &'static str {
+"
+----------------------------------------------------------------\n
+= How to play =\n\nEach player starts the game with:\n
+- 1 bee (q1)
+- 2 spiders (s1, s2)
+- 3 ants (a1, a2, a3)
+- 2 beetles (b1, b2)
+- 3 grasshoppers (g1, g2, g3)
+- a mosquito (m1)
+- a ladybird (l1)
+- a pill bug (p1).\n
+Select one of the peices above using the codes given in brackets,
+and then enter a location to move the peice to on the board using
+the board's grid co-ordinate system (e.g. 1,-3).\n
+Press return or enter at any time to abort moves, or to see the peices
+on the board and in your hand.\n
+You can attempt to move any peice in your hand or on the board as
+long as it belongs to you.\n
+Game rules: https://en.wikipedia.org/wiki/Hive_(game)\n
+----------------------------------------------------------------
+"
 }

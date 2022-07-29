@@ -5,7 +5,7 @@ The boardgame Hive, written in Rust.
 Done so far:
 * play the game in terminal with cargo run
 * basic rules working
-* ants, spiders, ladybirds and queen bees
+* ants (a), spiders (s), ladybirds (l) and queen bees (q)
 
 ![snapshot](/reference/snapshot.png "snapshot of game")
 
