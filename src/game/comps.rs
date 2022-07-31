@@ -45,6 +45,7 @@ pub fn starting_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
         (Chip::new("a3", Team::Black), None),
         (Chip::new("q1", Team::Black), None),
         (Chip::new("l1", Team::Black), None),
+        (Chip::new("p1", Team::Black), None),
         // White team's chips
         (Chip::new("s1", Team::White), None),
         (Chip::new("s2", Team::White), None),
@@ -53,6 +54,7 @@ pub fn starting_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
         (Chip::new("a3", Team::White), None),
         (Chip::new("q1", Team::White), None),
         (Chip::new("l1", Team::White), None),
+        (Chip::new("p1", Team::White), None),
     ])
 }
 

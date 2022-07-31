@@ -145,7 +145,7 @@ pub fn team_string(team: Team) -> &'static str {
 // List all chips belonging to a given team that are in their hand. Return a colourful single string for display.
 pub fn list_chips<T: Coord>(board: &Board<T>, team: Team) -> String {
     // Filter out the chips that are hand of given team (in hand  position = None)
-    let mut chip_list = board
+    let chip_list = board
         .chips
         .clone()
         .into_iter()
@@ -153,6 +153,22 @@ pub fn list_chips<T: Coord>(board: &Board<T>, team: Team) -> String {
         .map(|(c, _)| chip_to_str(Some(c)))
         .collect::<Vec<String>>();
 
+    // Convert to colourful formatted string
+    make_chip_string(chip_list)
+}
+
+// List chips that you are passed and return a colourful single string for display
+pub fn list_these_chips(chips_vec: Vec<Chip>) -> String {
+    let chip_list = chips_vec
+        .into_iter()
+        .map(|c| chip_to_str(Some(c)))
+        .collect::<Vec<String>>();
+
+    make_numbered_chip_string(chip_list)
+}
+
+// Do the colourful bit
+fn make_chip_string(mut chip_list: Vec<String>) -> String {
     // sort alphabetically
     chip_list.sort();
 
@@ -160,6 +176,24 @@ pub fn list_chips<T: Coord>(board: &Board<T>, team: Team) -> String {
     let mut chip_string = chip_list
         .iter()
         .map(|c| format!(" {},", c))
+        .collect::<String>();
+
+    // Delete the trailing comma
+    chip_string.pop();
+
+    chip_string
+}
+
+// Make a numbered list
+fn make_numbered_chip_string(mut chip_list: Vec<String>) -> String {
+    // sort alphabetically
+    chip_list.sort();
+
+    // Create a single tring to return
+    let mut chip_string = chip_list
+        .iter()
+        .enumerate()
+        .map(|(i,c)| format!("{}) {},", i, c))
         .collect::<String>();
 
     // Delete the trailing comma

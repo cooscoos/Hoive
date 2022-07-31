@@ -5,7 +5,7 @@ use hoive::maths::coord::{Coord, Cube};
 use hoive::pmoore;
 
 mod common;
-use common::games::{game_snapshot_6};
+use common::games::game_snapshot_6;
 
 #[test]
 fn ladybird_backtrack() {

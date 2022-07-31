@@ -8,7 +8,6 @@ use hoive::pmoore;
 mod common;
 use common::games::{game_snapshot_2, game_snapshot_3};
 
-
 #[test]
 fn spider_move_ok() {
     // Try move a spider 3 spaces (okay).

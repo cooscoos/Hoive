@@ -6,6 +6,7 @@ use std::io; // For parsing player inputs
 use crate::draw;
 use crate::game::board::{Board, MoveStatus};
 use crate::game::comps::{other_team, Team};
+use crate::game::{animals, specials};
 use crate::maths::coord::Coord;
 
 // Introduction: say hello and define who goes first
@@ -47,6 +48,21 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
     }
 
     let chip_name = chip_selection.unwrap();
+
+    // If we selected a pillbug or mosquito, and it's already on the board, then we need to have the option to do a special move
+    if (chip_name == "p1" || chip_name == "m1")
+        && board.get_position_byname(active_team, chip_name).is_some()
+    {
+        match ask_special_move() {
+            // ask the player if they want to do the special move
+            // This will either return success and end the turn (by incrementing board.turn), or it'll return a useful error and start this turn again
+            true => {
+                println!("SPECIAL");
+                return try_special(board, chip_name, active_team);
+            }
+            false => (), // do nothing, proceed to movement
+        }
+    }
 
     let mut coord = None;
     while coord == None {
@@ -107,7 +123,7 @@ fn match_chip<T: Coord>(board: &Board<T>, team: Team, name: String) -> Option<&'
 
 // Select a chip and return its static str. Returns None if user input invalid.
 fn chip_select<T: Coord>(board: &Board<T>, active_team: Team) -> Option<&'static str> {
-    println!("Select a tile from the board or your hand to move. Hit enter to see the board and your hand.");
+    println!("Select a tile from the board or your hand to move. Hit enter to see the board and your hand, or h for help.");
 
     let textin = get_usr_input();
 
@@ -122,6 +138,10 @@ fn chip_select<T: Coord>(board: &Board<T>, active_team: Team) -> Option<&'static
         } // hard-coded 5 here but can adapt based on game extremeties later
         _ if textin == "xylophone" => {
             xylophone();
+            None
+        }
+        _ if textin == "h" => {
+            println!("{}", help_me());
             None
         }
         c => {
@@ -150,10 +170,17 @@ fn coord_select() -> Option<(bool, i8, i8)> {
 
     match usr_hex[..] {
         [Some(x), Some(y)] => {
-            match (x+y)%2 { // The sum of doubleheight coords should always be an even no.
-                0 => {return Some((false, x, y));},
-                _ => {println!("Enter valid co-ordinates."); return None;},
-                }},
+            match (x + y) % 2 {
+                // The sum of doubleheight coords should always be an even no.
+                0 => {
+                    return Some((false, x, y));
+                }
+                _ => {
+                    println!("Enter valid co-ordinates.");
+                    return None;
+                }
+            }
+        }
         _ => {
             println!("Enter two numbers separated by a comma for co-ordinates.");
             None
@@ -201,10 +228,90 @@ pub fn try_move<T: Coord>(
                 "\n\x1b[31;1m<< It's your third turn, you must place your bee now  >>\x1b[0m\n"
             )
         }
+        MoveStatus::RecentMove(chip) => {
+            println!("\n\x1b[31;1m<< Can't do that this turn because chip {} moved last turn  >>\x1b[0m\n", chip.name)
+        }
         MoveStatus::Win(_) => {}
         MoveStatus::Nothing => {}
     }
     move_status
+}
+
+// Ask player if they want to do a special move
+fn ask_special_move() -> bool {
+    println!("Type s to try and execute this chip's special move, or enter to move the chip.");
+    let textin = get_usr_input();
+    !textin.is_empty() // try execute a special if the user inputs anything
+}
+
+// Handles the attempt at doing a special move.
+pub fn try_special<T: Coord>(
+    board: &mut Board<T>,
+    chip_name: &'static str,
+    active_team: Team,
+) -> MoveStatus {
+    // Find out if we're dealing with a mosquito or pillbug and lead the player through the prompts
+
+    // Pillbug, p1
+
+    // Get its position
+    let position = board.get_position_byname(active_team, chip_name).unwrap();
+    // Get its neighbouring chips
+    let neighbours = board.get_neighbour_chips(position);
+
+    // Ask the player to select a neighbouring chip from this list (present options 1-6 for white and black team chips), return source to fn
+    println!("Select a neighbouring chip to sumo from this numbered list:\n {}", draw::list_these_chips(neighbours.clone()));
+
+    let textin = get_usr_input();
+
+    let selection;
+
+    match textin {
+        _ if textin.is_empty() => return MoveStatus::Nothing, // abort the sumo, return to start
+        _ => {
+            selection = match textin.parse::<usize>() {
+                Ok(value) if value < neighbours.len()+1 => value,
+                _ => {
+                    println!("Use a number from the list");
+                    return MoveStatus::Nothing;
+                    },
+                };
+            },
+    }
+
+    // get the co-ordinate of the selected chip
+    let source = board.chips.get(&neighbours[selection]).unwrap().unwrap();
+
+
+
+    // Ask player to select a co-ordinate to sumo to
+    let mut coord = None;
+    while coord == None {
+        coord = coord_select();
+    }
+
+    // If the user wants to abort coord selecton and switch pieces, go back to the start
+    let select_hex = match coord.unwrap().0 {
+        true => return MoveStatus::Nothing,
+        false => (coord.unwrap().1, coord.unwrap().2),
+    };
+
+    // Convert from doubleheight to the game's co-ordinate system
+    let dest = board.coord.mapfrom_doubleheight(select_hex);
+
+    // Try execute the move, if it works then show the board. The function try_move will increment the turn itself if move=success
+    let move_status = specials::pillbug_toss(board, &source, dest,position);
+
+    if move_status == MoveStatus::Success {
+        board.turns += 1;
+    }
+
+    move_status
+
+
+    // mosquito todo, m1
+
+
 }
 
 // Request user input into terminal
@@ -229,7 +336,34 @@ fn coord_from_string(str: String) -> Vec<Option<i8>> {
         .collect::<Vec<Option<i8>>>()
 }
 
+// OooOoooh
 fn xylophone() {
     let egg = "                                     \n    ....,,..                        \n    .......',;cllllooll:'.                     \n  ..;cccccodxxkkkOkkkxxxol;.                   \n .:ooooooddxkkkkOOOOOOOkxxdl,                  \n.cdddoooddxxkkkkOO0000OOOOkkx:.                \n'loddolooddxkkOOO00000000OOOO0x.                \n.;ldxdlllodxxkOO000KKKK0000OOO0x'                \n,codo::clodxkOO00KKKKKKKK00Okkk:                \n.,::;,;cldxkkOO00000KKK0000OkkOl.               \n.','.';:ldxxkOOO0000OO000O0OOkxo,               \n....',;:loxxkkkkOOkkOO00O0OOkxxd'              \n.....';cclodkkOkkkkOOO00OOOOkxxd'              \n .  ...,:looodkkkxxxkkkkkkkkxxxo.              \n .   .'';ldoodoolloddddddddoxxxo.              \n     ....,,',,;;::ldollccldxOkxo.              \n    .....'',::c::ox0OkdxxkOO0Oxl.              \n    ..'';:cllddc:lx0OOOOOO0Okxdl.              \n   ....';clcldl,;lx0OkxkOOOkdddc.              \n  ..   ..,cool'.;ld0Okdoddxxxxdl.              \n  .. ....':c:,...,:ldxkkdlodxxxo'              \n  .......',,,,....':dkOOkxdxxdxl.              \n  ......,::,.''';:coooddddddddd,.              \n  .......,cc,',,,,;:ccldxdllll;.               \n............','.,;::cloodddoc:c:.                \n.;;;'..''........',::clcclllooxo'                .\n.oxddl,.','''.......''''',:ldOKO:                 .\n.d0000ko;',:c;.    .....,ldOKNWNd.                 .\n.oKKXKX0kkcco;. ......;:;,oXWWMNk;.                 .\n.o00KKXX0O00Od,...''cxKNNXkldXWWO:'.                  \n'd00000KXKKXKkc.....c0NWWMWNK0X0x:,;.                  \n,d000KKKXXXXOl.',. .oXNNWWMWXXXKd'':;.                  \n.:OKKXXXXXNX0l.  ....:KWNWWWWWNX0d;.;:,.                  \n.o0XKXXXXXXKo'      .;ONNNWWWWNXKx:.,;;'.                  \n,xXXXXXXXKxl'   ..   .dNNNNNWNXXKkc'',''.                   \nOXXXXXXXk, ...   .    ;kKXNNNNXXKx,......                   \n0KKKXNXKd.   ...     ..cdxk0KNNN0l. ..',.                   \nkkxkkO00Ol.       ...  .lkxddddl,....:k0l.                  \n..';ldxx0k, .      .'.  :0Ol'. ..'. ;OXXx.";
     println!("{egg}");
+}
+
+// Returns info on how to play
+fn help_me() -> &'static str {
+    "
+----------------------------------------------------------------\n
+= How to play =\n
+Each player starts the game with the following peices in their hand:\n
+- 1 bee (q1)
+- 2 spiders (s1, s2)
+- 3 ants (a1, a2, a3)
+- 2 beetles (b1, b2)
+- 3 grasshoppers (g1, g2, g3)
+- a mosquito (m1)
+- a ladybird (l1)
+- a pill bug (p1).\n
+Select one of the peices above using the codes given in brackets,
+and then enter a location to move the peice to on the board using
+the board's grid co-ordinate system (e.g. 1,-3).\n
+Press return or enter at any time to abort moves, or to see the peices
+on the board and in your hand.\n
+You can attempt to move any peice in your hand or on the board as
+long as it belongs to you.\n
+Game rules: https://en.wikipedia.org/wiki/Hive_(game)\n
+----------------------------------------------------------------
+"
 }

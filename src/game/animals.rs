@@ -36,6 +36,7 @@ pub fn bee_check<T: Coord>(
     dest: &(i8, i8, i8),
 ) -> MoveStatus {
     // Do an ant_check plus make sure dest is a neighbour of source (bee moves 1)
+    // Bee move check is also used for pillbug moves as it has the same relocation rules
     match ant_check(board, source, dest) {
         MoveStatus::SmallGap => MoveStatus::SmallGap,
         MoveStatus::Success => {
@@ -74,8 +75,6 @@ pub fn spider_check<T: Coord>(
     }
 }
 
-
-
 pub fn ladybird_check<T: Coord>(
     board: &Board<T>,
     source: &(i8, i8, i8),
@@ -86,8 +85,8 @@ pub fn ladybird_check<T: Coord>(
     match ant_check(board, source, dest) {
         MoveStatus::SmallGap => MoveStatus::SmallGap,
         MoveStatus::Success => {
-            // Get list of hexes ladybird can visit within 3 moves 
-            let move_rules = vec![true, true, false];   // must the space be occupied?
+            // Get list of hexes ladybird can visit within 3 moves
+            let move_rules = vec![true, true, false]; // must the space be occupied?
             let visitable = mod_dist_lim_floodfill(board, source, move_rules);
 
             // If destination is visitable on turn 3, the move is good.
@@ -103,7 +102,7 @@ pub fn ladybird_check<T: Coord>(
 pub fn mod_dist_lim_floodfill<T: Coord>(
     board: &Board<T>,
     source: &(i8, i8, i8),
-    move_rules: Vec<bool>
+    move_rules: Vec<bool>,
 ) -> HashSet<(i8, i8, i8)> {
     // A modified distance-limited flood fill which can find movement ranges around and over obstacles
     // Useful for spiders and ladybirds.
@@ -138,21 +137,21 @@ pub fn mod_dist_lim_floodfill<T: Coord>(
             // Get the 6 neighbours
             let neighbours = board.coord.neighbour_tiles(check_hex);
 
-            
             neighbours.iter().for_each(|n| {
-                
                 // These neighbours are visitable on this turn (k) if ...
-                let can_visit = match move_rules[k-1] { // (match on k-1 because of how vectors are indexed)
-                    true => obstacles.contains(n),           // they are blocked by an obstacle 
-                    false => !obstacles.contains(n),         // they are not blocked by an obstacle
+                let can_visit = match move_rules[k - 1] {
+                    // (match on k-1 because of how vectors are indexed)
+                    true => obstacles.contains(n), // they are blocked by an obstacle
+                    false => !obstacles.contains(n), // they are not blocked by an obstacle
                 };
 
-                if can_visit & !visitable.contains(n) {     // don't keep overwriting values in hashset (inefficient)
-                    fringes.insert(*n, k);             // add the neighbour to the list of fringes for this k
+                if can_visit & !visitable.contains(n) {
+                    // don't keep overwriting values in hashset (inefficient)
+                    fringes.insert(*n, k); // add the neighbour to the list of fringes for this k
 
                     // We only care about what hexes this peice can visit on its final turn
                     if k == move_rules.len() {
-                        visitable.insert(*n);   
+                        visitable.insert(*n);
                     }
                 }
             });
