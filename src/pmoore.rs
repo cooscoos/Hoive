@@ -225,7 +225,7 @@ pub fn try_move<T: Coord>(
     move_status
 }
 
-// Ask player if they want to do a special move
+// Ask player if they want to do a special move 
 fn ask_special_move() -> bool {
     println!("Type s to try and execute this chip's special move, or enter to move the chip.");
     let textin = get_usr_input();
