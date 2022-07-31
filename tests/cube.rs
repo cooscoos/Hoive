@@ -4,10 +4,9 @@ use hoive::game::comps::Team;
 use hoive::maths::{coord::Coord, coord::Cube};
 use hoive::pmoore;
 
-
 mod common;
-use common::basic;        // basic tests that work with all co-ordinate systems
-use common::games::game_snapshot_1;  // Half played games of Hive
+use common::basic; // basic tests that work with all co-ordinate systems
+use common::games::game_snapshot_1; // Half played games of Hive
 
 #[test]
 fn cube_first_turn() {

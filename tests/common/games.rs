@@ -176,13 +176,13 @@ pub fn game_snapshot_6() -> Board<Cube> {
     let mut board = Board::default(Cube);
 
     let moves_list = vec![
-        (0, 0),   // bq1
-        (0, -2),  // wq1
-        (0, -4),  // wl1
-        (1, -3),  // wa2
-        (2,-2),   // wa1
-        (3,-1),   // wa3
-                  // can now move wl1 to (1,-5) for backtrack, or (0,2) for advance, or -1,-3 = illegal
+        (0, 0),  // bq1
+        (0, -2), // wq1
+        (0, -4), // wl1
+        (1, -3), // wa2
+        (2, -2), // wa1
+        (3, -1), // wa3
+                 // can now move wl1 to (1,-5) for backtrack, or (0,2) for advance, or -1,-3 = illegal
     ];
 
     // Convert to cube
@@ -191,7 +191,6 @@ pub fn game_snapshot_6() -> Board<Cube> {
         .map(|xy| board.coord.mapfrom_doubleheight(*xy))
         .collect::<Vec<(i8, i8, i8)>>();
 
-    
     pmoore::try_move(&mut board, "q1", Team::Black, hex_moves[0]);
     pmoore::try_move(&mut board, "q1", Team::White, hex_moves[1]);
     pmoore::try_move(&mut board, "l1", Team::White, hex_moves[2]);
