@@ -12,8 +12,12 @@ Done so far:
 
 ## To do
 
-* create sumo handle in pmoore for pillbug selection (with selection of neighbours), then co-ord to sumo to
-* make the sumo rules, ideally in animals.rs
+### Pillbug
+
+* finish sumo rules in pillbug.rs
+* lots of tests for pillbug
+* tidy up the user interface
+* a lot of tidy up of code, refactor
 
 
 
