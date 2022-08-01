@@ -14,7 +14,7 @@ Done so far:
 
 ### Pillbug
 
-Seems to be working.
+Pillbug seems to be working.
 Also written a history module to save a game's move history to csv and then emulate the replay of that game based on csv.
 
 * re-write some tests to utilise the emulation to see if it works
