@@ -256,9 +256,12 @@ pub fn try_special<T: Coord>(
     chip_name: &'static str,
     active_team: Team,
 ) -> MoveStatus {
+    
+    // This and associated functions and methods are a bit of a mess. Tidy up.
     // Find out if we're dealing with a mosquito or pillbug and lead the player through the prompts
 
     let move_status;
+
 
     // Pillbug, p1
 
