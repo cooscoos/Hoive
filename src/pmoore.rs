@@ -123,7 +123,7 @@ fn match_chip<T: Coord>(board: &Board<T>, team: Team, name: String) -> Option<&'
 
 // Select a chip and return its static str. Returns None if user input invalid.
 fn chip_select<T: Coord>(board: &Board<T>, active_team: Team) -> Option<&'static str> {
-    println!("Select a tile from the board or your hand to move. Hit enter to see the board and your hand, or h for help.");
+    println!("Select a tile from the board or your hand to move. Hit enter to see the board and your hand, h for help, s to save.");
 
     let textin = get_usr_input();
 
@@ -142,6 +142,12 @@ fn chip_select<T: Coord>(board: &Board<T>, active_team: Team) -> Option<&'static
         }
         _ if textin == "h" => {
             println!("{}", help_me());
+            None
+        }
+        _ if textin =="s" => {
+            println!("Enter a filename:");
+            let filename = get_usr_input();
+            board.history.save(filename).unwrap();
             None
         }
         c => {
