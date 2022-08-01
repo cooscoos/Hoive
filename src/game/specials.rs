@@ -36,10 +36,6 @@ pub fn pillbug_toss<T: Coord>(
         return MoveStatus::RecentMove(sumoee.unwrap());
     }
 
-
-    
-
-
     // Check that the source and destination both neighbour the pillbug. If they don't return error
     let neighbours = board.coord.neighbour_tiles(position).into_iter().collect::<HashSet<_>>();
     if !neighbours.contains(source) || !neighbours.contains(&dest) {
