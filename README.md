@@ -14,11 +14,11 @@ Done so far:
 
 ### Pillbug
 
-Seems to be working:
+Seems to be working.
+Also written a history module to save a game's move history to csv and then emulate the replay of that game based on csv.
 
-* write a module to replay a game based on what I do, need to have a savefn for pmoore and loadup in tests
-* write tests for those
-* then write tests for pillbug and various error messages including hive splits etc utilising your new module
+* re-write some tests to utilise the emulation to see if it works
+* then write tests for pillbug and various error messages including hive splits etc utilising that new history module
 * tidy up a lot -- pmoore, board and specials and their interactions need to be refactored
 
 
