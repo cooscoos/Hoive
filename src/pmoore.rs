@@ -196,10 +196,14 @@ pub fn try_move<T: Coord>(
     position: (i8, i8, i8),
 ) -> MoveStatus {
     let move_status = board.move_chip(name, team, position);
+    message(board, &move_status);
+    move_status
+}
 
+fn message<T: Coord>(board: &mut Board<T>, move_status: &MoveStatus) {
     match move_status {
         MoveStatus::Success => {
-            println!("Chip move was successful.");
+            println!("Successful.");
             board.turns += 1;
         }
         MoveStatus::BadNeighbour => {
@@ -231,10 +235,12 @@ pub fn try_move<T: Coord>(
         MoveStatus::RecentMove(chip) => {
             println!("\n\x1b[31;1m<< Can't do that this turn because chip {} moved last turn  >>\x1b[0m\n", chip.name)
         }
+        MoveStatus::NotNeighbour => {
+            println!("\n\x1b[31;1m<< That is not a neighbouring hex  >>\x1b[0m\n")
+        }
         MoveStatus::Win(_) => {}
         MoveStatus::Nothing => {}
     }
-    move_status
 }
 
 // Ask player if they want to do a special move
@@ -252,6 +258,8 @@ pub fn try_special<T: Coord>(
 ) -> MoveStatus {
     // Find out if we're dealing with a mosquito or pillbug and lead the player through the prompts
 
+    let move_status;
+
     // Pillbug, p1
 
     // Get its position
@@ -267,13 +275,19 @@ pub fn try_special<T: Coord>(
     let selection;
 
     match textin {
-        _ if textin.is_empty() => return MoveStatus::Nothing, // abort the sumo, return to start
+        _ if textin.is_empty() => {
+            move_status = MoveStatus::Nothing;
+            message(board, &move_status);
+            return move_status;
+        }, // abort the sumo, return to start
         _ => {
             selection = match textin.parse::<usize>() {
                 Ok(value) if value < neighbours.len()+1 => value,
                 _ => {
                     println!("Use a number from the list");
-                    return MoveStatus::Nothing;
+                    move_status = MoveStatus::Nothing;
+                    message(board, &move_status);
+                    return move_status;
                     },
                 };
             },
@@ -281,8 +295,6 @@ pub fn try_special<T: Coord>(
 
     // get the co-ordinate of the selected chip
     let source = board.chips.get(&neighbours[selection]).unwrap().unwrap();
-
-
 
     // Ask player to select a co-ordinate to sumo to
     let mut coord = None;
@@ -292,7 +304,11 @@ pub fn try_special<T: Coord>(
 
     // If the user wants to abort coord selecton and switch pieces, go back to the start
     let select_hex = match coord.unwrap().0 {
-        true => return MoveStatus::Nothing,
+        true => {
+            move_status = MoveStatus::Nothing;
+            message(board, &move_status);
+            return move_status;
+        },
         false => (coord.unwrap().1, coord.unwrap().2),
     };
 
@@ -300,14 +316,10 @@ pub fn try_special<T: Coord>(
     let dest = board.coord.mapfrom_doubleheight(select_hex);
 
     // Try execute the move, if it works then show the board. The function try_move will increment the turn itself if move=success
-    let move_status = specials::pillbug_toss(board, &source, dest,position);
+    move_status = specials::pillbug_toss(board, &source, dest,position);
 
-    if move_status == MoveStatus::Success {
-        board.turns += 1;
-    }
-
+    message(board, &move_status);
     move_status
-
 
     // mosquito todo, m1
 

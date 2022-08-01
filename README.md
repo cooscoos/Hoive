@@ -14,7 +14,7 @@ Done so far:
 
 ### Pillbug
 
-* finish sumo rules in pillbug.rs
+* finish sumo rules in specials.rs
 * lots of tests for pillbug
 * tidy up the user interface
 * a lot of tidy up of code, refactor

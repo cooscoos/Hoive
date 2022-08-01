@@ -3,7 +3,7 @@
 use std::collections::{HashMap, HashSet, BTreeSet};
 
 use super::comps::{other_team, starting_chips, test_chips, Chip, Team}; // Game components
-use crate::game::animals; // Animal movement logic
+use crate::game::{animals, history::History}; // Animal movement logic and history
 use crate::maths::coord::Coord; // Coord trait applies to all hex co-ordinate systems
 
 // A "move" in Hive is defined as either a:
@@ -23,7 +23,8 @@ pub enum MoveStatus {
     // Following statuses are specific to animals / groups of animals
     SmallGap,         // gap is too small for an ant/spider/bee to access
     BadDistance(u32), // wrong distance for this animal to travel
-    RecentMove(Chip), // chip moved too recently for its special move to be executed
+    RecentMove(Chip), // pillbug: chip moved too recently for its special move to be executed
+    NotNeighbour,     // pillbug: destination to sumo to is not a neighbouring chip
 
     // Following statuses are returned early game
     NoBee,   // You can't move existing chips because not placed bee yet
@@ -38,7 +39,8 @@ pub enum MoveStatus {
 pub struct Board<T: Coord> {
     pub chips: HashMap<Chip, Option<(i8, i8, i8)>>,
     pub turns: u32, // tracks number of turns that have elapsed
-    pub coord: T,   // The coordinate sytem for the board e.g. HECS, Cube
+    pub coord: T,   // The coordinate sytem for the board e.g. Cube, HECS
+    pub history: History,   // The history of the moves taken
 }
 
 impl<T> Board<T>
@@ -48,24 +50,36 @@ where
     pub fn default(coord: T) -> Self {
         // At new game, initialise all of the chips for each team with position = None (in player hand)
         let chips = starting_chips();
+        let history = History::new();
 
         Board {
             chips,
             turns: 0,
             coord,
+            history,
         }
     }
 
     pub fn test_board(coord: T) -> Self {
         // During testing we often want lots of pieces that move freely, so give each team 8 ants and one bee
         let chips = test_chips();
+        let history = History::new();
 
         Board {
             chips,
             turns: 0,
             coord,
+            history,
         }
     }
+
+    // update the board's state and history
+    pub fn update(&mut self, chip: Chip, dest: (i8,i8,i8)){
+        self.chips.insert(chip, Some(dest)); // Overwrite the chip's position in the board's HashMap
+        self.history.add_record(self.turns, chip, self.coord.mapto_doubleheight(dest)); // update the history (in dheight)
+    }
+
+    
 
     // Try move a chip of given name / team, to a new position. Return MoveStatus to tell the main loop how successful the attempt was.
     pub fn move_chip(
@@ -142,7 +156,8 @@ where
         } else if self.turns >= 2 && constraint3 {
             MoveStatus::BadNeighbour
         } else {
-            self.chips.insert(chip, Some(dest)); // Overwrite the chip's position in the HashMap
+             // Overwrite the chip's position in the HashMap and update history
+            self.update(chip, dest);
             MoveStatus::Success
         }
     }
@@ -182,7 +197,8 @@ where
         } else if constraint_4 != MoveStatus::Success {
             constraint_4
         } else {
-            self.chips.insert(chip, Some(dest)); // Overwrite the chip's position in the HashMap
+             // Overwrite the chip's position in the HashMap and update history
+             self.update(chip, dest);
 
             // Relocation of chip could result in the game end
             self.check_win_state(team) // Returns MoveStatus::Success if nobody won (game continues)
