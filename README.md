@@ -14,10 +14,12 @@ Done so far:
 
 ### Pillbug
 
-* finish sumo rules in specials.rs
-* lots of tests for pillbug
-* tidy up the user interface
-* a lot of tidy up of code, refactor
+Seems to be working:
+
+* write a module to replay a game based on what I do, need to have a savefn for pmoore and loadup in tests
+* write tests for those
+* then write tests for pillbug and various error messages including hive splits etc utilising your new module
+* tidy up a lot -- pmoore, board and specials and their interactions need to be refactored
 
 
 
