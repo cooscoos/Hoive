@@ -6,7 +6,6 @@ use std::io::{prelude::*, BufReader};
 use super::board::Board;
 use super::comps::{convert_static, Chip, Team};
 use crate::maths::coord::Coord;
-use crate::pmoore;
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct History {

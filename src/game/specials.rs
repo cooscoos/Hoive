@@ -2,7 +2,7 @@
 
 use std::collections::HashSet;
 
-use super::board::{Board, MoveStatus};
+use super::{board::Board, movestatus::MoveStatus};
 use crate::maths::coord::Coord;
 
 // Allows pillbug to sumo (move adjacent chip to empty hex)

@@ -5,9 +5,9 @@ use rand::Rng;
 use std::io; // For parsing player inputs
 
 use crate::draw;
-use crate::game::board::{Board, MoveStatus};
 use crate::game::comps::{convert_static, Team};
 use crate::game::specials;
+use crate::game::{board::Board, movestatus::MoveStatus};
 use crate::maths::coord::Coord;
 
 // Introduction: say hello and define who goes first
@@ -133,24 +133,21 @@ fn movement_prompts<T: Coord>(
     active_team: Team,
     textin: String,
 ) -> MoveStatus {
-    // Keep asking them for a coordinate until they input something useful or give up and hit enter
-    let mut coord = None;
-    while coord == None {
-        coord = match coord_select(textin.clone()) {
-            None => return MoveStatus::Nothing, // abort move
-            Some((row, col)) => Some((row, col)),
-        };
-    }
+    // Ask user to input dheight co-ordinates
+    let coord = match coord_prompts(textin) {
+        None => return MoveStatus::Nothing, // abort move
+        Some((row, col)) => (row, col),
+    };
 
     // Convert from doubleheight to the board's co-ordinate system
-    let game_hex = board.coord.mapfrom_doubleheight(coord.unwrap());
+    let game_hex = board.coord.mapfrom_doubleheight(coord);
 
     // Try execute the move.
     board.move_chip(chip_name, active_team, game_hex)
 }
 
 // Ask user to select a coordinate. Returns None to abort parent function.
-fn coord_select(mut textin: String) -> Option<(i8, i8)> {
+fn coord_prompts(mut textin: String) -> Option<(i8, i8)> {
     if textin.is_empty() {
         return None;
     }; // escape this function and start again
@@ -165,14 +162,14 @@ fn coord_select(mut textin: String) -> Option<(i8, i8)> {
                 _ => {
                     println!("Invalid co-ordinates, try again. Enter to abort.");
                     textin = get_usr_input();
-                    coord_select(textin)
+                    coord_prompts(textin)
                 }
             }
         }
         _ => {
             println!("Try again: enter two numbers separated by a comma. Enter to abort.");
             textin = get_usr_input();
-            coord_select(textin)
+            coord_prompts(textin)
         }
     }
 }
@@ -238,17 +235,12 @@ pub fn special_prompts<T: Coord>(
     chip_name: &'static str,
     active_team: Team,
 ) -> MoveStatus {
-    let move_status;
-
     // Find out if we're dealing with a mosquito or pillbug, then lead the player through the prompts to execute special
     match chip_name {
-        "p1" => move_status = pillbug_prompts(board, chip_name, active_team), //pillbugs
-        "m1" => {
-            move_status = MoveStatus::Success;
-        }    // mosquito is to do
+        "p1" => pillbug_prompts(board, chip_name, active_team), //pillbugs
+        "m1" => MoveStatus::Nothing,                            // mosquito is to do
         _ => panic!("Unrecognised chip"),
     }
-    move_status
 }
 
 fn pillbug_prompts<T: Coord>(
@@ -286,18 +278,15 @@ fn pillbug_prompts<T: Coord>(
     let source = board.chips.get(&neighbours[selection]).unwrap().unwrap();
 
     // Ask player to select a co-ordinate to sumo to
-    let mut coord = None;
-    while coord == None {
-        println!("Select a co-ordinate to sumo this chip to. Input column then row, separated by a comma, e.g.: 0, 0. Hit enter to abort the sumo.");
-        let textin = get_usr_input();
-        coord = match coord_select(textin.clone()) {
-            None => return MoveStatus::Nothing, // abort move
-            Some((row, col)) => Some((row, col)),
-        };
-    }
+    println!("Select a co-ordinate to sumo this chip to. Input column then row, separated by a comma, e.g.: 0, 0. Hit enter to abort the sumo.");
+    let textin = get_usr_input();
+    let coord = match coord_prompts(textin) {
+        None => return MoveStatus::Nothing, // abort move
+        Some((row, col)) => (row, col),
+    };
 
     // Convert from doubleheight to the game's co-ordinate system
-    let dest = board.coord.mapfrom_doubleheight(coord.unwrap());
+    let dest = board.coord.mapfrom_doubleheight(coord);
 
     // Try execute the move and show the game's messages.
     specials::pillbug_sumo(board, &source, dest, position)

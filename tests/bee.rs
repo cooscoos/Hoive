@@ -1,6 +1,6 @@
 // Tests for the bee
-use hoive::game::board::*;
 use hoive::game::comps::Team;
+use hoive::game::{board::Board, movestatus::MoveStatus};
 use hoive::maths::coord::{Coord, Cube};
 
 mod common;

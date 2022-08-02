@@ -1,8 +1,7 @@
 // Tests for the ladybird
-use hoive::game::board::*;
 use hoive::game::comps::Team;
-use hoive::maths::coord::{Coord, Cube};
-use hoive::pmoore;
+use hoive::game::movestatus::MoveStatus;
+use hoive::maths::coord::Coord;
 
 mod common;
 use common::games::game_snapshot_6;

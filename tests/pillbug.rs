@@ -1,5 +1,5 @@
-use hoive::game::board::MoveStatus;
-use hoive::game::{board::Board, comps::Chip, comps::Team, history, specials};
+use hoive::game::{board::Board, movestatus::MoveStatus};
+use hoive::game::{comps::Chip, comps::Team, history, specials};
 use hoive::maths::coord::{Coord, Cube};
 
 fn pillbug_tests_setup(filename: String) -> Board<Cube> {

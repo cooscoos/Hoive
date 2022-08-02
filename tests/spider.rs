@@ -1,9 +1,8 @@
 // Tests for the spider
 use hoive::game::animals;
-use hoive::game::board::*;
 use hoive::game::comps::Team;
+use hoive::game::movestatus::MoveStatus;
 use hoive::maths::coord::Coord;
-use hoive::pmoore;
 
 mod common;
 use common::games::{game_snapshot_2, game_snapshot_3};

@@ -1,4 +1,4 @@
-use hoive::game::board::{Board, MoveStatus};
+use hoive::game::{board::Board, movestatus::MoveStatus};
 use hoive::pmoore;
 
 fn main() {

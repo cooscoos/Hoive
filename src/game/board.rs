@@ -3,37 +3,12 @@
 use std::collections::{HashMap, HashSet};
 
 use super::comps::{starting_chips, test_chips, Chip, Team}; // Game components
-use crate::game::{animals, history::History}; // Animal movement logic and history
+use crate::game::{animals, history::History, movestatus::MoveStatus}; // Animal movement logic and history
 use crate::maths::coord::Coord; // Coord trait applies to all hex co-ordinate systems
 
 // A "move" in Hive is defined as either a:
 // i) Placement: a new chip moves from player's hand to the board, i.e.: position = None --> position = Some(a, r, c);
 // ii) Relocation: a chip already on the board moves to somewhere else on board, i.e.: position = Some(a, r, c) --> position = Some(a', r', c').
-
-// Enum to return the status of whether a move was legal
-#[derive(Debug, Eq, PartialEq)]
-pub enum MoveStatus {
-    Success, // The placement/relocation of the chip was legal, the move was executed
-    // Following statuses are returned when move can't be executed because the target space...:
-    Occupied,     // is already occupied
-    Unconnected,  // is in the middle of nowhere
-    BadNeighbour, // is next to opposing team
-    HiveSplit,    // would split the hive in two
-
-    // Following statuses are specific to animals / groups of animals
-    SmallGap,         // gap is too small for an ant/spider/bee to access
-    BadDistance(u32), // wrong distance for this animal to travel
-    RecentMove(Chip), // pillbug: chip moved too recently for its special move to be executed
-    NotNeighbour,     // pillbug: destination to sumo to is not a neighbouring chip
-
-    // Following statuses are returned early game
-    NoBee,   // You can't move existing chips because not placed bee yet
-    BeeNeed, // You need to place your bee on this turn
-
-    // Finally
-    Win(Option<Team>), // You won the game
-    Nothing,           // You did nothing this turn
-}
 
 // The board struct is the game and all of its base logic
 #[derive(Debug, Eq, PartialEq)]
