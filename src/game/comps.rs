@@ -10,7 +10,7 @@ pub enum Team {
     White,
 }
 
-// Tell me who the other team are
+// Tell me who the other team are when I use !team
 impl Not for Team {
     type Output = Self;
     fn not(self) -> Self::Output{
