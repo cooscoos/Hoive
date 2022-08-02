@@ -6,7 +6,7 @@ use std::io; // For parsing player inputs
 
 use crate::draw;
 use crate::game::board::{Board, MoveStatus};
-use crate::game::comps::{other_team, Team};
+use crate::game::comps::Team;
 use crate::game::specials;
 use crate::maths::coord::Coord;
 
@@ -37,7 +37,7 @@ The boardgame Hive, in Rust.
 pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
     let active_team = match board.turns % 2 {
         0 => first,
-        _ => other_team(first),
+        _ => !first,
     };
 
     println!("{} team's turn.\n", draw::team_string(active_team));

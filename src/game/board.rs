@@ -1,8 +1,8 @@
-// Handles the game's base logic and rules
+// Handles the game's base logic and rules for movement and placement
 
 use std::collections::{HashMap, HashSet};
 
-use super::comps::{other_team, starting_chips, test_chips, Chip, Team}; // Game components
+use super::comps::{starting_chips, test_chips, Chip, Team}; // Game components
 use crate::game::{animals, history::History}; // Animal movement logic and history
 use crate::maths::coord::Coord; // Coord trait applies to all hex co-ordinate systems
 
@@ -243,12 +243,12 @@ where
 
     fn check_win_state(&self, team: Team) -> MoveStatus {
         // Are any bees surrounded by 6 neighbours?
-        if (self.bee_neighbours(team) == 6) & (self.bee_neighbours(other_team(team)) == 6) {
+        if (self.bee_neighbours(team) == 6) & (self.bee_neighbours(!team) == 6) {
             MoveStatus::Win(None) // both teams' bees have 6 neighbours, it's a draw
-        } else if self.bee_neighbours(other_team(team)) == 6 {
+        } else if self.bee_neighbours(!team) == 6 {
             MoveStatus::Win(Some(team)) // opponent's bee has 6 neighbours, you win
         } else if self.bee_neighbours(team) == 6 {
-            MoveStatus::Win(Some(other_team(team))) // your own bee has 6 neighbours, you lose
+            MoveStatus::Win(Some(!team)) // your own bee has 6 neighbours, you lose
         } else {
             MoveStatus::Success // nothing, continue game
         }

@@ -1,6 +1,7 @@
-// Components of a game: the two teams and chips/tiles
+// Components of a game: the teams and chips
 
 use std::collections::HashMap;
+use std::ops::Not;
 
 // Enum for two teams
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
@@ -9,12 +10,14 @@ pub enum Team {
     White,
 }
 
-// Probably a better way of doing this, but this works.
 // Tell me who the other team are
-pub fn other_team(team: Team) -> Team {
-    match team {
-        Team::Black => Team::White,
-        Team::White => Team::Black,
+impl Not for Team {
+    type Output = Self;
+    fn not(self) -> Self::Output{
+        match self {
+            Team::Black => Team::White,
+            Team::White => Team::Black,
+        }
     }
 }
 
