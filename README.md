@@ -11,7 +11,6 @@ Done so far:
 
 ### Tidy up
 
-* pmoore should be robust to lots of user input nonsense and enter hitting
 * tidy up a lot -- pmoore, board and specials and their interactions need to be refactored
 
 ### Other animals
