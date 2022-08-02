@@ -83,3 +83,20 @@ pub fn test_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
         (Chip::new("q1", Team::White), None),
     ])
 }
+
+// Convert a chip_name (String on the heap) to a static str (on the stack)
+pub fn convert_static(chip_string: String) -> &'static str {
+    // Get all possible chip names
+    let chips = starting_chips();
+    let chip_names = chips
+        .into_iter()
+        .map(|(c, v)| c.name)
+        .collect::<Vec<&str>>();
+
+    // Find the chip name that matches the chip_string and return that chip's name as str
+    let matched = chip_names
+        .into_iter()
+        .filter(|n| n.to_string() == chip_string)
+        .collect::<Vec<&str>>();
+    matched[0]
+}

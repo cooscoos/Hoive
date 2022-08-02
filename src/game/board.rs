@@ -1,6 +1,6 @@
 // Handles the game's base logic and rules
 
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 
 use super::comps::{other_team, starting_chips, test_chips, Chip, Team}; // Game components
 use crate::game::{animals, history::History}; // Animal movement logic and history

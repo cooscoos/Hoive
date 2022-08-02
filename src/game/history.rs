@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::{prelude::*, BufReader};
 
 use super::board::Board;
-use super::comps::{starting_chips, Chip, Team};
+use super::comps::{convert_static, Chip, Team};
 use crate::maths::coord::Coord;
 use crate::pmoore;
 
@@ -123,21 +123,4 @@ pub fn emulate<T: Coord>(board: &mut Board<T>, filename: String, test: bool) {
         let hex_move = board.coord.mapfrom_doubleheight((row, col)); // Map dheight to board coords
         pmoore::try_move(board, convert_static(chip_name), team, hex_move);
     }
-}
-
-// Convert a chip_name (String on the heap) to a static str (on the stack)
-fn convert_static(chip_string: String) -> &'static str {
-    // Get all possible chip names
-    let chips = starting_chips();
-    let chip_names = chips
-        .into_iter()
-        .map(|(c, v)| c.name)
-        .collect::<Vec<&str>>();
-
-    // Find the chip name that matches the chip_string and return that chip's name as str
-    let matched = chip_names
-        .into_iter()
-        .filter(|n| n.to_string() == chip_string)
-        .collect::<Vec<&str>>();
-    matched[0]
 }

@@ -91,7 +91,7 @@ fn pillbug_non_neighbouring() {
     // Pillbug attempts to sumo into a non-neighbouring hex
     let mut board = pillbug_tests_setup("snapshot_10".to_string());
 
-    // p1 (0,0) to try sumo wa1 (-1,1) to 2,0 should be unconnected
+    // p1 (0,0) to try sumo wa1 (-1,1) to 2,0 should return "not neighbour"
     let position = board.coord.mapfrom_doubleheight((0, 0));
     let source = board.coord.mapfrom_doubleheight((-1, 1));
     let dest = board.coord.mapfrom_doubleheight((2, 0));
