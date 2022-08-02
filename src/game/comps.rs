@@ -21,7 +21,7 @@ impl Not for Team {
     }
 }
 
-// Struct for tiles/chips in a game
+// Struct for chips in a game
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub struct Chip {
     pub name: &'static str, // identifies a unique animal/number, e.g. a2, s1 = ant 2, spider 1
@@ -62,7 +62,7 @@ pub fn starting_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
 }
 
 pub fn test_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
-    // During tests we want lots of pieces that move freely, so give each team 8 ants and one bee
+    // During some tests we want lots of chips that move freely. Give each team 8 ants, 1 bee
     HashMap::from([
         // Black team's chips
         (Chip::new("a1", Team::Black), None),
@@ -88,17 +88,14 @@ pub fn test_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
 }
 
 // Convert a chip_name (String on the heap) to a static str (on the stack)
-pub fn convert_static(chip_string: String) -> &'static str {
+pub fn convert_static(chip_string: String) -> Option<&'static str> {
     // Get all possible chip names
     let chips = starting_chips();
 
-    // Find the chip name that matches the chip_string and return that chip's name as str
-    match chips
+    // Find the chip name that matches the chip_string and return that chip's name as static str
+    chips
         .into_iter()
         .map(|(c, _)| c.name)
         .find(|n| *n.to_string() == chip_string)
-    {
-        Some(value) => value,
-        None => panic!("Error matching chip name, does not exist"),
-    }
+
 }

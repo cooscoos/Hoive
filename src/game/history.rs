@@ -124,6 +124,7 @@ pub fn emulate<T: Coord>(board: &mut Board<T>, filename: String, test: bool) {
     // Execute each move
     for (team, chip_name, row, col) in events {
         let hex_move = board.coord.mapfrom_doubleheight((row, col)); // Map dheight to board coords
-        pmoore::try_move(board, convert_static(chip_name), team, hex_move);
+        let chip_str = convert_static(chip_name).expect("Error matching chip name, does not exist");
+        pmoore::try_move(board, chip_str, team, hex_move);
     }
 }

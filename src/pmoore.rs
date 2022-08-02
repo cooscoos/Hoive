@@ -6,7 +6,7 @@ use std::io; // For parsing player inputs
 
 use crate::draw;
 use crate::game::board::{Board, MoveStatus};
-use crate::game::comps::Team;
+use crate::game::comps::{Team,convert_static};
 use crate::game::specials;
 use crate::maths::coord::Coord;
 
@@ -99,25 +99,6 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
     return_status
 }
 
-// Return the str of a chip with a given team and name (used for display)
-fn match_chip<T: Coord>(board: &Board<T>, team: Team, name: String) -> Option<&'static str> {
-    // Filter out the chips that belong to a given team and have a name
-    let list = board
-        .chips
-        .clone()
-        .into_iter()
-        .filter(|(c, _)| c.team == team)
-        .map(|(c, _)| c.name)
-        .collect::<Vec<&str>>();
-
-    for item in list {
-        if item == name {
-            return Some(item);
-        }
-    }
-    None
-}
-
 // Ask user to select chip. Returns None if user input invalid.
 fn chip_select<T: Coord>(board: &Board<T>, active_team: Team) -> Option<&'static str> {
     println!("Select a tile from the board or your hand to move. Hit enter to see the board and your hand, h for help, s to save.");
@@ -152,9 +133,9 @@ fn chip_select<T: Coord>(board: &Board<T>, active_team: Team) -> Option<&'static
         }
         c => {
             // Try and match a chip by this name
-            let list = match_chip(board, active_team, c); // get the available chips
+            let chip_str = convert_static(c);
 
-            match list {
+            match chip_str {
                 Some(value) => Some(value),
                 None => {
                     println!("You don't have this tile in your hand.");
