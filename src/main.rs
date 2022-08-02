@@ -4,7 +4,7 @@ use hoive::pmoore;
 fn main() {
     // Initialise game board in cube co-ordinates
     let coord = hoive::maths::coord::Cube;
-    let mut board = Board::default(coord);
+    let mut board = Board::new(coord);
 
     // Say hello, tell players who goes first
     let first = pmoore::intro();

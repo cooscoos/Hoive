@@ -1,3 +1,4 @@
+use hoive::game;
 // Tests that use cube co-ordinates: cargo test cube
 use hoive::game::comps::Team;
 use hoive::game::{board::Board, movestatus::MoveStatus};
@@ -5,28 +6,28 @@ use hoive::maths::{coord::Coord, coord::Cube};
 
 mod common;
 use common::basic; // basic tests that work with all co-ordinate systems
-use common::games::game_snapshot_1; // Half played games of Hive
+use common::games::{game_snapshot_1, test_board}; // Half played games of Hive
 
 #[test]
 fn cube_first_turn() {
-    basic::first_turn(&mut Board::test_board(Cube));
+    basic::first_turn(&mut test_board(Cube));
 }
 
 #[test]
 fn cube_occupied() {
-    basic::occupied(&mut Board::test_board(Cube));
+    basic::occupied(&mut test_board(Cube));
 }
 
 #[test]
 fn cube_to_the_moon() {
-    basic::to_the_moon(&mut Board::test_board(Cube));
+    basic::to_the_moon(&mut test_board(Cube));
 }
 
 // These tests are hecs specific
 #[test]
 fn cube_second_turn_neighbour() {
     // Place a white chip next to a black chip but on the second turn (should be okay)
-    let mut board = Board::test_board(Cube);
+    let mut board = test_board(Cube);
     board.move_chip("a1", Team::Black, (0, 0, 0));
     assert_eq!(
         MoveStatus::Success,
@@ -37,7 +38,7 @@ fn cube_second_turn_neighbour() {
 #[test]
 fn cube_third_turn_badneighbour() {
     // Place a white chip next to a black chip on the third turn (that's illegal)
-    let mut board = Board::test_board(Cube);
+    let mut board = test_board(Cube);
     board.move_chip("a1", Team::Black, (0, 0, 0));
     board.move_chip("a1", Team::White, (1, 0, -1));
     assert_eq!(
@@ -49,7 +50,7 @@ fn cube_third_turn_badneighbour() {
 #[test]
 fn cube_fifth_turn_badneighbour() {
     // Do a bunch of legal stuff with a BadNeighbour move at the end
-    let mut board = Board::test_board(Cube);
+    let mut board = test_board(Cube);
     board.move_chip("q1", Team::Black, (0, 0, 0));
     board.move_chip("q1", Team::White, (0, -1, 1));
     board.move_chip("a2", Team::Black, (0, 1, -1));
@@ -64,7 +65,7 @@ fn cube_fifth_turn_badneighbour() {
 #[test]
 fn cube_split_hive() {
     // Put down four chips and then split the hive by moving a black chip from the middle
-    let mut board = Board::test_board(Cube);
+    let mut board = test_board(Cube);
     board.move_chip("a1", Team::Black, (0, 0, 0));
     board.move_chip("q1", Team::White, (0, -1, 1));
     board.move_chip("q1", Team::Black, (0, 1, -1));
@@ -79,7 +80,7 @@ fn cube_split_hive() {
 #[test]
 fn cube_attack() {
     // Put down chips and then move them about a lot
-    let mut board = Board::test_board(Cube);
+    let mut board = test_board(Cube);
     board.move_chip("q1", Team::Black, (0, 0, 0));
     board.move_chip("q1", Team::White, (0, -1, 1));
     board.move_chip("a1", Team::Black, (0, 1, -1));
@@ -96,7 +97,7 @@ fn cube_attack() {
 #[test]
 fn cube_nosplit_hive() {
     // Put down lots of chips and then do a move that doesn't split hive and is legal
-    let mut board = Board::test_board(Cube);
+    let mut board = test_board(Cube);
     board.move_chip("q1", Team::Black, (0, 0, 0));
     board.move_chip("q1", Team::White, (0, -1, 1));
     board.move_chip("a1", Team::Black, (0, 1, -1));
@@ -114,7 +115,7 @@ fn cube_nosplit_hive() {
 #[test]
 fn cube_from_dheight_once() {
     // Convert from doubleheight to cube co-ordinates once
-    let board = Board::test_board(Cube);
+    let board = test_board(Cube);
     let dheight = (0, -4);
 
     let cubehex = board.coord.mapfrom_doubleheight(dheight);
@@ -127,7 +128,7 @@ fn cube_from_dheight_complicated() {
     // Convert from doubleheight to cube co-ordinates a lot
 
     // Do a bunch of moves in dheight co-ords to simulate the game shownn in /reference/tests/bug1.png
-    let board = Board::test_board(Cube);
+    let board = test_board(Cube);
     let moves_list: [(i8, i8); 8] = [
         (0, 0),
         (0, -2),
@@ -192,7 +193,7 @@ fn doubleheight_to_cube<T: Coord>(board: &mut Board<T>) -> Vec<(i8, i8, i8)> {
 #[test]
 fn cube_no_split_hive2() {
     // Put down chips in doubleheight co-ords and then do a move that doesn't split hive and is legal
-    let mut board = Board::test_board(Cube);
+    let mut board = test_board(Cube);
     let hex_moves = doubleheight_to_cube(&mut board);
 
     // Apply these moves on the board
@@ -281,7 +282,7 @@ fn cube_from_doubleheight() {
 fn cube_ant_squeeze() {
     // Set up the board as shown in /reference/tests/ant_squeeze.jpeg, but with all ants (and one bee)
     // Try and move into the small gap, should be illegal
-    let mut board = Board::test_board(Cube);
+    let mut board = test_board(Cube);
 
     // In doubleheight
     let moves_list: Vec<(i8, i8)> = vec![
@@ -328,7 +329,7 @@ fn cube_ant_squeeze() {
 #[test]
 fn cube_hex_distance() {
     // Make sure the hex distance calc is working
-    let board = Board::test_board(Cube);
+    let board = test_board(Cube);
 
     let pos1 = (0, 0, 0);
     let pos2 = (-3, 2, 1);

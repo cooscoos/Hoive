@@ -1,13 +1,53 @@
 // Snapshots of boards used for other tests
-use hoive::game::board::*;
-use hoive::game::comps::Team;
+
+use std::collections::HashMap;
+
+use hoive::game::{board::Board, comps::Chip, comps::Team, history::History};
 use hoive::maths::{coord::Coord, coord::Cube};
-use hoive::pmoore;
+
+pub fn test_board<T: Coord>(coord: T) -> Board<T> {
+    // During testing we often want lots of pieces that move freely, so give each team 8 ants and one bee
+    let chips = test_chips();
+    let history = History::new();
+
+    Board {
+        chips,
+        turns: 0,
+        coord,
+        history,
+    }
+}
+
+fn test_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
+    // During some tests we want lots of chips that move freely. Give each team 8 ants, 1 bee
+    HashMap::from([
+        // Black team's chips
+        (Chip::new("a1", Team::Black), None),
+        (Chip::new("a2", Team::Black), None),
+        (Chip::new("a3", Team::Black), None),
+        (Chip::new("a4", Team::Black), None),
+        (Chip::new("a5", Team::Black), None),
+        (Chip::new("a6", Team::Black), None),
+        (Chip::new("a7", Team::Black), None),
+        (Chip::new("a8", Team::Black), None),
+        (Chip::new("q1", Team::Black), None),
+        // White team's chips
+        (Chip::new("a1", Team::White), None),
+        (Chip::new("a2", Team::White), None),
+        (Chip::new("a3", Team::White), None),
+        (Chip::new("a4", Team::White), None),
+        (Chip::new("a5", Team::White), None),
+        (Chip::new("a6", Team::White), None),
+        (Chip::new("a7", Team::White), None),
+        (Chip::new("a8", Team::White), None),
+        (Chip::new("q1", Team::White), None),
+    ])
+}
 
 pub fn game_snapshot_1() -> Board<Cube> {
     // This function is called by a few subsequent tests
     // Run the game shown in /referenece/tests/bug2.png using cube co-ordinates
-    let mut board = Board::test_board(Cube);
+    let mut board = test_board(Cube);
     let hex_moves: [(i8, i8, i8); 9] = [
         (0, 0, 0),
         (0, -1, 1),
@@ -41,7 +81,7 @@ pub fn game_snapshot_1() -> Board<Cube> {
 pub fn game_snapshot_2() -> Board<Cube> {
     // Set up a gameboard for some spider and bee tests
 
-    let mut board = Board::default(Cube);
+    let mut board = Board::new(Cube);
 
     let moves_list = vec![
         (0, 0),  // wq1
@@ -65,7 +105,7 @@ pub fn game_snapshot_2() -> Board<Cube> {
 pub fn game_snapshot_3() -> Board<Cube> {
     // Spider and ladybird test - barrier
 
-    let mut board = Board::default(Cube);
+    let mut board = Board::new(Cube);
 
     let moves_list = vec![
         (0, 0),   // wq1
@@ -95,7 +135,7 @@ pub fn game_snapshot_3() -> Board<Cube> {
 pub fn game_snapshot_4() -> Board<Cube> {
     // Win game tests - the white bee is in trouble
 
-    let mut board = Board::default(Cube);
+    let mut board = Board::new(Cube);
 
     let moves_list = vec![
         (0, 0),   // wq1
@@ -132,7 +172,7 @@ pub fn game_snapshot_4() -> Board<Cube> {
 pub fn game_snapshot_5() -> Board<Cube> {
     // Draw game tests - both bees are in trouble
 
-    let mut board = Board::default(Cube);
+    let mut board = Board::new(Cube);
 
     let moves_list = vec![
         (0, 0),   // wq1
@@ -173,7 +213,7 @@ pub fn game_snapshot_5() -> Board<Cube> {
 pub fn game_snapshot_6() -> Board<Cube> {
     // Ladybird moves, based loosely on /reference/tests/bug3.png
 
-    let mut board = Board::default(Cube);
+    let mut board = Board::new(Cube);
 
     let moves_list = vec![
         (0, 0),  // bq1
@@ -203,7 +243,7 @@ pub fn game_snapshot_6() -> Board<Cube> {
 
 pub fn game_snapshot_7() -> Board<Cube> {
     // to test history.rs. reference/tests/snapshot_7.csv
-    let mut board = Board::default(Cube);
+    let mut board = Board::new(Cube);
 
     let moves_list = vec![
         (0, 0),   // wq1

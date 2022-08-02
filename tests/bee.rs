@@ -41,7 +41,7 @@ fn bee_move_toofar() {
 #[test]
 fn bee_need() {
     // Place no bees and then continue to have no bee on white player's 3rd turn.
-    let mut board = Board::default(Cube);
+    let mut board = Board::new(Cube);
 
     let moves_list = vec![
         (0, 0),   // wa1
@@ -71,7 +71,7 @@ fn bee_need() {
 #[test]
 fn bee_missing() {
     // Place no bees and then try move existing chip
-    let mut board = Board::default(Cube);
+    let mut board = Board::new(Cube);
 
     let moves_list = vec![
         (0, 0),   // wa1

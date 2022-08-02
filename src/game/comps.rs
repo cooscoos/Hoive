@@ -61,32 +61,6 @@ pub fn starting_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
     ])
 }
 
-pub fn test_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
-    // During some tests we want lots of chips that move freely. Give each team 8 ants, 1 bee
-    HashMap::from([
-        // Black team's chips
-        (Chip::new("a1", Team::Black), None),
-        (Chip::new("a2", Team::Black), None),
-        (Chip::new("a3", Team::Black), None),
-        (Chip::new("a4", Team::Black), None),
-        (Chip::new("a5", Team::Black), None),
-        (Chip::new("a6", Team::Black), None),
-        (Chip::new("a7", Team::Black), None),
-        (Chip::new("a8", Team::Black), None),
-        (Chip::new("q1", Team::Black), None),
-        // White team's chips
-        (Chip::new("a1", Team::White), None),
-        (Chip::new("a2", Team::White), None),
-        (Chip::new("a3", Team::White), None),
-        (Chip::new("a4", Team::White), None),
-        (Chip::new("a5", Team::White), None),
-        (Chip::new("a6", Team::White), None),
-        (Chip::new("a7", Team::White), None),
-        (Chip::new("a8", Team::White), None),
-        (Chip::new("q1", Team::White), None),
-    ])
-}
-
 // Convert a chip_name (String on the heap) to a static str (on the stack)
 pub fn convert_static(chip_string: String) -> Option<&'static str> {
     // Get all possible chip names

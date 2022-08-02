@@ -10,7 +10,7 @@ fn history_load() {
     // out the same as /tests/common/games.rs pub fn game_snapshot_7
 
     // load in game from file
-    let mut board1 = Board::default(Cube);
+    let mut board1 = Board::new(Cube);
     let filename = "snapshot_7".to_string();
     history::emulate(&mut board1, filename, true);
 
@@ -27,7 +27,7 @@ fn history_wrong_load() {
     // out differently to /tests/common/games.rs pub fn game_snapshot_7
 
     // load in game from file
-    let mut board1 = Board::default(Cube);
+    let mut board1 = Board::new(Cube);
     let filename = "badsnapshot_7".to_string();
     history::emulate(&mut board1, filename, true);
 

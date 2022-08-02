@@ -2,7 +2,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use super::comps::{starting_chips, test_chips, Chip, Team}; // Game components
+use super::comps::{starting_chips, Chip, Team}; // Game components
 use crate::game::{animals, history::History, movestatus::MoveStatus}; // Animal movement logic and history
 use crate::maths::coord::Coord; // Coord trait applies to all hex co-ordinate systems
 
@@ -16,14 +16,14 @@ pub struct Board<T: Coord> {
     pub chips: HashMap<Chip, Option<(i8, i8, i8)>>,
     pub turns: u32,       // tracks number of turns that have elapsed
     pub coord: T,         // The coordinate sytem for the board e.g. Cube, HECS
-    pub history: History, // The history of the moves taken
+    pub history: History, // A record of all previous moves
 }
 
 impl<T> Board<T>
 where
     T: Coord,
 {
-    pub fn default(coord: T) -> Self {
+    pub fn new(coord: T) -> Self {
         // At new game, initialise all of the chips for each team with position = None (in player hand)
         let chips = starting_chips();
         let history = History::new();
@@ -36,20 +36,7 @@ where
         }
     }
 
-    pub fn test_board(coord: T) -> Self {
-        // During testing we often want lots of pieces that move freely, so give each team 8 ants and one bee
-        let chips = test_chips();
-        let history = History::new();
-
-        Board {
-            chips,
-            turns: 0,
-            coord,
-            history,
-        }
-    }
-
-    // update the board's state and history
+    // update the board's state, history and turn number
     pub fn update(&mut self, chip: Chip, dest: (i8, i8, i8)) {
         self.chips.insert(chip, Some(dest)); // Overwrite the chip's position in the board's HashMap
         self.history
@@ -81,7 +68,7 @@ where
                 }
             }
             None => panic!(
-                "Something went very wrong. The chip can't be moved because it doesn't exist."
+                "Something went wrong. The chip can't be moved because it doesn't exist."
             ),
         };
 
@@ -148,10 +135,8 @@ where
     ) -> MoveStatus {
         // Constraints for a relocation:
         // Constraint 0) player must have placed their bee (only need to check prior to board turn 6)
-        // Constraint 1) chip relocate cannot break the hive in two;
-        // Constraint 2) chip must end up adjacent to other tiles
-        // Constraint 3) chip can't end up on top of another chip (unless beetle, but we'll worry about this later...)
-        // Constraint N) then there are animal-specific constraints
+        // Constraints 1-3) see method in basic_constraints
+        // Constraint 4) animal-specific constraints
 
         let team = chip.team;
 
@@ -183,13 +168,10 @@ where
     }
 
     pub fn basic_constraints(&mut self, dest: (i8, i8, i8), source: &(i8, i8, i8)) -> MoveStatus {
-        // Basic constraints are checked during all player moves, but also when a pillbug forces
-        // another chip to move. When pillbug forces move, only cons1-3 need checking.
+        // Basic constraints are checked during all moves, including pillbug sumos
         // Constraint 1) chip relocate cannot break the hive in two;
         // Constraint 2) chip must end up adjacent to other tiles
-        // Constraint 3) chip can't end up on top of another chip
-        // Constraint 2 will always be true for a pillbug, but we need to check constraints 1-3 in that order
-        // so that we can return error messages that make sense.
+        // Constraint 3) chip can't end up on top of another chip (unless bettle, but worry about that later)
 
         // Any chips already on board at the dest?
         let constraint1 = self.get_placed_positions().iter().any(|p| *p == dest);
@@ -206,7 +188,7 @@ where
         // Does moving the chip away from current position cause the hive to split?
         let constraint3 = self.hive_break_check(source, &dest);
 
-        // check constraints in this order because all unconnected moves are also hive splits, and we want to return useful error messages
+        // check constraints in this order because they're not all mutally exclusive and we want to return useful errors to users
         if constraint1 {
             MoveStatus::Occupied
         } else if constraint2 {
@@ -215,32 +197,6 @@ where
             MoveStatus::HiveSplit
         } else {
             MoveStatus::Success
-        }
-    }
-
-    fn check_win_state(&self, team: Team) -> MoveStatus {
-        // Are any bees surrounded by 6 neighbours?
-        if (self.bee_neighbours(team) == 6) & (self.bee_neighbours(!team) == 6) {
-            MoveStatus::Win(None) // both teams' bees have 6 neighbours, it's a draw
-        } else if self.bee_neighbours(!team) == 6 {
-            MoveStatus::Win(Some(team)) // opponent's bee has 6 neighbours, you win
-        } else if self.bee_neighbours(team) == 6 {
-            MoveStatus::Win(Some(!team)) // your own bee has 6 neighbours, you lose
-        } else {
-            MoveStatus::Success // nothing, continue game
-        }
-    }
-
-    // How many neighbours does this team's queen bee have?
-    fn bee_neighbours(&self, team: Team) -> usize {
-        match self
-            .chips
-            .iter()
-            .find(|(c, p)| (c.team == team) & (c.name == "q1") & (p.is_some()))
-            .map(|(_, p)| self.count_neighbours(p.unwrap()))
-        {
-            Some(value) => value,
-            None => panic!("{:?} bee has no neighbours. Something went wrong.", team),
         }
     }
 
@@ -302,6 +258,32 @@ where
             'q' | 'p' => animals::bee_check(self, source, dest), // bees and pillbugs
             'l' => animals::ladybird_check(self, source, dest), // ladybirds
             _ => MoveStatus::Success,                      // todo, other animals
+        }
+    }
+
+    fn check_win_state(&self, team: Team) -> MoveStatus {
+        // Are any bees surrounded by 6 neighbours?
+        if (self.bee_neighbours(team) == 6) & (self.bee_neighbours(!team) == 6) {
+            MoveStatus::Win(None) // both teams' bees have 6 neighbours, it's a draw
+        } else if self.bee_neighbours(!team) == 6 {
+            MoveStatus::Win(Some(team)) // opponent's bee has 6 neighbours, you win
+        } else if self.bee_neighbours(team) == 6 {
+            MoveStatus::Win(Some(!team)) // your own bee has 6 neighbours, you lose
+        } else {
+            MoveStatus::Success // nothing, continue game
+        }
+    }
+
+    // How many neighbours does this team's queen bee have?
+    fn bee_neighbours(&self, team: Team) -> usize {
+        match self
+            .chips
+            .iter()
+            .find(|(c, p)| (c.team == team) & (c.name == "q1") & (p.is_some()))
+            .map(|(_, p)| self.count_neighbours(p.unwrap()))
+        {
+            Some(value) => value,
+            None => panic!("{:?} bee has no neighbours. Something went wrong.", team),
         }
     }
 

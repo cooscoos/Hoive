@@ -2,17 +2,19 @@
 
 use hoive::draw;
 use hoive::maths::coord::Cube;
-use hoive::*;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 
 use hoive::game::board::*;
 use hoive::game::comps::{Chip, Team};
 
+mod common;
+use common::games::test_board;
+
 #[test]
 fn test_doubleheight_converter() {
     //put down lots of chips in Cube co-ords
-    let mut board = Board::test_board(Cube);
+    let mut board = test_board(Cube);
     board.move_chip("a1", Team::Black, (0, 0, 0)); // centre
     board.move_chip("a1", Team::White, (-1, 1, 0)); // down and left
     board.move_chip("a2", Team::Black, (1, -1, 0)); // up and right
@@ -79,7 +81,7 @@ fn test_doubleheight_converter() {
 #[test]
 fn test_parseout() {
     //put down lots of chips in Cube co-ords
-    let mut board = Board::test_board(Cube);
+    let mut board = test_board(Cube);
     board.move_chip("a1", Team::Black, (0, 0, 0)); // centre
     board.move_chip("a1", Team::White, (-1, 1, 0)); // down and left
     board.move_chip("a2", Team::Black, (1, -1, 0)); // up and right

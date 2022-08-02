@@ -6,7 +6,7 @@ fn pillbug_tests_setup(filename: String) -> Board<Cube> {
     // Some set up used by most tests for pillbug
 
     // Create and emulate a board from a named reference/tests/snapshots file
-    let mut board = Board::default(Cube);
+    let mut board = Board::new(Cube);
     history::emulate(&mut board, filename, true);
     board
 }
