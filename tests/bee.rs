@@ -2,7 +2,6 @@
 use hoive::game::board::*;
 use hoive::game::comps::Team;
 use hoive::maths::coord::{Coord, Cube};
-use hoive::pmoore;
 
 mod common;
 use common::games::{game_snapshot_2, game_snapshot_4, game_snapshot_5};
@@ -19,7 +18,7 @@ fn bee_move_ok() {
 
     assert_eq!(
         MoveStatus::Success,
-        pmoore::try_move(&mut board, "q1", Team::White, legal_move)
+        board.move_chip("q1", Team::White, legal_move)
     );
 }
 
@@ -35,7 +34,7 @@ fn bee_move_toofar() {
 
     assert_eq!(
         MoveStatus::BadDistance(1),
-        pmoore::try_move(&mut board, "q1", Team::White, illegal_move)
+        board.move_chip("q1", Team::White, illegal_move)
     );
 }
 
@@ -58,14 +57,14 @@ fn bee_need() {
         .map(|xy| board.coord.mapfrom_doubleheight(*xy))
         .collect::<Vec<(i8, i8, i8)>>();
 
-    pmoore::try_move(&mut board, "a1", Team::White, hex_moves[0]);
-    pmoore::try_move(&mut board, "q1", Team::Black, hex_moves[1]);
-    pmoore::try_move(&mut board, "a2", Team::White, hex_moves[2]);
-    pmoore::try_move(&mut board, "a1", Team::Black, hex_moves[3]);
+    board.move_chip("a1", Team::White, hex_moves[0]);
+    board.move_chip("q1", Team::Black, hex_moves[1]);
+    board.move_chip("a2", Team::White, hex_moves[2]);
+    board.move_chip("a1", Team::Black, hex_moves[3]);
 
     assert_eq!(
         MoveStatus::BeeNeed,
-        pmoore::try_move(&mut board, "a3", Team::White, hex_moves[4])
+        board.move_chip("a3", Team::White, hex_moves[4])
     );
 }
 
@@ -86,12 +85,12 @@ fn bee_missing() {
         .map(|xy| board.coord.mapfrom_doubleheight(*xy))
         .collect::<Vec<(i8, i8, i8)>>();
 
-    pmoore::try_move(&mut board, "a1", Team::White, hex_moves[0]);
-    pmoore::try_move(&mut board, "q1", Team::Black, hex_moves[1]);
+    board.move_chip("a1", Team::White, hex_moves[0]);
+    board.move_chip("q1", Team::Black, hex_moves[1]);
 
     assert_eq!(
         MoveStatus::NoBee,
-        pmoore::try_move(&mut board, "a1", Team::White, hex_moves[2])
+        board.move_chip("a1", Team::White, hex_moves[2])
     );
 }
 
@@ -105,7 +104,7 @@ fn bee_defeat() {
 
     assert_eq!(
         MoveStatus::Win(Some(Team::Black)),
-        pmoore::try_move(&mut board, "a2", Team::Black, defeat_move)
+        board.move_chip("a2", Team::Black, defeat_move)
     );
 }
 
@@ -119,7 +118,7 @@ fn bee_seppuku() {
 
     assert_eq!(
         MoveStatus::Win(Some(Team::Black)),
-        pmoore::try_move(&mut board, "a3", Team::White, defeat_move)
+        board.move_chip("a3", Team::White, defeat_move)
     );
 }
 
@@ -133,6 +132,6 @@ fn bee_spinning_seppuku() {
 
     assert_eq!(
         MoveStatus::Win(None),
-        pmoore::try_move(&mut board, "a3", Team::White, defeat_move)
+        board.move_chip("a3", Team::White, defeat_move)
     );
 }

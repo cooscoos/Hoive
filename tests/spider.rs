@@ -15,14 +15,14 @@ fn spider_move_ok() {
 
     // Place a spider down at (0,2)
     let placement = board.coord.mapfrom_doubleheight((0, 2));
-    pmoore::try_move(&mut board, "s1", Team::White, placement);
+    board.move_chip("s1", Team::White, placement);
 
     // Then try and move it 3 spaces away
     let legal_move = board.coord.mapfrom_doubleheight((1, -3));
 
     assert_eq!(
         MoveStatus::Success,
-        pmoore::try_move(&mut board, "s1", Team::White, legal_move)
+        board.move_chip("s1", Team::White, legal_move)
     );
 }
 
@@ -33,14 +33,14 @@ fn spider_move_toofar() {
 
     // Place a spider down at (0,2)
     let placement = board.coord.mapfrom_doubleheight((0, 2));
-    pmoore::try_move(&mut board, "s1", Team::White, placement);
+    board.move_chip("s1", Team::White, placement);
 
     // Then try and move it 4 spaces away
     let illegal_move = board.coord.mapfrom_doubleheight((0, -6));
 
     assert_eq!(
         MoveStatus::BadDistance(3),
-        pmoore::try_move(&mut board, "s1", Team::White, illegal_move)
+        board.move_chip("s1", Team::White, illegal_move)
     );
 }
 
@@ -79,6 +79,6 @@ fn spider_through_barrier() {
 
     assert_eq!(
         MoveStatus::BadDistance(3),
-        pmoore::try_move(&mut board, "s1", Team::White, illegal_move)
+        board.move_chip("s1", Team::White, illegal_move)
     );
 }

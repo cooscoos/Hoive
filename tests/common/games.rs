@@ -21,19 +21,19 @@ pub fn game_snapshot_1() -> Board<Cube> {
     ];
 
     // Do these moves on the board
-    pmoore::try_move(&mut board, "q1", Team::White, hex_moves[0]);
-    pmoore::try_move(&mut board, "q1", Team::Black, hex_moves[1]);
+    board.move_chip("q1", Team::White, hex_moves[0]);
+    board.move_chip("q1", Team::Black, hex_moves[1]);
 
-    pmoore::try_move(&mut board, "a2", Team::White, hex_moves[2]);
-    pmoore::try_move(&mut board, "a2", Team::Black, hex_moves[3]);
+    board.move_chip("a2", Team::White, hex_moves[2]);
+    board.move_chip("a2", Team::Black, hex_moves[3]);
 
-    pmoore::try_move(&mut board, "a3", Team::White, hex_moves[4]);
-    pmoore::try_move(&mut board, "a3", Team::Black, hex_moves[5]);
+    board.move_chip("a3", Team::White, hex_moves[4]);
+    board.move_chip("a3", Team::Black, hex_moves[5]);
 
-    pmoore::try_move(&mut board, "a4", Team::White, hex_moves[6]);
-    pmoore::try_move(&mut board, "a4", Team::Black, hex_moves[7]);
+    board.move_chip("a4", Team::White, hex_moves[6]);
+    board.move_chip("a4", Team::Black, hex_moves[7]);
 
-    pmoore::try_move(&mut board, "a3", Team::White, hex_moves[8]);
+    board.move_chip("a3", Team::White, hex_moves[8]);
 
     board
 }
@@ -55,9 +55,9 @@ pub fn game_snapshot_2() -> Board<Cube> {
         .map(|xy| board.coord.mapfrom_doubleheight(*xy))
         .collect::<Vec<(i8, i8, i8)>>();
 
-    pmoore::try_move(&mut board, "q1", Team::White, hex_moves[0]);
-    pmoore::try_move(&mut board, "q1", Team::Black, hex_moves[1]);
-    pmoore::try_move(&mut board, "a2", Team::Black, hex_moves[2]);
+    board.move_chip("q1", Team::White, hex_moves[0]);
+    board.move_chip("q1", Team::Black, hex_moves[1]);
+    board.move_chip("a2", Team::Black, hex_moves[2]);
 
     board
 }
@@ -82,12 +82,12 @@ pub fn game_snapshot_3() -> Board<Cube> {
         .map(|xy| board.coord.mapfrom_doubleheight(*xy))
         .collect::<Vec<(i8, i8, i8)>>();
 
-    pmoore::try_move(&mut board, "q1", Team::White, hex_moves[0]);
-    pmoore::try_move(&mut board, "q1", Team::Black, hex_moves[1]);
-    pmoore::try_move(&mut board, "a1", Team::Black, hex_moves[2]);
-    pmoore::try_move(&mut board, "a1", Team::White, hex_moves[3]);
-    pmoore::try_move(&mut board, "a2", Team::White, hex_moves[4]);
-    pmoore::try_move(&mut board, "s1", Team::White, hex_moves[5]);
+    board.move_chip("q1", Team::White, hex_moves[0]);
+    board.move_chip("q1", Team::Black, hex_moves[1]);
+    board.move_chip("a1", Team::Black, hex_moves[2]);
+    board.move_chip("a1", Team::White, hex_moves[3]);
+    board.move_chip("a2", Team::White, hex_moves[4]);
+    board.move_chip("s1", Team::White, hex_moves[5]);
 
     board
 }
@@ -116,15 +116,15 @@ pub fn game_snapshot_4() -> Board<Cube> {
         .map(|xy| board.coord.mapfrom_doubleheight(*xy))
         .collect::<Vec<(i8, i8, i8)>>();
 
-    pmoore::try_move(&mut board, "q1", Team::White, hex_moves[0]);
-    pmoore::try_move(&mut board, "q1", Team::Black, hex_moves[1]);
-    pmoore::try_move(&mut board, "a1", Team::White, hex_moves[2]);
-    pmoore::try_move(&mut board, "a1", Team::Black, hex_moves[3]);
-    pmoore::try_move(&mut board, "a2", Team::White, hex_moves[4]);
-    pmoore::try_move(&mut board, "a1", Team::Black, hex_moves[5]);
-    pmoore::try_move(&mut board, "s1", Team::White, hex_moves[6]);
-    pmoore::try_move(&mut board, "a2", Team::Black, hex_moves[7]);
-    pmoore::try_move(&mut board, "a3", Team::White, hex_moves[8]);
+    board.move_chip("q1", Team::White, hex_moves[0]);
+    board.move_chip("q1", Team::Black, hex_moves[1]);
+    board.move_chip("a1", Team::White, hex_moves[2]);
+    board.move_chip("a1", Team::Black, hex_moves[3]);
+    board.move_chip("a2", Team::White, hex_moves[4]);
+    board.move_chip("a1", Team::Black, hex_moves[5]);
+    board.move_chip("s1", Team::White, hex_moves[6]);
+    board.move_chip("a2", Team::Black, hex_moves[7]);
+    board.move_chip("a3", Team::White, hex_moves[8]);
 
     board
 }
@@ -155,17 +155,17 @@ pub fn game_snapshot_5() -> Board<Cube> {
         .map(|xy| board.coord.mapfrom_doubleheight(*xy))
         .collect::<Vec<(i8, i8, i8)>>();
 
-    pmoore::try_move(&mut board, "q1", Team::White, hex_moves[0]);
-    pmoore::try_move(&mut board, "q1", Team::Black, hex_moves[1]);
-    pmoore::try_move(&mut board, "a1", Team::White, hex_moves[2]);
-    pmoore::try_move(&mut board, "a1", Team::Black, hex_moves[3]);
-    pmoore::try_move(&mut board, "a2", Team::White, hex_moves[4]);
-    pmoore::try_move(&mut board, "a1", Team::Black, hex_moves[5]);
-    pmoore::try_move(&mut board, "s1", Team::White, hex_moves[6]);
-    pmoore::try_move(&mut board, "a2", Team::Black, hex_moves[7]);
-    pmoore::try_move(&mut board, "a3", Team::White, hex_moves[8]);
-    pmoore::try_move(&mut board, "a3", Team::Black, hex_moves[9]);
-    pmoore::try_move(&mut board, "s1", Team::Black, hex_moves[10]);
+    board.move_chip("q1", Team::White, hex_moves[0]);
+    board.move_chip("q1", Team::Black, hex_moves[1]);
+    board.move_chip("a1", Team::White, hex_moves[2]);
+    board.move_chip("a1", Team::Black, hex_moves[3]);
+    board.move_chip("a2", Team::White, hex_moves[4]);
+    board.move_chip("a1", Team::Black, hex_moves[5]);
+    board.move_chip("s1", Team::White, hex_moves[6]);
+    board.move_chip("a2", Team::Black, hex_moves[7]);
+    board.move_chip("a3", Team::White, hex_moves[8]);
+    board.move_chip("a3", Team::Black, hex_moves[9]);
+    board.move_chip("s1", Team::Black, hex_moves[10]);
 
     board
 }
@@ -191,12 +191,12 @@ pub fn game_snapshot_6() -> Board<Cube> {
         .map(|xy| board.coord.mapfrom_doubleheight(*xy))
         .collect::<Vec<(i8, i8, i8)>>();
 
-    pmoore::try_move(&mut board, "q1", Team::Black, hex_moves[0]);
-    pmoore::try_move(&mut board, "q1", Team::White, hex_moves[1]);
-    pmoore::try_move(&mut board, "l1", Team::White, hex_moves[2]);
-    pmoore::try_move(&mut board, "a2", Team::White, hex_moves[3]);
-    pmoore::try_move(&mut board, "a1", Team::White, hex_moves[4]);
-    pmoore::try_move(&mut board, "a3", Team::White, hex_moves[5]);
+    board.move_chip("q1", Team::Black, hex_moves[0]);
+    board.move_chip("q1", Team::White, hex_moves[1]);
+    board.move_chip("l1", Team::White, hex_moves[2]);
+    board.move_chip("a2", Team::White, hex_moves[3]);
+    board.move_chip("a1", Team::White, hex_moves[4]);
+    board.move_chip("a3", Team::White, hex_moves[5]);
 
     board
 }
@@ -224,16 +224,16 @@ pub fn game_snapshot_7() -> Board<Cube> {
         .map(|xy| board.coord.mapfrom_doubleheight(*xy))
         .collect::<Vec<(i8, i8, i8)>>();
 
-    pmoore::try_move(&mut board, "q1", Team::White, hex_moves[0]);
-    pmoore::try_move(&mut board, "q1", Team::Black, hex_moves[1]);
-    pmoore::try_move(&mut board, "a1", Team::White, hex_moves[2]);
-    pmoore::try_move(&mut board, "a1", Team::Black, hex_moves[3]);
-    pmoore::try_move(&mut board, "a2", Team::White, hex_moves[4]);
-    pmoore::try_move(&mut board, "a1", Team::Black, hex_moves[5]);
-    pmoore::try_move(&mut board, "s1", Team::White, hex_moves[6]);
-    pmoore::try_move(&mut board, "a2", Team::Black, hex_moves[7]);
-    pmoore::try_move(&mut board, "a3", Team::White, hex_moves[8]);
-    pmoore::try_move(&mut board, "a3", Team::Black, hex_moves[9]);
+    board.move_chip("q1", Team::White, hex_moves[0]);
+    board.move_chip("q1", Team::Black, hex_moves[1]);
+    board.move_chip("a1", Team::White, hex_moves[2]);
+    board.move_chip("a1", Team::Black, hex_moves[3]);
+    board.move_chip("a2", Team::White, hex_moves[4]);
+    board.move_chip("a1", Team::Black, hex_moves[5]);
+    board.move_chip("s1", Team::White, hex_moves[6]);
+    board.move_chip("a2", Team::Black, hex_moves[7]);
+    board.move_chip("a3", Team::White, hex_moves[8]);
+    board.move_chip("a3", Team::Black, hex_moves[9]);
 
     board
 }

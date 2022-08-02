@@ -18,7 +18,7 @@ fn ladybird_backtrack() {
 
     assert_eq!(
         MoveStatus::Success,
-        pmoore::try_move(&mut board, "l1", Team::White, legal_move)
+        board.move_chip("l1", Team::White, legal_move)
     );
 }
 
@@ -31,7 +31,7 @@ fn ladybird_advance() {
 
     assert_eq!(
         MoveStatus::Success,
-        pmoore::try_move(&mut board, "l1", Team::White, legal_move)
+        board.move_chip("l1", Team::White, legal_move)
     );
 }
 
@@ -44,6 +44,6 @@ fn ladybird_illegal() {
 
     assert_eq!(
         MoveStatus::BadDistance(3),
-        pmoore::try_move(&mut board, "l1", Team::White, illegal_move)
+        board.move_chip("l1", Team::White, illegal_move)
     );
 }
