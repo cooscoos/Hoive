@@ -7,7 +7,7 @@ use std::io; // For parsing player inputs
 use crate::draw;
 use crate::game::board::{Board, MoveStatus};
 use crate::game::comps::{other_team, Team};
-use crate::game::{animals, specials};
+use crate::game::specials;
 use crate::maths::coord::Coord;
 
 // Introduction: say hello and define who goes first
@@ -178,12 +178,10 @@ fn coord_select() -> Option<(bool, i8, i8)> {
         [Some(x), Some(y)] => {
             match (x + y) % 2 {
                 // The sum of doubleheight coords should always be an even no.
-                0 => {
-                    return Some((false, x, y));
-                }
+                0 => Some((false, x, y)),
                 _ => {
                     println!("Invalid co-ordinates, try again.");
-                    return None;
+                    None
                 }
             }
         }
@@ -276,31 +274,28 @@ pub fn try_special<T: Coord>(
             // Ask player to select neighbouring chips from a list (presenting options 1-6 for white and black team chips)
             println!(
                 "Select which chip to sumo by entering a number up to {}. Hit enter to abort.\n {}",
-                neighbours.len()-1,
+                neighbours.len() - 1,
                 draw::list_these_chips(neighbours.clone())
             );
 
             let textin = get_usr_input();
-            let selection;
 
-            match textin {
-                _ if textin.is_empty() => {
+            // This will abort
+            if textin.is_empty() {
+                move_status = MoveStatus::Nothing;
+                message(board, &move_status);
+                return move_status;
+            }
+
+            let selection = match textin.parse::<usize>() {
+                Ok(value) if value < neighbours.len() + 1 => value,
+                _ => {
+                    println!("Use a number from the list");
                     move_status = MoveStatus::Nothing;
                     message(board, &move_status);
                     return move_status;
-                } // abort the sumo, return to start
-                _ => {
-                    selection = match textin.parse::<usize>() {
-                        Ok(value) if value < neighbours.len() + 1 => value,
-                        _ => {
-                            println!("Use a number from the list");
-                            move_status = MoveStatus::Nothing;
-                            message(board, &move_status);
-                            return move_status;
-                        }
-                    };
                 }
-            }
+            };
 
             // get the co-ordinate of the selected chip
             let source = board.chips.get(&neighbours[selection]).unwrap().unwrap();

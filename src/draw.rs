@@ -193,7 +193,7 @@ fn make_numbered_chip_string(mut chip_list: Vec<String>) -> String {
     let mut chip_string = chip_list
         .iter()
         .enumerate()
-        .map(|(i, c)| format!("{}) {},", i, c))  
+        .map(|(i, c)| format!("{}) {},", i, c))
         .collect::<String>();
 
     // Delete the trailing comma

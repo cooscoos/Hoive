@@ -13,6 +13,12 @@ pub struct History {
     events: HashMap<u32, (Chip, (i8, i8))>, // key = turn-number, value = (chip, location)
 }
 
+impl Default for History {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl History {
     // Create new empty history
     pub fn new() -> Self {
@@ -59,10 +65,7 @@ impl History {
 
     // Return the chip that moved on a given turn
     fn which_chip(&self, turn: u32) -> Option<Chip> {
-        match self.events.get(&turn) {
-            Some((c, _)) => Some(*c),
-            None => None,
-        }
+        self.events.get(&turn).map(|(c, _)| *c)
     }
 }
 

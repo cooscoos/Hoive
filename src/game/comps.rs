@@ -88,15 +88,14 @@ pub fn test_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
 pub fn convert_static(chip_string: String) -> &'static str {
     // Get all possible chip names
     let chips = starting_chips();
-    let chip_names = chips
-        .into_iter()
-        .map(|(c, v)| c.name)
-        .collect::<Vec<&str>>();
 
     // Find the chip name that matches the chip_string and return that chip's name as str
-    let matched = chip_names
+    match chips
         .into_iter()
-        .filter(|n| n.to_string() == chip_string)
-        .collect::<Vec<&str>>();
-    matched[0]
+        .map(|(c, _)| c.name)
+        .find(|n| *n.to_string() == chip_string)
+    {
+        Some(value) => value,
+        None => panic!("Error matching chip name, does not exist"),
+    }
 }

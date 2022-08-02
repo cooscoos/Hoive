@@ -256,14 +256,15 @@ where
 
     // How many neighbours does this team's queen bee have?
     fn bee_neighbours(&self, team: Team) -> usize {
-        let neighbours = self
+        match self
             .chips
             .iter()
-            .filter(|(c, p)| (c.team == team) & (c.name == "q1") & (p.is_some()))
+            .find(|(c, p)| (c.team == team) & (c.name == "q1") & (p.is_some()))
             .map(|(_, p)| self.count_neighbours(p.unwrap()))
-            .collect::<Vec<usize>>();
-
-        neighbours[0]
+        {
+            Some(value) => value,
+            None => panic!("{:?} bee has no neighbours. Something went wrong.", team),
+        }
     }
 
     fn hive_break_check(&self, source: &(i8, i8, i8), dest: &(i8, i8, i8)) -> bool {
@@ -383,8 +384,7 @@ where
             true => panic!("All neighbouring hexes have no chips. This should not happen!"),
             false => neighbour_chips
                 .into_iter()
-                .filter(|c| c.is_some())
-                .map(|c| c.unwrap())
+                .flatten()
                 .collect::<Vec<Chip>>(),
         }
     }
