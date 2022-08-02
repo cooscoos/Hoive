@@ -13,7 +13,7 @@ pub enum Team {
 // Tell me who the other team are when I use !team
 impl Not for Team {
     type Output = Self;
-    fn not(self) -> Self::Output{
+    fn not(self) -> Self::Output {
         match self {
             Team::Black => Team::White,
             Team::White => Team::Black,
@@ -97,5 +97,4 @@ pub fn convert_static(chip_string: String) -> Option<&'static str> {
         .into_iter()
         .map(|(c, _)| c.name)
         .find(|n| *n.to_string() == chip_string)
-
 }

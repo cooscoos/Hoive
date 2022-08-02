@@ -382,10 +382,7 @@ where
         // otherwise, return  vector of neighbouring chips.
         match neighbour_chips.iter().all(|c| c.is_none()) {
             true => panic!("All neighbouring hexes have no chips. This should not happen!"),
-            false => neighbour_chips
-                .into_iter()
-                .flatten()
-                .collect::<Vec<Chip>>(),
+            false => neighbour_chips.into_iter().flatten().collect::<Vec<Chip>>(),
         }
     }
 

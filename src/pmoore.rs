@@ -6,7 +6,7 @@ use std::io; // For parsing player inputs
 
 use crate::draw;
 use crate::game::board::{Board, MoveStatus};
-use crate::game::comps::{Team,convert_static};
+use crate::game::comps::{convert_static, Team};
 use crate::game::specials;
 use crate::maths::coord::Coord;
 
