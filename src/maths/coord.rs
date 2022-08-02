@@ -32,6 +32,7 @@ pub trait Coord {
 
 // Cube coordinate system
 // https://www.redblobgames.com/grids/hexagons/
+#[derive(Debug, Eq, PartialEq)]
 pub struct Cube;
 impl Coord for Cube {
     // Get 6 neighbouring tile co-ordinates in cube co-ordinates

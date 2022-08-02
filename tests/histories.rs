@@ -1,12 +1,13 @@
-use hoive::draw;
 use hoive::game::{board::Board, history};
 use hoive::maths::coord::Cube;
 
+
 mod common;
-use common::games::game_snapshot_7;
+use common::games::{game_snapshot_7};
 
 #[test]
 fn history_load() {
+
     // Load up snapshot_7.csv from reference/tests and check that it plays
     // out the same as /tests/common/games.rs pub fn game_snapshot_7
 
@@ -14,6 +15,7 @@ fn history_load() {
     let mut board1 = Board::default(Cube);
     let filename = "snapshot_7".to_string();
     history::emulate(&mut board1, filename, true);
+
 
     // now load in the game from the fn
     let board2 = game_snapshot_7();
@@ -24,6 +26,7 @@ fn history_load() {
 
 #[test]
 fn history_wrong_load() {
+
     // Load up badsnapshot_7.csv from reference/tests and check that it plays
     // out differently to /tests/common/games.rs pub fn game_snapshot_7
 
@@ -31,6 +34,7 @@ fn history_wrong_load() {
     let mut board1 = Board::default(Cube);
     let filename = "badsnapshot_7".to_string();
     history::emulate(&mut board1, filename, true);
+
 
     // now load in the game from the fn
     let board2 = game_snapshot_7();
