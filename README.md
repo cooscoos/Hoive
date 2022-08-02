@@ -7,9 +7,6 @@ Done so far:
 * basic rules working
 * ants (a), spiders (s), ladybirds (l), queen bees (q), pillbugs (p)
 
-![snapshot](/reference/snapshot.png "snapshot of game")
-
-
 ## To do
 
 ### Tidy up
