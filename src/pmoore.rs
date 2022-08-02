@@ -353,7 +353,7 @@ on the board and in your hand.\n
 You can attempt to move any peice in your hand or on the board as
 long as it belongs to you.\n
 Pillbugs and mosquitos have special moves. To access these hit
-the s key when prompted.\n
+the m key when prompted.\n
 Game rules: https://en.wikipedia.org/wiki/Hive_(game)\n
 ----------------------------------------------------------------
 "
