@@ -79,7 +79,7 @@ where
         self.chips.insert(chip, Some(dest)); // Overwrite the chip's position in the board's HashMap
         self.history
             .add_event(self.turns, chip, self.coord.mapto_doubleheight(dest)); // update the history (in dheight)
-        self.turns +=1; // increment turns by 1
+        self.turns += 1; // increment turns by 1
     }
 
     // Try move a chip of given name / team, to a new position. Return MoveStatus to tell the main loop how successful the attempt was.

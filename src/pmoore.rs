@@ -77,7 +77,6 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
     message(board, &return_status);
 
     return_status
-
 }
 
 // Ask user to select chip. Returns None if user input invalid.
@@ -134,13 +133,12 @@ fn movement_prompts<T: Coord>(
     active_team: Team,
     textin: String,
 ) -> MoveStatus {
-
     // Keep asking them for a coordinate until they input something useful or give up and hit enter
     let mut coord = None;
     while coord == None {
         coord = match coord_select(textin.clone()) {
             None => return MoveStatus::Nothing, // abort move
-            Some((row,col)) => Some((row,col)),
+            Some((row, col)) => Some((row, col)),
         };
     }
 
@@ -149,7 +147,6 @@ fn movement_prompts<T: Coord>(
 
     // Try execute the move.
     board.move_chip(chip_name, active_team, game_hex)
-
 }
 
 // Ask user to select a coordinate. Returns None to abort parent function.
@@ -180,7 +177,7 @@ fn coord_select(mut textin: String) -> Option<(i8, i8)> {
     }
 }
 
-
+// Print feedback for the player based on how the move went
 fn message<T: Coord>(board: &mut Board<T>, move_status: &MoveStatus) {
     match move_status {
         MoveStatus::Success => {
@@ -245,62 +242,65 @@ pub fn special_prompts<T: Coord>(
 
     // Find out if we're dealing with a mosquito or pillbug, then lead the player through the prompts to execute special
     match chip_name {
-        "p1" => {
-            // Pillbug
-
-            // Get pillbug's position and neighbour chips
-            let position = board.get_position_byname(active_team, chip_name).unwrap();
-            let neighbours = board.get_neighbour_chips(position);
-
-            // Ask player to select neighbouring chips from a list (presenting options 1-6 for white and black team chips)
-            println!(
-                "Select which chip to sumo by entering a number up to {}. Hit enter to abort.\n {}",
-                neighbours.len() - 1,
-                draw::list_these_chips(neighbours.clone())
-            );
-
-            let textin = get_usr_input();
-
-            // This will abort
-            if textin.is_empty() {
-                return MoveStatus::Nothing;
-            }
-
-            let selection = match textin.parse::<usize>() {
-                Ok(value) if value < neighbours.len() + 1 => value,
-                _ => {
-                    println!("Use a number from the list");
-                    return MoveStatus::Nothing;
-                    }
-            };
-
-            // get the co-ordinate of the selected chip
-            let source = board.chips.get(&neighbours[selection]).unwrap().unwrap();
-
-            // Ask player to select a co-ordinate to sumo to
-            let mut coord = None;
-            while coord == None {
-                println!("Select a co-ordinate to sumo this chip to. Input column then row, separated by a comma, e.g.: 0, 0. Hit enter to abort the sumo.");
-                let textin = get_usr_input();
-                coord = match coord_select(textin.clone()) {
-                    None => return MoveStatus::Nothing, // abort move
-                    Some((row,col)) => Some((row,col)),
-                };
-            }
-
-            // Convert from doubleheight to the game's co-ordinate system
-            let dest = board.coord.mapfrom_doubleheight(coord.unwrap());
-
-            // Try execute the move and show the game's messages.
-            move_status = specials::pillbug_sumo(board, &source, dest, position);
-            //message(board, &move_status);
-        }
+        "p1" => move_status = pillbug_prompts(board, chip_name, active_team), //pillbugs
         "m1" => {
             move_status = MoveStatus::Success;
-        } // mosquito is to do
+        }    // mosquito is to do
         _ => panic!("Unrecognised chip"),
     }
     move_status
+}
+
+fn pillbug_prompts<T: Coord>(
+    board: &mut Board<T>,
+    chip_name: &'static str,
+    active_team: Team,
+) -> MoveStatus {
+    // Get pillbug's position and neighbour chips
+    let position = board.get_position_byname(active_team, chip_name).unwrap();
+    let neighbours = board.get_neighbour_chips(position);
+
+    // Ask player to select neighbouring chips from a list (presenting options 1-6 for white and black team chips)
+    println!(
+        "Select which chip to sumo by entering a number up to {}. Hit enter to abort.\n {}",
+        neighbours.len() - 1,
+        draw::list_these_chips(neighbours.clone())
+    );
+
+    let textin = get_usr_input();
+
+    // This will abort
+    if textin.is_empty() {
+        return MoveStatus::Nothing;
+    }
+
+    let selection = match textin.parse::<usize>() {
+        Ok(value) if value < neighbours.len() + 1 => value,
+        _ => {
+            println!("Use a number from the list");
+            return MoveStatus::Nothing;
+        }
+    };
+
+    // get the co-ordinate of the selected chip
+    let source = board.chips.get(&neighbours[selection]).unwrap().unwrap();
+
+    // Ask player to select a co-ordinate to sumo to
+    let mut coord = None;
+    while coord == None {
+        println!("Select a co-ordinate to sumo this chip to. Input column then row, separated by a comma, e.g.: 0, 0. Hit enter to abort the sumo.");
+        let textin = get_usr_input();
+        coord = match coord_select(textin.clone()) {
+            None => return MoveStatus::Nothing, // abort move
+            Some((row, col)) => Some((row, col)),
+        };
+    }
+
+    // Convert from doubleheight to the game's co-ordinate system
+    let dest = board.coord.mapfrom_doubleheight(coord.unwrap());
+
+    // Try execute the move and show the game's messages.
+    specials::pillbug_sumo(board, &source, dest, position)
 }
 
 // Request user input into terminal
