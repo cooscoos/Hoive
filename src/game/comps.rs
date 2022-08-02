@@ -1,6 +1,7 @@
-// Components of a game: the two teams and chips/tiles
+// Components of a game: the teams and chips
 
 use std::collections::HashMap;
+use std::ops::Not;
 
 // Enum for two teams
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
@@ -9,16 +10,18 @@ pub enum Team {
     White,
 }
 
-// Probably a better way of doing this, but this works.
-// Tell me who the other team are
-pub fn other_team(team: Team) -> Team {
-    match team {
-        Team::Black => Team::White,
-        Team::White => Team::Black,
+// Tell me who the other team are when I use !team
+impl Not for Team {
+    type Output = Self;
+    fn not(self) -> Self::Output {
+        match self {
+            Team::Black => Team::White,
+            Team::White => Team::Black,
+        }
     }
 }
 
-// Struct for tiles/chips in a game
+// Struct for chips in a game
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub struct Chip {
     pub name: &'static str, // identifies a unique animal/number, e.g. a2, s1 = ant 2, spider 1
@@ -58,28 +61,14 @@ pub fn starting_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
     ])
 }
 
-pub fn test_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
-    // During tests we want lots of pieces that move freely, so give each team 8 ants and one bee
-    HashMap::from([
-        // Black team's chips
-        (Chip::new("a1", Team::Black), None),
-        (Chip::new("a2", Team::Black), None),
-        (Chip::new("a3", Team::Black), None),
-        (Chip::new("a4", Team::Black), None),
-        (Chip::new("a5", Team::Black), None),
-        (Chip::new("a6", Team::Black), None),
-        (Chip::new("a7", Team::Black), None),
-        (Chip::new("a8", Team::Black), None),
-        (Chip::new("q1", Team::Black), None),
-        // White team's chips
-        (Chip::new("a1", Team::White), None),
-        (Chip::new("a2", Team::White), None),
-        (Chip::new("a3", Team::White), None),
-        (Chip::new("a4", Team::White), None),
-        (Chip::new("a5", Team::White), None),
-        (Chip::new("a6", Team::White), None),
-        (Chip::new("a7", Team::White), None),
-        (Chip::new("a8", Team::White), None),
-        (Chip::new("q1", Team::White), None),
-    ])
+// Convert a chip_name (String on the heap) to a static str (on the stack)
+pub fn convert_static(chip_string: String) -> Option<&'static str> {
+    // Get all possible chip names
+    let chips = starting_chips();
+
+    // Find the chip name that matches the chip_string and return that chip's name as static str
+    chips
+        .into_iter()
+        .map(|(c, _)| c.name)
+        .find(|n| *n.to_string() == chip_string)
 }

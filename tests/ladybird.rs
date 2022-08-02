@@ -1,8 +1,7 @@
 // Tests for the ladybird
-use hoive::game::board::*;
 use hoive::game::comps::Team;
-use hoive::maths::coord::{Coord, Cube};
-use hoive::pmoore;
+use hoive::game::movestatus::MoveStatus;
+use hoive::maths::coord::Coord;
 
 mod common;
 use common::games::game_snapshot_6;
@@ -18,7 +17,7 @@ fn ladybird_backtrack() {
 
     assert_eq!(
         MoveStatus::Success,
-        pmoore::try_move(&mut board, "l1", Team::White, legal_move)
+        board.move_chip("l1", Team::White, legal_move)
     );
 }
 
@@ -31,7 +30,7 @@ fn ladybird_advance() {
 
     assert_eq!(
         MoveStatus::Success,
-        pmoore::try_move(&mut board, "l1", Team::White, legal_move)
+        board.move_chip("l1", Team::White, legal_move)
     );
 }
 
@@ -44,6 +43,6 @@ fn ladybird_illegal() {
 
     assert_eq!(
         MoveStatus::BadDistance(3),
-        pmoore::try_move(&mut board, "l1", Team::White, illegal_move)
+        board.move_chip("l1", Team::White, illegal_move)
     );
 }

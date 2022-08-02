@@ -1,12 +1,12 @@
-use hoive::game::board::MoveStatus;
-use hoive::game::{board::Board, comps::Chip, comps::Team, history, specials};
+use hoive::game::{board::Board, movestatus::MoveStatus};
+use hoive::game::{comps::Chip, comps::Team, history, specials};
 use hoive::maths::coord::{Coord, Cube};
 
 fn pillbug_tests_setup(filename: String) -> Board<Cube> {
     // Some set up used by most tests for pillbug
 
     // Create and emulate a board from a named reference/tests/snapshots file
-    let mut board = Board::default(Cube);
+    let mut board = Board::new(Cube);
     history::emulate(&mut board, filename, true);
     board
 }
@@ -29,7 +29,7 @@ fn pillbug_me_too_soon() {
 
     assert_eq!(
         MoveStatus::RecentMove(pillchip),
-        specials::pillbug_toss(&mut board, &source, dest, position)
+        specials::pillbug_sumo(&mut board, &source, dest, position)
     );
 }
 
@@ -50,7 +50,7 @@ fn pillbug_you_too_soon() {
 
     assert_eq!(
         MoveStatus::RecentMove(antchip),
-        specials::pillbug_toss(&mut board, &source, dest, position)
+        specials::pillbug_sumo(&mut board, &source, dest, position)
     );
 }
 
@@ -66,7 +66,7 @@ fn pillbug_hivebreak() {
 
     assert_eq!(
         MoveStatus::HiveSplit,
-        specials::pillbug_toss(&mut board, &source, dest, position)
+        specials::pillbug_sumo(&mut board, &source, dest, position)
     );
 }
 
@@ -82,7 +82,7 @@ fn pillbug_no_hivebreak() {
 
     assert_eq!(
         MoveStatus::Success,
-        specials::pillbug_toss(&mut board, &source, dest, position)
+        specials::pillbug_sumo(&mut board, &source, dest, position)
     );
 }
 
@@ -91,13 +91,13 @@ fn pillbug_non_neighbouring() {
     // Pillbug attempts to sumo into a non-neighbouring hex
     let mut board = pillbug_tests_setup("snapshot_10".to_string());
 
-    // p1 (0,0) to try sumo wa1 (-1,1) to 2,0 should be unconnected
+    // p1 (0,0) to try sumo wa1 (-1,1) to 2,0 should return "not neighbour"
     let position = board.coord.mapfrom_doubleheight((0, 0));
     let source = board.coord.mapfrom_doubleheight((-1, 1));
     let dest = board.coord.mapfrom_doubleheight((2, 0));
 
     assert_eq!(
         MoveStatus::NotNeighbour,
-        specials::pillbug_toss(&mut board, &source, dest, position)
+        specials::pillbug_sumo(&mut board, &source, dest, position)
     );
 }

@@ -2,7 +2,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use crate::game::board::*;
+use crate::game::{board::Board, movestatus::MoveStatus};
 use crate::maths::{coord::Coord, morphops};
 
 pub fn ant_check<T: Coord>(
