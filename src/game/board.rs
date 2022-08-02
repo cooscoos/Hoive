@@ -67,9 +67,9 @@ where
                     }
                 }
             }
-            None => panic!(
-                "Something went wrong. The chip can't be moved because it doesn't exist."
-            ),
+            None => {
+                panic!("Something went wrong. The chip can't be moved because it doesn't exist.")
+            }
         };
 
         move_status
@@ -219,6 +219,8 @@ where
 
         // Start connected component labelling at dest hex (doesn't matter where we start)
         let mut queue = vec![*dest];
+
+        
 
         // Keep searching for neighbours until the queue is empty
         while let Some(position) = queue.pop() {
