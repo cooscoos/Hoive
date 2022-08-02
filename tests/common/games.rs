@@ -200,3 +200,40 @@ pub fn game_snapshot_6() -> Board<Cube> {
 
     board
 }
+
+pub fn game_snapshot_7() -> Board<Cube> {
+    // to test history.rs. reference/tests/snapshot_7.csv
+    let mut board = Board::default(Cube);
+
+    let moves_list = vec![
+        (0, 0),   // wq1
+        (0, 2),   // bq1
+        (1, -1),  // wa1
+        (-1, 3),  // ba1
+        (-1, -1), // wa2
+        (-1, 1),  // ba1
+        (0, -2),  // ws1
+        (-1, 3),  // ba2
+        (0, -4),  // wa3
+        (0, 4),   // ba3
+    ];
+
+    // Convert to cube
+    let hex_moves = moves_list
+        .iter()
+        .map(|xy| board.coord.mapfrom_doubleheight(*xy))
+        .collect::<Vec<(i8, i8, i8)>>();
+
+    pmoore::try_move(&mut board, "q1", Team::White, hex_moves[0]);
+    pmoore::try_move(&mut board, "q1", Team::Black, hex_moves[1]);
+    pmoore::try_move(&mut board, "a1", Team::White, hex_moves[2]);
+    pmoore::try_move(&mut board, "a1", Team::Black, hex_moves[3]);
+    pmoore::try_move(&mut board, "a2", Team::White, hex_moves[4]);
+    pmoore::try_move(&mut board, "a1", Team::Black, hex_moves[5]);
+    pmoore::try_move(&mut board, "s1", Team::White, hex_moves[6]);
+    pmoore::try_move(&mut board, "a2", Team::Black, hex_moves[7]);
+    pmoore::try_move(&mut board, "a3", Team::White, hex_moves[8]);
+    pmoore::try_move(&mut board, "a3", Team::Black, hex_moves[9]);
+
+    board
+}

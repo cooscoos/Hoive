@@ -1,0 +1,5 @@
+snapshot_7: a copy of /tests/common/games.rs fn game_snapshot_7
+badsnapshot_7: as above but the last move is incorrect in the csv
+snapshot_8: set up for pillbug tries to sumo after moving (try sumo q1 to 0,2)
+snapshot_9: set up for pillbug tries to sumo another chip that recently moved (try sumo ba1 to -1,-1), breaking hive (try sumo wa1 to 1,1), ok= not break the hive (try sumo wa1 to 0,2)
+snapshot_10: set up for pillbug tries to sumo into non-neighbouring hex (try sumo a1 to 2,0)

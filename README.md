@@ -5,23 +5,16 @@ The boardgame Hive, written in Rust.
 Done so far:
 * play the game in terminal with cargo run
 * basic rules working
-* ants (a), spiders (s), ladybirds (l) and queen bees (q)
+* ants (a), spiders (s), ladybirds (l), queen bees (q), pillbugs (p)
 
 ![snapshot](/reference/snapshot.png "snapshot of game")
 
 
 ## To do
 
-### Pillbug
+### Tidy up
 
-Pillbug seems to be working.
-Also written a history module to save a game's move history to csv and then emulate the replay of that game based on csv.
-
-* re-write some tests to utilise the emulation to see if it works
-* then write tests for pillbug and various error messages including hive splits etc utilising that new history module
 * tidy up a lot -- pmoore, board and specials and their interactions need to be refactored
-
-
 
 ### Other animals
 
@@ -45,9 +38,7 @@ Then it might be fun to add new animals in a non-standard version of the game e.
 
 Make it so that two people can play on t'internet and other weirdos can just watch.
 
-### Tidy up
-
-Always.
+### Tweaks
 
 #### morphops.rs, board.rs, game.rs
 

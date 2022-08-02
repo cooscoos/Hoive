@@ -144,7 +144,7 @@ fn chip_select<T: Coord>(board: &Board<T>, active_team: Team) -> Option<&'static
             println!("{}", help_me());
             None
         }
-        _ if textin =="s" => {
+        _ if textin == "s" => {
             println!("Enter a filename:");
             let filename = get_usr_input();
             board.history.save(filename).unwrap();
@@ -262,12 +262,10 @@ pub fn try_special<T: Coord>(
     chip_name: &'static str,
     active_team: Team,
 ) -> MoveStatus {
-    
     // This and associated functions and methods are a bit of a mess. Tidy up.
     // Find out if we're dealing with a mosquito or pillbug and lead the player through the prompts
 
     let move_status;
-
 
     // Pillbug, p1
 
@@ -277,7 +275,10 @@ pub fn try_special<T: Coord>(
     let neighbours = board.get_neighbour_chips(position);
 
     // Ask the player to select a neighbouring chip from this list (present options 1-6 for white and black team chips), return source to fn
-    println!("Select a neighbouring chip to sumo from this numbered list:\n {}", draw::list_these_chips(neighbours.clone()));
+    println!(
+        "Select a neighbouring chip to sumo from this numbered list:\n {}",
+        draw::list_these_chips(neighbours.clone())
+    );
 
     let textin = get_usr_input();
 
@@ -288,18 +289,18 @@ pub fn try_special<T: Coord>(
             move_status = MoveStatus::Nothing;
             message(board, &move_status);
             return move_status;
-        }, // abort the sumo, return to start
+        } // abort the sumo, return to start
         _ => {
             selection = match textin.parse::<usize>() {
-                Ok(value) if value < neighbours.len()+1 => value,
+                Ok(value) if value < neighbours.len() + 1 => value,
                 _ => {
                     println!("Use a number from the list");
                     move_status = MoveStatus::Nothing;
                     message(board, &move_status);
                     return move_status;
-                    },
-                };
-            },
+                }
+            };
+        }
     }
 
     // get the co-ordinate of the selected chip
@@ -317,7 +318,7 @@ pub fn try_special<T: Coord>(
             move_status = MoveStatus::Nothing;
             message(board, &move_status);
             return move_status;
-        },
+        }
         false => (coord.unwrap().1, coord.unwrap().2),
     };
 
@@ -325,14 +326,12 @@ pub fn try_special<T: Coord>(
     let dest = board.coord.mapfrom_doubleheight(select_hex);
 
     // Try execute the move, if it works then show the board. The function try_move will increment the turn itself if move=success
-    move_status = specials::pillbug_toss(board, &source, dest,position);
+    move_status = specials::pillbug_toss(board, &source, dest, position);
 
     message(board, &move_status);
     move_status
 
     // mosquito todo, m1
-
-
 }
 
 // Request user input into terminal

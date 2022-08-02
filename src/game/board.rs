@@ -1,6 +1,6 @@
 // Handles the game's base logic and rules
 
-use std::collections::{HashMap, HashSet, BTreeSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 
 use super::comps::{other_team, starting_chips, test_chips, Chip, Team}; // Game components
 use crate::game::{animals, history::History}; // Animal movement logic and history
@@ -36,11 +36,12 @@ pub enum MoveStatus {
 }
 
 // The board struct is the game and all of its base logic
+#[derive(Debug, Eq, PartialEq)]
 pub struct Board<T: Coord> {
     pub chips: HashMap<Chip, Option<(i8, i8, i8)>>,
-    pub turns: u32, // tracks number of turns that have elapsed
-    pub coord: T,   // The coordinate sytem for the board e.g. Cube, HECS
-    pub history: History,   // The history of the moves taken
+    pub turns: u32,       // tracks number of turns that have elapsed
+    pub coord: T,         // The coordinate sytem for the board e.g. Cube, HECS
+    pub history: History, // The history of the moves taken
 }
 
 impl<T> Board<T>
@@ -74,12 +75,11 @@ where
     }
 
     // update the board's state and history
-    pub fn update(&mut self, chip: Chip, dest: (i8,i8,i8)){
+    pub fn update(&mut self, chip: Chip, dest: (i8, i8, i8)) {
         self.chips.insert(chip, Some(dest)); // Overwrite the chip's position in the board's HashMap
-        self.history.add_record(self.turns, chip, self.coord.mapto_doubleheight(dest)); // update the history (in dheight)
+        self.history
+            .add_record(self.turns, chip, self.coord.mapto_doubleheight(dest)); // update the history (in dheight)
     }
-
-    
 
     // Try move a chip of given name / team, to a new position. Return MoveStatus to tell the main loop how successful the attempt was.
     pub fn move_chip(
@@ -156,7 +156,7 @@ where
         } else if self.turns >= 2 && constraint3 {
             MoveStatus::BadNeighbour
         } else {
-             // Overwrite the chip's position in the HashMap and update history
+            // Overwrite the chip's position in the HashMap and update history
             self.update(chip, dest);
             MoveStatus::Success
         }
@@ -197,8 +197,8 @@ where
         } else if constraint_4 != MoveStatus::Success {
             constraint_4
         } else {
-             // Overwrite the chip's position in the HashMap and update history
-             self.update(chip, dest);
+            // Overwrite the chip's position in the HashMap and update history
+            self.update(chip, dest);
 
             // Relocation of chip could result in the game end
             self.check_win_state(team) // Returns MoveStatus::Success if nobody won (game continues)
@@ -387,7 +387,6 @@ where
                 .map(|c| c.unwrap())
                 .collect::<Vec<Chip>>(),
         }
-
     }
 
     // Return a chip's position based on its name and team
@@ -424,7 +423,4 @@ where
 
         neighbours.len()
     }
-
-
-
 }
