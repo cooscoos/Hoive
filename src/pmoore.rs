@@ -326,7 +326,7 @@ pub fn try_special<T: Coord>(
     let dest = board.coord.mapfrom_doubleheight(select_hex);
 
     // Try execute the move, if it works then show the board. The function try_move will increment the turn itself if move=success
-    move_status = specials::pillbug_toss(board, &source, dest, position);
+    move_status = specials::pillbug_sumo(board, &source, dest, position);
 
     message(board, &move_status);
     move_status

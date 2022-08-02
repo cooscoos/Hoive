@@ -29,7 +29,7 @@ fn pillbug_me_too_soon() {
 
     assert_eq!(
         MoveStatus::RecentMove(pillchip),
-        specials::pillbug_toss(&mut board, &source, dest, position)
+        specials::pillbug_sumo(&mut board, &source, dest, position)
     );
 }
 
@@ -50,7 +50,7 @@ fn pillbug_you_too_soon() {
 
     assert_eq!(
         MoveStatus::RecentMove(antchip),
-        specials::pillbug_toss(&mut board, &source, dest, position)
+        specials::pillbug_sumo(&mut board, &source, dest, position)
     );
 }
 
@@ -66,7 +66,7 @@ fn pillbug_hivebreak() {
 
     assert_eq!(
         MoveStatus::HiveSplit,
-        specials::pillbug_toss(&mut board, &source, dest, position)
+        specials::pillbug_sumo(&mut board, &source, dest, position)
     );
 }
 
@@ -82,7 +82,7 @@ fn pillbug_no_hivebreak() {
 
     assert_eq!(
         MoveStatus::Success,
-        specials::pillbug_toss(&mut board, &source, dest, position)
+        specials::pillbug_sumo(&mut board, &source, dest, position)
     );
 }
 
@@ -98,6 +98,6 @@ fn pillbug_non_neighbouring() {
 
     assert_eq!(
         MoveStatus::NotNeighbour,
-        specials::pillbug_toss(&mut board, &source, dest, position)
+        specials::pillbug_sumo(&mut board, &source, dest, position)
     );
 }
