@@ -7,3 +7,12 @@ edition = "2021"
 
 [dependencies]
 rand = "0.8.5"  # For randomising which player goes first
+
+# For benchmarking
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "benchmark1"
+harness = false

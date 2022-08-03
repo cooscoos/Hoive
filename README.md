@@ -9,12 +9,13 @@ Done so far:
 
 ## To do
 
-### Figure out how to benchmark
+### Benchmark
 
-* How do we run only portions of code with flags?
-* How do we benchmark
-* then improve double for loop with elem/elem2 can be solved w/ BTree, see https://www.reddit.com/r/rust/comments/wdb1uo/hey_rustaceans_got_a_question_ask_here_312022/iimrdim/?context=3
+* Can use Criterion: https://bheisler.github.io/criterion.rs/book/getting_started.html
+* benchmark the double for loop with elem/elem2 against conversion to and intersect w/ BTree, building a BTree in the first place, etc., see https://www.reddit.com/r/rust/comments/wdb1uo/hey_rustaceans_got_a_question_ask_here_312022/iimrdim/?context=3
+* use the optimised thing.
 * read this: https://doc.rust-lang.org/std/collections/index.html
+
 ### Tidy up
 
 * tidy up a lot -- pmoore, board and specials and their interactions need to be refactored
