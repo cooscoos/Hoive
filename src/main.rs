@@ -9,6 +9,11 @@ fn main() {
     // Say hello, tell players who goes first
     let first = pmoore::intro();
 
+    #[cfg(feature = "benchmarking")]
+    {
+        println!("It's benchmarking time!!")
+    }
+
     // Loop game until someone wins
     loop {
         if let MoveStatus::Win(_) = pmoore::take_turn(&mut board, first) {

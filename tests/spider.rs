@@ -81,3 +81,4 @@ fn spider_through_barrier() {
         board.move_chip("s1", Team::White, illegal_move)
     );
 }
+
