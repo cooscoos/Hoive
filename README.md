@@ -11,7 +11,6 @@ Done so far:
 
 ### Figure out how to benchmark
 
-* How do we run only portions of code with flags?
 * How do we benchmark
 * then improve double for loop with elem/elem2 can be solved w/ BTree, see https://www.reddit.com/r/rust/comments/wdb1uo/hey_rustaceans_got_a_question_ask_here_312022/iimrdim/?context=3
 * read this: https://doc.rust-lang.org/std/collections/index.html
