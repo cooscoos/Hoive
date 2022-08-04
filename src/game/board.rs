@@ -94,7 +94,6 @@ where
             }
         }
 
-
         // There must be better way of doing this...
         // List of neighbouring hexes
         let neighbour_hex = self.coord.neighbour_tiles(dest);
@@ -106,9 +105,11 @@ where
             .filter(|t| t.is_some())
             .all(|t| t.unwrap() == team);
 
-        if self.get_chip(dest).is_some() { // // Any chips already on board already at dest?
+        if self.get_chip(dest).is_some() {
+            // // Any chips already on board already at dest?
             MoveStatus::Occupied
-        } else if self.turns >= 1 && self.count_neighbours(dest) == 0 { // Is there at least one chip neighbouring dest after turn 1?
+        } else if self.turns >= 1 && self.count_neighbours(dest) == 0 {
+            // Is there at least one chip neighbouring dest after turn 1?
             MoveStatus::Unconnected
         } else if self.turns >= 2 && constraint3 {
             MoveStatus::BadNeighbour
@@ -164,11 +165,14 @@ where
         // Basic constraints are checked during all moves, including pillbug sumos:
 
         // check constraints in this order because they're not all mutally exclusive and we want to return useful errors to users
-        if self.get_chip(dest).is_some() {     // Do we end up on top of another chip? (unless bettle, but worry about that later);
+        if self.get_chip(dest).is_some() {
+            // Do we end up on top of another chip? (unless bettle, but worry about that later);
             MoveStatus::Occupied
-        } else if self.count_neighbours(dest) == 0 { // Do we have end up adjacent to no other tiles?
+        } else if self.count_neighbours(dest) == 0 {
+            // Do we have end up adjacent to no other tiles?
             MoveStatus::Unconnected
-        } else if self.hive_break_check(source, &dest) {    // Does moving the chip split the hive?
+        } else if self.hive_break_check(source, &dest) {
+            // Does moving the chip split the hive?
             MoveStatus::HiveSplit
         } else {
             MoveStatus::Success
@@ -208,7 +212,6 @@ where
                     queue.push(n);
                 }
             }
-
         }
         // The no. of chips in blobs should equal no. of chips on the board.
         // If it's not then the move has created two blobs (split hive): illegal.
@@ -331,7 +334,4 @@ where
         // Count the common elements
         neighbour_hexes.intersection(&chip_positions).count()
     }
-
-
-
 }
