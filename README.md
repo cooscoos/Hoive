@@ -10,6 +10,7 @@ Done so far:
 ## To do
 ### Tidy up
 
+* line 98 of board.rs
 * Continue to tidy up and optimise a bit
 
 ### Other animals

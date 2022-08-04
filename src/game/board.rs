@@ -94,17 +94,10 @@ where
             }
         }
 
-        // Any chips already on board already at dest?
-        let constraint1 = self.get_placed_positions().iter().any(|p| *p == dest);
 
+        // There must be better way of doing this...
         // List of neighbouring hexes
         let neighbour_hex = self.coord.neighbour_tiles(dest);
-
-        // Is there at least one chip neighbouring dest?
-        let constraint2 = !neighbour_hex
-            .iter()
-            .map(|p| self.get_team(*p))
-            .any(|t| t.is_some());
 
         // This will return true if any of the chips neighbouring the dest are on a different team
         let constraint3 = !neighbour_hex
@@ -113,9 +106,9 @@ where
             .filter(|t| t.is_some())
             .all(|t| t.unwrap() == team);
 
-        if constraint1 {
+        if self.get_chip(dest).is_some() { // // Any chips already on board already at dest?
             MoveStatus::Occupied
-        } else if self.turns >= 1 && constraint2 {
+        } else if self.turns >= 1 && self.count_neighbours(dest) == 0 { // Is there at least one chip neighbouring dest after turn 1?
             MoveStatus::Unconnected
         } else if self.turns >= 2 && constraint3 {
             MoveStatus::BadNeighbour
@@ -168,26 +161,14 @@ where
     }
 
     pub fn basic_constraints(&mut self, dest: (i8, i8, i8), source: &(i8, i8, i8)) -> MoveStatus {
-        // Basic constraints are checked during all moves, including pillbug sumos
-        // Constraint 1) chip relocate cannot break the hive in two;
-        // Constraint 2) chip must end up adjacent to other tiles
-        // Constraint 3) chip can't end up on top of another chip (unless bettle, but worry about that later)
-
-        // Any chips already on board at the dest?
-        let constraint1 = self.get_placed_positions().iter().any(|p| *p == dest);
-
-        // Do we have no neighbours at the destination?
-        let constraint2 = self.count_neighbours(dest) == 0;
-
-        // Does moving the chip away from current position cause the hive to split?
-        let constraint3 = self.hive_break_check(source, &dest);
+        // Basic constraints are checked during all moves, including pillbug sumos:
 
         // check constraints in this order because they're not all mutally exclusive and we want to return useful errors to users
-        if constraint1 {
+        if self.get_chip(dest).is_some() {     // Do we end up on top of another chip? (unless bettle, but worry about that later);
             MoveStatus::Occupied
-        } else if constraint2 {
+        } else if self.count_neighbours(dest) == 0 { // Do we have end up adjacent to no other tiles?
             MoveStatus::Unconnected
-        } else if constraint3 {
+        } else if self.hive_break_check(source, &dest) {    // Does moving the chip split the hive?
             MoveStatus::HiveSplit
         } else {
             MoveStatus::Success
@@ -350,4 +331,7 @@ where
         // Count the common elements
         neighbour_hexes.intersection(&chip_positions).count()
     }
+
+
+
 }
