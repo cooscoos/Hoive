@@ -42,7 +42,7 @@ pub fn erode<T: Coord>(coord: &T, flat_vec: &HashSet<(i8, i8, i8)>) -> HashSet<(
         // if it doesn't have all six neighbours, then it gets removed from the hashset
         // this is erosion
         // count the neighbours
-        let neighbours = neighbour_hexes.intersection(&flat_vec).count();
+        let neighbours = neighbour_hexes.intersection(flat_vec).count();
 
         if neighbours != 6 {
             store.remove(position);
