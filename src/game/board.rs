@@ -176,14 +176,8 @@ where
         // Any chips already on board at the dest?
         let constraint1 = self.get_placed_positions().iter().any(|p| *p == dest);
 
-        // Get hexes that neighbour dest
-        let neighbour_hex = self.coord.neighbour_tiles(dest);
-
-        // Do we have at least one neighbour at dest?
-        let constraint2 = !neighbour_hex
-            .into_iter()
-            .map(|p| self.get_team(p))
-            .any(|t| t.is_some());
+        // Do we have no neighbours at the destination?
+        let constraint2 = self.count_neighbours(dest) == 0;
 
         // Does moving the chip away from current position cause the hive to split?
         let constraint3 = self.hive_break_check(source, &dest);
