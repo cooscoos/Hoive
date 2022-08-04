@@ -1,8 +1,8 @@
-use hoive::game;
 // Tests that use cube co-ordinates: cargo test cube
 use hoive::game::comps::Team;
 use hoive::game::{board::Board, movestatus::MoveStatus};
 use hoive::maths::{coord::Coord, coord::Cube};
+use std::collections::BTreeSet;
 
 mod common;
 use common::basic; // basic tests that work with all co-ordinate systems
@@ -158,11 +158,11 @@ fn cube_from_dheight_complicated() {
         (0, 2, -2),
     ];
 
-    // Raster scan both the result and the expected vectors to make sure they're in the same order
-    board.coord.raster_scan(&mut hex_moves);
-    board.coord.raster_scan(&mut expected);
+    // Shove both results into a BTreeSet to ensure order is the same
+    let hex_ordered = hex_moves.into_iter().collect::<BTreeSet<_>>();
+    let expected_ordered = expected.into_iter().collect::<BTreeSet<_>>();
 
-    assert_eq!(expected, hex_moves);
+    assert_eq!(expected_ordered, hex_ordered);
 }
 
 // This fn gets run by some of the next tests
@@ -215,30 +215,6 @@ fn cube_no_split_hive2() {
         MoveStatus::Success,
         board.move_chip("a3", Team::Black, hex_moves[9])
     );
-}
-
-#[test]
-fn cube_check_rasterscan_order() {
-    // Make sure raster scan is behaving properly
-    // Do a /referenece/tests/bug2.png game
-    let snapshot = game_snapshot_1();
-
-    // Get a raster scan of this game
-    let code_raster = snapshot.rasterscan_board();
-
-    // Expected raster scan output is (top to bottom, left to right)
-    let expected = vec![
-        (2, -3, 1),
-        (0, -2, 2),
-        (1, -2, 1),
-        (-1, -1, 2),
-        (0, -1, 1),
-        (0, 0, 0),
-        (1, 0, -1),
-        (0, 1, -1),
-    ];
-
-    assert_eq!(expected, code_raster);
 }
 
 #[test]

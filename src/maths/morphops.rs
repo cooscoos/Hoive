@@ -5,7 +5,7 @@ use std::collections::HashSet;
 use super::coord::Coord;
 
 // Dilation
-pub fn dilate<T: Coord>(coord: &T, flat_vec: &Vec<(i8, i8, i8)>) -> Vec<(i8, i8, i8)> {
+pub fn dilate<T: Coord>(coord: &T, flat_vec: &HashSet<(i8, i8, i8)>) -> HashSet<(i8, i8, i8)> {
     // Hashset for keeping track of chip locations
     let mut store: HashSet<(i8, i8, i8)> = HashSet::new();
 
@@ -22,11 +22,11 @@ pub fn dilate<T: Coord>(coord: &T, flat_vec: &Vec<(i8, i8, i8)>) -> Vec<(i8, i8,
             store.insert(*v);
         });
     }
-    store.into_iter().collect::<Vec<(i8, i8, i8)>>()
+    store.into_iter().collect::<HashSet<(i8, i8, i8)>>()
 }
 
 // Erosion
-pub fn erode<T: Coord>(coord: &T, flat_vec: &[(i8, i8, i8)]) -> Vec<(i8, i8, i8)> {
+pub fn erode<T: Coord>(coord: &T, flat_vec: &HashSet<(i8, i8, i8)>) -> HashSet<(i8, i8, i8)> {
     //Hashset for keeping track of chip locations
     let mut store: HashSet<(i8, i8, i8)> = HashSet::new();
 
@@ -41,30 +41,24 @@ pub fn erode<T: Coord>(coord: &T, flat_vec: &[(i8, i8, i8)]) -> Vec<(i8, i8, i8)
 
         // if it doesn't have all six neighbours, then it gets removed from the hashset
         // this is erosion
-        let mut i = 0;
-        for elem in neighbour_hexes.iter() {
-            for elem2 in flat_vec.iter() {
-                if elem == elem2 {
-                    i += 1;
-                }
-            }
-        }
+        // count the neighbours
+        let neighbours = neighbour_hexes.intersection(flat_vec).count();
 
-        if i != 6 {
+        if neighbours != 6 {
             store.remove(position);
         }
     }
-    store.into_iter().collect::<Vec<(i8, i8, i8)>>()
+    store.into_iter().collect::<HashSet<(i8, i8, i8)>>()
 }
 
 // Closing (dilate, then erode)
-pub fn close<T: Coord>(coord: &T, flat_vec: &Vec<(i8, i8, i8)>) -> Vec<(i8, i8, i8)> {
+pub fn close<T: Coord>(coord: &T, flat_vec: &HashSet<(i8, i8, i8)>) -> HashSet<(i8, i8, i8)> {
     let dilated = dilate(coord, flat_vec);
     erode(coord, &dilated)
 }
 
 // Closing and returning only the new additions
-pub fn close_new<T: Coord>(coord: &T, flat_vec: &Vec<(i8, i8, i8)>) -> Vec<(i8, i8, i8)> {
+pub fn close_new<T: Coord>(coord: &T, flat_vec: &HashSet<(i8, i8, i8)>) -> Vec<(i8, i8, i8)> {
     // Do the closure
     let closed = close(coord, flat_vec);
 
@@ -84,7 +78,7 @@ pub fn close_new<T: Coord>(coord: &T, flat_vec: &Vec<(i8, i8, i8)>) -> Vec<(i8, 
 }
 
 // Closing, and then deleting new additions which don't have 5 or more neighbours
-pub fn gap_closure<T: Coord>(coord: &T, flat_vec: &Vec<(i8, i8, i8)>) -> Vec<(i8, i8, i8)> {
+pub fn gap_closure<T: Coord>(coord: &T, flat_vec: &HashSet<(i8, i8, i8)>) -> HashSet<(i8, i8, i8)> {
     // get the ghost tiles from a closure
     let ghosts = close_new(coord, flat_vec);
 
@@ -111,19 +105,12 @@ pub fn gap_closure<T: Coord>(coord: &T, flat_vec: &Vec<(i8, i8, i8)>) -> Vec<(i8
         // this is light additional erosion
 
         // Count the neighbours
-        let mut i = 0;
-        for elem in neighbour_hexes.iter() {
-            for elem2 in all.clone().iter() {
-                if elem == elem2 {
-                    i += 1;
-                }
-            }
-        }
+        let neighbours = neighbour_hexes.intersection(&all).count();
 
         // Delete if less than 5
-        if i < 5 {
+        if neighbours < 5 {
             store.remove(&position);
         }
     }
-    store.into_iter().collect::<Vec<(i8, i8, i8)>>()
+    store.into_iter().collect::<HashSet<(i8, i8, i8)>>()
 }
