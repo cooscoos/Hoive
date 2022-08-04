@@ -1,9 +1,8 @@
 // Handles the game's base logic and rules for movement and placement
 
-use std::collections::{HashMap, HashSet, BTreeMap};
+use std::collections::{HashMap, HashSet};
 
 
-use std::collections::BTreeSet;
 
 use super::comps::{starting_chips, Chip, Team}; // Game components
 use crate::game::{animals, history::History, movestatus::MoveStatus}; // Animal movement logic and history
@@ -105,14 +104,14 @@ where
 
         // Is there at least one chip neighbouring dest?
         let constraint2 = !neighbour_hex
-            .into_iter()
-            .map(|p| self.get_team(p))
+            .iter()
+            .map(|p| self.get_team(*p))
             .any(|t| t.is_some());
 
         // This will return true if any of the chips neighbouring the dest are on a different team
         let constraint3 = !neighbour_hex
-            .into_iter()
-            .map(|p| self.get_team(p))
+            .iter()
+            .map(|p| self.get_team(*p))
             .filter(|t| t.is_some())
             .all(|t| t.unwrap() == team);
 
@@ -218,7 +217,7 @@ where
 
         // Move current chip from source to dest to simulate its relocation.
         chip_positions.retain(|&p| p != *source); // remove
-        chip_positions.push(*dest); // add
+        chip_positions.insert(*dest); // add
 
         // Start connected component labelling at dest hex (doesn't matter where we start)
         let mut queue = vec![*dest];
@@ -293,17 +292,10 @@ where
     }
 
     // Get co-ordinates of all chips that are already placed on the board
-    pub fn get_placed_positions(&self) -> Vec<(i8, i8, i8)> {
+    pub fn get_placed_positions(&self) -> HashSet<(i8, i8, i8)> {
         self.chips.values().flatten().copied().collect()
     }
 
-    // Raster scan chips on the board to return sorted positions
-    // Not used much if at all during game, but is useful for tests
-    pub fn rasterscan_board(&self) -> Vec<(i8, i8, i8)> {
-        let mut chip_positions = self.get_placed_positions();
-        self.coord.raster_scan(&mut chip_positions);
-        chip_positions
-    }
 
     // Get the chips that are already placed on the board by a given team
     fn get_placed_chips(&self, team: Team) -> Vec<Chip> {
@@ -372,6 +364,7 @@ where
 
         // If any of these neighbouring hex coords also appear in the board's list of chips, it means they're a neighbouring chip
         let chip_positions = self.get_placed_positions();
+
 
         // Add common vector elements to the hashset using that terrible double-for loop
         for elem in neighbour_hexes.iter() {

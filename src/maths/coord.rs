@@ -1,5 +1,5 @@
 // Here we define hex co-ordinate systems for the game.
-use std::collections::BTreeSet;
+use std::collections::HashSet;
 
 // First, some useful maths functions
 // Vector subtraction
@@ -23,8 +23,7 @@ fn manhattan(a: &(i8, i8, i8)) -> u32 {
 
 // Hex coordinate systems we define need to have the following methods
 pub trait Coord {
-    fn neighbour_tiles(&self, position: (i8, i8, i8)) -> [(i8, i8, i8); 6]; // a list of 6 neighbouring tiles
-    fn raster_scan(&self, flat_vec: &mut Vec<(i8, i8, i8)>); // a method to logically raster scan through each tile
+    fn neighbour_tiles(&self, position: (i8, i8, i8)) -> HashSet<(i8, i8, i8)>; // a list of 6 neighbouring tiles
     fn centroid_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> f32; // calculate centroid distance between two hexes
     fn hex_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> u32; // calculate distance between two hexes
     fn mapto_doubleheight(&self, hex: (i8, i8, i8)) -> (i8, i8); // convert to and from doubleheight co-ords for the ascii renderer
@@ -37,31 +36,22 @@ pub trait Coord {
 pub struct Cube;
 impl Coord for Cube {
     // Get 6 neighbouring tile co-ordinates in cube co-ordinates
-    fn neighbour_tiles(&self, position: (i8, i8, i8)) -> [(i8, i8, i8); 6] {
+    fn neighbour_tiles(&self, position: (i8, i8, i8)) ->  HashSet<(i8, i8, i8)>{
         let (q, r, s) = position;
 
-        [
+        HashSet::from([
             (q + 1, r - 1, s),
             (q + 1, r, s - 1),
             (q, r + 1, s - 1),
             (q - 1, r + 1, s),
             (q - 1, r, s + 1),
             (q, r - 1, s + 1),
-        ]
+        ])
     }
 
 
 
-    // Sort flat vector of co-ordinates in raster scan order:
-    fn raster_scan(&self, flat_vec: &mut Vec<(i8, i8, i8)>) {
-        // For cube co-ordinates, one way to raster scan (q,r,s) is:
-        // r ascending first
-        // then s descending
-        // then q ascending
-        // This gives a top to bottom, right to left scan
-        flat_vec
-            .sort_by(|(q1, r1, s1), (q2, r2, s2)| (r1, s2, q2).partial_cmp(&(r2, s1, q1)).unwrap());
-    }
+
 
     fn hex_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> u32 {
         let vector_distance = vector_subtract(&hex1, &hex2);
