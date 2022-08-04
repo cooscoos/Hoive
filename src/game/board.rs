@@ -1,6 +1,9 @@
 // Handles the game's base logic and rules for movement and placement
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, BTreeMap};
+
+
+use std::collections::BTreeSet;
 
 use super::comps::{starting_chips, Chip, Team}; // Game components
 use crate::game::{animals, history::History, movestatus::MoveStatus}; // Animal movement logic and history
@@ -358,7 +361,7 @@ where
         }
     }
 
-    fn count_neighbours(&self, position: (i8, i8, i8)) -> usize {
+    pub fn count_neighbours(&self, position: (i8, i8, i8)) -> usize {
         // Count number of neighbouring chips
 
         // Store neighbours here
@@ -381,4 +384,6 @@ where
 
         neighbours.len()
     }
+
+
 }
