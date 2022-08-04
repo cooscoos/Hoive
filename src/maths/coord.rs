@@ -36,7 +36,7 @@ pub trait Coord {
 pub struct Cube;
 impl Coord for Cube {
     // Get 6 neighbouring tile co-ordinates in cube co-ordinates
-    fn neighbour_tiles(&self, position: (i8, i8, i8)) ->  HashSet<(i8, i8, i8)>{
+    fn neighbour_tiles(&self, position: (i8, i8, i8)) -> HashSet<(i8, i8, i8)> {
         let (q, r, s) = position;
 
         HashSet::from([
@@ -48,10 +48,6 @@ impl Coord for Cube {
             (q, r - 1, s + 1),
         ])
     }
-
-
-
-
 
     fn hex_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> u32 {
         let vector_distance = vector_subtract(&hex1, &hex2);

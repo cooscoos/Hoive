@@ -1,8 +1,8 @@
 // Test morphological operations
 
 use hoive::maths::{coord::Coord, coord::Cube, morphops};
-use std::collections::HashSet;
 use std::collections::BTreeSet;
+use std::collections::HashSet;
 
 #[test]
 fn test_dilate() {
@@ -27,7 +27,6 @@ fn test_dilate() {
     let expected_ordered = expected.into_iter().collect::<BTreeSet<_>>();
 
     assert_eq!(expected_ordered, dilated_ordered);
-
 }
 
 #[test]
@@ -78,9 +77,7 @@ fn test_close_closes() {
 
     let coord = Cube;
 
-
     let mut closed_ring = morphops::close(&coord, &ring);
-
 
     // Shove both results into a BTreeSet to ensure order is the same
     let closed_ordered = closed_ring.into_iter().collect::<BTreeSet<_>>();
@@ -104,8 +101,6 @@ fn test_close_new() {
     let mut expected = vec![(0, 0, 0)];
 
     let coord = Cube;
-
-
 
     let mut closed_ring = morphops::close_new(&coord, &ring);
 

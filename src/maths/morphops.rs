@@ -41,16 +41,10 @@ pub fn erode<T: Coord>(coord: &T, flat_vec: &HashSet<(i8, i8, i8)>) -> HashSet<(
 
         // if it doesn't have all six neighbours, then it gets removed from the hashset
         // this is erosion
-        let mut i = 0;
-        for elem in neighbour_hexes.iter() {
-            for elem2 in flat_vec.iter() {
-                if elem == elem2 {
-                    i += 1;
-                }
-            }
-        }
+        // count the neighbours
+        let neighbours = neighbour_hexes.intersection(&flat_vec).count();
 
-        if i != 6 {
+        if neighbours != 6 {
             store.remove(position);
         }
     }
@@ -111,17 +105,10 @@ pub fn gap_closure<T: Coord>(coord: &T, flat_vec: &HashSet<(i8, i8, i8)>) -> Has
         // this is light additional erosion
 
         // Count the neighbours
-        let mut i = 0;
-        for elem in neighbour_hexes.iter() {
-            for elem2 in all.clone().iter() {
-                if elem == elem2 {
-                    i += 1;
-                }
-            }
-        }
+        let neighbours = neighbour_hexes.intersection(&all).count();
 
         // Delete if less than 5
-        if i < 5 {
+        if neighbours < 5 {
             store.remove(&position);
         }
     }

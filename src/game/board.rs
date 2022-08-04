@@ -2,8 +2,6 @@
 
 use std::collections::{HashMap, HashSet};
 
-
-
 use super::comps::{starting_chips, Chip, Team}; // Game components
 use crate::game::{animals, history::History, movestatus::MoveStatus}; // Animal movement logic and history
 use crate::maths::coord::Coord; // Coord trait applies to all hex co-ordinate systems
@@ -222,8 +220,6 @@ where
         // Start connected component labelling at dest hex (doesn't matter where we start)
         let mut queue = vec![*dest];
 
-        
-
         // Keep searching for neighbours until the queue is empty
         while let Some(position) = queue.pop() {
             // Pop an element out of the queue and get the co-ordinates of neighbouring hexes
@@ -231,16 +227,13 @@ where
 
             // If any of these neighbour hexes co-ordinates also appear in the chip_positions, it means they're a neighbouring chip
             // If they're a new entry, add them to the queue and the hashset, otherwise ignore them and move on
-            // We have a double for loop with an if statement to try and find common elements in two vectors.
-            // This is likely inefficient, and doesn't feel very rusty, but it works for now.
-            for elem in neighbour_hexes.iter() {
-                for elem2 in chip_positions.clone().iter() {
-                    if (elem == elem2) & (!blobs.contains(elem2)) {
-                        blobs.insert(*elem2);
-                        queue.push(*elem2);
-                    }
+            for n in neighbour_hexes.into_iter() {
+                if (chip_positions.contains(&n)) && (!blobs.contains(&n)) {
+                    blobs.insert(n);
+                    queue.push(n);
                 }
             }
+
         }
         // The no. of chips in blobs should equal no. of chips on the board.
         // If it's not then the move has created two blobs (split hive): illegal.
@@ -295,7 +288,6 @@ where
     pub fn get_placed_positions(&self) -> HashSet<(i8, i8, i8)> {
         self.chips.values().flatten().copied().collect()
     }
-
 
     // Get the chips that are already placed on the board by a given team
     fn get_placed_chips(&self, team: Team) -> Vec<Chip> {
@@ -353,30 +345,15 @@ where
         }
     }
 
+    // Count number of neighbouring chips
     pub fn count_neighbours(&self, position: (i8, i8, i8)) -> usize {
-        // Count number of neighbouring chips
-
-        // Store neighbours here
-        let mut neighbours = HashSet::new();
-
         // Get the co-ordinates of neighbouring hexes
         let neighbour_hexes = self.coord.neighbour_tiles(position);
 
-        // If any of these neighbouring hex coords also appear in the board's list of chips, it means they're a neighbouring chip
+        // Get all placed chip positions
         let chip_positions = self.get_placed_positions();
 
-
-        // Add common vector elements to the hashset using that terrible double-for loop
-        for elem in neighbour_hexes.iter() {
-            for elem2 in chip_positions.clone().iter() {
-                if (elem == elem2) & (!neighbours.contains(elem2)) {
-                    neighbours.insert(*elem2); // add the neighbour to the hashset
-                }
-            }
-        }
-
-        neighbours.len()
+        // Count the common elements
+        neighbour_hexes.intersection(&chip_positions).count()
     }
-
-
 }

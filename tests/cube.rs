@@ -217,7 +217,6 @@ fn cube_no_split_hive2() {
     );
 }
 
-
 #[test]
 fn cube_no_split_hive3() {
     // Run the /reference/tests/bug2.png game and do a legal move
