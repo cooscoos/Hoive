@@ -10,15 +10,19 @@ Done so far:
 ## To do
 ### Tidy up
 
-* board is tidier. continue to others.
-* Continue to tidy up and optimise a bit
+continue to others:
+* animals,
+* specials,
+* coord,
+* morphops,
+* pmoore
 
 ### Other animals
 
 This order seems sensible: 
 
-* beetle (dread)
-* back to pillbug to capture the beetle gate rule
+* beetle
+* back to pillbug to capture the "beetle gate rule"
 * grashopper - line drawing - then a check to see if it's straight and only goes over occupied hexes
 * mosquito
 
