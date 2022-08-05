@@ -32,7 +32,7 @@ where
         }
     }
 
-    /// Execute the move of chip to destination, update the board's history and increment turn number. 
+    /// Execute the move of chip to destination, update the board's history and increment turn number.
     pub fn update(&mut self, chip: Chip, dest: (i8, i8, i8)) {
         // Overwrite the chip's position in the board's HashMap
         self.chips.insert(chip, Some(dest));
@@ -74,98 +74,85 @@ where
     }
 
     /// Move chip from player's hand to the board at position == dest
+    /// Check following constraints:
+    /// 1) player must have placed the bee by their turn 3 (board turns 4 and 5)
+    /// 2) can't place on top of another chip;
+    /// 3) must have at least one neighbour (ater turn 1);
+    /// 4) neighbours must be on the same team (after turn 2).
     fn place_chip(&mut self, chip: Chip, dest: (i8, i8, i8)) -> MoveStatus {
-        // There are constraints for placement of a new chip:
-        // Constraint 0) team must have placed the bee (only need to check on players' turn 3, board turns 4 and 5)
-        // Constraint 1) can't be placed on top of another chip (ever, even if beetle);
-        // Constraint 2) must have at least one neighbour (after turn 1);
-        // Constraint 3) neighbours must be on the same team (after turn 2).
-
-        // If turn number is 4 or 5, and if this player hasn't placed their bee and isn't trying to, then illegal.
-        if (self.turns == 4) | (self.turns == 5) {
-            let placed_chips = self.get_placed_chips(chip.team);
-            if !placed_chips.iter().any(|c| c.name == "q1") & (chip.name != "q1") {
-                return MoveStatus::BeeNeed;
-            }
+        // Check if a bee has been placed by player turn 3
+        if (self.turns == 4) | (self.turns == 5)
+            && !self.bee_placed(chip.team) & (chip.name != "q1")
+        {
+            // Player hasn't placed bee yet and isn't trying to
+            return MoveStatus::BeeNeed;
         }
 
-        // There must be better way of doing this...
-        // List of neighbouring hexes
-        let neighbour_hex = self.coord.neighbour_tiles(dest);
-
-        // This will return true if any of the chips neighbouring the dest are on a different team
-        let constraint3 = !neighbour_hex
-            .iter()
-            .map(|p| self.get_team(*p))
-            .filter(|t| t.is_some())
-            .all(|t| t.unwrap() == chip.team);
-
         if self.get_chip(dest).is_some() {
-            // // Any chips already on board already at dest?
+            // // Any chips already on board at dest?
             MoveStatus::Occupied
-        } else if self.turns >= 1 && self.count_neighbours(dest) == 0 {
-            // Is there at least one chip neighbouring dest after turn 1?
+        } else if self.turns > 0 && self.count_neighbours(dest) == 0 {
+            // Is there at least one chip neighbouring dest after turn 0?
             MoveStatus::Unconnected
-        } else if self.turns >= 2 && constraint3 {
+        } else if self.turns > 1
+            && self
+                .get_neighbour_chips(dest)
+                .iter()
+                .any(|c| c.team != chip.team)
+        {
+            // Are any neighbours not on my team after turn 1
             MoveStatus::BadNeighbour
         } else {
-            // Overwrite the chip's position in the HashMap and update history
+            // No problem: execute the move.
             self.update(chip, dest);
             MoveStatus::Success
         }
     }
 
-    // Relocate a chip on the board
+    /// Relocate a chip on the board at source to dest checking constraints:
+    /// 1) player must have placed their bee (only need to check prior to board turn 6)
+    /// 2) check other basic_constraints for moves
+    /// 3) animal-specific constraints
     fn relocate_chip(
         &mut self,
         chip: Chip,
         dest: (i8, i8, i8),
         source: &(i8, i8, i8),
     ) -> MoveStatus {
-        // Constraints for a relocation:
-        // Constraint 0) player must have placed their bee (only need to check prior to board turn 6)
-        // Constraints 1-3) see method in basic_constraints
-        // Constraint 4) animal-specific constraints
-
-        let team = chip.team;
-
-        // Constraint 0: team can't relocate chips if they haven't placed bee.
-        if self.turns <= 5 {
-            let placed_chips = self.get_placed_chips(team);
-            if !placed_chips.iter().any(|c| c.name == "q1") {
-                return MoveStatus::NoBee;
-            }
+        // Team can't relocate chips if they haven't placed bee.
+        if self.turns <= 5 && !self.bee_placed(chip.team) {
+            return MoveStatus::NoBee;
         }
 
-        // Constraints 1-3 are checked using method base_constraints
+        // Check basic constraints, checked during all relocations on board
         let basic_constraints = self.basic_constraints(dest, source);
 
         // Check animal-specific constraints of the move
-        let constraint_4 = self.animal_constraint(chip, source, &dest);
+        let animal_rules = self.animal_constraint(chip, source, &dest);
 
         if basic_constraints != MoveStatus::Success {
             basic_constraints
-        } else if constraint_4 != MoveStatus::Success {
-            constraint_4
+        } else if animal_rules != MoveStatus::Success {
+            animal_rules
         } else {
-            // Overwrite the chip's position in the HashMap and update history
+            // No problem, execute the move
             self.update(chip, dest);
-
             // Relocation of chip could result in the game end
-            self.check_win_state(team) // Returns MoveStatus::Success if nobody won (game continues)
+            self.check_win_state(chip.team) // Returns MoveStatus::Success if nobody won (game continues)
         }
     }
 
-    /// Basic constraints are checked during all moves, including pillbug sumos.
-    /// We ask, does the move from source to dest cause any of the following:
-    /// 1) we end turn on top of another chip (worry about beetle later);
-    /// 2) we end up adjacent to no other tiles, or;
-    /// 3) move splits the hive.
-    /// 
-    /// The returned MoveStatus describes which problems occurred (or "Success" if none occurred).
+    /// Check if a team has placed their bee
+    fn bee_placed(&self, team: Team) -> bool {
+        self.get_placed_chips(team).iter().any(|c| c.name == "q1")
+    }
+
+    /// Basic constraints checked during all relocations, including pillbug sumos.
+    /// A move from source to dest should not cause us to:
+    /// 1) end turn on top of another chip (worry about beetle later);
+    /// 2) have no neighbours, or;
+    /// 3) split the hive.
     pub fn basic_constraints(&mut self, dest: (i8, i8, i8), source: &(i8, i8, i8)) -> MoveStatus {
-
-
         // check constraints in this order because they're not all mutally exclusive and we want to return useful errors to users
         if self.get_chip(dest).is_some() {
             // Do we end up on top of another chip? (unless bettle, but worry about that later);
@@ -181,14 +168,12 @@ where
         }
     }
 
+    /// Check if moving a chip from source to dest splits the hive
+    /// This function will likely cause test failure when we introduce beetles, so will need to edit then.
+    /// Uses "one-component-at-a-time" connected component labelling.
+    /// See: https://en.wikipedia.org/wiki/Connected-component_labeling?oldformat=true#Pseudocode_for_the_one-component-at-a-time_algorithm
     fn hive_break_check(&self, source: &(i8, i8, i8), dest: &(i8, i8, i8)) -> bool {
-        // Check if moving a chip out of the current position splits the hive
-        // This function will likely cause test failure when we introduce beetles, so will need to edit then.
-
-        // We need to do some connected component labelling. Use "one-component-at-a-time", because it's simple.
-        // See: https://en.wikipedia.org/wiki/Connected-component_labeling?oldformat=true#Pseudocode_for_the_one-component-at-a-time_algorithm
-
-        // Store locations of blobs (chips on the board that neighbour at least one other chip)
+        // Store locations of blobs (almagamations of chips on the board that neighbour at least one other chip)
         let mut blobs: HashSet<(i8, i8, i8)> = HashSet::new();
 
         // Get the positions of all the chips on the board
@@ -216,19 +201,18 @@ where
             }
         }
         // The no. of chips in blobs should equal no. of chips on the board.
-        // If it's not then the move has created two blobs (split hive): illegal.
+        // If it's not then the move has created two blobs (i.e. split the hive)
         blobs.len() != self.get_placed_positions().len()
     }
 
+    /// Check if any animal-specific constraints of chip prevent a move from source to dest
     fn animal_constraint(
         &self,
         chip: Chip,
         source: &(i8, i8, i8),
         dest: &(i8, i8, i8),
     ) -> MoveStatus {
-        // Check if any animal-specific constraints prevent the move
-
-        // Match on chip animal (first character of chipname)
+        // Match on chip animal (first character of chip.name)
         match chip.name.chars().next().unwrap() {
             'a' => animals::ant_check(self, source, dest), // ants
             's' => animals::spider_check(self, source, dest), // spiders
@@ -238,8 +222,9 @@ where
         }
     }
 
+    /// See if either team has won (called at the end of current team's turn).
+    /// Are any bees surrounded by 6 neighbours?
     fn check_win_state(&self, team: Team) -> MoveStatus {
-        // Are any bees surrounded by 6 neighbours?
         if (self.bee_neighbours(team) == 6) & (self.bee_neighbours(!team) == 6) {
             MoveStatus::Win(None) // both teams' bees have 6 neighbours, it's a draw
         } else if self.bee_neighbours(!team) == 6 {
@@ -251,7 +236,7 @@ where
         }
     }
 
-    // How many neighbours does this team's queen bee have?
+    /// How many neighbours does this team's bee have?
     fn bee_neighbours(&self, team: Team) -> usize {
         match self
             .chips
@@ -264,7 +249,7 @@ where
         }
     }
 
-    // Get co-ordinates of all chips that are already placed on the board
+    /// Get co-ordinates of all chips that are already placed on the board
     pub fn get_placed_positions(&self) -> HashSet<(i8, i8, i8)> {
         self.chips.values().flatten().copied().collect()
     }
@@ -278,17 +263,6 @@ where
             .collect()
     }
 
-    // Get the Team enum of the chip at the given position. Return None if the hex is empty.
-    fn get_team(&self, position: (i8, i8, i8)) -> Option<Team> {
-        self.chips.iter().find_map(|(c, p)| {
-            if *p == Some(position) {
-                Some(c.team)
-            } else {
-                None
-            }
-        })
-    }
-
     // Return the Chip that is at a given position (None if location is empty)
     // This will break if we move away from a 3-coordinate system
     pub fn get_chip(&self, position: (i8, i8, i8)) -> Option<Chip> {
@@ -300,14 +274,14 @@ where
     // Return a vector of neighbouring chips
     pub fn get_neighbour_chips(&self, position: (i8, i8, i8)) -> Vec<Chip> {
         let neighbour_hexes = self.coord.neighbour_tiles(position);
+
+        // Get the chips in neighbouring hexes
         let neighbour_chips = neighbour_hexes
             .into_iter()
             .map(|h| self.get_chip(h))
             .collect::<Vec<Option<Chip>>>();
 
-        // The other rules should ensure that there will always be at least one neighbouring chip.
-        // Still, if there are no neighbouring chips when this method is called, then panic
-        // otherwise, return  vector of neighbouring chips.
+        // Unwrap Vec<Option<Chip>> into Vec<Chip>
         match neighbour_chips.iter().all(|c| c.is_none()) {
             true => panic!("All neighbouring hexes have no chips. This should not happen!"),
             false => neighbour_chips.into_iter().flatten().collect::<Vec<Chip>>(),
@@ -321,11 +295,11 @@ where
         // Get its location
         match self.chips.get(&chip_select) {
             Some(value) => *value,
-            None => panic!("Something went very wrong, the chip doesn't exist."),
+            None => panic!("Something went very wrong: the chip doesn't exist."),
         }
     }
 
-    // Count number of neighbouring chips
+    /// Count number of neighbouring chips at given position
     pub fn count_neighbours(&self, position: (i8, i8, i8)) -> usize {
         // Get the co-ordinates of neighbouring hexes
         let neighbour_hexes = self.coord.neighbour_tiles(position);
