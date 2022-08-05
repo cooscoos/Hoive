@@ -1,32 +1,28 @@
-// Handles the game's base logic and rules for movement and placement
-
+/// Board module tracks the chips and executes their moves
 use std::collections::{HashMap, HashSet};
 
-use super::comps::{starting_chips, Chip, Team}; // Game components
-use crate::game::{animals, history::History, movestatus::MoveStatus}; // Animal movement logic and history
-use crate::maths::coord::Coord; // Coord trait applies to all hex co-ordinate systems
+use super::comps::{self, Chip, Team}; // Game components (chips, teams)
+use crate::game::{animals, history::History, movestatus::MoveStatus}; // Animal logic, move tracking and history
+use crate::maths::coord::Coord; // Hexagonal coordinate system
 
-// A "move" in Hive is defined as either a:
-// i) Placement: a new chip moves from player's hand to the board, i.e.: position = None --> position = Some(a, r, c);
-// ii) Relocation: a chip already on the board moves to somewhere else on board, i.e.: position = Some(a, r, c) --> position = Some(a', r', c').
-
-// The board struct is the game and all of its base logic
+/// The Board struct keeps track of game's progress, history and execution of rules
 #[derive(Debug, Eq, PartialEq)]
 pub struct Board<T: Coord> {
-    pub chips: HashMap<Chip, Option<(i8, i8, i8)>>,
-    pub turns: u32,       // tracks number of turns that have elapsed
-    pub coord: T,         // The coordinate sytem for the board e.g. Cube, HECS
-    pub history: History, // A record of all previous moves
+    pub chips: HashMap<Chip, Option<(i8, i8, i8)>>, // player chips (both teams)
+    pub turns: u32,                                 // number of turns that have elapsed
+    pub coord: T,         // coordinate sytem for the board e.g. Cube, HECS
+    pub history: History, // record of all previous moves
 }
 
 impl<T> Board<T>
 where
     T: Coord,
 {
+    /// Initialises a new board with a given coordinate system.
     pub fn new(coord: T) -> Self {
-        // At new game, initialise all of the chips for each team with position = None (in player hand)
-        let chips = starting_chips();
-        let history = History::new();
+        // Chips for each team initialised in players' hands (position == None)
+        let chips = comps::starting_chips();
+        let history = History::new(); // Blank history
 
         Board {
             chips,
@@ -36,15 +32,21 @@ where
         }
     }
 
-    // update the board's state, history and turn number
+    /// Execute the move of chip to destination, update the board's history and increment turn number. 
     pub fn update(&mut self, chip: Chip, dest: (i8, i8, i8)) {
-        self.chips.insert(chip, Some(dest)); // Overwrite the chip's position in the board's HashMap
+        // Overwrite the chip's position in the board's HashMap
+        self.chips.insert(chip, Some(dest));
+
+        // Update history (in dheight coords)
         self.history
-            .add_event(self.turns, chip, self.coord.mapto_doubleheight(dest)); // update the history (in dheight)
-        self.turns += 1; // increment turns by 1
+            .add_event(self.turns, chip, self.coord.mapto_doubleheight(dest));
+
+        // Increment turns by 1
+        self.turns += 1;
     }
 
-    // Try move a chip of given name / team, to a new position. Return MoveStatus to tell the main loop how successful the attempt was.
+    /// Try move a chip, of given name and team, to a new position.
+    /// Returned MoveStatus tells the caller how successful the attempt was.
     pub fn move_chip(
         &mut self,
         name: &'static str,
@@ -53,42 +55,35 @@ where
     ) -> MoveStatus {
         let chip_select = Chip::new(name, team); // Select the chip
 
-        // A chip's current position tells us if we're "placing" from player's hand, or "relocating" on board
+        // A chip's current position tells us if we're "placing" from a player's hand, or "relocating" on the board
         let move_status = match self.chips.clone().get(&chip_select) {
             Some(p) => {
                 match p {
-                    Some(source) => {
-                        // chip already has a position, so we must be relocating it
-                        self.relocate_chip(chip_select, position, source)
-                    }
-                    None => {
-                        // chip's current position == None (player hand), so we must be placing it
-                        self.place_chip(chip_select, position)
-                    }
+                    // chip already has a position, so we're relocating
+                    Some(source) => self.relocate_chip(chip_select, position, source),
+                    // chip's current position == None (player hand), so we're placing
+                    None => self.place_chip(chip_select, position),
                 }
             }
             None => {
-                panic!("Something went wrong. The chip can't be moved because it doesn't exist.")
+                panic!("Something went wrong in game logic. Chip can't be moved because it isn't defined.")
             }
         };
 
         move_status
     }
 
-    // Move chip from player's hand to the board at position = dest
+    /// Move chip from player's hand to the board at position == dest
     fn place_chip(&mut self, chip: Chip, dest: (i8, i8, i8)) -> MoveStatus {
         // There are constraints for placement of a new chip:
         // Constraint 0) team must have placed the bee (only need to check on players' turn 3, board turns 4 and 5)
-        // Constraint 1) can't be placed on top of another chip;
+        // Constraint 1) can't be placed on top of another chip (ever, even if beetle);
         // Constraint 2) must have at least one neighbour (after turn 1);
         // Constraint 3) neighbours must be on the same team (after turn 2).
 
-        // The current team
-        let team = chip.team;
-
         // If turn number is 4 or 5, and if this player hasn't placed their bee and isn't trying to, then illegal.
         if (self.turns == 4) | (self.turns == 5) {
-            let placed_chips = self.get_placed_chips(team);
+            let placed_chips = self.get_placed_chips(chip.team);
             if !placed_chips.iter().any(|c| c.name == "q1") & (chip.name != "q1") {
                 return MoveStatus::BeeNeed;
             }
@@ -103,7 +98,7 @@ where
             .iter()
             .map(|p| self.get_team(*p))
             .filter(|t| t.is_some())
-            .all(|t| t.unwrap() == team);
+            .all(|t| t.unwrap() == chip.team);
 
         if self.get_chip(dest).is_some() {
             // // Any chips already on board already at dest?
@@ -161,8 +156,15 @@ where
         }
     }
 
+    /// Basic constraints are checked during all moves, including pillbug sumos.
+    /// We ask, does the move from source to dest cause any of the following:
+    /// 1) we end turn on top of another chip (worry about beetle later);
+    /// 2) we end up adjacent to no other tiles, or;
+    /// 3) move splits the hive.
+    /// 
+    /// The returned MoveStatus describes which problems occurred (or "Success" if none occurred).
     pub fn basic_constraints(&mut self, dest: (i8, i8, i8), source: &(i8, i8, i8)) -> MoveStatus {
-        // Basic constraints are checked during all moves, including pillbug sumos:
+
 
         // check constraints in this order because they're not all mutally exclusive and we want to return useful errors to users
         if self.get_chip(dest).is_some() {
