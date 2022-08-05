@@ -1,26 +1,36 @@
 use super::comps::{Chip, Team};
 
-// Enum to return the status of whether a move was legal
+/// Enum to return the result of a player action
+/// MoveStatus::Selection | Meaning
+///--- | --- 
+/// Success| Action was successfully executed
+/// Win(Option<Team>)| Team won the game (None=draw)
+/// Nothing| Nothing happened (used to abort action)
+/// NoBee| Haven't placed bee yet so can't relocate chips
+/// BeeNeed| You need to place a bee on this turn
+/// Occupied| Target already occupied
+/// Unconnected| Target has no neighbours
+/// BadNeighbour| Target is next to opposing team
+/// HiveSplit| Would split the hive if you moved
+/// SmallGap| Gap too small for animal to access
+/// BadDistance(u32)| Can't travel this distance, must travel u32
+/// RecentMove(Chip)| Chip moved too recently to act
+/// NotNeighbour| Target hex isn't a neighbour
 #[derive(Debug, Eq, PartialEq)]
 pub enum MoveStatus {
-    Success, // The placement/relocation of the chip was legal, the move was executed
-    // Following statuses are returned when move can't be executed because the target space...:
-    Occupied,     // is already occupied
-    Unconnected,  // is in the middle of nowhere
-    BadNeighbour, // is next to opposing team
-    HiveSplit,    // would split the hive in two
+    Success,
+    Win(Option<Team>),
+    Nothing,
+    NoBee,   
+    BeeNeed, 
 
-    // Following statuses are specific to animals / groups of animals
-    SmallGap,         // gap is too small for an ant/spider/bee to access
-    BadDistance(u32), // wrong distance for this animal to travel
-    RecentMove(Chip), // pillbug: chip moved too recently for its special move to be executed
-    NotNeighbour,     // pillbug: destination to sumo to is not a neighbouring chip
+    Occupied,
+    Unconnected,
+    BadNeighbour,
+    HiveSplit,
 
-    // Following statuses are returned early game
-    NoBee,   // You can't move existing chips because not placed bee yet
-    BeeNeed, // You need to place your bee on this turn
-
-    // Finally
-    Win(Option<Team>), // You won the game
-    Nothing,           // You did nothing this turn
+    SmallGap, 
+    BadDistance(u32), 
+    RecentMove(Chip),
+    NotNeighbour,    
 }
