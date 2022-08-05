@@ -254,7 +254,7 @@ where
         self.chips.values().flatten().copied().collect()
     }
 
-    // Get the chips that are already placed on the board by a given team
+    /// Get all chips that are already placed on the board by a given team
     fn get_placed_chips(&self, team: Team) -> Vec<Chip> {
         self.chips
             .iter()
@@ -263,15 +263,15 @@ where
             .collect()
     }
 
-    // Return the Chip that is at a given position (None if location is empty)
-    // This will break if we move away from a 3-coordinate system
+    /// Return the Chip that is at a given position (None if location is empty)
+    /// TODO: This will break if we move away from a 3-coordinate system (as may other fns)
     pub fn get_chip(&self, position: (i8, i8, i8)) -> Option<Chip> {
         self.chips
             .iter()
             .find_map(|(c, p)| if *p == Some(position) { Some(*c) } else { None })
     }
 
-    // Return a vector of neighbouring chips
+    /// Return a vector of neighbouring chips
     pub fn get_neighbour_chips(&self, position: (i8, i8, i8)) -> Vec<Chip> {
         let neighbour_hexes = self.coord.neighbour_tiles(position);
 
@@ -288,7 +288,7 @@ where
         }
     }
 
-    // Return a chip's position based on its name and team
+    /// Return a chip's position based on its name and team
     pub fn get_position_byname(&self, team: Team, name: &'static str) -> Option<(i8, i8, i8)> {
         let chip_select = Chip::new(name, team); // Select the chip
 
