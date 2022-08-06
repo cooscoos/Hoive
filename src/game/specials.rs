@@ -1,11 +1,9 @@
-// Special moves that are employed by pillbug and mosquito
-
-use std::collections::HashSet;
-
+/// Module for rules that govern the special moves of the pillbug and mosquito
 use super::{board::Board, movestatus::MoveStatus};
 use crate::maths::coord::Coord;
 
-// Allows pillbug to sumo (move adjacent chip to empty hex)
+/// This checks if a pillbug can sumo another chip (move adjacent chip to an adjacent empty hex)
+/// If it can, it will execute the move and return MoveStatus::Success.
 pub fn pillbug_sumo<T: Coord>(
     board: &mut Board<T>,
     source: &(i8, i8, i8),  // place to grab the sumo-ee from
@@ -18,7 +16,7 @@ pub fn pillbug_sumo<T: Coord>(
     // If the pillbug or sumo-ee moved within last two turns, we can't sumo
     let recent_movers = board.history.last_two_turns(board.turns);
 
-    // Prioritise returning pillbug if both moved
+    // Prioritise returning the pillbug if both moved
     if recent_movers.contains(&the_pillbug) {
         return MoveStatus::RecentMove(the_pillbug.unwrap());
     }
@@ -27,12 +25,7 @@ pub fn pillbug_sumo<T: Coord>(
     }
 
     // Ensure source and destination hexes both neighbour the pillbug
-    // Get hashset so we can use the .contains() method
-    let neighbours = board
-        .coord
-        .neighbour_tiles(position)
-        .into_iter()
-        .collect::<HashSet<_>>();
+    let neighbours = board.coord.neighbour_tiles(position);
 
     if !neighbours.contains(source) || !neighbours.contains(&dest) {
         return MoveStatus::NotNeighbour;
@@ -41,8 +34,9 @@ pub fn pillbug_sumo<T: Coord>(
     // Check we can move the neighbour by checking the basic constraints of its move (e.g. hive breaks)
     let basic_constraints = board.basic_constraints(dest, source);
 
+    // If all is fine, go ahead and execute the move
     if basic_constraints == MoveStatus::Success {
-        board.update(sumoee.unwrap(), dest); // Execute the move of sumoee if all is fine.
+        board.update(sumoee.unwrap(), dest);
     }
 
     basic_constraints

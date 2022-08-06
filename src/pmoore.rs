@@ -1,7 +1,6 @@
-// Patrick Moore is the GamesMaster: the human-readable interface between players and the game logic
-
-use rand::Rng;
+/// Patrick Moore is the GamesMaster: the human-readable interface between players and the game logic.
 // To randomise which player goes first
+use rand::Rng;
 use std::io; // For parsing player inputs
 
 use crate::draw;
@@ -10,7 +9,7 @@ use crate::game::specials;
 use crate::game::{board::Board, movestatus::MoveStatus};
 use crate::maths::coord::Coord;
 
-// Introduction: say hello and define who goes first
+/// Introduction: say hello and define which team goes first
 pub fn intro() -> Team {
     println!(
         "
@@ -33,7 +32,7 @@ The boardgame Hive, in Rust.
     first
 }
 
-// The game loop
+/// The game loop. Pass the team which goes first and this will handle the rest.
 pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
     let active_team = match board.turns % 2 {
         0 => first,
@@ -79,7 +78,7 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
     return_status
 }
 
-// Ask user to select chip. Returns None if user input invalid.
+/// Ask user on active team to select chip. Returns None if user input invalid.
 fn chip_select<T: Coord>(board: &Board<T>, active_team: Team) -> Option<&'static str> {
     println!("Select a tile from the board or your hand to move. Hit enter to see the board and your hand, h for help, s to save.");
 
@@ -87,13 +86,14 @@ fn chip_select<T: Coord>(board: &Board<T>, active_team: Team) -> Option<&'static
 
     match textin {
         _ if textin.is_empty() => {
+            // hard-coded 5 for show_board here but can adapt based on game extremeties later.
             println!(
                 "{}\n Hand:{}\n",
                 draw::show_board(board, 5),
                 draw::list_chips(board, active_team)
             );
             None
-        } // hard-coded 5 here but can adapt based on game extremeties later
+        }
         _ if textin == "xylophone" => {
             xylophone();
             None
@@ -126,7 +126,7 @@ fn chip_select<T: Coord>(board: &Board<T>, active_team: Team) -> Option<&'static
     }
 }
 
-// Run the player through prompts to execute a chip movement
+/// Run the player through prompts to execute a chip movement
 fn movement_prompts<T: Coord>(
     board: &mut Board<T>,
     chip_name: &'static str,
@@ -146,7 +146,8 @@ fn movement_prompts<T: Coord>(
     board.move_chip(chip_name, active_team, game_hex)
 }
 
-// Ask user to select a coordinate. Returns None to abort parent function.
+/// Ask user to select a coordinate or hit enter to return None so that we can
+/// abort the parent function.
 fn coord_prompts(mut textin: String) -> Option<(i8, i8)> {
     if textin.is_empty() {
         return None;
@@ -174,7 +175,7 @@ fn coord_prompts(mut textin: String) -> Option<(i8, i8)> {
     }
 }
 
-// Print feedback for the player based on how the move went
+/// Print feedback for the player based on how un/successful an attempted action was.
 fn message<T: Coord>(board: &mut Board<T>, move_status: &MoveStatus) {
     match move_status {
         MoveStatus::Success => {
@@ -229,7 +230,7 @@ fn message<T: Coord>(board: &mut Board<T>, move_status: &MoveStatus) {
     }
 }
 
-// Handles the attempt at doing a special move.
+/// Handles the attempt at doing a special move.
 pub fn special_prompts<T: Coord>(
     board: &mut Board<T>,
     chip_name: &'static str,
@@ -243,6 +244,7 @@ pub fn special_prompts<T: Coord>(
     }
 }
 
+/// Leads the player through executing a pillbug's sumo special move.
 fn pillbug_prompts<T: Coord>(
     board: &mut Board<T>,
     chip_name: &'static str,
@@ -303,7 +305,7 @@ fn get_usr_input() -> String {
     textin.trim().to_string()
 }
 
-// Parse comma separated values in a string to a doubleheight co-ordinate
+/// Parse comma separated values input by a user to a doubleheight co-ordinate
 fn coord_from_string(str: String) -> Vec<Option<i8>> {
     str.trim()
         .split(',')
@@ -314,13 +316,13 @@ fn coord_from_string(str: String) -> Vec<Option<i8>> {
         .collect::<Vec<Option<i8>>>()
 }
 
-// OooOoooh
+/// ~~~ OooOoooh ~~~
 fn xylophone() {
     let egg = "                                     \n    ....,,..                        \n    .......',;cllllooll:'.                     \n  ..;cccccodxxkkkOkkkxxxol;.                   \n .:ooooooddxkkkkOOOOOOOkxxdl,                  \n.cdddoooddxxkkkkOO0000OOOOkkx:.                \n'loddolooddxkkOOO00000000OOOO0x.                \n.;ldxdlllodxxkOO000KKKK0000OOO0x'                \n,codo::clodxkOO00KKKKKKKK00Okkk:                \n.,::;,;cldxkkOO00000KKK0000OkkOl.               \n.','.';:ldxxkOOO0000OO000O0OOkxo,               \n....',;:loxxkkkkOOkkOO00O0OOkxxd'              \n.....';cclodkkOkkkkOOO00OOOOkxxd'              \n .  ...,:looodkkkxxxkkkkkkkkxxxo.              \n .   .'';ldoodoolloddddddddoxxxo.              \n     ....,,',,;;::ldollccldxOkxo.              \n    .....'',::c::ox0OkdxxkOO0Oxl.              \n    ..'';:cllddc:lx0OOOOOO0Okxdl.              \n   ....';clcldl,;lx0OkxkOOOkdddc.              \n  ..   ..,cool'.;ld0Okdoddxxxxdl.              \n  .. ....':c:,...,:ldxkkdlodxxxo'              \n  .......',,,,....':dkOOkxdxxdxl.              \n  ......,::,.''';:coooddddddddd,.              \n  .......,cc,',,,,;:ccldxdllll;.               \n............','.,;::cloodddoc:c:.                \n.;;;'..''........',::clcclllooxo'                .\n.oxddl,.','''.......''''',:ldOKO:                 .\n.d0000ko;',:c;.    .....,ldOKNWNd.                 .\n.oKKXKX0kkcco;. ......;:;,oXWWMNk;.                 .\n.o00KKXX0O00Od,...''cxKNNXkldXWWO:'.                  \n'd00000KXKKXKkc.....c0NWWMWNK0X0x:,;.                  \n,d000KKKXXXXOl.',. .oXNNWWMWXXXKd'':;.                  \n.:OKKXXXXXNX0l.  ....:KWNWWWWWNX0d;.;:,.                  \n.o0XKXXXXXXKo'      .;ONNNWWWWNXKx:.,;;'.                  \n,xXXXXXXXKxl'   ..   .dNNNNNWNXXKkc'',''.                   \nOXXXXXXXk, ...   .    ;kKXNNNNXXKx,......                   \n0KKKXNXKd.   ...     ..cdxk0KNNN0l. ..',.                   \nkkxkkO00Ol.       ...  .lkxddddl,....:k0l.                  \n..';ldxx0k, .      .'.  :0Ol'. ..'. ;OXXx.";
     println!("{egg}");
 }
 
-// Returns info on how to play
+/// Returns the game manual.
 fn help_me() -> &'static str {
     "
 ----------------------------------------------------------------\n

@@ -2,7 +2,7 @@ use super::comps::{Chip, Team};
 
 /// Enum to return the result of a player action
 /// MoveStatus::Selection | Meaning
-///--- | --- 
+///--- | ---
 /// Success| Action was successfully executed
 /// Win(Option<Team>)| Team won the game (None=draw)
 /// Nothing| Nothing happened (used to abort action)
@@ -21,16 +21,16 @@ pub enum MoveStatus {
     Success,
     Win(Option<Team>),
     Nothing,
-    NoBee,   
-    BeeNeed, 
+    NoBee,
+    BeeNeed,
 
     Occupied,
     Unconnected,
     BadNeighbour,
     HiveSplit,
 
-    SmallGap, 
-    BadDistance(u32), 
+    SmallGap,
+    BadDistance(u32),
     RecentMove(Chip),
-    NotNeighbour,    
+    NotNeighbour,
 }

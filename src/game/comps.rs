@@ -1,9 +1,8 @@
 /// Module with the components of a game: the teams and chips
-
 use std::collections::HashMap;
 use std::ops::Not;
 
-/// Enum for the two teams, Team::Black and Team::White 
+/// Enum for the two teams, Team::Black and Team::White
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub enum Team {
     Black,
@@ -24,14 +23,14 @@ impl Not for Team {
 
 /// Struct for the chips in a game
 /// Each chip has a team and also a unique name that defines its animal and number.
-/// 
+///
 /// For example:
 /// * the first spider chip is s1,
 /// * the third ant chip is a3.
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub struct Chip {
-    pub name: &'static str, 
-    pub team: Team,         
+    pub name: &'static str,
+    pub team: Team,
 }
 
 impl Chip {
@@ -42,7 +41,7 @@ impl Chip {
 }
 
 /// Generate the starting chips for both teams.
-/// 
+///
 /// All chips start off in the players' hands with position == None.
 ///  Each team gets:
 /// * 1 bee, 2 spiders, 3 ants,

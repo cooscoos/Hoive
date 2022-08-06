@@ -7,9 +7,8 @@ use super::board::Board;
 use super::comps::{convert_static, Chip, Team};
 use crate::maths::coord::Coord;
 
-
 /// Struct to keep track of events (previous player actions).
-/// 
+///
 /// Events are a BTreeMap where the key = turn number, and value = (chip,location).
 /// BTreeMap is used so that turn events are ordered.
 #[derive(Debug, Eq, PartialEq)]
