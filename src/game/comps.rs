@@ -1,16 +1,16 @@
-// Components of a game: the teams and chips
-
+/// Module with the components of a game: the teams and chips
 use std::collections::HashMap;
 use std::ops::Not;
 
-// Enum for two teams
+/// Enum for the two teams, Team::Black and Team::White
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub enum Team {
     Black,
     White,
 }
 
-// Tell me who the other team are when I use !team
+// This allows us to find out who the opposing team are, e.g.
+// !Team::White == Team::Black
 impl Not for Team {
     type Output = Self;
     fn not(self) -> Self::Output {
@@ -21,24 +21,33 @@ impl Not for Team {
     }
 }
 
-// Struct for chips in a game
+/// Struct for the chips in a game
+/// Each chip has a team and also a unique name that defines its animal and number.
+///
+/// For example:
+/// * the first spider chip is s1,
+/// * the third ant chip is a3.
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub struct Chip {
-    pub name: &'static str, // identifies a unique animal/number, e.g. a2, s1 = ant 2, spider 1
-    pub team: Team,         // black or white chip
+    pub name: &'static str,
+    pub team: Team,
 }
 
 impl Chip {
-    // Create new chip
+    /// Create a new chip with given name and team.
     pub fn new(name: &'static str, team: Team) -> Self {
         Chip { name, team }
     }
 }
 
+/// Generate the starting chips for both teams.
+///
+/// All chips start off in the players' hands with position == None.
+///  Each team gets:
+/// * 1 bee, 2 spiders, 3 ants,
+/// * 2 beetles, 3 grasshoppers,
+/// * 1 each of mosquito, ladybird, pill bug.
 pub fn starting_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
-    // Give each team:
-    // 1 bee, 2 spiders, 3 ants,
-    // 2 beetles, 3 grasshoppers, 1 each of mosquito, ladybird, pill bug
     HashMap::from([
         // Black team's chips
         (Chip::new("s1", Team::Black), None),
@@ -61,7 +70,7 @@ pub fn starting_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
     ])
 }
 
-// Convert a chip_name (String on the heap) to a static str (on the stack)
+/// Convert a chip_name String (on the heap) to a static str on the stack)
 pub fn convert_static(chip_string: String) -> Option<&'static str> {
     // Get all possible chip names
     let chips = starting_chips();

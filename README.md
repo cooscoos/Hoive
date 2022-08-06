@@ -8,17 +8,13 @@ Done so far:
 * ants (a), spiders (s), ladybirds (l), queen bees (q), pillbugs (p)
 
 ## To do
-### Tidy up
-
-* line 98 of board.rs
-* Continue to tidy up and optimise a bit
-
 ### Other animals
 
 This order seems sensible: 
 
-* beetle (dread)
-* back to pillbug to capture the beetle gate rule
+* beetle
+* back to pillbug to capture the "beetle gate rule"
+* Rules check for later: can ladybird move over beetle on top of other chip?
 * grashopper - line drawing - then a check to see if it's straight and only goes over occupied hexes
 * mosquito
 

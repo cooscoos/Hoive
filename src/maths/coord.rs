@@ -1,27 +1,28 @@
-// Here we define hex co-ordinate systems for the game.
+/// Module defining hexagonal co-ordinate systems for the board to use.
 use std::collections::HashSet;
 
 // First, some useful maths functions
-// Vector subtraction
+
+/// Returns vector subtraction of two 3-dimensional vectors, a-b.
 fn vector_subtract(a: &(i8, i8, i8), b: &(i8, i8, i8)) -> (i8, i8, i8) {
     (a.0 - b.0, a.1 - b.1, a.2 - b.2)
 }
 
-// Square sum of vector components
+/// Returns square sum of vector components for input vector a.
 fn vector_sqsum(a: &(i8, i8, i8)) -> u32 {
     ((a.0).pow(2) + (a.1).pow(2) + (a.2).pow(2))
         .try_into()
         .unwrap()
 }
 
-// Manhattan distance (sum of abs of each component)
+/// Calculate Manhattan distance (sum of the absolute value of each component of a vector a)
 fn manhattan(a: &(i8, i8, i8)) -> u32 {
     ((a.0).abs() + (a.1).abs() + (a.2).abs())
         .try_into()
         .unwrap()
 }
 
-// Hex coordinate systems we define need to have the following methods
+/// A trait ensuring all hex coordinate systems utilise the same methods
 pub trait Coord {
     fn neighbour_tiles(&self, position: (i8, i8, i8)) -> HashSet<(i8, i8, i8)>; // a list of 6 neighbouring tiles
     fn centroid_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> f32; // calculate centroid distance between two hexes
@@ -30,12 +31,12 @@ pub trait Coord {
     fn mapfrom_doubleheight(&self, hex: (i8, i8)) -> (i8, i8, i8);
 }
 
-// Cube coordinate system
-// https://www.redblobgames.com/grids/hexagons/
+/// A cube coordinate system for hexagonal grids.
+/// See: https://www.redblobgames.com/grids/hexagons/
 #[derive(Debug, Eq, PartialEq)]
 pub struct Cube;
 impl Coord for Cube {
-    // Get 6 neighbouring tile co-ordinates in cube co-ordinates
+    /// Get 6 neighbouring tile co-ordinates in cube co-ordinates
     fn neighbour_tiles(&self, position: (i8, i8, i8)) -> HashSet<(i8, i8, i8)> {
         let (q, r, s) = position;
 
@@ -49,13 +50,14 @@ impl Coord for Cube {
         ])
     }
 
+    /// Find the distance between two hexes input in cube coordinates.
     fn hex_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> u32 {
         let vector_distance = vector_subtract(&hex1, &hex2);
         // Get absolute sum of each component divided by 2
         manhattan(&vector_distance) / 2
     }
 
-    // Get centroid distance between two hexes
+    /// Get the centroid distance between two hexes input in cube coordinates
     fn centroid_distance(&self, hex1: (i8, i8, i8), hex2: (i8, i8, i8)) -> f32 {
         // Squared sum of components of vector distance
         let vector_distance = vector_subtract(&hex1, &hex2);
@@ -64,16 +66,16 @@ impl Coord for Cube {
         ((sq_sum as f32) / 2.0).powf(0.5)
     }
 
+    /// Map cube coordinates to doubelheight
     fn mapto_doubleheight(&self, hex: (i8, i8, i8)) -> (i8, i8) {
-        // Convert from cube to doubleheight
         let col = hex.0;
         let row = 2 * hex.1 + hex.0;
 
         (col, row)
     }
 
+    /// Map doubleheight coordinates to cube coordinates
     fn mapfrom_doubleheight(&self, hex: (i8, i8)) -> (i8, i8, i8) {
-        // Convert from doubleheight to cube
         let q = hex.0; // columns (x)
         let r = (hex.1 - hex.0) / 2; // rows (y)
         let s = -q - r;
