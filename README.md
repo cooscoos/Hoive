@@ -17,7 +17,10 @@ This order seems sensible:
 * mosquito
 
 ### Tweaks
-* make methods compatible with non 3-coordinate systems
+
+* try define a 1D coordinate system to play the game with (spiral hex)
+* try play a game with it
+* benchmark
 
 ### Online
 Make it so that two people can play on t'internet and other weirdos can just watch.
