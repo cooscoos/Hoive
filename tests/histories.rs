@@ -1,5 +1,5 @@
 use hoive::game::{board::Board, history};
-use hoive::maths::coord::{Cube, Coord};
+use hoive::maths::coord::{Coord, Cube};
 
 mod common;
 use common::games::game_snapshot_7;

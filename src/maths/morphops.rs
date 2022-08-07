@@ -82,10 +82,7 @@ pub fn close_new<T: Coord>(coord: &T, binary_img: &HashSet<T>) -> HashSet<T> {
 ///
 /// The result of this operation, and the function's return value, is a collection of
 /// hexes which cannot be accessed by e.g. ants, because the gaps are too small for the ant to pass.
-pub fn gap_closure<T: Coord>(
-    coord: &T,
-    binary_img: &HashSet<T>,
-) -> HashSet<T> {
+pub fn gap_closure<T: Coord>(coord: &T, binary_img: &HashSet<T>) -> HashSet<T> {
     // Will store the return values here
     let mut store = HashSet::new();
 

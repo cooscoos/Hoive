@@ -3,14 +3,15 @@ use std::collections::HashSet;
 use std::hash::Hash;
 use std::ops::{Add, Sub};
 
-
 /// A trait ensuring all hex coordinate systems utilise the same methods
-pub trait Coord: Hash + PartialOrd + Ord+ Eq + Clone + Copy + Add + Sub + Add<Output = Self> + Sub<Output = Self> {
+pub trait Coord:
+    Hash + PartialOrd + Ord + Eq + Clone + Copy + Add + Sub + Add<Output = Self> + Sub<Output = Self>
+{
     fn default() -> Self;
-    fn new(x:i8,y:i8,z:i8) -> Self;
-    fn vector_sqsum(&self) -> u32;  // Square sum of vector components
-    fn manhattan(&self) -> u32;     // Manhattan distance: sum of the abs value of each component
-    fn to_cube(&self) -> Cube;       // Convert to cube coordinates
+    fn new(x: i8, y: i8, z: i8) -> Self;
+    fn vector_sqsum(&self) -> u32; // Square sum of vector components
+    fn manhattan(&self) -> u32; // Manhattan distance: sum of the abs value of each component
+    fn to_cube(&self) -> Cube; // Convert to cube coordinates
     fn neighbour_tiles<T: Coord>(&self, position: T) -> HashSet<T>; // a list of 6 neighbouring tiles
     fn centroid_distance<T: Coord>(&self, hex1: T, hex2: T) -> f32; // calculate centroid distance between two hexes
     fn hex_distance<T: Coord>(&self, hex1: T, hex2: T) -> u32; // calculate distance between two hexes
@@ -18,20 +19,19 @@ pub trait Coord: Hash + PartialOrd + Ord+ Eq + Clone + Copy + Add + Sub + Add<Ou
     fn mapfrom_doubleheight(&self, hex: (i8, i8)) -> Self;
 }
 
-
 /// Cube coordinate system
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
-pub struct Cube{
+pub struct Cube {
     q: i8,
     r: i8,
     s: i8,
 }
 
 /// Define how to add two vectors in Cube coordinates
-impl Add for Cube{
+impl Add for Cube {
     type Output = Self;
     fn add(self, other: Self) -> Self {
-        Self{
+        Self {
             q: self.q + other.q,
             r: self.r + other.r,
             s: self.s + other.s,
@@ -40,10 +40,10 @@ impl Add for Cube{
 }
 
 /// Define how to subtract two vectors in Cube coordinates
-impl Sub for Cube{
+impl Sub for Cube {
     type Output = Self;
     fn sub(self, other: Self) -> Self {
-        Self{
+        Self {
             q: self.q - other.q,
             r: self.r - other.r,
             s: self.s - other.s,
@@ -52,12 +52,11 @@ impl Sub for Cube{
 }
 
 impl Coord for Cube {
-
-    fn default() -> Self{
-        Cube::new(0,0,0)
+    fn default() -> Self {
+        Cube::new(0, 0, 0)
     }
 
-    fn new(q:i8,r:i8,s:i8) -> Self {
+    fn new(q: i8, r: i8, s: i8) -> Self {
         Cube { q, r, s }
     }
 
@@ -106,7 +105,6 @@ impl Coord for Cube {
         vector_distance.manhattan() / 2
     }
 
-
     /// Map cube coordinates to doubelheight
     fn mapto_doubleheight<T: Coord>(&self, hex: T) -> (i8, i8) {
         let cube_position = hex.to_cube();
@@ -117,21 +115,14 @@ impl Coord for Cube {
     }
 
     /// Map doubleheight coordinates to cube coordinates
-    fn mapfrom_doubleheight(&self, hex: (i8, i8)) -> Self{
-
+    fn mapfrom_doubleheight(&self, hex: (i8, i8)) -> Self {
         let q = hex.0; // columns (x)
         let r = (hex.1 - hex.0) / 2; // rows (y)
         let s = -q - r;
 
-        Cube{q,r,s}
+        Cube { q, r, s }
     }
 }
-
-
-
-
-
-
 
 // Hexagonal Efficient Coordinate (HECS) co-ordinate system
 // https://en.wikipedia.org/wiki/Hexagonal_Efficient_Coordinate_System

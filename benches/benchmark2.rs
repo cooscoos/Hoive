@@ -9,11 +9,9 @@
 // StructTuples are weirdly faster than regular tuples, and can impl a generic
 // TODO: impl addition for the trait? optional really.
 
-
 // use criterion::{criterion_group, criterion_main, Criterion};
 
 // use std::collections::{HashSet, VecDeque};
-
 
 // // Define vector version of storing and using cube co-ordinates.
 // trait CoordVec{
@@ -33,8 +31,6 @@
 //         ])
 //     }
 // }
-
-
 
 // // Define vector deque version of storing and using cube co-ordinates.
 // trait CoordVecDeq{
@@ -57,7 +53,6 @@
 //     }
 // }
 
-
 // // Tuple version of storing and using cube coordinates.
 // trait CoordTuple{
 //     fn neighbour_tiles(&self, position: (i8,i8,i8)) -> HashSet<(i8,i8,i8)>;
@@ -79,13 +74,12 @@
 //     }
 // }
 
-
 // trait Position: Hash + Eq + Clone + Copy + Add{
 //     //fn nothing(&self);
 //     fn new(x:i8,y:i8,z:i8) -> Self;
 //     //fn add(self, other:Self) -> Self;
 //     //fn toPosition(self) -> CubePosition;
-    
+
 // }
 
 // #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -94,7 +88,6 @@
 //     y: i8,
 //     z: i8,
 // }
-
 
 // impl Position for CubePosition{
 //     // fn nothing(&self){
@@ -107,8 +100,6 @@
 //     //     self
 //     // }
 // }
-
-
 
 // use std::ops::Add;
 // impl Add for CubePosition{
@@ -143,8 +134,6 @@
 //     }
 // }
 
-
-
 // // Define list version of storing and using cube co-ordinates.
 // trait CoordList{
 //     fn neighbour_tiles(&self, position: [Option<i8>;3]) -> HashSet<[i8;3]>;
@@ -153,7 +142,6 @@
 // struct CubeList;
 // impl CoordList for CubeList{
 //     fn neighbour_tiles(&self, position: [Option<i8>;3]) -> HashSet<[i8;3]> {
-
 
 //         let q = position[0].unwrap();
 //         let r = position[1].unwrap();
@@ -169,8 +157,6 @@
 //         ])
 //     }
 // }
-
-
 
 // fn criterion_benchmark(c: &mut Criterion) {
 

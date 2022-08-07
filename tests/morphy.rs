@@ -133,8 +133,12 @@ fn test_gap_closure() {
     let mut ghosts = morphops::gap_closure(&coord, &before_gap);
 
     // Ghosts should appear at these locations
-    let mut expected = vec![Cube::new(0, 1, -1),
-    Cube::new(1, 0, -1), Cube::new(0, 2, -2), Cube::new(1, 1, -2)];
+    let mut expected = vec![
+        Cube::new(0, 1, -1),
+        Cube::new(1, 0, -1),
+        Cube::new(0, 2, -2),
+        Cube::new(1, 1, -2),
+    ];
 
     // Shove both results into a BTreeSet to ensure order is the same
     let ghosts_ordered = ghosts.into_iter().collect::<BTreeSet<_>>();

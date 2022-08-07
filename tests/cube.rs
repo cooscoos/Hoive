@@ -166,7 +166,10 @@ fn cube_from_dheight_complicated() {
 }
 
 // This fn gets run by some of the next tests
-fn doubleheight_to_cube<T: Coord>(board: &mut Board<T>) -> Vec<Cube> where Vec<Cube>: FromIterator<T>{
+fn doubleheight_to_cube<T: Coord>(board: &mut Board<T>) -> Vec<Cube>
+where
+    Vec<Cube>: FromIterator<T>,
+{
     // Here's a big list of moves that simulates the game shown in /reference/tests/bug2.png using doubleheight co-ords
     let moves_list: [(i8, i8); 10] = [
         (0, 0),
@@ -232,7 +235,10 @@ fn cube_no_split_hive3() {
 fn cube_centroid_calc() {
     // Check the hex centroid distance calcs are working
     let coord_sys = Cube::default();
-    assert_eq!(2.0, coord_sys.centroid_distance(Cube::new(0, 0, 0), Cube::new(2, -2, -0)));
+    assert_eq!(
+        2.0,
+        coord_sys.centroid_distance(Cube::new(0, 0, 0), Cube::new(2, -2, -0))
+    );
 }
 
 #[test]

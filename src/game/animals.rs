@@ -9,11 +9,7 @@ use crate::maths::{coord::Coord, morphops};
 /// MoveStatus::SmallGap.
 ///
 /// This function is also used by bees, spiders and pillbugs.
-pub fn ant_check<T: Coord>(
-    board: &Board<T>,
-    source: &T,
-    dest: &T,
-) -> MoveStatus {
+pub fn ant_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
     // Get current chip positions
     let mut chip_positions = board.get_placed_positions();
 
@@ -36,11 +32,7 @@ pub fn ant_check<T: Coord>(
 /// This involves an ant check, plus ensuring that the chip is only moving one hex.
 ///
 /// This function is also used by pillbugs.
-pub fn bee_check<T: Coord>(
-    board: &Board<T>,
-    source: &T,
-    dest: &T,
-) -> MoveStatus {
+pub fn bee_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
     // Do an ant check first
     match ant_check(board, source, dest) {
         MoveStatus::SmallGap => MoveStatus::SmallGap,
@@ -59,11 +51,7 @@ pub fn bee_check<T: Coord>(
 /// Check whether spider can move from source to dest.
 /// This involves an ant check, plus ensuring that the source and dest are
 /// 3 hexes apart (moving around obstacles if necessary).
-pub fn spider_check<T: Coord>(
-    board: &Board<T>,
-    source: &T,
-    dest: &T,
-) -> MoveStatus {
+pub fn spider_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
     // Do an ant check first
     match ant_check(board, source, dest) {
         MoveStatus::SmallGap => MoveStatus::SmallGap,
@@ -87,11 +75,7 @@ pub fn spider_check<T: Coord>(
 /// Check whether ladybird can move from source to dest.
 /// This involes an ant check, plus ensuring source and dest are 3
 /// hexes apart (travelling over other hexes).
-pub fn ladybird_check<T: Coord>(
-    board: &Board<T>,
-    source: &T,
-    dest: &T,
-) -> MoveStatus {
+pub fn ladybird_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
     // Do an ant check first
     match ant_check(board, source, dest) {
         MoveStatus::SmallGap => MoveStatus::SmallGap,

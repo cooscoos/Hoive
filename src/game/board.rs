@@ -9,9 +9,9 @@ use crate::maths::coord::Coord; // Hexagonal coordinate system
 #[derive(Debug, Eq, PartialEq)]
 pub struct Board<T: Coord> {
     pub chips: HashMap<Chip, Option<T>>, // player chips (both teams)
-    pub turns: u32,                                 // number of turns that have elapsed
-    pub coord: T,         // coordinate sytem for the board e.g. Cube, HECS
-    pub history: History, // record of all previous moves
+    pub turns: u32,                      // number of turns that have elapsed
+    pub coord: T,                        // coordinate sytem for the board e.g. Cube, HECS
+    pub history: History,                // record of all previous moves
 }
 
 impl<T> Board<T>
@@ -47,12 +47,7 @@ where
 
     /// Try move a chip, of given name and team, to a new position.
     /// Returned MoveStatus tells the caller how successful the attempt was.
-    pub fn move_chip(
-        &mut self,
-        name: &'static str,
-        team: Team,
-        position: T,
-    ) -> MoveStatus {
+    pub fn move_chip(&mut self, name: &'static str, team: Team, position: T) -> MoveStatus {
         let chip_select = Chip::new(name, team); // Select the chip
 
         // A chip's current position tells us if we're "placing" from a player's hand, or "relocating" on the board
@@ -113,12 +108,7 @@ where
     /// 1) player must have placed their bee (only need to check prior to board turn 6)
     /// 2) check other basic_constraints for moves
     /// 3) animal-specific constraints
-    fn relocate_chip(
-        &mut self,
-        chip: Chip,
-        dest: T,
-        source: &T,
-    ) -> MoveStatus {
+    fn relocate_chip(&mut self, chip: Chip, dest: T, source: &T) -> MoveStatus {
         // Team can't relocate chips if they haven't placed bee.
         if self.turns <= 5 && !self.bee_placed(chip.team) {
             return MoveStatus::NoBee;
@@ -206,12 +196,7 @@ where
     }
 
     /// Check if any animal-specific constraints of chip prevent a move from source to dest
-    fn animal_constraint(
-        &self,
-        chip: Chip,
-        source: &T,
-        dest: &T,
-    ) -> MoveStatus {
+    fn animal_constraint(&self, chip: Chip, source: &T, dest: &T) -> MoveStatus {
         // Match on chip animal (first character of chip.name)
         match chip.name.chars().next().unwrap() {
             'a' => animals::ant_check(self, source, dest), // ants

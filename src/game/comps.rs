@@ -1,7 +1,7 @@
+use crate::maths::coord::{Coord, Cube};
 /// Module with the components of a game: the teams and chips
 use std::collections::HashMap;
 use std::ops::Not;
-use crate::maths::coord::{Coord, Cube};
 
 /// Enum for the two teams, Team::Black and Team::White
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]

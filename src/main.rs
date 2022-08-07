@@ -1,6 +1,6 @@
 use hoive::game::{board::Board, movestatus::MoveStatus};
-use hoive::pmoore;
 use hoive::maths::coord::Coord;
+use hoive::pmoore;
 
 fn main() {
     // Initialise game board in cube co-ordinates
