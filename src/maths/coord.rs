@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use std::hash::Hash;
 use std::ops::{Add, Sub};
 
-/// A trait ensuring all hex coordinate systems utilise the same methods
+/// A trait ensuring all genetic hex coordinate systems utilise the same methods
 pub trait Coord:
     Hash + PartialOrd + Ord + Eq + Clone + Copy + Add + Sub + Add<Output = Self> + Sub<Output = Self>
 {
@@ -18,6 +18,7 @@ pub trait Coord:
     fn mapto_doubleheight<T: Coord>(&self, hex: T) -> (i8, i8); // convert to and from doubleheight co-ords for the ascii renderer
     fn mapfrom_doubleheight(&self, hex: (i8, i8)) -> Self;
 }
+
 
 /// Cube coordinate system
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
@@ -51,6 +52,7 @@ impl Sub for Cube {
     }
 }
 
+/// Methods for Cube coordinates (trait: Coord)
 impl Coord for Cube {
     fn default() -> Self {
         Cube::new(0, 0, 0)
@@ -123,6 +125,7 @@ impl Coord for Cube {
         Cube { q, r, s }
     }
 }
+
 
 // Hexagonal Efficient Coordinate (HECS) co-ordinate system
 // https://en.wikipedia.org/wiki/Hexagonal_Efficient_Coordinate_System
