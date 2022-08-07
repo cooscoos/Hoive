@@ -10,117 +10,117 @@ use common::games::{game_snapshot_1, test_board}; // Half played games of Hive
 
 #[test]
 fn cube_first_turn() {
-    basic::first_turn(&mut test_board(Cube));
+    basic::first_turn(&mut test_board(Cube::default()));
 }
 
 #[test]
 fn cube_occupied() {
-    basic::occupied(&mut test_board(Cube));
+    basic::occupied(&mut test_board(Cube::default()));
 }
 
 #[test]
 fn cube_to_the_moon() {
-    basic::to_the_moon(&mut test_board(Cube));
+    basic::to_the_moon(&mut test_board(Cube::default()));
 }
 
 // These tests are hecs specific
 #[test]
 fn cube_second_turn_neighbour() {
     // Place a white chip next to a black chip but on the second turn (should be okay)
-    let mut board = test_board(Cube);
-    board.move_chip("a1", Team::Black, (0, 0, 0));
+    let mut board = test_board(Cube::default());
+    board.move_chip("a1", Team::Black, Cube::new(0, 0, 0));
     assert_eq!(
         MoveStatus::Success,
-        board.move_chip("a1", Team::White, (1, 0, -1))
+        board.move_chip("a1", Team::White, Cube::new(1, 0, -1))
     );
 }
 
 #[test]
 fn cube_third_turn_badneighbour() {
     // Place a white chip next to a black chip on the third turn (that's illegal)
-    let mut board = test_board(Cube);
-    board.move_chip("a1", Team::Black, (0, 0, 0));
-    board.move_chip("a1", Team::White, (1, 0, -1));
+    let mut board = test_board(Cube::default());
+    board.move_chip("a1", Team::Black, Cube::new(0, 0, 0));
+    board.move_chip("a1", Team::White, Cube::new(1, 0, -1));
     assert_eq!(
         MoveStatus::BadNeighbour,
-        board.move_chip("a2", Team::White, (-1, 0, 1))
+        board.move_chip("a2", Team::White, Cube::new(-1, 0, 1))
     );
 }
 
 #[test]
 fn cube_fifth_turn_badneighbour() {
     // Do a bunch of legal stuff with a BadNeighbour move at the end
-    let mut board = test_board(Cube);
-    board.move_chip("q1", Team::Black, (0, 0, 0));
-    board.move_chip("q1", Team::White, (0, -1, 1));
-    board.move_chip("a2", Team::Black, (0, 1, -1));
-    board.move_chip("a2", Team::White, (0, -2, 2));
+    let mut board = test_board(Cube::default());
+    board.move_chip("q1", Team::Black, Cube::new(0, 0, 0));
+    board.move_chip("q1", Team::White, Cube::new(0, -1, 1));
+    board.move_chip("a2", Team::Black, Cube::new(0, 1, -1));
+    board.move_chip("a2", Team::White, Cube::new(0, -2, 2));
 
     assert_eq!(
         MoveStatus::BadNeighbour,
-        board.move_chip("a3", Team::Black, (1, -3, 2))
+        board.move_chip("a3", Team::Black, Cube::new(1, -3, 2))
     );
 }
 
 #[test]
 fn cube_split_hive() {
     // Put down four chips and then split the hive by moving a black chip from the middle
-    let mut board = test_board(Cube);
-    board.move_chip("a1", Team::Black, (0, 0, 0));
-    board.move_chip("q1", Team::White, (0, -1, 1));
-    board.move_chip("q1", Team::Black, (0, 1, -1));
-    board.move_chip("a2", Team::White, (0, -2, 2));
+    let mut board = test_board(Cube::default());
+    board.move_chip("a1", Team::Black, Cube::new(0, 0, 0));
+    board.move_chip("q1", Team::White, Cube::new(0, -1, 1));
+    board.move_chip("q1", Team::Black, Cube::new(0, 1, -1));
+    board.move_chip("a2", Team::White, Cube::new(0, -2, 2));
 
     assert_eq!(
         MoveStatus::HiveSplit,
-        board.move_chip("a1", Team::Black, (0, -3, 3))
+        board.move_chip("a1", Team::Black, Cube::new(0, -3, 3))
     );
 }
 
 #[test]
 fn cube_attack() {
     // Put down chips and then move them about a lot
-    let mut board = test_board(Cube);
-    board.move_chip("q1", Team::Black, (0, 0, 0));
-    board.move_chip("q1", Team::White, (0, -1, 1));
-    board.move_chip("a1", Team::Black, (0, 1, -1));
-    board.move_chip("a2", Team::White, (1, -2, 1));
-    board.move_chip("a1", Team::Black, (1, 1, -2));
-    board.move_chip("a3", Team::White, (0, -2, 2));
+    let mut board = test_board(Cube::default());
+    board.move_chip("q1", Team::Black, Cube::new(0, 0, 0));
+    board.move_chip("q1", Team::White, Cube::new(0, -1, 1));
+    board.move_chip("a1", Team::Black, Cube::new(0, 1, -1));
+    board.move_chip("a2", Team::White, Cube::new(1, -2, 1));
+    board.move_chip("a1", Team::Black, Cube::new(1, 1, -2));
+    board.move_chip("a3", Team::White, Cube::new(0, -2, 2));
 
     assert_eq!(
         MoveStatus::Success,
-        board.move_chip("a1", Team::Black, (1, -3, 2))
+        board.move_chip("a1", Team::Black, Cube::new(1, -3, 2))
     );
 }
 
 #[test]
 fn cube_nosplit_hive() {
     // Put down lots of chips and then do a move that doesn't split hive and is legal
-    let mut board = test_board(Cube);
-    board.move_chip("q1", Team::Black, (0, 0, 0));
-    board.move_chip("q1", Team::White, (0, -1, 1));
-    board.move_chip("a1", Team::Black, (0, 1, -1));
-    board.move_chip("a2", Team::White, (1, -2, 1));
-    board.move_chip("a1", Team::Black, (1, 1, -2));
-    board.move_chip("a3", Team::White, (0, -2, 2));
-    board.move_chip("a1", Team::Black, (1, -3, 2));
+    let mut board = test_board(Cube::default());
+    board.move_chip("q1", Team::Black, Cube::new(0, 0, 0));
+    board.move_chip("q1", Team::White, Cube::new(0, -1, 1));
+    board.move_chip("a1", Team::Black, Cube::new(0, 1, -1));
+    board.move_chip("a2", Team::White, Cube::new(1, -2, 1));
+    board.move_chip("a1", Team::Black, Cube::new(1, 1, -2));
+    board.move_chip("a3", Team::White, Cube::new(0, -2, 2));
+    board.move_chip("a1", Team::Black, Cube::new(1, -3, 2));
 
     assert_eq!(
         MoveStatus::Success,
-        board.move_chip("a3", Team::White, (-1, -1, 2))
+        board.move_chip("a3", Team::White, Cube::new(-1, -1, 2))
     );
 }
 
 #[test]
 fn cube_from_dheight_once() {
     // Convert from doubleheight to cube co-ordinates once
-    let board = test_board(Cube);
+    let board = test_board(Cube::default());
     let dheight = (0, -4);
 
     let cubehex = board.coord.mapfrom_doubleheight(dheight);
 
-    assert_eq!((0, -2, 2), cubehex);
+    assert_eq!(Cube::new(0, -2, 2), cubehex);
 }
 
 #[test]
@@ -128,7 +128,7 @@ fn cube_from_dheight_complicated() {
     // Convert from doubleheight to cube co-ordinates a lot
 
     // Do a bunch of moves in dheight co-ords to simulate the game shownn in /reference/tests/bug1.png
-    let board = test_board(Cube);
+    let board = test_board(Cube::default());
     let moves_list: [(i8, i8); 8] = [
         (0, 0),
         (0, -2),
@@ -144,18 +144,18 @@ fn cube_from_dheight_complicated() {
     let mut hex_moves = moves_list
         .iter()
         .map(|xy| board.coord.mapfrom_doubleheight(*xy))
-        .collect::<Vec<(i8, i8, i8)>>();
+        .collect::<Vec<Cube>>();
 
     // We'd expect the output to be this
     let mut expected = vec![
-        (0, 0, 0),
-        (0, -1, 1),
-        (0, -2, 2),
-        (1, -2, 1),
-        (2, -3, 1),
-        (1, 0, -1),
-        (0, 1, -1),
-        (0, 2, -2),
+        Cube::new(0, 0, 0),
+        Cube::new(0, -1, 1),
+        Cube::new(0, -2, 2),
+        Cube::new(1, -2, 1),
+        Cube::new(2, -3, 1),
+        Cube::new(1, 0, -1),
+        Cube::new(0, 1, -1),
+        Cube::new(0, 2, -2),
     ];
 
     // Shove both results into a BTreeSet to ensure order is the same
@@ -166,7 +166,10 @@ fn cube_from_dheight_complicated() {
 }
 
 // This fn gets run by some of the next tests
-fn doubleheight_to_cube<T: Coord>(board: &mut Board<T>) -> Vec<(i8, i8, i8)> {
+fn doubleheight_to_cube<T: Coord>(board: &mut Board<T>) -> Vec<Cube>
+where
+    Vec<Cube>: FromIterator<T>,
+{
     // Here's a big list of moves that simulates the game shown in /reference/tests/bug2.png using doubleheight co-ords
     let moves_list: [(i8, i8); 10] = [
         (0, 0),
@@ -185,7 +188,7 @@ fn doubleheight_to_cube<T: Coord>(board: &mut Board<T>) -> Vec<(i8, i8, i8)> {
     let hex_moves = moves_list
         .iter()
         .map(|xy| board.coord.mapfrom_doubleheight(*xy))
-        .collect::<Vec<(i8, i8, i8)>>();
+        .collect::<Vec<Cube>>();
 
     hex_moves
 }
@@ -193,7 +196,7 @@ fn doubleheight_to_cube<T: Coord>(board: &mut Board<T>) -> Vec<(i8, i8, i8)> {
 #[test]
 fn cube_no_split_hive2() {
     // Put down chips in doubleheight co-ords and then do a move that doesn't split hive and is legal
-    let mut board = test_board(Cube);
+    let mut board = test_board(Cube::default());
     let hex_moves = doubleheight_to_cube(&mut board);
 
     // Apply these moves on the board
@@ -224,22 +227,25 @@ fn cube_no_split_hive3() {
 
     assert_eq!(
         MoveStatus::Success,
-        snapshot.move_chip("a3", Team::Black, (0, 2, -2))
+        snapshot.move_chip("a3", Team::Black, Cube::new(0, 2, -2))
     );
 }
 
 #[test]
 fn cube_centroid_calc() {
     // Check the hex centroid distance calcs are working
-    let coord_sys = Cube;
-    assert_eq!(2.0, coord_sys.centroid_distance((0, 0, 0), (2, -2, -0)));
+    let coord_sys = Cube::default();
+    assert_eq!(
+        2.0,
+        coord_sys.centroid_distance(Cube::new(0, 0, 0), Cube::new(2, -2, -0))
+    );
 }
 
 #[test]
 fn cube_to_doubleheight() {
     // Test conversion from cube to doubleheight
-    let coord_sys = Cube;
-    let hex = (1, -1, 0); // up and right from the origin in cube coords
+    let coord_sys = Cube::default();
+    let hex = Cube::new(1, -1, 0); // up and right from the origin in cube coords
 
     assert_eq!((1, -1), coord_sys.mapto_doubleheight(hex));
 }
@@ -248,17 +254,17 @@ fn cube_to_doubleheight() {
 fn cube_from_doubleheight() {
     // Test conversion from doubleheight to cube
 
-    let coord_sys = Cube;
+    let coord_sys = Cube::default();
     let hex = (-1, 1); // down and left from the origin in doubleheight coords
 
-    assert_eq!((-1, 1, 0), coord_sys.mapfrom_doubleheight(hex));
+    assert_eq!(Cube::new(-1, 1, 0), coord_sys.mapfrom_doubleheight(hex));
 }
 
 #[test]
 fn cube_ant_squeeze() {
     // Set up the board as shown in /reference/tests/ant_squeeze.jpeg, but with all ants (and one bee)
     // Try and move into the small gap, should be illegal
-    let mut board = test_board(Cube);
+    let mut board = test_board(Cube::default());
 
     // In doubleheight
     let moves_list: Vec<(i8, i8)> = vec![
@@ -282,7 +288,7 @@ fn cube_ant_squeeze() {
     let hex_moves = moves_list
         .iter()
         .map(|xy| board.coord.mapfrom_doubleheight(*xy))
-        .collect::<Vec<(i8, i8, i8)>>();
+        .collect::<Vec<Cube>>();
 
     board.move_chip("q1", Team::White, hex_moves[0]);
     board.move_chip("q1", Team::Black, hex_moves[1]);
@@ -305,10 +311,10 @@ fn cube_ant_squeeze() {
 #[test]
 fn cube_hex_distance() {
     // Make sure the hex distance calc is working
-    let board = test_board(Cube);
+    let board = test_board(Cube::default());
 
-    let pos1 = (0, 0, 0);
-    let pos2 = (-3, 2, 1);
+    let pos1 = Cube::new(0, 0, 0);
+    let pos2 = Cube::new(-3, 2, 1);
 
     assert_eq!(3, board.coord.hex_distance(pos1, pos2));
 }

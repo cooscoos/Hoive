@@ -18,7 +18,7 @@ pub fn test_board<T: Coord>(coord: T) -> Board<T> {
     }
 }
 
-fn test_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
+fn test_chips<T: Coord>() -> HashMap<Chip, Option<T>> {
     // During some tests we want lots of chips that move freely. Give each team 8 ants, 1 bee
     HashMap::from([
         // Black team's chips
@@ -47,17 +47,17 @@ fn test_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
 pub fn game_snapshot_1() -> Board<Cube> {
     // This function is called by a few subsequent tests
     // Run the game shown in /referenece/tests/bug2.png using cube co-ordinates
-    let mut board = test_board(Cube);
-    let hex_moves: [(i8, i8, i8); 9] = [
-        (0, 0, 0),
-        (0, -1, 1),
-        (1, 0, -1),
-        (1, -2, 1),
-        (-1, 1, 0),
-        (-1, -1, 2),
-        (0, 1, -1),
-        (0, -2, 2),
-        (2, -3, 1),
+    let mut board = test_board(Cube::default());
+    let hex_moves: [Cube; 9] = [
+        Cube::new(0, 0, 0),
+        Cube::new(0, -1, 1),
+        Cube::new(1, 0, -1),
+        Cube::new(1, -2, 1),
+        Cube::new(-1, 1, 0),
+        Cube::new(-1, -1, 2),
+        Cube::new(0, 1, -1),
+        Cube::new(0, -2, 2),
+        Cube::new(2, -3, 1),
     ];
 
     // Do these moves on the board
@@ -81,7 +81,7 @@ pub fn game_snapshot_1() -> Board<Cube> {
 pub fn game_snapshot_2() -> Board<Cube> {
     // Set up a gameboard for some spider and bee tests
 
-    let mut board = Board::new(Cube);
+    let mut board = Board::new(Cube::default());
 
     let moves_list = vec![
         (0, 0),  // wq1
@@ -93,7 +93,7 @@ pub fn game_snapshot_2() -> Board<Cube> {
     let hex_moves = moves_list
         .iter()
         .map(|xy| board.coord.mapfrom_doubleheight(*xy))
-        .collect::<Vec<(i8, i8, i8)>>();
+        .collect::<Vec<Cube>>();
 
     board.move_chip("q1", Team::White, hex_moves[0]);
     board.move_chip("q1", Team::Black, hex_moves[1]);
@@ -105,7 +105,7 @@ pub fn game_snapshot_2() -> Board<Cube> {
 pub fn game_snapshot_3() -> Board<Cube> {
     // Spider and ladybird test - barrier
 
-    let mut board = Board::new(Cube);
+    let mut board = Board::new(Cube::default());
 
     let moves_list = vec![
         (0, 0),   // wq1
@@ -120,7 +120,7 @@ pub fn game_snapshot_3() -> Board<Cube> {
     let hex_moves = moves_list
         .iter()
         .map(|xy| board.coord.mapfrom_doubleheight(*xy))
-        .collect::<Vec<(i8, i8, i8)>>();
+        .collect::<Vec<Cube>>();
 
     board.move_chip("q1", Team::White, hex_moves[0]);
     board.move_chip("q1", Team::Black, hex_moves[1]);
@@ -135,7 +135,7 @@ pub fn game_snapshot_3() -> Board<Cube> {
 pub fn game_snapshot_4() -> Board<Cube> {
     // Win game tests - the white bee is in trouble
 
-    let mut board = Board::new(Cube);
+    let mut board = Board::new(Cube::default());
 
     let moves_list = vec![
         (0, 0),   // wq1
@@ -154,7 +154,7 @@ pub fn game_snapshot_4() -> Board<Cube> {
     let hex_moves = moves_list
         .iter()
         .map(|xy| board.coord.mapfrom_doubleheight(*xy))
-        .collect::<Vec<(i8, i8, i8)>>();
+        .collect::<Vec<Cube>>();
 
     board.move_chip("q1", Team::White, hex_moves[0]);
     board.move_chip("q1", Team::Black, hex_moves[1]);
@@ -172,7 +172,7 @@ pub fn game_snapshot_4() -> Board<Cube> {
 pub fn game_snapshot_5() -> Board<Cube> {
     // Draw game tests - both bees are in trouble
 
-    let mut board = Board::new(Cube);
+    let mut board = Board::new(Cube::default());
 
     let moves_list = vec![
         (0, 0),   // wq1
@@ -193,7 +193,7 @@ pub fn game_snapshot_5() -> Board<Cube> {
     let hex_moves = moves_list
         .iter()
         .map(|xy| board.coord.mapfrom_doubleheight(*xy))
-        .collect::<Vec<(i8, i8, i8)>>();
+        .collect::<Vec<Cube>>();
 
     board.move_chip("q1", Team::White, hex_moves[0]);
     board.move_chip("q1", Team::Black, hex_moves[1]);
@@ -213,7 +213,7 @@ pub fn game_snapshot_5() -> Board<Cube> {
 pub fn game_snapshot_6() -> Board<Cube> {
     // Ladybird moves, based loosely on /reference/tests/bug3.png
 
-    let mut board = Board::new(Cube);
+    let mut board = Board::new(Cube::default());
 
     let moves_list = vec![
         (0, 0),  // bq1
@@ -229,7 +229,7 @@ pub fn game_snapshot_6() -> Board<Cube> {
     let hex_moves = moves_list
         .iter()
         .map(|xy| board.coord.mapfrom_doubleheight(*xy))
-        .collect::<Vec<(i8, i8, i8)>>();
+        .collect::<Vec<Cube>>();
 
     board.move_chip("q1", Team::Black, hex_moves[0]);
     board.move_chip("q1", Team::White, hex_moves[1]);
@@ -243,7 +243,7 @@ pub fn game_snapshot_6() -> Board<Cube> {
 
 pub fn game_snapshot_7() -> Board<Cube> {
     // to test history.rs. reference/tests/snapshot_7.csv
-    let mut board = Board::new(Cube);
+    let mut board = Board::new(Cube::default());
 
     let moves_list = vec![
         (0, 0),   // wq1
@@ -262,7 +262,7 @@ pub fn game_snapshot_7() -> Board<Cube> {
     let hex_moves = moves_list
         .iter()
         .map(|xy| board.coord.mapfrom_doubleheight(*xy))
-        .collect::<Vec<(i8, i8, i8)>>();
+        .collect::<Vec<Cube>>();
 
     board.move_chip("q1", Team::White, hex_moves[0]);
     board.move_chip("q1", Team::Black, hex_moves[1]);

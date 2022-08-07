@@ -1,3 +1,4 @@
+use crate::maths::coord::{Coord, Cube};
 /// Module with the components of a game: the teams and chips
 use std::collections::HashMap;
 use std::ops::Not;
@@ -47,7 +48,7 @@ impl Chip {
 /// * 1 bee, 2 spiders, 3 ants,
 /// * 2 beetles, 3 grasshoppers,
 /// * 1 each of mosquito, ladybird, pill bug.
-pub fn starting_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
+pub fn starting_chips<T: Coord>() -> HashMap<Chip, Option<T>> {
     HashMap::from([
         // Black team's chips
         (Chip::new("s1", Team::Black), None),
@@ -72,8 +73,8 @@ pub fn starting_chips() -> HashMap<Chip, Option<(i8, i8, i8)>> {
 
 /// Convert a chip_name String (on the heap) to a static str on the stack)
 pub fn convert_static(chip_string: String) -> Option<&'static str> {
-    // Get all possible chip names
-    let chips = starting_chips();
+    // Get all possible chip names. We can use any coordinate system we want.
+    let chips = starting_chips::<Cube>();
 
     // Find the chip name that matches the chip_string and return that chip's name as static str
     chips
