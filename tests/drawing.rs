@@ -1,11 +1,11 @@
 // Test the renderer operations
 
 use hoive::draw;
+use hoive::maths::coord::Coord;
 use hoive::maths::coord::Cube;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 
-use hoive::game::board::*;
 use hoive::game::comps::{Chip, Team};
 
 mod common;
@@ -14,11 +14,11 @@ use common::games::test_board;
 #[test]
 fn test_doubleheight_converter() {
     //put down lots of chips in Cube co-ords
-    let mut board = test_board(Cube);
-    board.move_chip("a1", Team::Black, (0, 0, 0)); // centre
-    board.move_chip("a1", Team::White, (-1, 1, 0)); // down and left
-    board.move_chip("a2", Team::Black, (1, -1, 0)); // up and right
-    board.move_chip("a3", Team::Black, (1, -2, 1)); // up from that
+    let mut board = test_board(Cube::default());
+    board.move_chip("a1", Team::Black, Cube::new(0, 0, 0)); // centre
+    board.move_chip("a1", Team::White, Cube::new(-1, 1, 0)); // down and left
+    board.move_chip("a2", Team::Black, Cube::new(1, -1, 0)); // up and right
+    board.move_chip("a3", Team::Black, Cube::new(1, -2, 1)); // up from that
 
     // We'll test if the program parses this to a doubleheight coordinate HashMap correctly
     let dheight_hashmap = draw::to_dheight(&board, 5);
@@ -81,10 +81,10 @@ fn test_doubleheight_converter() {
 #[test]
 fn test_parseout() {
     //put down lots of chips in Cube co-ords
-    let mut board = test_board(Cube);
-    board.move_chip("a1", Team::Black, (0, 0, 0)); // centre
-    board.move_chip("a1", Team::White, (-1, 1, 0)); // down and left
-    board.move_chip("a2", Team::Black, (1, -1, 0)); // up and right
+    let mut board = test_board(Cube::default());
+    board.move_chip("a1", Team::Black, Cube::new(0, 0, 0)); // centre
+    board.move_chip("a1", Team::White, Cube::new(-1, 1, 0)); // down and left
+    board.move_chip("a2", Team::Black, Cube::new(1, -1, 0)); // up and right
 
     // Size of the board
     let size = 3;

@@ -22,7 +22,7 @@ pub fn to_dheight<T: Coord>(board: &Board<T>, size: i8) -> HashMap<(i8, i8), Opt
     let board_coords = dheight_hashmap
         .iter()
         .map(|(xy, _)| board.coord.mapfrom_doubleheight(*xy))
-        .collect::<HashSet<(i8, i8, i8)>>();
+        .collect::<HashSet<T>>();
 
     // Check all board_coords for chips, and put the chips in dheight_hashmap if found
     board_coords.into_iter().for_each(|p| {

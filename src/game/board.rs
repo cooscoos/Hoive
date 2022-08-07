@@ -8,7 +8,7 @@ use crate::maths::coord::Coord; // Hexagonal coordinate system
 /// The Board struct keeps track of game's progress, history and execution of rules
 #[derive(Debug, Eq, PartialEq)]
 pub struct Board<T: Coord> {
-    pub chips: HashMap<Chip, Option<(i8, i8, i8)>>, // player chips (both teams)
+    pub chips: HashMap<Chip, Option<T>>, // player chips (both teams)
     pub turns: u32,                                 // number of turns that have elapsed
     pub coord: T,         // coordinate sytem for the board e.g. Cube, HECS
     pub history: History, // record of all previous moves
@@ -33,7 +33,7 @@ where
     }
 
     /// Execute the move of chip to destination, update the board's history and increment turn number.
-    pub fn update(&mut self, chip: Chip, dest: (i8, i8, i8)) {
+    pub fn update(&mut self, chip: Chip, dest: T) {
         // Overwrite the chip's position in the board's HashMap
         self.chips.insert(chip, Some(dest));
 
@@ -51,7 +51,7 @@ where
         &mut self,
         name: &'static str,
         team: Team,
-        position: (i8, i8, i8),
+        position: T,
     ) -> MoveStatus {
         let chip_select = Chip::new(name, team); // Select the chip
 
@@ -79,7 +79,7 @@ where
     /// 2) can't place on top of another chip;
     /// 3) must have at least one neighbour (ater turn 1);
     /// 4) neighbours must be on the same team (after turn 2).
-    fn place_chip(&mut self, chip: Chip, dest: (i8, i8, i8)) -> MoveStatus {
+    fn place_chip(&mut self, chip: Chip, dest: T) -> MoveStatus {
         // Check if a bee has been placed by player turn 3
         if (self.turns == 4) | (self.turns == 5)
             && !self.bee_placed(chip.team) & (chip.name != "q1")
@@ -116,8 +116,8 @@ where
     fn relocate_chip(
         &mut self,
         chip: Chip,
-        dest: (i8, i8, i8),
-        source: &(i8, i8, i8),
+        dest: T,
+        source: &T,
     ) -> MoveStatus {
         // Team can't relocate chips if they haven't placed bee.
         if self.turns <= 5 && !self.bee_placed(chip.team) {
@@ -152,7 +152,7 @@ where
     /// 1) end turn on top of another chip (worry about beetle later);
     /// 2) have no neighbours, or;
     /// 3) split the hive.
-    pub fn basic_constraints(&mut self, dest: (i8, i8, i8), source: &(i8, i8, i8)) -> MoveStatus {
+    pub fn basic_constraints(&mut self, dest: T, source: &T) -> MoveStatus {
         // check constraints in this order because they're not all mutally exclusive and we want to return useful errors to users
         if self.get_chip(dest).is_some() {
             // Do we end up on top of another chip? (unless bettle, but worry about that later);
@@ -172,9 +172,9 @@ where
     /// This function will likely cause test failure when we introduce beetles, so will need to edit then.
     /// Uses "one-component-at-a-time" connected component labelling.
     /// See: https://en.wikipedia.org/wiki/Connected-component_labeling?oldformat=true#Pseudocode_for_the_one-component-at-a-time_algorithm
-    fn hive_break_check(&self, source: &(i8, i8, i8), dest: &(i8, i8, i8)) -> bool {
+    fn hive_break_check(&self, source: &T, dest: &T) -> bool {
         // Store locations of blobs (almagamations of chips on the board that neighbour at least one other chip)
-        let mut blobs: HashSet<(i8, i8, i8)> = HashSet::new();
+        let mut blobs: HashSet<T> = HashSet::new();
 
         // Get the positions of all the chips on the board
         let mut chip_positions = self.get_placed_positions();
@@ -209,8 +209,8 @@ where
     fn animal_constraint(
         &self,
         chip: Chip,
-        source: &(i8, i8, i8),
-        dest: &(i8, i8, i8),
+        source: &T,
+        dest: &T,
     ) -> MoveStatus {
         // Match on chip animal (first character of chip.name)
         match chip.name.chars().next().unwrap() {
@@ -250,7 +250,7 @@ where
     }
 
     /// Get co-ordinates of all chips that are already placed on the board
-    pub fn get_placed_positions(&self) -> HashSet<(i8, i8, i8)> {
+    pub fn get_placed_positions(&self) -> HashSet<T> {
         self.chips.values().flatten().copied().collect()
     }
 
@@ -265,14 +265,14 @@ where
 
     /// Return the Chip that is at a given position (None if location is empty)
     /// TODO: This will break if we move away from a 3-coordinate system (as may other fns)
-    pub fn get_chip(&self, position: (i8, i8, i8)) -> Option<Chip> {
+    pub fn get_chip(&self, position: T) -> Option<Chip> {
         self.chips
             .iter()
             .find_map(|(c, p)| if *p == Some(position) { Some(*c) } else { None })
     }
 
     /// Return a vector of neighbouring chips
-    pub fn get_neighbour_chips(&self, position: (i8, i8, i8)) -> Vec<Chip> {
+    pub fn get_neighbour_chips(&self, position: T) -> Vec<Chip> {
         let neighbour_hexes = self.coord.neighbour_tiles(position);
 
         // Get the chips in neighbouring hexes
@@ -289,7 +289,7 @@ where
     }
 
     /// Return a chip's position based on its name and team
-    pub fn get_position_byname(&self, team: Team, name: &'static str) -> Option<(i8, i8, i8)> {
+    pub fn get_position_byname(&self, team: Team, name: &'static str) -> Option<T> {
         let chip_select = Chip::new(name, team); // Select the chip
 
         // Get its location
@@ -300,7 +300,7 @@ where
     }
 
     /// Count number of neighbouring chips at given position
-    pub fn count_neighbours(&self, position: (i8, i8, i8)) -> usize {
+    pub fn count_neighbours(&self, position: T) -> usize {
         // Get the co-ordinates of neighbouring hexes
         let neighbour_hexes = self.coord.neighbour_tiles(position);
 

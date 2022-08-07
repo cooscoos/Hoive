@@ -6,9 +6,9 @@ use crate::maths::coord::Coord;
 /// If it can, it will execute the move and return MoveStatus::Success.
 pub fn pillbug_sumo<T: Coord>(
     board: &mut Board<T>,
-    source: &(i8, i8, i8),  // place to grab the sumo-ee from
-    dest: (i8, i8, i8),     // place to sumo to
-    position: (i8, i8, i8), // position of pillbug (sumo-er)
+    source: &T,  // place to grab the sumo-ee from
+    dest: T,     // place to sumo to
+    position: T, // position of pillbug (sumo-er)
 ) -> MoveStatus {
     let the_pillbug = board.get_chip(position);
     let sumoee = board.get_chip(*source);

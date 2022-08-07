@@ -1,9 +1,10 @@
 use hoive::game::{board::Board, movestatus::MoveStatus};
 use hoive::pmoore;
+use hoive::maths::coord::Coord;
 
 fn main() {
     // Initialise game board in cube co-ordinates
-    let coord = hoive::maths::coord::Cube;
+    let coord = hoive::maths::coord::Cube::default();
     let mut board = Board::new(coord);
 
     // Say hello, tell players who goes first
