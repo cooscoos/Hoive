@@ -16,12 +16,6 @@ This order seems sensible:
 * grashopper - line drawing - then a check to see if it's straight and only goes over occupied hexes
 * mosquito
 
-### Tweaks
-
-* try define a 1D coordinate system to play the game with (spiral hex)
-* try play a game with it
-* benchmark
-
 ### Online
 Make it so that two people can play on t'internet and other weirdos can just watch.
 
