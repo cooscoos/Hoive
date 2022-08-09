@@ -2,21 +2,28 @@
 use std::collections::HashSet;
 use std::hash::Hash;
 use std::ops::{Add, Sub};
+use std::fmt::Debug;
 
 /// A trait ensuring all genetic hex coordinate systems utilise the same methods
 pub trait Coord:
-    Hash + PartialOrd + Ord + Eq + Clone + Copy + Add + Sub + Add<Output = Self> + Sub<Output = Self>
+    Debug + Hash + PartialOrd + Ord + Eq + Clone + Copy + Add + Sub + Add<Output = Self> + Sub<Output = Self>
 {
     fn default() -> Self;
     fn new(x: i8, y: i8, z: i8) -> Self;
+    fn new_layer(x:i8,y:i8,z:i8,l:i8) -> Self;
+    fn get_layer(&self) -> i8;
     fn vector_sqsum(&self) -> u32; // Square sum of vector components
     fn manhattan(&self) -> u32; // Manhattan distance: sum of the abs value of each component
     fn to_cube(&self) -> Cube; // Convert to cube coordinates
-    fn neighbour_tiles<T: Coord>(&self, position: T) -> HashSet<T>; // a list of 6 neighbouring tiles
+    fn neighbour_tiles<T: Coord>(&self, position: T) -> HashSet<T>; // a list of 6 neighbouring tiles on layer 0
+    fn neighbour_layers<T: Coord>(&self, position: T) -> HashSet<T>; // a list of up to 7 neighbouring tiles on all layers
     fn centroid_distance<T: Coord>(&self, hex1: T, hex2: T) -> f32; // calculate centroid distance between two hexes
     fn hex_distance<T: Coord>(&self, hex1: T, hex2: T) -> u32; // calculate distance between two hexes
     fn mapto_doubleheight<T: Coord>(&self, hex: T) -> (i8, i8); // convert to and from doubleheight co-ords for the ascii renderer
     fn mapfrom_doubleheight(&self, hex: (i8, i8)) -> Self;
+    fn ascend(&mut self);   // increase or decrease the layer number
+    fn descend(&mut self);
+    fn to_bottom(&self) -> Self; // drop to layer 0
 }
 
 /// Cube coordinate system
@@ -25,6 +32,7 @@ pub struct Cube {
     q: i8,
     r: i8,
     s: i8,
+    l: i8,  // the layer
 }
 
 /// Define how to add two vectors in Cube coordinates
@@ -35,6 +43,7 @@ impl Add for Cube {
             q: self.q + other.q,
             r: self.r + other.r,
             s: self.s + other.s,
+            l: self.l + other.l,
         }
     }
 }
@@ -47,6 +56,7 @@ impl Sub for Cube {
             q: self.q - other.q,
             r: self.r - other.r,
             s: self.s - other.s,
+            l: self.l - other.l,
         }
     }
 }
@@ -58,7 +68,15 @@ impl Coord for Cube {
     }
 
     fn new(q: i8, r: i8, s: i8) -> Self {
-        Cube { q, r, s }
+        Cube { q, r, s, l:0} 
+    }
+
+    fn new_layer(q:i8,r:i8,s:i8,l:i8) -> Self {
+        Cube { q, r, s, l} 
+    }
+
+    fn get_layer(&self) -> i8 {
+        self.l
     }
 
     /// Square sum of vector components
@@ -81,6 +99,9 @@ impl Coord for Cube {
     }
 
     fn neighbour_tiles<T: Coord>(&self, position: T) -> HashSet<T> {
+
+        // Check layer 0 regardless of what layer we're on
+        let position = position.to_bottom();
         HashSet::from([
             position + T::new(1, -1, 0),
             position + T::new(1, 0, -1),
@@ -89,6 +110,21 @@ impl Coord for Cube {
             position + T::new(-1, 0, 1),
             position + T::new(0, -1, 1),
         ])
+    }
+
+    fn neighbour_layers<T: Coord>(&self, position: T) -> HashSet<T> {
+
+        HashSet::from([
+            position + T::new(1, -1, 0),
+            position + T::new(1, 0, -1),
+            position + T::new(0, 1, -1),
+            position + T::new(-1, 1, 0),
+            position + T::new(-1, 0, 1),
+            position + T::new(0, -1, 1),
+            position + T::new_layer(0, 0, 0, 1), // one layer up
+            position - T::new_layer(0, 0, 0, 1), // one layer down
+        ])
+        
     }
 
     /// Get the centroid distance between two hexes input in cube coordinates
@@ -121,7 +157,21 @@ impl Coord for Cube {
         let r = (hex.1 - hex.0) / 2; // rows (y)
         let s = -q - r;
 
-        Cube { q, r, s }
+        Cube { q, r, s, l: 0 }  // default to layer 0, game logic handles layers
+    }
+
+    fn ascend(&mut self) {
+        self.l +=1;
+    }
+
+    fn descend(&mut self) {
+        self.l -=1;
+    }
+
+    fn to_bottom(&self) -> Self {
+        let mut copy = self.clone();
+        copy.l = 0;
+        copy
     }
 }
 

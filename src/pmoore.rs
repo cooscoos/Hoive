@@ -291,7 +291,7 @@ fn pillbug_prompts<T: Coord>(
     let dest = board.coord.mapfrom_doubleheight(coord);
 
     // Try execute the move and show the game's messages.
-    specials::pillbug_sumo(board, &source, dest, position)
+    specials::pillbug_sumo(board, source, dest, position)
 }
 
 // Request user input into terminal

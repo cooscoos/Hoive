@@ -55,7 +55,7 @@ where
             Some(p) => {
                 match p {
                     // chip already has a position, so we're relocating
-                    Some(source) => self.relocate_chip(chip_select, position, source),
+                    Some(source) => self.relocate_chip(chip_select, position, *source),
                     // chip's current position == None (player hand), so we're placing
                     None => self.place_chip(chip_select, position),
                 }
@@ -108,17 +108,40 @@ where
     /// 1) player must have placed their bee (only need to check prior to board turn 6)
     /// 2) check other basic_constraints for moves
     /// 3) animal-specific constraints
-    fn relocate_chip(&mut self, chip: Chip, dest: T, source: &T) -> MoveStatus {
+    fn relocate_chip(&mut self, chip: Chip, dest: T, source: T) -> MoveStatus {
         // Team can't relocate chips if they haven't placed bee.
         if self.turns <= 5 && !self.bee_placed(chip.team) {
             return MoveStatus::NoBee;
         }
+        
+        // if it's a beetle trying to climb up, then its destination is ascending
+        let desty = match chip.name.chars().next().unwrap() == 'b' && self.get_chip(dest).is_some(){
+
+            true => {
+                // increase layer number by one
+                let mut new_position = dest;
+                new_position.ascend();
+
+                // Check for a beetle in this position in layer, and keep ascending until there isn't one
+
+
+                println!("Old position was {:?} and new is {:?}",dest, new_position);
+                // overwrite the source position
+                new_position
+
+
+            },
+
+            false => dest,
+        };
+
+        // todo: we'll need some logic for descending too.
 
         // Check basic constraints, checked during all relocations on board
-        let basic_constraints = self.basic_constraints(dest, source);
+        let basic_constraints = self.basic_constraints(desty, source);
 
         // Check animal-specific constraints of the move
-        let animal_rules = self.animal_constraint(chip, source, &dest);
+        let animal_rules = self.animal_constraint(chip, &source, &desty);
 
         if basic_constraints != MoveStatus::Success {
             basic_constraints
@@ -126,7 +149,7 @@ where
             animal_rules
         } else {
             // No problem, execute the move
-            self.update(chip, dest);
+            self.update(chip, desty);
             // Relocation of chip could result in the game end
             self.check_win_state(chip.team) // Returns MoveStatus::Success if nobody won (game continues)
         }
@@ -142,18 +165,19 @@ where
     /// 1) end turn on top of another chip (worry about beetle later);
     /// 2) have no neighbours, or;
     /// 3) split the hive.
-    pub fn basic_constraints(&mut self, dest: T, source: &T) -> MoveStatus {
+    pub fn basic_constraints(&mut self, dest: T, source: T) -> MoveStatus {
         // check constraints in this order because they're not all mutally exclusive and we want to return useful errors to users
 
-        let is_beetle = self.get_chip(*source).unwrap().name.chars().next().unwrap() == 'b';
-
-        if self.get_chip(dest).is_some() & !is_beetle {
-            // Do we end up on top of another chip? (unless bettle);
+        if self.get_chip(dest).is_some() {
+            // Do we end up on top of another chip? This won't fail if beetle because they are already ascended
             MoveStatus::Occupied
         } else if self.count_neighbours(dest) == 0 {
             // Do we have end up adjacent to no other tiles?
+            // This won't fail even if beetle because count_neighbours always counts neighbours in layer 0
+            // And there is no situation in the game where beetles can have 0 neighbours in layer 0, becuase there
+            // must always be at least one own bee + one opponent chip on the board to move the beetle. 
             MoveStatus::Unconnected
-        } else if self.hive_break_check(source, &dest) {
+        } else if self.hive_break_check(&source, &dest) {
             // Does moving the chip split the hive?
             MoveStatus::HiveSplit
         } else {
@@ -181,8 +205,8 @@ where
 
         // Keep searching for neighbours until the queue is empty
         while let Some(position) = queue.pop() {
-            // Pop an element out of the queue and get the co-ordinates of neighbouring hexes
-            let neighbour_hexes = self.coord.neighbour_tiles(position);
+            // Pop an element out of the queue and get the co-ordinates of neighbouring hexes (including those 1 layer up and down if they exist)
+            let neighbour_hexes = self.coord.neighbour_layers(position);
 
             // If any of these neighbour hexes co-ordinates also appear in the chip_positions, it means they're a neighbouring chip
             // If they're a new entry, add them to the queue and the hashset, otherwise ignore them and move on
@@ -289,6 +313,7 @@ where
     }
 
     /// Count number of neighbouring chips at given position
+    /// This always counts neighbours in layer 0, even if position is in layer 1, 2, etc.
     pub fn count_neighbours(&self, position: T) -> usize {
         // Get the co-ordinates of neighbouring hexes
         let neighbour_hexes = self.coord.neighbour_tiles(position);

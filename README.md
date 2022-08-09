@@ -10,10 +10,10 @@ Done so far:
 
 ### Beetle
 
-Track beetles on a hashmap
-Could beetles live on another layer when they move to an occupied position?
-Where do we capture that layer?
-
+* broadly seems to be working now
+* allow beetle descending
+* draw needs a renderer for layers, it doesn't consider them - could have a renderer for vert layers, and have brackets or b1 > q1 (only show one down)
+* allow beetle super ascension (keep checking up) and super descending (keep checking down)
 
 ### Other animals
 This order seems sensible: 
