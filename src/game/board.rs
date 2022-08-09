@@ -144,8 +144,9 @@ where
     /// 3) split the hive.
     pub fn basic_constraints(&mut self, dest: T, source: &T) -> MoveStatus {
         // check constraints in this order because they're not all mutally exclusive and we want to return useful errors to users
+
         if self.get_chip(dest).is_some() {
-            // Do we end up on top of another chip? (unless bettle, but worry about that later);
+            // Do we end up on top of another chip? (unless bettle);
             MoveStatus::Occupied
         } else if self.count_neighbours(dest) == 0 {
             // Do we have end up adjacent to no other tiles?

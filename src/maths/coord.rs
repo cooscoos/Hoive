@@ -19,7 +19,6 @@ pub trait Coord:
     fn mapfrom_doubleheight(&self, hex: (i8, i8)) -> Self;
 }
 
-
 /// Cube coordinate system
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct Cube {
@@ -125,7 +124,6 @@ impl Coord for Cube {
         Cube { q, r, s }
     }
 }
-
 
 // Hexagonal Efficient Coordinate (HECS) co-ordinate system
 // https://en.wikipedia.org/wiki/Hexagonal_Efficient_Coordinate_System

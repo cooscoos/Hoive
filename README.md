@@ -7,6 +7,13 @@ Done so far:
 * ants (a), spiders (s), ladybirds (l), queen bees (q), pillbugs (p)
 
 ## To do
+
+### Beetle
+
+Could beetles live on another layer when they move to an occupied position?
+Where do we capture that layer?
+
+
 ### Other animals
 This order seems sensible: 
 
