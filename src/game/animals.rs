@@ -76,24 +76,20 @@ pub fn spider_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveSta
 /// This involes an ant check, plus ensuring source and dest are 3
 /// hexes apart (travelling over other hexes).
 pub fn ladybird_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
-    // Do an ant check first
-    match ant_check(board, source, dest) {
-        MoveStatus::SmallGap => MoveStatus::SmallGap,
-        MoveStatus::Success => {
-            // Get list of hexes ladybird can visit within 3 moves
-            // The move rules define whether ladybird should travel over occupied spaces
-            // (it must on its first two movements, but shouldn't on its last).
-            let move_rules = vec![true, true, false];
-            let visitable = mod_dist_lim_floodfill(board, source, move_rules);
+    // Don't do an ant check first -- I think ladybird should skip this.
 
-            // If destination is visitable on turn 3, the move is good.
-            match visitable.contains(dest) {
-                true => MoveStatus::Success,
-                false => MoveStatus::BadDistance(3),
-            }
-        }
-        _ => unreachable!(), // this chip can't return other movestatus types
+    // Get list of hexes ladybird can visit within 3 moves
+    // The move rules define whether ladybird should travel over occupied spaces
+    // (it must on its first two movements, but shouldn't on its last).
+    let move_rules = vec![true, true, false];
+    let visitable = mod_dist_lim_floodfill(board, source, move_rules);
+
+    // If destination is visitable on turn 3, the move is good.
+    match visitable.contains(dest) {
+        true => MoveStatus::Success,
+        false => MoveStatus::BadDistance(3),
     }
+
 }
 
 /// Check whether beetle can move from source to dest.

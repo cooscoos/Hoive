@@ -10,10 +10,13 @@ Done so far:
 
 ### Beetle
 
-* broadly seems to be working now
+broadly seems to be working now:
 * allow beetle descending
-* draw needs a renderer for layers, it doesn't consider them - could have a renderer for vert layers, and have brackets or b1 > q1 (only show one down)
+* small gap rule for beetle - manually check neighbours and intended move direction
 * allow beetle super ascension (keep checking up) and super descending (keep checking down)
+* draw needs a renderer for layers, it doesn't consider them - could have a renderer for vert layers, and have brackets or b1 > q1 (only show one down)
+* tidy up
+* benchmark the small gap beetle rule - more or less efficient? If more, apply to other animals that move 1 space per turn (bee, pillbug)
 
 ### Other animals
 This order seems sensible: 
