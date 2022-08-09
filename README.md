@@ -13,7 +13,7 @@ Done so far:
 broadly seems to be working now:
 * beetle gets treated as the opposing neighbour (so the neighbour check should get the highest layer)
 * small gap rule for beetle - manually check neighbours and intended move direction
-* draw needs a renderer for layers, it doesn't consider them - could have a renderer for vert layers, and have brackets or b1 > q1 (only show one down)
+* draw needs a renderer for layers, it doesn't consider them - could have a renderer for vert layers, and have brackets or b1 > q1 (only show one down) or (T1: b1) then hit T1 for tower
 * tidy up
 * benchmark the small gap beetle rule - more or less efficient? If more, apply to other animals that move 1 space per turn (bee, pillbug)
 
