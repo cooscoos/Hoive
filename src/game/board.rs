@@ -1,5 +1,6 @@
 /// Board module tracks the chips and executes their moves
 use std::collections::{HashMap, HashSet};
+use std::thread::current;
 
 use super::comps::{self, Chip, Team}; // Game components (chips, teams)
 use crate::game::{animals, history::History, movestatus::MoveStatus}; // Animal logic, move tracking and history
@@ -114,26 +115,27 @@ where
             return MoveStatus::NoBee;
         }
         
-        // if it's a beetle trying to climb up, then its destination is ascending
-        let desty = match chip.name.chars().next().unwrap() == 'b' && self.get_chip(dest).is_some(){
-
-            true => {
-                // increase layer number by one
-                let mut new_position = dest;
-                new_position.ascend();
-
-                // Check for a beetle in this position in layer, and keep ascending until there isn't one
+  
+        let mut desty = dest;
 
 
-                println!("Old position was {:?} and new is {:?}",dest, new_position);
-                // overwrite the source position
-                new_position
 
+        // If it's a beetle
+        if chip.name.chars().next().unwrap() == 'b' {
 
-            },
+            // If there's nothing in the way, decrease layer number by one and repeat until there's a free layer
+            // or until we hit layer 0
+            while self.get_chip(desty).is_some() == false && desty.get_layer() != 0 {
+                
+                desty.descend();
+            }
 
-            false => dest,
-        };
+            // If there's something in the way, increase layer number by one and repeat until there's a free layer
+            while self.get_chip(desty).is_some() == true {
+                desty.ascend();
+            }
+
+        }
 
         // todo: we'll need some logic for descending too.
 

@@ -11,9 +11,9 @@ Done so far:
 ### Beetle
 
 broadly seems to be working now:
-* allow beetle descending
+* beetle prevent others' movement below
+* beetle gets treated as the opposing neighbour (so the neighbour check should get the highest layer)
 * small gap rule for beetle - manually check neighbours and intended move direction
-* allow beetle super ascension (keep checking up) and super descending (keep checking down)
 * draw needs a renderer for layers, it doesn't consider them - could have a renderer for vert layers, and have brackets or b1 > q1 (only show one down)
 * tidy up
 * benchmark the small gap beetle rule - more or less efficient? If more, apply to other animals that move 1 space per turn (bee, pillbug)
@@ -22,7 +22,7 @@ broadly seems to be working now:
 This order seems sensible: 
 
 * beetle
-* back to pillbug to capture the "beetle gate rule"
+* back to pillbug to capture the "beetle gate rule", and sumoing higher layer beetles (top layer)
 * Rules check for later: can ladybird move over beetle on top of other chip?
 * grashopper - line drawing - then a check to see if it's straight and only goes over occupied hexes
 * mosquito

@@ -214,6 +214,9 @@ fn message<T: Coord>(board: &mut Board<T>, move_status: &MoveStatus) {
         MoveStatus::NotNeighbour => {
             println!("\n\x1b[31;1m<< That is not a neighbouring hex >>\x1b[0m\n")
         }
+        MoveStatus::BeetleBlock => {
+            println!("\n\x1b[31;1m<< A beetle on top of you prevents you from moving >>\x1b[0m\n")
+        }
         MoveStatus::Win(teamopt) => {
             println!("{}\n", draw::show_board(board, 5));
             match teamopt {
