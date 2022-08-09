@@ -97,7 +97,7 @@ pub fn ladybird_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveS
 }
 
 /// Check whether beetle can move from source to dest.
-/// 
+///
 pub fn beetle_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
     MoveStatus::Success
 }
@@ -162,4 +162,3 @@ pub fn mod_dist_lim_floodfill<T: Coord>(
     }
     visitable
 }
-

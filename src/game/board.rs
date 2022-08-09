@@ -114,16 +114,12 @@ where
             return MoveStatus::NoBee;
         }
 
-        // For now we're going to assume beetles need completely different logic if they're moving to an occupied position
-        // Basic constraints will be set to success (effectively ignoring it), and all beetle movement will be captured by animal_rules
-        let basic_constraints = match chip.name.chars().next().unwrap() == 'b' {
-            true => MoveStatus::Success,
-            false => self.basic_constraints(dest, source),            // Check basic constraints, checked during all relocations on board
-        };
-                        
+        // Check basic constraints, checked during all relocations on board
+        let basic_constraints = self.basic_constraints(dest, source);
+
         // Check animal-specific constraints of the move
         let animal_rules = self.animal_constraint(chip, source, &dest);
-        
+
         if basic_constraints != MoveStatus::Success {
             basic_constraints
         } else if animal_rules != MoveStatus::Success {
@@ -149,7 +145,9 @@ where
     pub fn basic_constraints(&mut self, dest: T, source: &T) -> MoveStatus {
         // check constraints in this order because they're not all mutally exclusive and we want to return useful errors to users
 
-        if self.get_chip(dest).is_some() {
+        let is_beetle = self.get_chip(*source).unwrap().name.chars().next().unwrap() == 'b';
+
+        if self.get_chip(dest).is_some() & !is_beetle {
             // Do we end up on top of another chip? (unless bettle);
             MoveStatus::Occupied
         } else if self.count_neighbours(dest) == 0 {
@@ -167,7 +165,7 @@ where
     /// This function will likely cause test failure when we introduce beetles, so will need to edit then.
     /// Uses "one-component-at-a-time" connected component labelling.
     /// See: https://en.wikipedia.org/wiki/Connected-component_labeling?oldformat=true#Pseudocode_for_the_one-component-at-a-time_algorithm
-    fn hive_break_check(&self, source: &T, dest: &T) -> bool {
+    pub fn hive_break_check(&self, source: &T, dest: &T) -> bool {
         // Store locations of blobs (almagamations of chips on the board that neighbour at least one other chip)
         let mut blobs: HashSet<T> = HashSet::new();
 
@@ -208,7 +206,7 @@ where
             's' => animals::spider_check(self, source, dest), // spiders
             'q' | 'p' => animals::bee_check(self, source, dest), // bees and pillbugs
             'l' => animals::ladybird_check(self, source, dest), // ladybirds
-            'b' => animals::beetle_check(self,source,dest),           // beetles
+            'b' => animals::beetle_check(self, source, dest), // beetles
             _ => MoveStatus::Success,                      // todo, other animals
         }
     }
