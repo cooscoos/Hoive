@@ -10,6 +10,7 @@ Done so far:
 
 ### Beetle
 
+Track beetles on a hashmap
 Could beetles live on another layer when they move to an occupied position?
 Where do we capture that layer?
 

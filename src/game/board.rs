@@ -114,12 +114,16 @@ where
             return MoveStatus::NoBee;
         }
 
-        // Check basic constraints, checked during all relocations on board
-        let basic_constraints = self.basic_constraints(dest, source);
-
+        // For now we're going to assume beetles need completely different logic if they're moving to an occupied position
+        // Basic constraints will be set to success (effectively ignoring it), and all beetle movement will be captured by animal_rules
+        let basic_constraints = match chip.name.chars().next().unwrap() == 'b' {
+            true => MoveStatus::Success,
+            false => self.basic_constraints(dest, source),            // Check basic constraints, checked during all relocations on board
+        };
+                        
         // Check animal-specific constraints of the move
         let animal_rules = self.animal_constraint(chip, source, &dest);
-
+        
         if basic_constraints != MoveStatus::Success {
             basic_constraints
         } else if animal_rules != MoveStatus::Success {
@@ -204,6 +208,7 @@ where
             's' => animals::spider_check(self, source, dest), // spiders
             'q' | 'p' => animals::bee_check(self, source, dest), // bees and pillbugs
             'l' => animals::ladybird_check(self, source, dest), // ladybirds
+            'b' => animals::beetle_check(self,source,dest),           // beetles
             _ => MoveStatus::Success,                      // todo, other animals
         }
     }

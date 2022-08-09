@@ -96,6 +96,12 @@ pub fn ladybird_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveS
     }
 }
 
+/// Check whether beetle can move from source to dest.
+/// 
+pub fn beetle_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
+    MoveStatus::Success
+}
+
 /// A modified distance-limited flood fill which can find movement ranges around and over obstacles.
 /// Useful for spiders and ladybirds.
 /// See: https://www.redblobgames.com/grids/hexagons/#distances
@@ -156,3 +162,4 @@ pub fn mod_dist_lim_floodfill<T: Coord>(
     }
     visitable
 }
+
