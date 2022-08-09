@@ -11,7 +11,6 @@ Done so far:
 ### Beetle
 
 broadly seems to be working now:
-* beetle prevent others' movement below
 * beetle gets treated as the opposing neighbour (so the neighbour check should get the highest layer)
 * small gap rule for beetle - manually check neighbours and intended move direction
 * draw needs a renderer for layers, it doesn't consider them - could have a renderer for vert layers, and have brackets or b1 > q1 (only show one down)

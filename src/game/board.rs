@@ -1,6 +1,5 @@
 /// Board module tracks the chips and executes their moves
 use std::collections::{HashMap, HashSet};
-use std::thread::current;
 
 use super::comps::{self, Chip, Team}; // Game components (chips, teams)
 use crate::game::{animals, history::History, movestatus::MoveStatus}; // Animal logic, move tracking and history
@@ -114,19 +113,13 @@ where
         if self.turns <= 5 && !self.bee_placed(chip.team) {
             return MoveStatus::NoBee;
         }
-        
   
         let mut desty = dest;
-
-
-
         // If it's a beetle
         if chip.name.chars().next().unwrap() == 'b' {
-
             // If there's nothing in the way, decrease layer number by one and repeat until there's a free layer
             // or until we hit layer 0
             while self.get_chip(desty).is_some() == false && desty.get_layer() != 0 {
-                
                 desty.descend();
             }
 
@@ -134,10 +127,7 @@ where
             while self.get_chip(desty).is_some() == true {
                 desty.ascend();
             }
-
         }
-
-        // todo: we'll need some logic for descending too.
 
         // Check basic constraints, checked during all relocations on board
         let basic_constraints = self.basic_constraints(desty, source);
@@ -179,6 +169,9 @@ where
             // And there is no situation in the game where beetles can have 0 neighbours in layer 0, becuase there
             // must always be at least one own bee + one opponent chip on the board to move the beetle. 
             MoveStatus::Unconnected
+        } else if self.sat_on_me(source) {
+            // Check if there's a beetle above
+            MoveStatus::BeetleBlock 
         } else if self.hive_break_check(&source, &dest) {
             // Does moving the chip split the hive?
             MoveStatus::HiveSplit
@@ -235,6 +228,16 @@ where
             'b' => animals::beetle_check(self, source, dest), // beetles
             _ => MoveStatus::Success,                      // todo, other animals
         }
+    }
+
+    /// Check if there's something one layer above this location
+    fn sat_on_me(&self, source: T) -> bool {
+        // Go up one layer from current position
+        let mut my_position = source;
+        my_position.ascend();
+
+        // If there's something there, you're being beetle blocked
+        self.get_chip(my_position).is_some()
     }
 
     /// See if either team has won (called at the end of current team's turn).
