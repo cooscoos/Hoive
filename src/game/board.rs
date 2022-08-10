@@ -288,29 +288,23 @@ where
         // Get neighbouring tiles on layer 0
         let layer0_neighbour = self.coord.neighbour_tiles(position);
 
-
+        // Get the topmost chip on a stack
         let get_topmost = |mut dest: T| {
-            // If there's something above me, go up a layer
-            let mut one_up = dest;
-            one_up.ascend();
-            while self.get_chip(one_up).is_some() == true {
+            // Start at layer 1
+            dest.ascend();
+            // If there's a chip there, go up a layer, keep going until no chip
+            while self.get_chip(dest).is_some() == true {
                 dest.ascend();
-                one_up.ascend();
             }
-            dest
+            // Go down one layer to reach the position of the top-most chip
+            dest.descend();
+            self.get_chip(dest)
         };
 
-        // For each of these hexes, check if there's a chip above it, adjust the neighbour hex
-        // to match the topmost layer
-        let neighbour_hexes = layer0_neighbour
+        // Get the top-most neighbour hex
+        let neighbour_chips = layer0_neighbour
             .into_iter()
             .map(|d| get_topmost(d))
-            .collect::<HashSet<T>>();
-
-        // Get the chips in neighbouring hexes
-        let neighbour_chips = neighbour_hexes
-            .into_iter()
-            .map(|h| self.get_chip(h))
             .collect::<Vec<Option<Chip>>>();
 
         // Unwrap Vec<Option<Chip>> into Vec<Chip>

@@ -1,0 +1,7 @@
+turn,team,name,row,col
+0,White,q1,0,0
+1,Black,q1,0,2
+2,White,b1,0,-2
+3,Black,b1,-1,3
+4,White,b1,0,0
+5,White,b1,0,2
