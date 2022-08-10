@@ -4,23 +4,20 @@ The boardgame Hive, written in Rust.
 Done so far:
 * play the game in terminal with cargo run
 * basic rules working
-* ants (a), spiders (s), ladybirds (l), queen bees (q), pillbugs (p)
+* ants (a), spiders (s), ladybirds (l), queen bees (q), pillbugs (p), beetles (b)
 
 ## To do
 
 ### Beetle
 
 broadly seems to be working now:
-* small gap rule for beetle - manually check neighbours and intended move direction
 * draw needs a renderer for layers, it doesn't consider them - could have a renderer for vert layers, and have brackets or b1 > q1 (only show one down) or (T1: b1) then hit T1 for tower
 * tidy up
-* benchmark the small gap beetle rule - more or less efficient? If more, apply to other animals that move 1 space per turn (bee, pillbug)
 
 ### Other animals
 This order seems sensible: 
 
-* beetle
-* back to pillbug to capture the "beetle gate rule", and sumoing higher layer beetles (top layer)
+* back to pillbug after beetle to capture the "beetle gate rule", and write a test for sumoing higher layer beetles (top layer)
 * Rules check for later: can ladybird move over beetle on top of other chip?
 * grashopper - line drawing - then a check to see if it's straight and only goes over occupied hexes
 * mosquito

@@ -33,8 +33,8 @@ pub fn ant_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus
 ///
 /// This function is also used by pillbugs.
 pub fn bee_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
-    // Do an ant check first
-    match ant_check(board, source, dest) {
+    // Do a beetle check first for small gaps
+    match beetle_check(board, source, dest) {
         MoveStatus::SmallGap => MoveStatus::SmallGap,
         MoveStatus::Success => {
             // Check if the distance is within the bee's travel range (its immediate neighbours)
@@ -93,12 +93,8 @@ pub fn ladybird_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveS
 
 /// Check whether beetle can move from source to dest.
 /// If there is a small gap between source and dest then this will return
-/// MoveStatus::SmallGap.
-///
-/// This is different to the ant_check because ant_check closes off all hexes
-/// beyond a small gap. The same isn't needed for beetles because they can move
-/// over other chips into areas that an ant can't access. As a result, the
-/// beetle check is a lot less clever and much more manual.
+/// MoveStatus::SmallGap. This check will work on any chip that only moves one
+/// space (bees, pillbugs), and will be more efficient than an ant_check.
 pub fn beetle_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
     let placed_hexes = board.get_placed_positions();
 
