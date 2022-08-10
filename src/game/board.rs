@@ -89,12 +89,7 @@ where
         } else if self.turns > 0 && self.count_neighbours(dest) == 0 {
             // Is there at least one chip neighbouring dest after turn 0?
             MoveStatus::Unconnected
-        } else if self.turns > 1
-            && self
-                .get_neighbour_chips(dest)
-                .iter()
-                .any(|c| c.team != chip.team)
-        {
+        } else if self.turns > 1 && self.unfriendly_neighbours(dest, chip.team) {
             // Are any neighbours not on my team after turn 1
             MoveStatus::BadNeighbour
         } else {
@@ -102,6 +97,13 @@ where
             self.update(chip, dest);
             MoveStatus::Success
         }
+    }
+
+    /// Checks if there are any neighbours on opposing teams next to the chosen destination
+    fn unfriendly_neighbours(&self, dest: T, my_team: Team) -> bool {
+        self.get_neighbour_chips(dest)
+            .iter()
+            .any(|c| c.team != my_team)
     }
 
     /// Relocate a chip on the board at source to dest checking constraints:
@@ -113,27 +115,18 @@ where
         if self.turns <= 5 && !self.bee_placed(chip.team) {
             return MoveStatus::NoBee;
         }
-  
-        let mut desty = dest;
-        // If it's a beetle
-        if chip.name.chars().next().unwrap() == 'b' {
-            // If there's nothing in the way, decrease layer number by one and repeat until there's a free layer
-            // or until we hit layer 0
-            while self.get_chip(desty).is_some() == false && desty.get_layer() != 0 {
-                desty.descend();
-            }
 
-            // If there's something in the way, increase layer number by one and repeat until there's a free layer
-            while self.get_chip(desty).is_some() == true {
-                desty.ascend();
-            }
-        }
-
-        // Check basic constraints, checked during all relocations on board
-        let basic_constraints = self.basic_constraints(desty, source);
+        // Allow the chip to switch layers if it's a beetle
+        let destin = match chip.name.chars().next().unwrap() == 'b' {
+            true => animals::layer_adjust(&self, dest),
+            false => dest,
+        };
 
         // Check animal-specific constraints of the move
-        let animal_rules = self.animal_constraint(chip, &source, &desty);
+        let animal_rules = self.animal_constraint(chip, &source, &destin);
+
+        // Check basic constraints, checked during all relocations on board
+        let basic_constraints = self.basic_constraints(destin, source);
 
         if basic_constraints != MoveStatus::Success {
             basic_constraints
@@ -141,7 +134,7 @@ where
             animal_rules
         } else {
             // No problem, execute the move
-            self.update(chip, desty);
+            self.update(chip, destin);
             // Relocation of chip could result in the game end
             self.check_win_state(chip.team) // Returns MoveStatus::Success if nobody won (game continues)
         }
@@ -167,11 +160,11 @@ where
             // Do we have end up adjacent to no other tiles?
             // This won't fail even if beetle because count_neighbours always counts neighbours in layer 0
             // And there is no situation in the game where beetles can have 0 neighbours in layer 0, becuase there
-            // must always be at least one own bee + one opponent chip on the board to move the beetle. 
+            // must always be at least one own bee + one opponent chip on the board to move the beetle.
             MoveStatus::Unconnected
         } else if self.sat_on_me(source) {
             // Check if there's a beetle above
-            MoveStatus::BeetleBlock 
+            MoveStatus::BeetleBlock
         } else if self.hive_break_check(&source, &dest) {
             // Does moving the chip split the hive?
             MoveStatus::HiveSplit
@@ -289,9 +282,30 @@ where
             .find_map(|(c, p)| if *p == Some(position) { Some(*c) } else { None })
     }
 
-    /// Return a vector of neighbouring chips
+    /// Return a vector of neighbouring chips. This always returns the top-most chip if there is a stack
+    /// of beetles.
     pub fn get_neighbour_chips(&self, position: T) -> Vec<Chip> {
-        let neighbour_hexes = self.coord.neighbour_tiles(position);
+        // Get neighbouring tiles on layer 0
+        let layer0_neighbour = self.coord.neighbour_tiles(position);
+
+
+        let get_topmost = |mut dest: T| {
+            // If there's something above me, go up a layer
+            let mut one_up = dest;
+            one_up.ascend();
+            while self.get_chip(one_up).is_some() == true {
+                dest.ascend();
+                one_up.ascend();
+            }
+            dest
+        };
+
+        // For each of these hexes, check if there's a chip above it, adjust the neighbour hex
+        // to match the topmost layer
+        let neighbour_hexes = layer0_neighbour
+            .into_iter()
+            .map(|d| get_topmost(d))
+            .collect::<HashSet<T>>();
 
         // Get the chips in neighbouring hexes
         let neighbour_chips = neighbour_hexes
@@ -305,6 +319,10 @@ where
             false => neighbour_chips.into_iter().flatten().collect::<Vec<Chip>>(),
         }
     }
+
+
+
+    
 
     /// Return a chip's position based on its name and team
     pub fn get_position_byname(&self, team: Team, name: &'static str) -> Option<T> {

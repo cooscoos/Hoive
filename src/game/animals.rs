@@ -89,7 +89,6 @@ pub fn ladybird_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveS
         true => MoveStatus::Success,
         false => MoveStatus::BadDistance(3),
     }
-
 }
 
 /// Check whether beetle can move from source to dest.
@@ -157,4 +156,20 @@ pub fn mod_dist_lim_floodfill<T: Coord>(
         }
     }
     visitable
+}
+
+/// Adjusts the beetle destination so that the beetle can climb into higher or lower layers
+pub fn layer_adjust<T: Coord>(board: &Board<T>, mut dest: T) -> T {
+    // If there's nothing in the way, decrease layer number by one and repeat until there's a free layer
+    // or until we hit layer 0
+    while board.get_chip(dest).is_some() == false && dest.get_layer() != 0 {
+        dest.descend();
+    }
+
+    // If there's something in the way, increase layer number by one and repeat until there's a free layer
+    while board.get_chip(dest).is_some() == true {
+        dest.ascend();
+    }
+
+    dest
 }

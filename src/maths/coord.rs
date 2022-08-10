@@ -1,16 +1,26 @@
 /// Module defining hexagonal co-ordinate systems for the board to use.
 use std::collections::HashSet;
+use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::{Add, Sub};
-use std::fmt::Debug;
 
 /// A trait ensuring all genetic hex coordinate systems utilise the same methods
 pub trait Coord:
-    Debug + Hash + PartialOrd + Ord + Eq + Clone + Copy + Add + Sub + Add<Output = Self> + Sub<Output = Self>
+    Debug
+    + Hash
+    + PartialOrd
+    + Ord
+    + Eq
+    + Clone
+    + Copy
+    + Add
+    + Sub
+    + Add<Output = Self>
+    + Sub<Output = Self>
 {
     fn default() -> Self;
     fn new(x: i8, y: i8, z: i8) -> Self;
-    fn new_layer(x:i8,y:i8,z:i8,l:i8) -> Self;
+    fn new_layer(x: i8, y: i8, z: i8, l: i8) -> Self;
     fn get_layer(&self) -> i8;
     fn vector_sqsum(&self) -> u32; // Square sum of vector components
     fn manhattan(&self) -> u32; // Manhattan distance: sum of the abs value of each component
@@ -21,7 +31,7 @@ pub trait Coord:
     fn hex_distance<T: Coord>(&self, hex1: T, hex2: T) -> u32; // calculate distance between two hexes
     fn mapto_doubleheight<T: Coord>(&self, hex: T) -> (i8, i8); // convert to and from doubleheight co-ords for the ascii renderer
     fn mapfrom_doubleheight(&self, hex: (i8, i8)) -> Self;
-    fn ascend(&mut self);   // increase or decrease the layer number
+    fn ascend(&mut self); // increase or decrease the layer number
     fn descend(&mut self);
     fn to_bottom(&self) -> Self; // drop to layer 0
 }
@@ -32,7 +42,7 @@ pub struct Cube {
     q: i8,
     r: i8,
     s: i8,
-    l: i8,  // the layer
+    l: i8, // the layer
 }
 
 /// Define how to add two vectors in Cube coordinates
@@ -68,11 +78,11 @@ impl Coord for Cube {
     }
 
     fn new(q: i8, r: i8, s: i8) -> Self {
-        Cube { q, r, s, l:0} 
+        Cube { q, r, s, l: 0 }
     }
 
-    fn new_layer(q:i8,r:i8,s:i8,l:i8) -> Self {
-        Cube { q, r, s, l} 
+    fn new_layer(q: i8, r: i8, s: i8, l: i8) -> Self {
+        Cube { q, r, s, l }
     }
 
     fn get_layer(&self) -> i8 {
@@ -99,7 +109,6 @@ impl Coord for Cube {
     }
 
     fn neighbour_tiles<T: Coord>(&self, position: T) -> HashSet<T> {
-
         // Check layer 0 regardless of what layer we're on
         let position = position.to_bottom();
         HashSet::from([
@@ -113,7 +122,6 @@ impl Coord for Cube {
     }
 
     fn neighbour_layers<T: Coord>(&self, position: T) -> HashSet<T> {
-
         HashSet::from([
             position + T::new(1, -1, 0),
             position + T::new(1, 0, -1),
@@ -124,7 +132,6 @@ impl Coord for Cube {
             position + T::new_layer(0, 0, 0, 1), // one layer up
             position - T::new_layer(0, 0, 0, 1), // one layer down
         ])
-        
     }
 
     /// Get the centroid distance between two hexes input in cube coordinates
@@ -157,15 +164,15 @@ impl Coord for Cube {
         let r = (hex.1 - hex.0) / 2; // rows (y)
         let s = -q - r;
 
-        Cube { q, r, s, l: 0 }  // default to layer 0, game logic handles layers
+        Cube { q, r, s, l: 0 } // default to layer 0, game logic handles layers
     }
 
     fn ascend(&mut self) {
-        self.l +=1;
+        self.l += 1;
     }
 
     fn descend(&mut self) {
-        self.l -=1;
+        self.l -= 1;
     }
 
     fn to_bottom(&self) -> Self {

@@ -6,7 +6,7 @@ use crate::maths::coord::Coord;
 /// If it can, it will execute the move and return MoveStatus::Success.
 pub fn pillbug_sumo<T: Coord>(
     board: &mut Board<T>,
-    source: T,  // place to grab the sumo-ee from
+    source: T,   // place to grab the sumo-ee from
     dest: T,     // place to sumo to
     position: T, // position of pillbug (sumo-er)
 ) -> MoveStatus {
