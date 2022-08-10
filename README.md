@@ -11,6 +11,7 @@ Done so far:
 ### Beetle
 
 broadly seems to be working now:
+* doubleheight needs layers??
 * draw needs a renderer for layers, it doesn't consider them - could have a renderer for vert layers, and have brackets or b1 > q1 (only show one down) or (T1: b1) then hit T1 for tower
 * tidy up
 

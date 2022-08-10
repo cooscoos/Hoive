@@ -13,7 +13,7 @@ use std::fmt::Write as _; // import without risk of name clash
 // Offset co-ordinate systems are easy for human-people to interpret, but they're a nighmare to do maths with.
 // We therefore need to map to and from the cube (or other) co-ordinate system that the game logic uses.
 
-// Parse the board out into doubleheight hex co-ordinates (a grid format more readable to humans)
+/// Parse the board out into doubleheight hex co-ordinates (a grid format more readable to humans)
 pub fn to_dheight<T: Coord>(board: &Board<T>, size: i8) -> HashMap<(i8, i8), Option<Chip>> {
     // Initialise an empty doubleheight hashmap to store chips at each co-ordinate
     let mut dheight_hashmap = empty(size);
