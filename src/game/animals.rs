@@ -33,8 +33,8 @@ pub fn ant_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus
 ///
 /// This function is also used by pillbugs.
 pub fn bee_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
-    // Do an ant check first
-    match ant_check(board, source, dest) {
+    // Do a beetle check first for small gaps
+    match beetle_check(board, source, dest) {
         MoveStatus::SmallGap => MoveStatus::SmallGap,
         MoveStatus::Success => {
             // Check if the distance is within the bee's travel range (its immediate neighbours)
@@ -76,23 +76,45 @@ pub fn spider_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveSta
 /// This involes an ant check, plus ensuring source and dest are 3
 /// hexes apart (travelling over other hexes).
 pub fn ladybird_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
-    // Do an ant check first
-    match ant_check(board, source, dest) {
-        MoveStatus::SmallGap => MoveStatus::SmallGap,
-        MoveStatus::Success => {
-            // Get list of hexes ladybird can visit within 3 moves
-            // The move rules define whether ladybird should travel over occupied spaces
-            // (it must on its first two movements, but shouldn't on its last).
-            let move_rules = vec![true, true, false];
-            let visitable = mod_dist_lim_floodfill(board, source, move_rules);
+    // Don't do an ant check first -- I think ladybird should skip this.
 
-            // If destination is visitable on turn 3, the move is good.
-            match visitable.contains(dest) {
-                true => MoveStatus::Success,
-                false => MoveStatus::BadDistance(3),
-            }
-        }
-        _ => unreachable!(), // this chip can't return other movestatus types
+    // Get list of hexes ladybird can visit within 3 moves
+    // The move rules define whether ladybird should travel over occupied spaces
+    // (it must on its first two movements, but shouldn't on its last).
+    let move_rules = vec![true, true, false];
+    let visitable = mod_dist_lim_floodfill(board, source, move_rules);
+
+    // If destination is visitable on turn 3, the move is good.
+    match visitable.contains(dest) {
+        true => MoveStatus::Success,
+        false => MoveStatus::BadDistance(3),
+    }
+}
+
+/// Check whether beetle can move from source to dest.
+/// If there is a small gap between source and dest then this will return
+/// MoveStatus::SmallGap. This check will work on any chip that only moves one
+/// space (bees, pillbugs), and will be more efficient than an ant_check.
+pub fn beetle_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
+    let placed_hexes = board.get_placed_positions();
+
+    // Get the positions of chips neighbouring source
+    let source_neighbour_hexes = board.coord.neighbour_tiles(*source);
+    let source_neighbours = placed_hexes
+        .intersection(&source_neighbour_hexes)
+        .collect::<HashSet<&T>>();
+
+    // Get the positions of chips neighbouring dest
+    let dest_neighbour_hexes = board.coord.neighbour_tiles(*dest);
+    let dest_neighbours = placed_hexes
+        .intersection(&dest_neighbour_hexes)
+        .collect::<HashSet<&T>>();
+
+    // The common neighbours between source and dest will be the ones that are in the way of the desired move from source to dest
+    // If there are 2 of them, then it means we have a small gap and the move can't be allowed
+    match source_neighbours.intersection(&dest_neighbours).count() == 2 {
+        true => MoveStatus::SmallGap,
+        false => MoveStatus::Success,
     }
 }
 
@@ -155,4 +177,20 @@ pub fn mod_dist_lim_floodfill<T: Coord>(
         }
     }
     visitable
+}
+
+/// Adjusts the beetle destination so that the beetle can climb into higher or lower layers
+pub fn layer_adjust<T: Coord>(board: &Board<T>, mut dest: T) -> T {
+    // If there's nothing in the way, decrease layer number by one and repeat until there's a free layer
+    // or until we hit layer 0
+    while board.get_chip(dest).is_some() == false && dest.get_layer() != 0 {
+        dest.descend();
+    }
+
+    // If there's something in the way, increase layer number by one and repeat until there's a free layer
+    while board.get_chip(dest).is_some() == true {
+        dest.ascend();
+    }
+
+    dest
 }

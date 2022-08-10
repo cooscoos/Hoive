@@ -16,6 +16,7 @@ use super::comps::{Chip, Team};
 /// BadDistance(u32)| Can't travel this distance, must travel u32
 /// RecentMove(Chip)| Chip moved too recently to act
 /// NotNeighbour| Target hex isn't a neighbour
+/// BeetleBlock | A beetle on top of you is blocking your move
 #[derive(Debug, Eq, PartialEq)]
 pub enum MoveStatus {
     Success,
@@ -33,4 +34,6 @@ pub enum MoveStatus {
     BadDistance(u32),
     RecentMove(Chip),
     NotNeighbour,
+
+    BeetleBlock,
 }

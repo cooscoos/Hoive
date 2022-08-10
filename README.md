@@ -4,21 +4,20 @@ The boardgame Hive, written in Rust.
 Done so far:
 * play the game in terminal with cargo run
 * basic rules working
-* ants (a), spiders (s), ladybirds (l), queen bees (q), pillbugs (p)
+* ants (a), spiders (s), ladybirds (l), queen bees (q), pillbugs (p), beetles (b)
 
 ## To do
 
 ### Beetle
 
-Could beetles live on another layer when they move to an occupied position?
-Where do we capture that layer?
-
+broadly seems to be working now:
+* draw needs a renderer for layers, it doesn't consider them - could have a renderer for vert layers, and have brackets or b1 > q1 (only show one down) or (T1: b1) then hit T1 for tower
+* tidy up
 
 ### Other animals
 This order seems sensible: 
 
-* beetle
-* back to pillbug to capture the "beetle gate rule"
+* back to pillbug after beetle to capture the "beetle gate rule", and write a test for sumoing higher layer beetles (top layer)
 * Rules check for later: can ladybird move over beetle on top of other chip?
 * grashopper - line drawing - then a check to see if it's straight and only goes over occupied hexes
 * mosquito

@@ -6,12 +6,12 @@ use crate::maths::coord::Coord;
 /// If it can, it will execute the move and return MoveStatus::Success.
 pub fn pillbug_sumo<T: Coord>(
     board: &mut Board<T>,
-    source: &T,  // place to grab the sumo-ee from
+    source: T,   // place to grab the sumo-ee from
     dest: T,     // place to sumo to
     position: T, // position of pillbug (sumo-er)
 ) -> MoveStatus {
     let the_pillbug = board.get_chip(position);
-    let sumoee = board.get_chip(*source);
+    let sumoee = board.get_chip(source);
 
     // If the pillbug or sumo-ee moved within last two turns, we can't sumo
     let recent_movers = board.history.last_two_turns(board.turns);
@@ -27,7 +27,7 @@ pub fn pillbug_sumo<T: Coord>(
     // Ensure source and destination hexes both neighbour the pillbug
     let neighbours = board.coord.neighbour_tiles(position);
 
-    if !neighbours.contains(source) || !neighbours.contains(&dest) {
+    if !neighbours.contains(&source) || !neighbours.contains(&dest) {
         return MoveStatus::NotNeighbour;
     }
 

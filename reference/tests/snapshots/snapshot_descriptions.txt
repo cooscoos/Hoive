@@ -4,3 +4,5 @@ snapshot_8: set up for pillbug tries to sumo after moving (try sumo q1 to 0,2)
 snapshot_9: set up for pillbug tries to sumo another chip that recently moved (try sumo ba1 to -1,-1), breaking hive (try sumo wa1 to 1,1), ok= not break the hive (try sumo wa1 to 0,2)
 snapshot_10: set up for pillbug tries to sumo into non-neighbouring hex (try sumo a1 to 2,0)
 snapshot_5neighbours: wa1 has 5 neighbours. for benchmarking counting.
+snapshot_11: wb1 on top of bq1, trying to place a black chip at 1,3 should result in bad neighbour because of opposing beetle covering queen
+snapshot_12: try move wb1 to -1,-1, should be too small a gap

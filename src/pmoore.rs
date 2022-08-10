@@ -214,6 +214,9 @@ fn message<T: Coord>(board: &mut Board<T>, move_status: &MoveStatus) {
         MoveStatus::NotNeighbour => {
             println!("\n\x1b[31;1m<< That is not a neighbouring hex >>\x1b[0m\n")
         }
+        MoveStatus::BeetleBlock => {
+            println!("\n\x1b[31;1m<< A beetle on top of you prevents you from moving >>\x1b[0m\n")
+        }
         MoveStatus::Win(teamopt) => {
             println!("{}\n", draw::show_board(board, 5));
             match teamopt {
@@ -291,7 +294,7 @@ fn pillbug_prompts<T: Coord>(
     let dest = board.coord.mapfrom_doubleheight(coord);
 
     // Try execute the move and show the game's messages.
-    specials::pillbug_sumo(board, &source, dest, position)
+    specials::pillbug_sumo(board, source, dest, position)
 }
 
 // Request user input into terminal
