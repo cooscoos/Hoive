@@ -11,7 +11,6 @@ fn beetle_test_setup(filename: String) -> Board<Cube> {
     board
 }
 
-
 #[test]
 fn beetle_bad_neigbour() {
     // Black ant tries to go next to white beetle which is on top of its black bee
@@ -35,7 +34,6 @@ fn beetle_layer_1() {
     assert_eq!(1, position.get_layer());
 }
 
-
 #[test]
 fn beetle_layer_2() {
     // Put black beetle on white beetle and check if layer 2
@@ -45,7 +43,6 @@ fn beetle_layer_2() {
 
     // execute move
     board.move_chip("b1", Team::Black, stack_up);
-
 
     let position = board.get_position_byname(Team::Black, "b1").unwrap();
 
@@ -61,10 +58,8 @@ fn beetle_layer_0() {
     board.move_chip("b1", Team::Black, stack_up);
 
     // now move to empty
-    let empty_move = board.coord.mapfrom_doubleheight((1,3));
+    let empty_move = board.coord.mapfrom_doubleheight((1, 3));
     board.move_chip("b1", Team::Black, empty_move);
-
-
 
     let position = board.get_position_byname(Team::Black, "b1").unwrap();
 
@@ -79,11 +74,10 @@ fn beetle_stop_move() {
     let stack_up = board.coord.mapfrom_doubleheight((0, 2));
     board.move_chip("b1", Team::Black, stack_up);
 
-    let bad_move = board.coord.mapfrom_doubleheight((1,3));
+    let bad_move = board.coord.mapfrom_doubleheight((1, 3));
 
     assert_eq!(
         MoveStatus::BeetleBlock,
         board.move_chip("b1", Team::White, bad_move)
     );
 }
-

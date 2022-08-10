@@ -314,10 +314,6 @@ where
         }
     }
 
-
-
-    
-
     /// Return a chip's position based on its name and team
     pub fn get_position_byname(&self, team: Team, name: &'static str) -> Option<T> {
         let chip_select = Chip::new(name, team); // Select the chip
