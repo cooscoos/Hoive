@@ -91,10 +91,33 @@ pub fn ladybird_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveS
     }
 }
 
-/// Check whether beetle can move from source to dest.
-///
+/// Check whether beetle can move from source to dest. 
+/// If there is a small gap between source and dest then this will return
+/// MoveStatus::SmallGap.
+/// 
+/// This is different to the ant_check because ant_check closes off all hexes
+/// beyond a small gap. The same isn't needed for beetles because they can move
+/// over other chips into areas that an ant can't access. As a result, the
+/// beetle check is a lot less clever and much more manual.
 pub fn beetle_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
-    MoveStatus::Success
+
+    let placed_hexes = board.get_placed_positions();
+
+    // Get the positions of chips neighbouring source
+    let source_neighbour_hexes = board.coord.neighbour_tiles(*source);
+    let source_neighbours = placed_hexes.intersection(&source_neighbour_hexes).collect::<HashSet<&T>>();
+
+    // Get the positions of chips neighbouring dest
+    let dest_neighbour_hexes = board.coord.neighbour_tiles(*dest);
+    let dest_neighbours = placed_hexes.intersection(&dest_neighbour_hexes).collect::<HashSet<&T>>();
+
+    // The common neighbours between source and dest will be the ones that are in the way of the desired move from source to dest
+    // If there are 2 of them, then it means we have a small gap and the move can't be allowed
+    match source_neighbours.intersection(&dest_neighbours).count() == 2 {
+        true => MoveStatus::SmallGap,
+        false => MoveStatus::Success,
+    }
+
 }
 
 /// A modified distance-limited flood fill which can find movement ranges around and over obstacles.

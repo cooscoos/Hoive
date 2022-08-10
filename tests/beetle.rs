@@ -81,3 +81,16 @@ fn beetle_stop_move() {
         board.move_chip("b1", Team::White, bad_move)
     );
 }
+
+#[test]
+fn beetle_small_gap() {
+    // Try fit wb1 through a gap that's too small
+    let mut board = beetle_test_setup("snapshot_12".to_string());
+
+    let bad_move = board.coord.mapfrom_doubleheight((-1, -1));
+
+    assert_eq!(
+        MoveStatus::SmallGap,
+        board.move_chip("b1", Team::White, bad_move)
+    );
+}
