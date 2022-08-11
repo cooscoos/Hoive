@@ -31,7 +31,7 @@ pub trait Coord:
     fn centroid_distance<T: Coord>(&self, hex1: T, hex2: T) -> f32; // calculate centroid distance between two hexes
     fn hex_distance<T: Coord>(&self, hex1: T, hex2: T) -> u32; // calculate distance between two hexes
     fn to_doubleheight<T: Coord>(&self, hex: T) -> DoubleHeight; // convert to doubleheight
-    fn from_doubleheight(&self, hex: DoubleHeight) -> Self; // convert from doubleheight
+    fn mapfrom_doubleheight(&self, hex: DoubleHeight) -> Self; // convert from doubleheight
     fn ascend(&mut self); // increase or decrease the layer number
     fn descend(&mut self);
     fn to_bottom(&self) -> Self; // drop to layer 0
@@ -183,14 +183,14 @@ impl Coord for Cube {
         let col = cube_position.q;
         let row = 2 * cube_position.r + cube_position.q;
         DoubleHeight {
-            col: col,
-            row: row,
+            col,
+            row,
             l: cube_position.l,
         }
     }
 
     /// Map doubleheight coordinates to cube coordinates
-    fn from_doubleheight(&self, hex: DoubleHeight) -> Self {
+    fn mapfrom_doubleheight(&self, hex: DoubleHeight) -> Self {
         let q = hex.col; // columns (x)
         let r = (hex.row - hex.col) / 2; // rows (y)
         let s = -q - r;
@@ -207,9 +207,7 @@ impl Coord for Cube {
     }
 
     fn to_bottom(&self) -> Self {
-        let mut copy = self.clone();
-        copy.l = 0;
-        copy
+        Cube::new(self.q, self.r, self.s)
     }
 }
 

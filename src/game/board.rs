@@ -117,8 +117,8 @@ where
         }
 
         // Allow the chip to switch layers if it's a beetle
-        let destin = match chip.name.chars().next().unwrap() == 'b' {
-            true => animals::layer_adjust(&self, dest),
+        let destin = match chip.name.starts_with('b') {
+            true => animals::layer_adjust(self, dest),
             false => dest,
         };
 
@@ -293,7 +293,7 @@ where
             // Start at layer 1
             dest.ascend();
             // If there's a chip there, go up a layer, keep going until no chip
-            while self.get_chip(dest).is_some() == true {
+            while self.get_chip(dest).is_some() {
                 dest.ascend();
             }
             // Go down one layer to reach the position of the top-most chip
@@ -304,7 +304,7 @@ where
         // Get the top-most neighbour hex
         let neighbour_chips = layer0_neighbour
             .into_iter()
-            .map(|d| get_topmost(d))
+            .map(get_topmost)
             .collect::<Vec<Option<Chip>>>();
 
         // Unwrap Vec<Option<Chip>> into Vec<Chip>

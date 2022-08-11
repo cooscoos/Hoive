@@ -14,7 +14,9 @@ fn ladybird_backtrack() {
 
     // There's a white ladybird at 0,-4 in this snapshot already
 
-    let legal_move = board.coord.from_doubleheight(DoubleHeight::from((1, -5)));
+    let legal_move = board
+        .coord
+        .mapfrom_doubleheight(DoubleHeight::from((1, -5)));
 
     assert_eq!(
         MoveStatus::Success,
@@ -27,7 +29,7 @@ fn ladybird_advance() {
     // Try move a ladybird over 2 hexes then back on itself (ok).
     let mut board = game_snapshot_6();
 
-    let legal_move = board.coord.from_doubleheight(DoubleHeight::from((0, 2)));
+    let legal_move = board.coord.mapfrom_doubleheight(DoubleHeight::from((0, 2)));
 
     assert_eq!(
         MoveStatus::Success,
@@ -40,7 +42,7 @@ fn ladybird_illegal() {
     // Try move a ladybird over to an illegal spot that's too far away
     let mut board = game_snapshot_6();
 
-    let illegal_move = board.coord.from_doubleheight(DoubleHeight::from((4, 0)));
+    let illegal_move = board.coord.mapfrom_doubleheight(DoubleHeight::from((4, 0)));
 
     assert_eq!(
         MoveStatus::BadDistance(3),

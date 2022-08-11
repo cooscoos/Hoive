@@ -118,7 +118,7 @@ fn cube_from_dheight_once() {
     let board = test_board(Cube::default());
     let dheight = DoubleHeight::from((0, -4));
 
-    let cubehex = board.coord.from_doubleheight(dheight);
+    let cubehex = board.coord.mapfrom_doubleheight(dheight);
 
     assert_eq!(Cube::new(0, -2, 2), cubehex);
 }
@@ -143,7 +143,7 @@ fn cube_from_dheight_complicated() {
     // Map all of these moves to cube co-ords
     let mut hex_moves = moves_list
         .iter()
-        .map(|xy| board.coord.from_doubleheight(DoubleHeight::from((*xy))))
+        .map(|xy| board.coord.mapfrom_doubleheight(DoubleHeight::from((*xy))))
         .collect::<Vec<Cube>>();
 
     // We'd expect the output to be this
@@ -187,7 +187,7 @@ where
     // Map all of these to hex
     let hex_moves = moves_list
         .iter()
-        .map(|xy| board.coord.from_doubleheight(DoubleHeight::from((*xy))))
+        .map(|xy| board.coord.mapfrom_doubleheight(DoubleHeight::from((*xy))))
         .collect::<Vec<Cube>>();
 
     hex_moves
@@ -259,7 +259,7 @@ fn cube_from_doubleheight() {
 
     assert_eq!(
         Cube::new(-1, 1, 0),
-        coord_sys.from_doubleheight(DoubleHeight::from(hex))
+        coord_sys.mapfrom_doubleheight(DoubleHeight::from(hex))
     );
 }
 
@@ -290,7 +290,7 @@ fn cube_ant_squeeze() {
     // Convert to cube
     let hex_moves = moves_list
         .iter()
-        .map(|xy| board.coord.from_doubleheight(DoubleHeight::from(*xy)))
+        .map(|xy| board.coord.mapfrom_doubleheight(DoubleHeight::from(*xy)))
         .collect::<Vec<Cube>>();
 
     board.move_chip("q1", Team::White, hex_moves[0]);

@@ -152,7 +152,7 @@ fn movement_prompts<T: Coord>(
     };
 
     // Convert from doubleheight to the board's co-ordinate system
-    let game_hex = board.coord.from_doubleheight(DoubleHeight::from(coord));
+    let game_hex = board.coord.mapfrom_doubleheight(DoubleHeight::from(coord));
 
     // Try execute the move.
     board.move_chip(chip_name, active_team, game_hex)
@@ -303,7 +303,7 @@ fn pillbug_prompts<T: Coord>(
     };
 
     // Convert from doubleheight to the game's co-ordinate system
-    let dest = board.coord.from_doubleheight(DoubleHeight::from(coord));
+    let dest = board.coord.mapfrom_doubleheight(DoubleHeight::from(coord));
 
     // Try execute the move and show the game's messages.
     specials::pillbug_sumo(board, source, dest, position)

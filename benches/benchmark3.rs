@@ -19,8 +19,12 @@ fn beetle_test_setup(filename: String) -> Board<Cube> {
 fn criterion_benchmark(c: &mut Criterion) {
     let board = beetle_test_setup("snapshot_12".to_string());
 
-    let source = board.coord.from_doubleheight(DoubleHeight::from((-1, 1)));
-    let dest = board.coord.from_doubleheight(DoubleHeight::from((-1, -1)));
+    let source = board
+        .coord
+        .mapfrom_doubleheight(DoubleHeight::from((-1, 1)));
+    let dest = board
+        .coord
+        .mapfrom_doubleheight(DoubleHeight::from((-1, -1)));
 
     c.bench_function("ant_check", |b| {
         b.iter(|| animals::ant_check(&board, &source, &dest))

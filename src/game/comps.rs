@@ -42,7 +42,7 @@ impl Chip {
 
     /// Elevate a beetle
     pub fn elevate(&self) -> Self {
-        if self.name.chars().next().unwrap() != 'b' {
+        if !self.name.starts_with('b') {
             panic!("This function should only be used to elevate beetles!")
         }
 
