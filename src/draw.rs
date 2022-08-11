@@ -2,6 +2,7 @@
 use crate::game::board::Board;
 use crate::game::comps::{Chip, Team};
 use crate::maths::coord::Coord;
+use crate::maths::coord::DoubleHeight;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Write as _; // import without risk of name clash
 
@@ -13,20 +14,20 @@ use std::fmt::Write as _; // import without risk of name clash
 // Offset co-ordinate systems are easy for human-people to interpret, but they're a nighmare to do maths with.
 // We therefore need to map to and from the cube (or other) co-ordinate system that the game logic uses.
 
-// Parse the board out into doubleheight hex co-ordinates (a grid format more readable to humans)
-pub fn to_dheight<T: Coord>(board: &Board<T>, size: i8) -> HashMap<(i8, i8), Option<Chip>> {
+/// Parse the board out into doubleheight hex co-ordinates (a grid format more readable to humans)
+pub fn to_dheight<T: Coord>(board: &Board<T>, size: i8) -> HashMap<DoubleHeight, Option<Chip>> {
     // Initialise an empty doubleheight hashmap to store chips at each co-ordinate
     let mut dheight_hashmap = empty(size);
 
     // Translate doubleheight co-ordinates to the current coord system being used by the board
     let board_coords = dheight_hashmap
         .iter()
-        .map(|(xy, _)| board.coord.mapfrom_doubleheight(*xy))
+        .map(|(xy, _)| board.coord.from_doubleheight(*xy))
         .collect::<HashSet<T>>();
 
     // Check all board_coords for chips, and put the chips in dheight_hashmap if found
     board_coords.into_iter().for_each(|p| {
-        dheight_hashmap.insert(board.coord.mapto_doubleheight(p), board.get_chip(p));
+        dheight_hashmap.insert(board.coord.to_doubleheight(p), board.get_chip(p));
     });
 
     dheight_hashmap
@@ -42,7 +43,7 @@ pub fn show_board<T: Coord>(board: &Board<T>, size: i8) -> String {
 }
 
 // Parse a doubleheight hashmap of chips into an ascii string to print board to terminal
-fn parse_to_ascii(dheight_hashmap: HashMap<(i8, i8), Option<Chip>>, size: i8) -> String {
+fn parse_to_ascii(dheight_hashmap: HashMap<DoubleHeight, Option<Chip>>, size: i8) -> String {
     // Display size of ascii board should be 3, 5, 7,...
     if (size % 2 == 0) | (size == 1) {
         panic!("The size of the ascii board render must be an odd number > 1.")
@@ -52,10 +53,39 @@ fn parse_to_ascii(dheight_hashmap: HashMap<(i8, i8), Option<Chip>>, size: i8) ->
 
     // Stuffing HashMaps into BTreeMaps sorts them based on the value of the key.
     // We'll switch col and row co-ordinates so that the BTree sorts by rows first
+    // For now only deal with layer 0
     let mut dheight_tree: BTreeMap<(i8, i8), Option<Chip>> = dheight_hashmap
-        .into_iter()
-        .map(|((col, row), c)| ((row, col), c))
+        .iter()
+        .filter(|(p, _)| p.l == 0) // only do layer 0
+        .map(|(p, c)| ((p.row, p.col), *c))
         .collect();
+
+    // Now check higher layers. If we find beetles here they overwrite position input as an elevated beetle with a *, e.g. b1*
+    // Keep track of stacks of chips here
+    let mut chip_stacks = HashMap::new();
+    for layer in 1..=4 {
+        // The beetles in this layer are here
+        let beetles = dheight_hashmap
+            .iter()
+            .filter(|(p, c)| p.l == layer && c.is_some())
+            .map(|(p, c)| (*p, *c))
+            .collect::<Vec<_>>();
+
+        // if there are some beetles, insert them in the board's display btree and keep track of them in the chip_stacks hashmap
+        if !beetles.is_empty() {
+            beetles.into_iter().for_each(|(p, c)| {
+                // keep a log of what they're covering to display later
+                let covered = dheight_tree.get(&(p.row, p.col)).unwrap();
+                let coveree = Some(c.unwrap().elevate());
+                chip_stacks.insert(
+                    (chip_to_str(coveree), chip_to_str(*covered)),
+                    (p.row, p.col),
+                );
+
+                dheight_tree.insert((p.row, p.col), Some(c.unwrap().elevate()));
+            });
+        }
+    }
 
     // Make a header for the ascii board
     let mut header_info = String::new();
@@ -90,6 +120,16 @@ fn parse_to_ascii(dheight_hashmap: HashMap<(i8, i8), Option<Chip>>, size: i8) ->
         dheight_tree = remainder;
     }
 
+    // If there are elevated beetles on the board, we need to state what they are covering
+    if !chip_stacks.is_empty() {
+        let mut beetle_string = String::new();
+        for ((coverer, coveree), location) in chip_stacks {
+            let beetle_line = format!("{} is blocking {} at {:?}\n", coverer, coveree, location);
+            beetle_string.push_str(&beetle_line);
+        }
+        ascii_board.push_str(&beetle_string);
+    }
+
     ascii_board
 }
 
@@ -109,7 +149,7 @@ fn chip_to_str(chip: Option<Chip>) -> String {
     return_string
 }
 
-pub fn empty(n: i8) -> HashMap<(i8, i8), Option<Chip>> {
+pub fn empty(n: i8) -> HashMap<DoubleHeight, Option<Chip>> {
     // Generate an HashMap k, v, where:
     // k = chip positions in doubleheight co-ordinates
     // v = None, so the board is empty
@@ -120,9 +160,11 @@ pub fn empty(n: i8) -> HashMap<(i8, i8), Option<Chip>> {
     // Generate tile positions over the range n: the size of the board
     for col in -n..n + 1 {
         for row in -n..n + 1 {
-            // if both col row share oddness or evenness (this defines doubleheight coords)
-            if ((row % 2 == 0) & (col % 2 == 0)) | ((row % 2 != 0) & (col % 2 != 0)) {
-                dheight_display.insert((col, row));
+            for layer in 0..4 {
+                // if both col row share oddness or evenness (this defines doubleheight coords)
+                if ((row % 2 == 0) & (col % 2 == 0)) | ((row % 2 != 0) & (col % 2 != 0)) {
+                    dheight_display.insert(DoubleHeight::new(col, row, layer));
+                }
             }
         }
     }
@@ -130,8 +172,8 @@ pub fn empty(n: i8) -> HashMap<(i8, i8), Option<Chip>> {
     // Initialise the empty hashmap, None for all hexes
     dheight_display
         .iter()
-        .map(|xy| (*xy, None))
-        .collect::<HashMap<(i8, i8), Option<Chip>>>()
+        .map(|p| (*p, None))
+        .collect::<HashMap<DoubleHeight, Option<Chip>>>()
 }
 
 // Convert team to a pretty string

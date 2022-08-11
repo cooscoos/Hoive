@@ -5,6 +5,7 @@ use std::hash::Hash;
 use std::ops::{Add, Sub};
 
 /// A trait ensuring all genetic hex coordinate systems utilise the same methods
+/// Any coordinate system that is used by game logic must implement this trait.
 pub trait Coord:
     Debug
     + Hash
@@ -29,14 +30,40 @@ pub trait Coord:
     fn neighbour_layers<T: Coord>(&self, position: T) -> HashSet<T>; // a list of up to 7 neighbouring tiles on all layers
     fn centroid_distance<T: Coord>(&self, hex1: T, hex2: T) -> f32; // calculate centroid distance between two hexes
     fn hex_distance<T: Coord>(&self, hex1: T, hex2: T) -> u32; // calculate distance between two hexes
-    fn mapto_doubleheight<T: Coord>(&self, hex: T) -> (i8, i8); // convert to and from doubleheight co-ords for the ascii renderer
-    fn mapfrom_doubleheight(&self, hex: (i8, i8)) -> Self;
+    fn to_doubleheight<T: Coord>(&self, hex: T) -> DoubleHeight; // convert to doubleheight
+    fn from_doubleheight(&self, hex: DoubleHeight) -> Self; // convert from doubleheight
     fn ascend(&mut self); // increase or decrease the layer number
     fn descend(&mut self);
     fn to_bottom(&self) -> Self; // drop to layer 0
 }
 
-/// Cube coordinate system
+/// Doubleheight coordinate system used by the ascii renderer
+/// It doesn't need to implement the Coord trait because it is
+/// never used by the game logic.
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
+pub struct DoubleHeight {
+    pub col: i8,
+    pub row: i8,
+    pub l: i8, // the layer
+}
+
+impl DoubleHeight {
+    /// Parse col, row, layer into doubleheight
+    pub fn new(col: i8, row: i8, l: i8) -> Self {
+        DoubleHeight { col, row, l }
+    }
+
+    /// Parse tuple into doubleheight, ignoring layer
+    pub fn from(colrow: (i8, i8)) -> Self {
+        DoubleHeight {
+            col: colrow.0,
+            row: colrow.1,
+            l: 0,
+        }
+    }
+}
+
+/// Cube coordinate system, used by game logic
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct Cube {
     q: i8,
@@ -150,21 +177,25 @@ impl Coord for Cube {
     }
 
     /// Map cube coordinates to doubelheight
-    fn mapto_doubleheight<T: Coord>(&self, hex: T) -> (i8, i8) {
+    fn to_doubleheight<T: Coord>(&self, hex: T) -> DoubleHeight {
         let cube_position = hex.to_cube();
 
         let col = cube_position.q;
         let row = 2 * cube_position.r + cube_position.q;
-        (col, row)
+        DoubleHeight {
+            col: col,
+            row: row,
+            l: cube_position.l,
+        }
     }
 
     /// Map doubleheight coordinates to cube coordinates
-    fn mapfrom_doubleheight(&self, hex: (i8, i8)) -> Self {
-        let q = hex.0; // columns (x)
-        let r = (hex.1 - hex.0) / 2; // rows (y)
+    fn from_doubleheight(&self, hex: DoubleHeight) -> Self {
+        let q = hex.col; // columns (x)
+        let r = (hex.row - hex.col) / 2; // rows (y)
         let s = -q - r;
 
-        Cube { q, r, s, l: 0 } // default to layer 0, game logic handles layers
+        Cube { q, r, s, l: hex.l }
     }
 
     fn ascend(&mut self) {

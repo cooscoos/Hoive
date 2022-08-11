@@ -39,6 +39,23 @@ impl Chip {
     pub fn new(name: &'static str, team: Team) -> Self {
         Chip { name, team }
     }
+
+    /// Elevate a beetle
+    pub fn elevate(&self) -> Self {
+        if self.name.chars().next().unwrap() != 'b' {
+            panic!("This function should only be used to elevate beetles!")
+        }
+
+        let new_name = match self.name {
+            "b1" => "b1*",
+            "b2" => "b2*",
+            _ => unreachable!(),
+        };
+        Chip {
+            name: new_name,
+            team: self.team,
+        }
+    }
 }
 
 /// Generate the starting chips for both teams.

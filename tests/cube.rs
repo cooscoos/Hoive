@@ -1,7 +1,7 @@
 // Tests that use cube co-ordinates: cargo test cube
 use hoive::game::comps::Team;
 use hoive::game::{board::Board, movestatus::MoveStatus};
-use hoive::maths::{coord::Coord, coord::Cube};
+use hoive::maths::{coord::Coord, coord::Cube, coord::DoubleHeight};
 use std::collections::BTreeSet;
 
 mod common;
@@ -116,9 +116,9 @@ fn cube_nosplit_hive() {
 fn cube_from_dheight_once() {
     // Convert from doubleheight to cube co-ordinates once
     let board = test_board(Cube::default());
-    let dheight = (0, -4);
+    let dheight = DoubleHeight::from((0, -4));
 
-    let cubehex = board.coord.mapfrom_doubleheight(dheight);
+    let cubehex = board.coord.from_doubleheight(dheight);
 
     assert_eq!(Cube::new(0, -2, 2), cubehex);
 }
@@ -143,7 +143,7 @@ fn cube_from_dheight_complicated() {
     // Map all of these moves to cube co-ords
     let mut hex_moves = moves_list
         .iter()
-        .map(|xy| board.coord.mapfrom_doubleheight(*xy))
+        .map(|xy| board.coord.from_doubleheight(DoubleHeight::from((*xy))))
         .collect::<Vec<Cube>>();
 
     // We'd expect the output to be this
@@ -187,7 +187,7 @@ where
     // Map all of these to hex
     let hex_moves = moves_list
         .iter()
-        .map(|xy| board.coord.mapfrom_doubleheight(*xy))
+        .map(|xy| board.coord.from_doubleheight(DoubleHeight::from((*xy))))
         .collect::<Vec<Cube>>();
 
     hex_moves
@@ -247,7 +247,7 @@ fn cube_to_doubleheight() {
     let coord_sys = Cube::default();
     let hex = Cube::new(1, -1, 0); // up and right from the origin in cube coords
 
-    assert_eq!((1, -1), coord_sys.mapto_doubleheight(hex));
+    assert_eq!(DoubleHeight::from((1, -1)), coord_sys.to_doubleheight(hex));
 }
 
 #[test]
@@ -257,7 +257,10 @@ fn cube_from_doubleheight() {
     let coord_sys = Cube::default();
     let hex = (-1, 1); // down and left from the origin in doubleheight coords
 
-    assert_eq!(Cube::new(-1, 1, 0), coord_sys.mapfrom_doubleheight(hex));
+    assert_eq!(
+        Cube::new(-1, 1, 0),
+        coord_sys.from_doubleheight(DoubleHeight::from(hex))
+    );
 }
 
 #[test]
@@ -287,7 +290,7 @@ fn cube_ant_squeeze() {
     // Convert to cube
     let hex_moves = moves_list
         .iter()
-        .map(|xy| board.coord.mapfrom_doubleheight(*xy))
+        .map(|xy| board.coord.from_doubleheight(DoubleHeight::from(*xy)))
         .collect::<Vec<Cube>>();
 
     board.move_chip("q1", Team::White, hex_moves[0]);

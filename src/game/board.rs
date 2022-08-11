@@ -39,7 +39,7 @@ where
 
         // Update history (in dheight coords)
         self.history
-            .add_event(self.turns, chip, self.coord.mapto_doubleheight(dest));
+            .add_event(self.turns, chip, self.coord.to_doubleheight(dest));
 
         // Increment turns by 1
         self.turns += 1;

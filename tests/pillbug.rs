@@ -1,5 +1,6 @@
 use hoive::game::{board::Board, movestatus::MoveStatus};
 use hoive::game::{comps::Chip, comps::Team, history, specials};
+use hoive::maths::coord::DoubleHeight;
 use hoive::maths::coord::{Coord, Cube};
 
 fn pillbug_tests_setup(filename: String) -> Board<Cube> {
@@ -23,9 +24,9 @@ fn pillbug_me_too_soon() {
 
     // p1 (0,0) to try sumo q1 (0,-2) to 0,2 should cause RecentMove(p1)
     // Map everything to board's co-ordinate system
-    let position = board.coord.mapfrom_doubleheight((0, 0));
-    let source = board.coord.mapfrom_doubleheight((0, -2));
-    let dest = board.coord.mapfrom_doubleheight((0, 2));
+    let position = board.coord.from_doubleheight(DoubleHeight::from((0, 0)));
+    let source = board.coord.from_doubleheight(DoubleHeight::from((0, -2)));
+    let dest = board.coord.from_doubleheight(DoubleHeight::from((0, 2)));
 
     assert_eq!(
         MoveStatus::RecentMove(pillchip),
@@ -44,9 +45,9 @@ fn pillbug_you_too_soon() {
     };
 
     // p1 (0,0) to try sumo ba1 (1,-1) to -1,-1 should cause RecentMove(ba1)
-    let position = board.coord.mapfrom_doubleheight((0, 0));
-    let source = board.coord.mapfrom_doubleheight((1, -1));
-    let dest = board.coord.mapfrom_doubleheight((-1, -1));
+    let position = board.coord.from_doubleheight(DoubleHeight::from((0, 0)));
+    let source = board.coord.from_doubleheight(DoubleHeight::from((1, -1)));
+    let dest = board.coord.from_doubleheight(DoubleHeight::from((-1, -1)));
 
     assert_eq!(
         MoveStatus::RecentMove(antchip),
@@ -60,9 +61,9 @@ fn pillbug_hivebreak() {
     let mut board = pillbug_tests_setup("snapshot_9".to_string());
 
     // p1 (0,0) to try sumo wa1 (-1,1) to 1,1 should cause hive break
-    let position = board.coord.mapfrom_doubleheight((0, 0));
-    let source = board.coord.mapfrom_doubleheight((-1, 1));
-    let dest = board.coord.mapfrom_doubleheight((1, 1));
+    let position = board.coord.from_doubleheight(DoubleHeight::from((0, 0)));
+    let source = board.coord.from_doubleheight(DoubleHeight::from((-1, 1)));
+    let dest = board.coord.from_doubleheight(DoubleHeight::from((1, 1)));
 
     assert_eq!(
         MoveStatus::HiveSplit,
@@ -76,9 +77,9 @@ fn pillbug_no_hivebreak() {
     let mut board = pillbug_tests_setup("snapshot_9".to_string());
 
     // p1 (0,0) to try sumo wa1 (-1,1) to 0,2 should be successful
-    let position = board.coord.mapfrom_doubleheight((0, 0));
-    let source = board.coord.mapfrom_doubleheight((-1, 1));
-    let dest = board.coord.mapfrom_doubleheight((0, 2));
+    let position = board.coord.from_doubleheight(DoubleHeight::from((0, 0)));
+    let source = board.coord.from_doubleheight(DoubleHeight::from((-1, 1)));
+    let dest = board.coord.from_doubleheight(DoubleHeight::from((0, 2)));
 
     assert_eq!(
         MoveStatus::Success,
@@ -92,9 +93,9 @@ fn pillbug_non_neighbouring() {
     let mut board = pillbug_tests_setup("snapshot_10".to_string());
 
     // p1 (0,0) to try sumo wa1 (-1,1) to 2,0 should return "not neighbour"
-    let position = board.coord.mapfrom_doubleheight((0, 0));
-    let source = board.coord.mapfrom_doubleheight((-1, 1));
-    let dest = board.coord.mapfrom_doubleheight((2, 0));
+    let position = board.coord.from_doubleheight(DoubleHeight::from((0, 0)));
+    let source = board.coord.from_doubleheight(DoubleHeight::from((-1, 1)));
+    let dest = board.coord.from_doubleheight(DoubleHeight::from((2, 0)));
 
     assert_eq!(
         MoveStatus::NotNeighbour,
