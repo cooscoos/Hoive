@@ -61,7 +61,8 @@ fn parse_to_ascii(dheight_hashmap: HashMap<DoubleHeight, Option<Chip>>, size: i8
         .collect();
 
     // Now check higher layers. If we find beetles here they overwrite position input as an elevated beetle with a *, e.g. b1*
-    let mut moo = HashMap::new();
+    // Keep track of stacks of chips here
+    let mut chip_stacks = HashMap::new();
     for layer in 1..=4 {
         // The beetles in this layer are here
         let beetles = dheight_hashmap
@@ -70,13 +71,13 @@ fn parse_to_ascii(dheight_hashmap: HashMap<DoubleHeight, Option<Chip>>, size: i8
             .map(|(p, c)| (*p, *c))
             .collect::<Vec<_>>();
 
-        // if there are some beetles, insert them in the hashmap
+        // if there are some beetles, insert them in the board's display btree and keep track of them in the chip_stacks hashmap
         if !beetles.is_empty() {
             beetles.into_iter().for_each(|(p, c)| {
                 // keep a log of what they're covering to display later
                 let covered = dheight_tree.get(&(p.row, p.col)).unwrap();
                 let coveree = Some(c.unwrap().elevate());
-                moo.insert((chip_to_str(coveree), chip_to_str(*covered)), (p.row, p.col));
+                chip_stacks.insert((chip_to_str(coveree), chip_to_str(*covered)), (p.row, p.col));
 
                 dheight_tree.insert((p.row, p.col), Some(c.unwrap().elevate()));
             });
@@ -117,9 +118,9 @@ fn parse_to_ascii(dheight_hashmap: HashMap<DoubleHeight, Option<Chip>>, size: i8
     }
 
     // If there are elevated beetles on the board, we need to state what they are covering
-    if !moo.is_empty() {
+    if !chip_stacks.is_empty() {
         let mut beetle_string = String::new();
-        for ((coverer, coveree), location) in moo {
+        for ((coverer, coveree), location) in chip_stacks {
             let beetle_line = format!("{} is blocking {} at {:?}\n", coverer, coveree, location);
             beetle_string.push_str(&beetle_line);
         }
