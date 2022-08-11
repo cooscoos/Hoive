@@ -257,7 +257,10 @@ fn cube_from_doubleheight() {
     let coord_sys = Cube::default();
     let hex = (-1, 1); // down and left from the origin in doubleheight coords
 
-    assert_eq!(Cube::new(-1, 1, 0), coord_sys.from_doubleheight(DoubleHeight::from(hex)));
+    assert_eq!(
+        Cube::new(-1, 1, 0),
+        coord_sys.from_doubleheight(DoubleHeight::from(hex))
+    );
 }
 
 #[test]

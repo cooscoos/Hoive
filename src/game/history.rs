@@ -123,7 +123,9 @@ pub fn emulate<T: Coord>(board: &mut Board<T>, filename: String, test_flag: bool
 
     // Execute each move
     for (team, chip_name, row, col) in events {
-        let hex_move = board.coord.from_doubleheight(DoubleHeight::from((row, col))); // Map dheight to board coords
+        let hex_move = board
+            .coord
+            .from_doubleheight(DoubleHeight::from((row, col))); // Map dheight to board coords
         let chip_str = convert_static(chip_name).expect("Error matching chip name, does not exist");
         board.move_chip(chip_str, team, hex_move);
     }

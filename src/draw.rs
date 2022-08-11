@@ -2,9 +2,9 @@
 use crate::game::board::Board;
 use crate::game::comps::{Chip, Team};
 use crate::maths::coord::Coord;
+use crate::maths::coord::DoubleHeight;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Write as _; // import without risk of name clash
-use crate::maths::coord::DoubleHeight;
 
 // Players will interact with the hex grid using "double-height offset co-ordinates"
 // See: https://www.redblobgames.com/grids/hexagons/
@@ -53,10 +53,29 @@ fn parse_to_ascii(dheight_hashmap: HashMap<DoubleHeight, Option<Chip>>, size: i8
 
     // Stuffing HashMaps into BTreeMaps sorts them based on the value of the key.
     // We'll switch col and row co-ordinates so that the BTree sorts by rows first
-    let mut dheight_tree: BTreeMap<(i8,i8), Option<Chip>> = dheight_hashmap
-        .into_iter()
-        .map(|(p, c)| ((p.col,p.row), c))
+    // For now only deal with layer 0
+    let mut dheight_tree: BTreeMap<(i8, i8), Option<Chip>> = dheight_hashmap
+        .iter()
+        .filter(|(p, _)| p.l == 0) // only do layer 0
+        .map(|(p, c)| ((p.row, p.col), *c))
         .collect();
+
+    // Now check higher layers. If we find beetles here they overwrite position input as an elevated beetle with a *, e.g. b1*
+    for layer in 1..=4 {
+        // The beetles in this layer are here
+        let beetles = dheight_hashmap
+            .iter()
+            .filter(|(p, c)| p.l == layer && c.is_some())
+            .map(|(p, c)| (*p, *c))
+            .collect::<Vec<_>>();
+
+        // if there are some beetles, insert them in the hashmap
+        if !beetles.is_empty() {
+            beetles.into_iter().for_each(|(p, c)| {
+                dheight_tree.insert((p.row, p.col), Some(c.unwrap().elevate()));
+            });
+        }
+    }
 
     // Make a header for the ascii board
     let mut header_info = String::new();
@@ -91,7 +110,14 @@ fn parse_to_ascii(dheight_hashmap: HashMap<DoubleHeight, Option<Chip>>, size: i8
         dheight_tree = remainder;
     }
 
+    // If there are elevated beetles on the board, we need to state what they are covering
+    if dheight_tree.values().map(|c| c.unwrap().name).any(|n| n =="b1*" || n=="b2*"){
+        // to do...
+    }
+
     ascii_board
+
+
 }
 
 fn chip_to_str(chip: Option<Chip>) -> String {
@@ -121,9 +147,11 @@ pub fn empty(n: i8) -> HashMap<DoubleHeight, Option<Chip>> {
     // Generate tile positions over the range n: the size of the board
     for col in -n..n + 1 {
         for row in -n..n + 1 {
-            // if both col row share oddness or evenness (this defines doubleheight coords)
-            if ((row % 2 == 0) & (col % 2 == 0)) | ((row % 2 != 0) & (col % 2 != 0)) {
-                dheight_display.insert(DoubleHeight::new(col, row,0));
+            for layer in 0..4 {
+                // if both col row share oddness or evenness (this defines doubleheight coords)
+                if ((row % 2 == 0) & (col % 2 == 0)) | ((row % 2 != 0) & (col % 2 != 0)) {
+                    dheight_display.insert(DoubleHeight::new(col, row, layer));
+                }
             }
         }
     }

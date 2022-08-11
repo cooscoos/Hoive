@@ -31,7 +31,7 @@ pub trait Coord:
     fn centroid_distance<T: Coord>(&self, hex1: T, hex2: T) -> f32; // calculate centroid distance between two hexes
     fn hex_distance<T: Coord>(&self, hex1: T, hex2: T) -> u32; // calculate distance between two hexes
     fn to_doubleheight<T: Coord>(&self, hex: T) -> DoubleHeight; // convert to doubleheight
-    fn from_doubleheight(&self, hex: DoubleHeight) -> Self;      // convert from doubleheight
+    fn from_doubleheight(&self, hex: DoubleHeight) -> Self; // convert from doubleheight
     fn ascend(&mut self); // increase or decrease the layer number
     fn descend(&mut self);
     fn to_bottom(&self) -> Self; // drop to layer 0
@@ -47,16 +47,19 @@ pub struct DoubleHeight {
     pub l: i8, // the layer
 }
 
-
-impl DoubleHeight{
+impl DoubleHeight {
     /// Parse col, row, layer into doubleheight
     pub fn new(col: i8, row: i8, l: i8) -> Self {
-        DoubleHeight{col, row, l}
+        DoubleHeight { col, row, l }
     }
 
     /// Parse tuple into doubleheight, ignoring layer
-    pub fn from(colrow: (i8,i8)) -> Self {
-        DoubleHeight { col: colrow.0, row: colrow.1, l: 0 }
+    pub fn from(colrow: (i8, i8)) -> Self {
+        DoubleHeight {
+            col: colrow.0,
+            row: colrow.1,
+            l: 0,
+        }
     }
 }
 
@@ -179,7 +182,11 @@ impl Coord for Cube {
 
         let col = cube_position.q;
         let row = 2 * cube_position.r + cube_position.q;
-        DoubleHeight { col: col, row: row, l: cube_position.l }
+        DoubleHeight {
+            col: col,
+            row: row,
+            l: cube_position.l,
+        }
     }
 
     /// Map doubleheight coordinates to cube coordinates
@@ -188,7 +195,7 @@ impl Coord for Cube {
         let r = (hex.row - hex.col) / 2; // rows (y)
         let s = -q - r;
 
-        Cube { q, r, s, l: hex.l } // default to layer 0, game logic handles layers
+        Cube { q, r, s, l: hex.l }
     }
 
     fn ascend(&mut self) {
@@ -205,7 +212,6 @@ impl Coord for Cube {
         copy
     }
 }
-
 
 // Hexagonal Efficient Coordinate (HECS) co-ordinate system
 // https://en.wikipedia.org/wiki/Hexagonal_Efficient_Coordinate_System

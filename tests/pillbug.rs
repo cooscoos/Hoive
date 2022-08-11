@@ -1,7 +1,7 @@
 use hoive::game::{board::Board, movestatus::MoveStatus};
 use hoive::game::{comps::Chip, comps::Team, history, specials};
-use hoive::maths::coord::{Coord, Cube};
 use hoive::maths::coord::DoubleHeight;
+use hoive::maths::coord::{Coord, Cube};
 
 fn pillbug_tests_setup(filename: String) -> Board<Cube> {
     // Some set up used by most tests for pillbug

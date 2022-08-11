@@ -27,7 +27,7 @@ fn test_doubleheight_converter() {
     let dheight_ignorenone = dheight_hashmap
         .into_iter()
         .filter(|(_, c)| c.is_some())
-        .map(|(p, c)| ((p.col,p.row), c.unwrap()))
+        .map(|(p, c)| ((p.col, p.row), c.unwrap()))
         .collect::<HashMap<(i8, i8), Chip>>();
 
     // Stuffing HashMaps into BTreeMaps will sort them based on the key (the xy co-ordinate)
