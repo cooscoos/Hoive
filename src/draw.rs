@@ -77,7 +77,10 @@ fn parse_to_ascii(dheight_hashmap: HashMap<DoubleHeight, Option<Chip>>, size: i8
                 // keep a log of what they're covering to display later
                 let covered = dheight_tree.get(&(p.row, p.col)).unwrap();
                 let coveree = Some(c.unwrap().elevate());
-                chip_stacks.insert((chip_to_str(coveree), chip_to_str(*covered)), (p.row, p.col));
+                chip_stacks.insert(
+                    (chip_to_str(coveree), chip_to_str(*covered)),
+                    (p.row, p.col),
+                );
 
                 dheight_tree.insert((p.row, p.col), Some(c.unwrap().elevate()));
             });

@@ -48,6 +48,16 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
         chip_selection = chip_select(board, active_team)
     }
 
+    if chip_selection == Some("w") {
+        // skip turn
+        println!(
+            "\n{} team skipped their turn.\n",
+            draw::team_string(active_team)
+        );
+        board.turns += 1;
+        return MoveStatus::Success;
+    }
+
     let chip_name = chip_selection.unwrap();
 
     // Is this chip a mosquito or pillbug and alreaddy on the board?
@@ -81,7 +91,7 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
 
 /// Ask user on active team to select chip. Returns None if user input invalid.
 fn chip_select<T: Coord>(board: &Board<T>, active_team: Team) -> Option<&'static str> {
-    println!("Select a tile from the board or your hand to move. Hit enter to see the board and your hand, h for help, s to save.");
+    println!("Select a tile from the board or your hand to move. Hit enter to see the board and your hand, h for help, s to save, w to skip turn.");
 
     let textin = get_usr_input();
 
@@ -112,13 +122,14 @@ fn chip_select<T: Coord>(board: &Board<T>, active_team: Team) -> Option<&'static
             }
             None
         }
+        _ if textin == "w" => Some("w"), // this will skip turn in the main loop
         c => {
             // Try and match a chip by this name
             let chip_str = convert_static(c);
 
-            match chip_str {
-                Some(value) => Some(value),
-                None => {
+            match chip_str.is_some() {
+                true => chip_str,
+                false => {
                     println!("You don't have this tile in your hand.");
                     None
                 }
