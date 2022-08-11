@@ -1,7 +1,7 @@
 // Tests for the bee
 use hoive::game::comps::Team;
 use hoive::game::{board::Board, movestatus::MoveStatus};
-use hoive::maths::coord::{Coord, Cube};
+use hoive::maths::coord::{Coord, Cube, DoubleHeight};
 
 mod common;
 use common::games::{game_snapshot_2, game_snapshot_4, game_snapshot_5};
@@ -14,7 +14,7 @@ fn bee_move_ok() {
     // There's a white bee at 0,0 in this snapshot already
 
     // Then try and move it 1 space away
-    let legal_move = board.coord.mapfrom_doubleheight((1, -1));
+    let legal_move = board.coord.from_doubleheight(DoubleHeight::from((1, -1)));
 
     assert_eq!(
         MoveStatus::Success,
@@ -30,7 +30,7 @@ fn bee_move_toofar() {
     // There's a white bee at 0,0 in this snapshot already
 
     // Then try and move it 2 spaces away
-    let illegal_move = board.coord.mapfrom_doubleheight((1, -3));
+    let illegal_move = board.coord.from_doubleheight(DoubleHeight::from((1, -3)));
 
     assert_eq!(
         MoveStatus::BadDistance(1),
@@ -54,7 +54,7 @@ fn bee_need() {
     // Convert to cube
     let hex_moves = moves_list
         .iter()
-        .map(|xy| board.coord.mapfrom_doubleheight(*xy))
+        .map(|xy| board.coord.from_doubleheight(DoubleHeight::from(*xy)))
         .collect::<Vec<Cube>>();
 
     board.move_chip("a1", Team::White, hex_moves[0]);
@@ -82,7 +82,7 @@ fn bee_missing() {
     // Convert to cube
     let hex_moves = moves_list
         .iter()
-        .map(|xy| board.coord.mapfrom_doubleheight(*xy))
+        .map(|xy| board.coord.from_doubleheight(DoubleHeight::from(*xy)))
         .collect::<Vec<Cube>>();
 
     board.move_chip("a1", Team::White, hex_moves[0]);
@@ -100,7 +100,7 @@ fn bee_defeat() {
     // This game set up so that we can now move ba2 or wa3 to (1,1) to defeat white team
     let mut board = game_snapshot_4();
 
-    let defeat_move = board.coord.mapfrom_doubleheight((1, 1));
+    let defeat_move = board.coord.from_doubleheight(DoubleHeight::from((1, 1)));
 
     assert_eq!(
         MoveStatus::Win(Some(Team::Black)),
@@ -114,7 +114,7 @@ fn bee_seppuku() {
     // This game set up so that we can now move ba2 or wa3 to (1,1) to defeat white team
     let mut board = game_snapshot_4();
 
-    let defeat_move = board.coord.mapfrom_doubleheight((1, 1));
+    let defeat_move = board.coord.from_doubleheight(DoubleHeight::from((1, 1)));
 
     assert_eq!(
         MoveStatus::Win(Some(Team::Black)),
@@ -128,7 +128,7 @@ fn bee_spinning_seppuku() {
     // This game set up so that we can now move wa3 to (1,1) to defeat both teams at once
     let mut board = game_snapshot_5();
 
-    let defeat_move = board.coord.mapfrom_doubleheight((1, 1));
+    let defeat_move = board.coord.from_doubleheight(DoubleHeight::from((1, 1)));
 
     assert_eq!(
         MoveStatus::Win(None),

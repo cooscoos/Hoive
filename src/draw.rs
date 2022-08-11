@@ -4,6 +4,7 @@ use crate::game::comps::{Chip, Team};
 use crate::maths::coord::Coord;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Write as _; // import without risk of name clash
+use crate::maths::coord::DoubleHeight;
 
 // Players will interact with the hex grid using "double-height offset co-ordinates"
 // See: https://www.redblobgames.com/grids/hexagons/
@@ -14,19 +15,19 @@ use std::fmt::Write as _; // import without risk of name clash
 // We therefore need to map to and from the cube (or other) co-ordinate system that the game logic uses.
 
 /// Parse the board out into doubleheight hex co-ordinates (a grid format more readable to humans)
-pub fn to_dheight<T: Coord>(board: &Board<T>, size: i8) -> HashMap<(i8, i8), Option<Chip>> {
+pub fn to_dheight<T: Coord>(board: &Board<T>, size: i8) -> HashMap<DoubleHeight, Option<Chip>> {
     // Initialise an empty doubleheight hashmap to store chips at each co-ordinate
     let mut dheight_hashmap = empty(size);
 
     // Translate doubleheight co-ordinates to the current coord system being used by the board
     let board_coords = dheight_hashmap
         .iter()
-        .map(|(xy, _)| board.coord.mapfrom_doubleheight(*xy))
+        .map(|(xy, _)| board.coord.from_doubleheight(*xy))
         .collect::<HashSet<T>>();
 
     // Check all board_coords for chips, and put the chips in dheight_hashmap if found
     board_coords.into_iter().for_each(|p| {
-        dheight_hashmap.insert(board.coord.mapto_doubleheight(p), board.get_chip(p));
+        dheight_hashmap.insert(board.coord.to_doubleheight(p), board.get_chip(p));
     });
 
     dheight_hashmap
@@ -42,7 +43,7 @@ pub fn show_board<T: Coord>(board: &Board<T>, size: i8) -> String {
 }
 
 // Parse a doubleheight hashmap of chips into an ascii string to print board to terminal
-fn parse_to_ascii(dheight_hashmap: HashMap<(i8, i8), Option<Chip>>, size: i8) -> String {
+fn parse_to_ascii(dheight_hashmap: HashMap<DoubleHeight, Option<Chip>>, size: i8) -> String {
     // Display size of ascii board should be 3, 5, 7,...
     if (size % 2 == 0) | (size == 1) {
         panic!("The size of the ascii board render must be an odd number > 1.")
@@ -52,9 +53,9 @@ fn parse_to_ascii(dheight_hashmap: HashMap<(i8, i8), Option<Chip>>, size: i8) ->
 
     // Stuffing HashMaps into BTreeMaps sorts them based on the value of the key.
     // We'll switch col and row co-ordinates so that the BTree sorts by rows first
-    let mut dheight_tree: BTreeMap<(i8, i8), Option<Chip>> = dheight_hashmap
+    let mut dheight_tree: BTreeMap<(i8,i8), Option<Chip>> = dheight_hashmap
         .into_iter()
-        .map(|((col, row), c)| ((row, col), c))
+        .map(|(p, c)| ((p.col,p.row), c))
         .collect();
 
     // Make a header for the ascii board
@@ -109,7 +110,7 @@ fn chip_to_str(chip: Option<Chip>) -> String {
     return_string
 }
 
-pub fn empty(n: i8) -> HashMap<(i8, i8), Option<Chip>> {
+pub fn empty(n: i8) -> HashMap<DoubleHeight, Option<Chip>> {
     // Generate an HashMap k, v, where:
     // k = chip positions in doubleheight co-ordinates
     // v = None, so the board is empty
@@ -122,7 +123,7 @@ pub fn empty(n: i8) -> HashMap<(i8, i8), Option<Chip>> {
         for row in -n..n + 1 {
             // if both col row share oddness or evenness (this defines doubleheight coords)
             if ((row % 2 == 0) & (col % 2 == 0)) | ((row % 2 != 0) & (col % 2 != 0)) {
-                dheight_display.insert((col, row));
+                dheight_display.insert(DoubleHeight::new(col, row,0));
             }
         }
     }
@@ -130,8 +131,8 @@ pub fn empty(n: i8) -> HashMap<(i8, i8), Option<Chip>> {
     // Initialise the empty hashmap, None for all hexes
     dheight_display
         .iter()
-        .map(|xy| (*xy, None))
-        .collect::<HashMap<(i8, i8), Option<Chip>>>()
+        .map(|p| (*p, None))
+        .collect::<HashMap<DoubleHeight, Option<Chip>>>()
 }
 
 // Convert team to a pretty string

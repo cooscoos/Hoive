@@ -1,6 +1,6 @@
 use hoive::game::{board::Board, movestatus::MoveStatus};
 use hoive::game::{comps::Team, history};
-use hoive::maths::coord::{Coord, Cube};
+use hoive::maths::coord::{Coord, Cube, DoubleHeight};
 
 fn beetle_test_setup(filename: String) -> Board<Cube> {
     // Some set up used by most tests for pillbug
@@ -16,7 +16,7 @@ fn beetle_bad_neigbour() {
     // Black ant tries to go next to white beetle which is on top of its black bee
     let mut board = beetle_test_setup("snapshot_11".to_string());
 
-    let bad_move = board.coord.mapfrom_doubleheight((1, 3));
+    let bad_move = board.coord.from_doubleheight(DoubleHeight::from((1, 3)));
 
     assert_eq!(
         MoveStatus::BadNeighbour,
@@ -39,7 +39,7 @@ fn beetle_layer_2() {
     // Put black beetle on white beetle and check if layer 2
     let mut board = beetle_test_setup("snapshot_11".to_string());
 
-    let stack_up = board.coord.mapfrom_doubleheight((0, 2));
+    let stack_up = board.coord.from_doubleheight(DoubleHeight::from((0, 2)));
 
     // execute move
     board.move_chip("b1", Team::Black, stack_up);
@@ -54,11 +54,11 @@ fn beetle_layer_0() {
     // Put black beetle on white beetle, then move it to an empty position and check layer is 0
     let mut board = beetle_test_setup("snapshot_11".to_string());
 
-    let stack_up = board.coord.mapfrom_doubleheight((0, 2));
+    let stack_up = board.coord.from_doubleheight(DoubleHeight::from((0, 2)));
     board.move_chip("b1", Team::Black, stack_up);
 
     // now move to empty
-    let empty_move = board.coord.mapfrom_doubleheight((1, 3));
+    let empty_move = board.coord.from_doubleheight(DoubleHeight::from((1, 3)));
     board.move_chip("b1", Team::Black, empty_move);
 
     let position = board.get_position_byname(Team::Black, "b1").unwrap();
@@ -71,10 +71,10 @@ fn beetle_stop_move() {
     // Put black beetle on white beetle and ensure white beetle can't move
     let mut board = beetle_test_setup("snapshot_11".to_string());
 
-    let stack_up = board.coord.mapfrom_doubleheight((0, 2));
+    let stack_up = board.coord.from_doubleheight(DoubleHeight::from((0, 2)));
     board.move_chip("b1", Team::Black, stack_up);
 
-    let bad_move = board.coord.mapfrom_doubleheight((1, 3));
+    let bad_move = board.coord.from_doubleheight(DoubleHeight::from((1, 3)));
 
     assert_eq!(
         MoveStatus::BeetleBlock,
@@ -87,7 +87,7 @@ fn beetle_small_gap() {
     // Try fit wb1 through a gap that's too small
     let mut board = beetle_test_setup("snapshot_12".to_string());
 
-    let bad_move = board.coord.mapfrom_doubleheight((-1, -1));
+    let bad_move = board.coord.from_doubleheight(DoubleHeight::from((-1, -1)));
 
     assert_eq!(
         MoveStatus::SmallGap,

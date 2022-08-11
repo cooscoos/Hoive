@@ -3,6 +3,7 @@ use hoive::game::animals;
 use hoive::game::comps::Team;
 use hoive::game::movestatus::MoveStatus;
 use hoive::maths::coord::Coord;
+use hoive::maths::coord::DoubleHeight;
 
 mod common;
 use common::games::{game_snapshot_2, game_snapshot_3};
@@ -13,11 +14,11 @@ fn spider_move_ok() {
     let mut board = game_snapshot_2();
 
     // Place a spider down at (0,2)
-    let placement = board.coord.mapfrom_doubleheight((0, 2));
+    let placement = board.coord.from_doubleheight(DoubleHeight::from((0, 2)));
     board.move_chip("s1", Team::White, placement);
 
     // Then try and move it 3 spaces away
-    let legal_move = board.coord.mapfrom_doubleheight((1, -3));
+    let legal_move = board.coord.from_doubleheight(DoubleHeight::from((1, -3)));
 
     assert_eq!(
         MoveStatus::Success,
@@ -31,11 +32,11 @@ fn spider_move_toofar() {
     let mut board = game_snapshot_2();
 
     // Place a spider down at (0,2)
-    let placement = board.coord.mapfrom_doubleheight((0, 2));
+    let placement = board.coord.from_doubleheight(DoubleHeight::from((0, 2)));
     board.move_chip("s1", Team::White, placement);
 
     // Then try and move it 4 spaces away
-    let illegal_move = board.coord.mapfrom_doubleheight((0, -6));
+    let illegal_move = board.coord.from_doubleheight(DoubleHeight::from((0, -6)));
 
     assert_eq!(
         MoveStatus::BadDistance(3),
@@ -49,7 +50,7 @@ fn spider_distlim_floodfill() {
     let board = game_snapshot_3();
 
     // Spider is already at (0,2) in doubleheight, which is this in cube co-ordinates:
-    let cube_pos = board.coord.mapfrom_doubleheight((0, 2));
+    let cube_pos = board.coord.from_doubleheight(DoubleHeight::from((0, 2)));
 
     // Movement rules for a spider are "can it go on top of other obstacles this move?" The answer is always false.
     let move_rules = vec![false, false, false];
@@ -59,8 +60,8 @@ fn spider_distlim_floodfill() {
     // Convert back to doubleheight for easier inperpretation
     let d_withinrange = cube_withinrange
         .into_iter()
-        .map(|p| board.coord.mapto_doubleheight(p))
-        .collect::<Vec<(i8, i8)>>();
+        .map(|p| board.coord.to_doubleheight(p))
+        .collect::<Vec<DoubleHeight>>();
 
     println!("Hexes within range 3 are {:?}", d_withinrange);
 }
@@ -74,7 +75,7 @@ fn spider_through_barrier() {
     // Spider is already at (0,2)
 
     // Then try and move it 2 spaces up but through a barrier of other chips
-    let illegal_move = board.coord.mapfrom_doubleheight((0, -2));
+    let illegal_move = board.coord.from_doubleheight(DoubleHeight::from((0, -2)));
 
     assert_eq!(
         MoveStatus::BadDistance(3),

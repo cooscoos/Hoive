@@ -4,6 +4,7 @@ use std::collections::HashMap;
 
 use hoive::game::{board::Board, comps::Chip, comps::Team, history::History};
 use hoive::maths::{coord::Coord, coord::Cube};
+use hoive::maths::coord::DoubleHeight;
 
 pub fn test_board<T: Coord>(coord: T) -> Board<T> {
     // During testing we often want lots of pieces that move freely, so give each team 8 ants and one bee
@@ -92,7 +93,7 @@ pub fn game_snapshot_2() -> Board<Cube> {
     // Convert to cube
     let hex_moves = moves_list
         .iter()
-        .map(|xy| board.coord.mapfrom_doubleheight(*xy))
+        .map(|xy| board.coord.from_doubleheight(DoubleHeight::from(*xy)))
         .collect::<Vec<Cube>>();
 
     board.move_chip("q1", Team::White, hex_moves[0]);
@@ -119,7 +120,7 @@ pub fn game_snapshot_3() -> Board<Cube> {
     // Convert to cube
     let hex_moves = moves_list
         .iter()
-        .map(|xy| board.coord.mapfrom_doubleheight(*xy))
+        .map(|xy| board.coord.from_doubleheight(DoubleHeight::from(*xy)))
         .collect::<Vec<Cube>>();
 
     board.move_chip("q1", Team::White, hex_moves[0]);
@@ -153,7 +154,7 @@ pub fn game_snapshot_4() -> Board<Cube> {
     // Convert to cube
     let hex_moves = moves_list
         .iter()
-        .map(|xy| board.coord.mapfrom_doubleheight(*xy))
+        .map(|xy| board.coord.from_doubleheight(DoubleHeight::from(*xy)))
         .collect::<Vec<Cube>>();
 
     board.move_chip("q1", Team::White, hex_moves[0]);
@@ -192,7 +193,7 @@ pub fn game_snapshot_5() -> Board<Cube> {
     // Convert to cube
     let hex_moves = moves_list
         .iter()
-        .map(|xy| board.coord.mapfrom_doubleheight(*xy))
+        .map(|xy| board.coord.from_doubleheight(DoubleHeight::from(*xy)))
         .collect::<Vec<Cube>>();
 
     board.move_chip("q1", Team::White, hex_moves[0]);
@@ -228,7 +229,7 @@ pub fn game_snapshot_6() -> Board<Cube> {
     // Convert to cube
     let hex_moves = moves_list
         .iter()
-        .map(|xy| board.coord.mapfrom_doubleheight(*xy))
+        .map(|xy| board.coord.from_doubleheight(DoubleHeight::from(*xy)))
         .collect::<Vec<Cube>>();
 
     board.move_chip("q1", Team::Black, hex_moves[0]);
@@ -261,7 +262,7 @@ pub fn game_snapshot_7() -> Board<Cube> {
     // Convert to cube
     let hex_moves = moves_list
         .iter()
-        .map(|xy| board.coord.mapfrom_doubleheight(*xy))
+        .map(|xy| board.coord.from_doubleheight(DoubleHeight::from(*xy)))
         .collect::<Vec<Cube>>();
 
     board.move_chip("q1", Team::White, hex_moves[0]);

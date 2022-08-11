@@ -5,7 +5,7 @@ use std::io::{prelude::*, BufReader};
 
 use super::board::Board;
 use super::comps::{convert_static, Chip, Team};
-use crate::maths::coord::Coord;
+use crate::maths::coord::{Coord, DoubleHeight};
 
 /// Struct to keep track of events (previous player actions).
 ///
@@ -13,7 +13,7 @@ use crate::maths::coord::Coord;
 /// BTreeMap is used so that turn events are ordered.
 #[derive(Debug, Eq, PartialEq)]
 pub struct History {
-    events: BTreeMap<u32, (Chip, (i8, i8))>,
+    events: BTreeMap<u32, (Chip, DoubleHeight)>,
 }
 
 impl Default for History {
@@ -31,7 +31,7 @@ impl History {
     }
 
     /// Add a record of what location a chip moved on a given turn (history doesn't record the reason for a chip moved).
-    pub fn add_event(&mut self, turn: u32, chip: Chip, location: (i8, i8)) {
+    pub fn add_event(&mut self, turn: u32, chip: Chip, location: DoubleHeight) {
         self.events.insert(turn, (chip, location));
     }
 
@@ -45,7 +45,7 @@ impl History {
             writeln!(
                 &mut file,
                 "{},{:?},{},{},{}",
-                turn, chip.team, chip.name, position.0, position.1
+                turn, chip.team, chip.name, position.col, position.row
             )?;
         }
         Ok(())
@@ -123,7 +123,7 @@ pub fn emulate<T: Coord>(board: &mut Board<T>, filename: String, test_flag: bool
 
     // Execute each move
     for (team, chip_name, row, col) in events {
-        let hex_move = board.coord.mapfrom_doubleheight((row, col)); // Map dheight to board coords
+        let hex_move = board.coord.from_doubleheight(DoubleHeight::from((row, col))); // Map dheight to board coords
         let chip_str = convert_static(chip_name).expect("Error matching chip name, does not exist");
         board.move_chip(chip_str, team, hex_move);
     }
