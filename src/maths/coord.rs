@@ -30,8 +30,8 @@ pub trait Coord:
     fn neighbour_layers<T: Coord>(&self, position: T) -> HashSet<T>; // a list of up to 7 neighbouring tiles on all layers
     fn centroid_distance<T: Coord>(&self, hex1: T, hex2: T) -> f32; // calculate centroid distance between two hexes
     fn hex_distance<T: Coord>(&self, hex1: T, hex2: T) -> u32; // calculate distance between two hexes
-    fn to_doubleheight<T: Coord>(&self, hex: T) -> DoubleHeight; // convert to doubleheight
-    fn mapfrom_doubleheight(&self, hex: DoubleHeight) -> Self; // convert from doubleheight
+    fn to_doubleheight<T: Coord>(&self, hex: T) -> DoubleHeight; // convert to doubleheight from self
+    fn mapfrom_doubleheight(&self, hex: DoubleHeight) -> Self; // convert from doubleheight to self
     fn ascend(&mut self); // increase or decrease the layer number
     fn descend(&mut self);
     fn to_bottom(&self) -> Self; // drop to layer 0
