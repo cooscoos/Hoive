@@ -8,18 +8,15 @@ Done so far:
 
 ## To do
 
-### Beetle
-
-broadly seems to be working now:
-* tidy up
+* back to pillbug after beetle to capture the "beetle gate rule", and write a test for sumoing higher layer beetles (top layer)
+* Rules check: can ladybird move over beetle on top of other chip?
+* Re-read rules on wiki in general
 
 ### Other animals
-This order seems sensible: 
+To finish:
 
-* back to pillbug after beetle to capture the "beetle gate rule", and write a test for sumoing higher layer beetles (top layer)
-* Rules check for later: can ladybird move over beetle on top of other chip?
 * grashopper - line drawing - then a check to see if it's straight and only goes over occupied hexes
-* mosquito
+* mosquito - special move to become neighbour. Must be beetle if in layer >0.
 
 ### Online
 Make it so that two people can play on t'internet and other weirdos can just watch.
