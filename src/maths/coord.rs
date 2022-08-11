@@ -5,6 +5,7 @@ use std::hash::Hash;
 use std::ops::{Add, Sub};
 
 /// A trait ensuring all genetic hex coordinate systems utilise the same methods
+/// Any coordinate system that is used by game logic must implement this trait.
 pub trait Coord:
     Debug
     + Hash
@@ -36,7 +37,30 @@ pub trait Coord:
     fn to_bottom(&self) -> Self; // drop to layer 0
 }
 
-/// Cube coordinate system
+/// Doubleheight coordinate system used by the ascii renderer
+/// It doesn't need to implement the Coord trait because it is
+/// never used by the game logic.
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
+pub struct DoubleHeight {
+    pub col: i8,
+    pub row: i8,
+    pub l: i8, // the layer
+}
+
+
+impl DoubleHeight{
+    /// Parse col, row, layer into doubleheight
+    pub fn new(col: i8, row: i8, l: i8) -> Self {
+        DoubleHeight{col, row, l}
+    }
+
+    /// Parse tuple into doubleheight, ignoring layer
+    pub fn from(colrow: (i8,i8)) -> Self {
+        DoubleHeight { col: colrow.0, row: colrow.1, l: 0 }
+    }
+}
+
+/// Cube coordinate system, used by game logic
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct Cube {
     q: i8,
@@ -182,26 +206,7 @@ impl Coord for Cube {
     }
 }
 
-/// Doubleheight coordinate system
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
-pub struct DoubleHeight {
-    pub col: i8,
-    pub row: i8,
-    pub l: i8, // the layer
-}
 
-
-impl DoubleHeight{
-    /// Parse col, row, layer into doubleheight
-    pub fn new(col: i8, row: i8, l: i8) -> Self {
-        DoubleHeight{col, row, l}
-    }
-
-    /// Parse tuple into doubleheight, ignoring layer
-    pub fn from(colrow: (i8,i8)) -> Self {
-        DoubleHeight { col: colrow.0, row: colrow.1, l: 0 }
-    }
-}
 // Hexagonal Efficient Coordinate (HECS) co-ordinate system
 // https://en.wikipedia.org/wiki/Hexagonal_Efficient_Coordinate_System
 
