@@ -10,11 +10,15 @@ Done so far:
 
 ### Rule tweaks
 
+* history needs to be able to cope with turn skipping
+
+* can pillbug sumo higher layer beetles (no) - can it during tests?
+
 * Beetles need to obey freedom to move rule on their own layer (including if they're on layer 1 or above). Set up so that you have a beetle gate.
 
 * the Pillbug cannot move a piece through a Beetle gate (if there are two Beetles creating a gate on the second layer of the Hive).
 
-* can pillbug sumo higher layer beetles (no) - can it during tests?
+
 
 * can ladybird move over beetle on top of other chip (yes) - can it during tests?
 

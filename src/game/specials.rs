@@ -24,9 +24,10 @@ pub fn pillbug_sumo<T: Coord>(
         return MoveStatus::RecentMove(sumoee.unwrap());
     }
 
-    // Ensure source and destination hexes both neighbour the pillbug
+    // Ensure source and destination hexes both neighbour the pillbug on layer 0
     let neighbours = board.coord.neighbour_tiles(position);
 
+    // If they're not neighbours on layer 0, the pillbug can't sumo
     if !neighbours.contains(&source) || !neighbours.contains(&dest) {
         return MoveStatus::NotNeighbour;
     }

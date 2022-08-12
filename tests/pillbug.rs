@@ -114,3 +114,42 @@ fn pillbug_non_neighbouring() {
         specials::pillbug_sumo(&mut board, source, dest, position)
     );
 }
+
+
+
+#[test]
+fn pillbug_stacksumo() {
+    // Pillbug attempts to sumo a beetle from one layer above (on a stack)
+    let mut board = pillbug_tests_setup("snapshot_13".to_string());
+
+    // p1 (0,2 on layer 0) to try sumo bb1 (0,0 on layer 1) to 0,4 on layer 0 should return "not neighbour"
+    let position = board.coord.mapfrom_doubleheight(DoubleHeight::from((0, 2)));
+    let source = board
+        .coord
+        .mapfrom_doubleheight(DoubleHeight::new(0,0,1));
+    let dest = board.coord.mapfrom_doubleheight(DoubleHeight::from((0, 4)));
+
+    assert_eq!(
+        MoveStatus::NotNeighbour,
+        specials::pillbug_sumo(&mut board, source, dest, position)
+    );
+}
+
+
+#[test]
+fn pillbug_under_stacksumo() {
+    // Pillbug attempts to sumo a qeen from the bottom of a beetle stack
+    let mut board = pillbug_tests_setup("snapshot_13".to_string());
+
+    // p1 (0,2 on layer 0) to try sumo bq1 (0,0 on layer 0) to 0,4 on layer 0 should return "beetle block"
+    let position = board.coord.mapfrom_doubleheight(DoubleHeight::from((0, 2)));
+    let source = board
+        .coord
+        .mapfrom_doubleheight(DoubleHeight::new(0,0,0));
+    let dest = board.coord.mapfrom_doubleheight(DoubleHeight::from((0, 4)));
+
+    assert_eq!(
+        MoveStatus::BeetleBlock,
+        specials::pillbug_sumo(&mut board, source, dest, position)
+    );
+}
