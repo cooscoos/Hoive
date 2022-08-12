@@ -44,15 +44,17 @@ fn bee_move_toofar() {
 
 #[test]
 fn bee_need() {
-    // Place no bees and then continue to have no bee on white player's 3rd turn.
+    // Place no bees and then continue to have no bee on white player's 4th turn.
     let mut board = Board::new(Cube::default());
 
     let moves_list = vec![
-        (0, 0),   // wa1
+        (0, 0),   // wa1 turn 1
         (1, -1),  // bq1
-        (-1, -1), // wa2
+        (-1, -1), // wa2 turn 2
         (2, -2),  // ba1
-        (-2, -2), // wa3
+        (-2, -2), // wa3  turn 3
+        (2,-4), // bs1
+        (-2,-4), // ws1 turn 4
     ];
 
     // Convert to cube
@@ -65,10 +67,12 @@ fn bee_need() {
     board.move_chip("q1", Team::Black, hex_moves[1]);
     board.move_chip("a2", Team::White, hex_moves[2]);
     board.move_chip("a1", Team::Black, hex_moves[3]);
+    board.move_chip("a3", Team::White, hex_moves[4]);
+    board.move_chip("s1", Team::Black, hex_moves[5]);
 
     assert_eq!(
         MoveStatus::BeeNeed,
-        board.move_chip("a3", Team::White, hex_moves[4])
+        board.move_chip("s1", Team::White, hex_moves[6])
     );
 }
 

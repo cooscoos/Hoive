@@ -70,13 +70,13 @@ where
 
     /// Move chip from player's hand to the board at position == dest
     /// Check following constraints:
-    /// 1) player must have placed the bee by their turn 3 (board turns 4 and 5)
+    /// 1) player must have placed the bee by their turn 4 (board turns 6 and 7)
     /// 2) can't place on top of another chip;
     /// 3) must have at least one neighbour (ater turn 1);
     /// 4) neighbours must be on the same team (after turn 2).
     fn place_chip(&mut self, chip: Chip, dest: T) -> MoveStatus {
-        // Check if a bee has been placed by player turn 3
-        if (self.turns == 4) | (self.turns == 5)
+        // Check if a bee has been placed by player turn 4
+        if (self.turns == 6) | (self.turns == 7)
             && !self.bee_placed(chip.team) & (chip.name != "q1")
         {
             // Player hasn't placed bee yet and isn't trying to

@@ -10,8 +10,6 @@ Done so far:
 
 ### Rule tweaks
 
-* Correction: Bee place rule should be first 4 turns not first 3!
-
 * Beetles need to obey freedom to move rule on their own layer (including if they're on layer 1 or above). Set up so that you have a beetle gate.
 
 * the Pillbug cannot move a piece through a Beetle gate (if there are two Beetles creating a gate on the second layer of the Hive).
