@@ -194,7 +194,7 @@ where
         // Keep searching for neighbours until the queue is empty
         while let Some(position) = queue.pop() {
             // Pop an element out of the queue and get the co-ordinates of neighbouring hexes (including those 1 layer up and down if they exist)
-            let neighbour_hexes = self.coord.neighbour_layers(position);
+            let neighbour_hexes = self.coord.neighbours_all(position);
 
             // If any of these neighbour hexes co-ordinates also appear in the chip_positions, it means they're a neighbouring chip
             // If they're a new entry, add them to the queue and the hashset, otherwise ignore them and move on
@@ -286,7 +286,7 @@ where
     /// of beetles.
     pub fn get_neighbour_chips(&self, position: T) -> Vec<Chip> {
         // Get neighbouring tiles on layer 0
-        let layer0_neighbour = self.coord.neighbour_tiles(position);
+        let layer0_neighbour = self.coord.neighbours_layer0(position);
 
         // Get the topmost chip on a stack
         let get_topmost = |mut dest: T| {
@@ -329,7 +329,7 @@ where
     /// This always counts neighbours in layer 0, even if position is in layer 1, 2, etc.
     pub fn count_neighbours(&self, position: T) -> usize {
         // Get the co-ordinates of neighbouring hexes
-        let neighbour_hexes = self.coord.neighbour_tiles(position);
+        let neighbour_hexes = self.coord.neighbours_layer0(position);
 
         // Get all placed chip positions
         let chip_positions = self.get_placed_positions();

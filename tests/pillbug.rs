@@ -174,7 +174,7 @@ fn sumo_through_beetlegate() {
         .mapfrom_doubleheight(DoubleHeight::from((0, -4)));
 
     assert_eq!(
-        MoveStatus::BeetleBlock,
+        MoveStatus::BeetleGate,
         specials::pillbug_sumo(&mut board, source, dest, position)
     );
 }
