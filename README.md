@@ -4,7 +4,7 @@ The boardgame Hive, written in Rust.
 Done so far:
 * play the game in terminal with cargo run
 * basic rules working
-* ants (a), spiders (s), ladybirds (l), queen bees (q), pillbugs (p), beetles (b)
+* every animal except grasshopper and mosquito
 
 ## To do
 ### Other animals
