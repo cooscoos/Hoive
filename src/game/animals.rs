@@ -38,7 +38,7 @@ pub fn bee_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus
         MoveStatus::SmallGap => MoveStatus::SmallGap,
         MoveStatus::Success => {
             // Check if the distance is within the bee's travel range (its immediate neighbours)
-            let neighbours = board.coord.neighbour_tiles(*source);
+            let neighbours = board.coord.neighbours_layer0(*source);
             match neighbours.contains(dest) {
                 true => MoveStatus::Success,
                 false => MoveStatus::BadDistance(1),
@@ -98,14 +98,16 @@ pub fn ladybird_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveS
 pub fn beetle_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
     let placed_hexes = board.get_placed_positions();
 
-    // Get the positions of chips neighbouring source
-    let source_neighbour_hexes = board.coord.neighbour_tiles(*source);
+    // Get the positions of chips neighbouring source, but only on the beetle's current later (this could be tidied up with a new trait method to get neighbours on current layer)
+    let source_neighbour_hexes = board.coord.neighbours_onlayer(*source, source.get_layer());
+
     let source_neighbours = placed_hexes
         .intersection(&source_neighbour_hexes)
         .collect::<HashSet<&T>>();
 
     // Get the positions of chips neighbouring dest
-    let dest_neighbour_hexes = board.coord.neighbour_tiles(*dest);
+    let dest_neighbour_hexes = board.coord.neighbours_onlayer(*dest, dest.get_layer());
+
     let dest_neighbours = placed_hexes
         .intersection(&dest_neighbour_hexes)
         .collect::<HashSet<&T>>();
@@ -154,7 +156,7 @@ pub fn mod_dist_lim_floodfill<T: Coord>(
         // For each of those hexes
         for check_hex in check_hexes {
             // Get the 6 neighbours
-            let neighbours = board.coord.neighbour_tiles(check_hex);
+            let neighbours = board.coord.neighbours_layer0(check_hex);
 
             neighbours.iter().for_each(|n| {
                 // These neighbours are visitable on this turn (k) if ...

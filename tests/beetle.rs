@@ -96,3 +96,22 @@ fn beetle_small_gap() {
         board.move_chip("b1", Team::White, bad_move)
     );
 }
+
+#[test]
+fn beetle_gate() {
+    // Try move bb2 to 0,-2 (fine) then through a beetle gate to 0,0 (not fine)
+    let mut board = beetle_test_setup("snapshot_15".to_string());
+
+    let okay_move = board
+        .coord
+        .mapfrom_doubleheight(DoubleHeight::from((0, -2)));
+
+    board.move_chip("b2", Team::Black, okay_move);
+
+    let bad_move = board.coord.mapfrom_doubleheight(DoubleHeight::from((0, 0)));
+
+    assert_eq!(
+        MoveStatus::SmallGap,
+        board.move_chip("b2", Team::Black, bad_move)
+    );
+}

@@ -16,7 +16,7 @@ pub fn dilate<T: Coord>(coord: &T, binary_img: &HashSet<T>) -> HashSet<T> {
     // Perform the dilation
     for position in binary_img {
         // Get the co-ordinates of neighbouring hexes and add them to the hashset (this is equivalent to dilation with window size 1)
-        let neighbour_hexes = coord.neighbour_tiles(*position);
+        let neighbour_hexes = coord.neighbours_layer0(*position);
         neighbour_hexes.iter().for_each(|v| {
             store.insert(*v);
         });
@@ -37,7 +37,7 @@ pub fn erode<T: Coord>(coord: &T, binary_img: &HashSet<T>) -> HashSet<T> {
 
     for position in binary_img {
         // Get the co-ordinates of neighbouring hexes
-        let neighbour_hexes = coord.neighbour_tiles(*position);
+        let neighbour_hexes = coord.neighbours_layer0(*position);
 
         // If a hex doesn't have all six neighbours, then it gets removed from the hashset (erosion)
         let neighbours = neighbour_hexes.intersection(binary_img).count();
@@ -106,7 +106,7 @@ pub fn gap_closure<T: Coord>(coord: &T, binary_img: &HashSet<T>) -> HashSet<T> {
     // For each ghost hex
     for position in ghosts {
         // Count the neighbouring hexes that have chips in them
-        let neighbour_hexes = coord.neighbour_tiles(position);
+        let neighbour_hexes = coord.neighbours_layer0(position);
         let neighbours = neighbour_hexes.intersection(&all).count();
 
         // If this hex doesn't have five or all of its neighbours, then it gets removed from the hashset

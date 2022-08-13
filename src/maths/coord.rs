@@ -26,8 +26,9 @@ pub trait Coord:
     fn vector_sqsum(&self) -> u32; // Square sum of vector components
     fn manhattan(&self) -> u32; // Manhattan distance: sum of the abs value of each component
     fn to_cube(&self) -> Cube; // Convert to cube coordinates
-    fn neighbour_tiles<T: Coord>(&self, position: T) -> HashSet<T>; // a list of 6 neighbouring tiles on layer 0
-    fn neighbour_layers<T: Coord>(&self, position: T) -> HashSet<T>; // a list of up to 7 neighbouring tiles on all layers
+    fn neighbours_layer0<T: Coord>(&self, position: T) -> HashSet<T>; // a list of 6 neighbouring tiles on layer 0
+    fn neighbours_all<T: Coord>(&self, position: T) -> HashSet<T>; // a list of up to 8 neighbouring tiles on all layers (neighbours + up and down)
+    fn neighbours_onlayer<T: Coord>(&self, position: T, layer: i8) -> HashSet<T>; // all of the neighbours on a specified layer
     fn centroid_distance<T: Coord>(&self, hex1: T, hex2: T) -> f32; // calculate centroid distance between two hexes
     fn hex_distance<T: Coord>(&self, hex1: T, hex2: T) -> u32; // calculate distance between two hexes
     fn to_doubleheight<T: Coord>(&self, hex: T) -> DoubleHeight; // convert to doubleheight from self
@@ -135,7 +136,8 @@ impl Coord for Cube {
         *self
     }
 
-    fn neighbour_tiles<T: Coord>(&self, position: T) -> HashSet<T> {
+    /// Get all of the neighbours but on layer 0
+    fn neighbours_layer0<T: Coord>(&self, position: T) -> HashSet<T> {
         // Check layer 0 regardless of what layer we're on
         let position = position.to_bottom();
         HashSet::from([
@@ -148,7 +150,8 @@ impl Coord for Cube {
         ])
     }
 
-    fn neighbour_layers<T: Coord>(&self, position: T) -> HashSet<T> {
+    /// Get all of the neighbours on my own layer, plus any chips above and below me
+    fn neighbours_all<T: Coord>(&self, position: T) -> HashSet<T> {
         HashSet::from([
             position + T::new(1, -1, 0),
             position + T::new(1, 0, -1),
@@ -158,6 +161,20 @@ impl Coord for Cube {
             position + T::new(0, -1, 1),
             position + T::new_layer(0, 0, 0, 1), // one layer up
             position - T::new_layer(0, 0, 0, 1), // one layer down
+        ])
+    }
+
+    /// Get my neighbours but on specified layer
+    fn neighbours_onlayer<T: Coord>(&self, position: T, layer: i8) -> HashSet<T> {
+        // Start at layer 0 so we can add the layer number to it
+        let position = position.to_bottom();
+        HashSet::from([
+            position + T::new_layer(1, -1, 0, layer),
+            position + T::new_layer(1, 0, -1, layer),
+            position + T::new_layer(0, 1, -1, layer),
+            position + T::new_layer(-1, 1, 0, layer),
+            position + T::new_layer(-1, 0, 1, layer),
+            position + T::new_layer(0, -1, 1, layer),
         ])
     }
 

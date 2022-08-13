@@ -4,22 +4,17 @@ The boardgame Hive, written in Rust.
 Done so far:
 * play the game in terminal with cargo run
 * basic rules working
-* ants (a), spiders (s), ladybirds (l), queen bees (q), pillbugs (p), beetles (b)
+* every animal except grasshopper and mosquito
 
 ## To do
-
-### Rule tweaks
-
-* Beetles need to obey freedom to move rule on their own layer (including if they're on layer 1 or above). Set up so that you have a beetle gate.
-* the Pillbug cannot move a piece through a Beetle gate (if there are two Beetles creating a gate on the second layer of the Hive).
-* can ladybird move over beetle on top of other chip (yes) - can it during tests?
-
-
 ### Other animals
 To finish:
-
 * grashopper - line drawing - then a check to see if it's straight and only goes over occupied hexes
 * mosquito - special move to become neighbour. Must be beetle if in layer >0.
+
+### Tidy up
+
+Have a really good tidy up and benchmark of the code once all animals done, and start to think about how it interacts with online module.
 
 ### Online
 Make it so that two people can play on t'internet and other weirdos can just watch.

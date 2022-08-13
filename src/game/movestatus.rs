@@ -17,6 +17,7 @@ use super::comps::{Chip, Team};
 /// RecentMove(Chip)| Chip moved too recently to act
 /// NotNeighbour| Target hex isn't a neighbour
 /// BeetleBlock | A beetle on top of you is blocking your move
+/// BeetleGate | A beetle gate is preventing the move
 #[derive(Debug, Eq, PartialEq)]
 pub enum MoveStatus {
     Success,
@@ -36,4 +37,5 @@ pub enum MoveStatus {
     NotNeighbour,
 
     BeetleBlock,
+    BeetleGate,
 }
