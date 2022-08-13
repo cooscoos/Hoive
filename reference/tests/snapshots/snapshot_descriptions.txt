@@ -8,3 +8,7 @@ snapshot_11: wb1 on top of bq1, trying to place a black chip at 1,3 should resul
 snapshot_12: try move wb1 to -1,-1, should be too small a gap
 snapshot_13: testing history's ability to deal with skipped turns, p1 at 1,1 should be able to sumo a1 at 0,2 to 2,0 because of skipped turns
 snapshot_14: use wp1 at 0,-4 to sumo bb1 at 0,-2 (layer 1) to 1,-5, or to sumo wq1 at 0,-2 (layer 0) should return not-neighbour or beetle-stack
+snapshot_15: beetle gate. (there's an image of this board in ../images)
+            a) Try move bb2 (currently on l1) to -1,-3 should not be allowed because of beetles on layer 1 forming a gate
+            b) try move bb2 to 0,-4 (l0) and then to -1,-3 should fail as above
+            c) use bp1 at -1,-3 to sumo wa2 at -2,-2 to 0,-4 should not be allowed becuase of beetle gate

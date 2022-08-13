@@ -158,3 +158,25 @@ fn pillbug_under_stacksumo() {
         specials::pillbug_sumo(&mut board, source, dest, position)
     );
 }
+
+#[test]
+fn sumo_through_beetlegate() {
+    // Pillbug attempts to sumo an ant through a beetle gate
+    let mut board = pillbug_tests_setup("snapshot_15".to_string());
+
+    // use bp1 at -1,-3 to sumo wa2 at -2,-2 to 0,-4 should not be allowed becuase of beetle gate
+    let position = board
+        .coord
+        .mapfrom_doubleheight(DoubleHeight::from((-1, -3)));
+    let source = board
+        .coord
+        .mapfrom_doubleheight(DoubleHeight::from((-2, -2)));
+    let dest = board
+        .coord
+        .mapfrom_doubleheight(DoubleHeight::from((0, -4)));
+
+    assert_eq!(
+        MoveStatus::BeetleBlock,
+        specials::pillbug_sumo(&mut board, source, dest, position)
+    );
+}
