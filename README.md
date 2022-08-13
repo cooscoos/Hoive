@@ -10,7 +10,7 @@ Done so far:
 
 ### Rule tweaks
 
-* the Pillbug cannot move a piece through a Beetle gate (if there are two Beetles creating a gate on the second layer of the Hive).
+* Sort pillbug beetlegate. It's a special move so we just need to check for beetle gates one layer up using the source,dest intersection rule similar to beetle_check
 * can ladybird move over beetle on top of other chip (yes) - can it during tests?
 
 
