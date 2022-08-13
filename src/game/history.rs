@@ -69,7 +69,7 @@ impl History {
 
 /// Convert a history csv of given filename into a set of moves that can be emulated
 /// If test_flag == true, then csvs are loaded from ./reference/tests/snapshots directory
-fn load_moves(filename: String, test_flag: bool) -> std::io::Result<Vec<(Team, String, i8, i8)>> {
+fn load_moves(filename: String, test_flag: bool) -> std::io::Result<Vec<Option<(Team, String, i8, i8)>>> {
     // If we're running a test we want to load files from another directory
     let file = match test_flag {
         true => File::open(format!("./reference/tests/snapshots/{}.csv", filename))?,
@@ -80,6 +80,10 @@ fn load_moves(filename: String, test_flag: bool) -> std::io::Result<Vec<(Team, S
 
     // A vector for storing moves, teams and chips
     let mut events = Vec::new();
+
+
+    // The turn number last turn
+    let mut last_turn = -1;
 
     // Read file line by line and push the moves to the events vector
     for (i, line) in reader.lines().enumerate() {
@@ -95,7 +99,16 @@ fn load_moves(filename: String, test_flag: bool) -> std::io::Result<Vec<(Team, S
 
         let items = this_line.split(',').collect::<Vec<&str>>();
 
-        // The item[0] is the turn number (ignore), item[1] is the team.
+        // The item[0] is the turn number.
+        let this_turn = items[0].trim().parse::<i16>().expect("Problem parsing turn number");
+        
+        // If the turn numbers don't increase by 1, then we need to push this many Nones to the events vector        
+        let nones_size = this_turn - last_turn - 1;
+        for _ in 0..nones_size {
+            events.push(None);
+        }
+
+        // item[1] is the team.
         let team = match items[1] {
             "Black" => Team::Black,
             "White" => Team::White,
@@ -107,7 +120,8 @@ fn load_moves(filename: String, test_flag: bool) -> std::io::Result<Vec<(Team, S
         let row = items[3].trim().parse::<i8>().expect("Problem parsing row");
         let col = items[4].trim().parse::<i8>().expect("Problem parsing col");
 
-        events.push((team, chip_name, row, col));
+        events.push(Some((team, chip_name, row, col)));
+        last_turn = this_turn;
     }
     Ok(events)
 }
@@ -122,11 +136,20 @@ pub fn emulate<T: Coord>(board: &mut Board<T>, filename: String, test_flag: bool
     };
 
     // Execute each move
-    for (team, chip_name, row, col) in events {
-        let hex_move = board
-            .coord
-            .mapfrom_doubleheight(DoubleHeight::from((row, col))); // Map dheight to board coords
-        let chip_str = convert_static(chip_name).expect("Error matching chip name, does not exist");
-        board.move_chip(chip_str, team, hex_move);
+    for event in events {
+
+        match event {
+            Some((team, chip_name, row, col)) => {
+                let hex_move = board
+                .coord
+                .mapfrom_doubleheight(DoubleHeight::from((row, col))); // Map dheight to board coords
+
+                let chip_str = convert_static(chip_name).expect("Error matching chip name, does not exist");
+                board.move_chip(chip_str, team, hex_move); // execute the move
+
+            },
+            None => board.turns += 1,   // skip the turn
+        }
+
     }
 }

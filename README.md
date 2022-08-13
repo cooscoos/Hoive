@@ -10,7 +10,7 @@ Done so far:
 
 ### Rule tweaks
 
-* history needs to be able to cope with turn skipping
+* then sort out the pillbug tests
 
 * can pillbug sumo higher layer beetles (no) - can it during tests?
 
