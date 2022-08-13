@@ -7,16 +7,8 @@ Done so far:
 * ants (a), spiders (s), ladybirds (l), queen bees (q), pillbugs (p), beetles (b)
 
 ## To do
-
-### Rule tweaks
-
-* Sort pillbug beetlegate. It's a special move so we just need to check for beetle gates one layer up using the source,dest intersection rule similar to beetle_check
-* can ladybird move over beetle on top of other chip (yes) - can it during tests?
-
-
 ### Other animals
 To finish:
-
 * grashopper - line drawing - then a check to see if it's straight and only goes over occupied hexes
 * mosquito - special move to become neighbour. Must be beetle if in layer >0.
 

@@ -36,19 +36,15 @@ pub fn pillbug_sumo<T: Coord>(
     // Check we can move the neighbour by checking the basic constraints of its move (e.g. hive breaks)
     let basic_constraints = board.basic_constraints(dest, source);
 
-
     // Check if we're sumoing through a beetle gate
     if sumo_beetle_gate(board, source, dest, position) {
         return MoveStatus::BeetleGate;
     } else if basic_constraints == MoveStatus::Success {
         // If all is fine, go ahead and execute the move
         board.update(sumoee.unwrap(), dest);
-        
     }
     basic_constraints
-    
 }
-
 
 /// Doesn't happen often, but there's an obscure rule that a pillbug cannot sumo
 /// through a beetle gate on the layer above, so this will check for the presence
@@ -59,32 +55,38 @@ fn sumo_beetle_gate<T: Coord>(
     dest: T,     // place to sumo to
     position: T, // position of pillbug (sumo-er)
 ) -> bool {
-    // Get the neighbouring chips one layer above the pillbug, the source and the dest 
+    // Get the neighbouring chips one layer above the pillbug, the source and the dest
     // These will all be on layer 1 because of previous checks
     // There may be higher beetle gates, but these would require a beetle gate on layer 1
 
     let source_layer1_neighbours = checky(board, source);
-    let position_layer1_neighbours = checky(board,position);
-    let dest_layer1_neighbours = checky(board,dest);
-
+    let position_layer1_neighbours = checky(board, position);
+    let dest_layer1_neighbours = checky(board, dest);
 
     // If there's overlap between source and position, or position and dest, we have a beetle gate
 
-    
-    (position_layer1_neighbours.intersection(&source_layer1_neighbours).count() == 2) || (position_layer1_neighbours.intersection(&dest_layer1_neighbours).count() == 2)
+    (position_layer1_neighbours
+        .intersection(&source_layer1_neighbours)
+        .count()
+        == 2)
+        || (position_layer1_neighbours
+            .intersection(&dest_layer1_neighbours)
+            .count()
+            == 2)
 }
 
-fn checky<T: Coord>(board: &mut Board<T>, location:T) -> HashSet<T> {
-
+fn checky<T: Coord>(board: &mut Board<T>, location: T) -> HashSet<T> {
     // Get placed positions of board chips
     let placed_hexes = board.get_placed_positions();
-    
+
     // The hexes neighbouring the chosen hex, but on layer 1
-    let position_layer1_hexes = board.coord.neighbours_onlayer(location, location.get_layer()+1);
+    let position_layer1_hexes = board
+        .coord
+        .neighbours_onlayer(location, location.get_layer() + 1);
 
     // The hexes which have chips in them
     position_layer1_hexes
         .intersection(&placed_hexes)
-        .map(|p| *p)
+        .copied()
         .collect::<HashSet<T>>()
 }
