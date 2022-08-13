@@ -7,13 +7,46 @@ use super::board::Board;
 use super::comps::{convert_static, Chip, Team};
 use crate::maths::coord::{Coord, DoubleHeight};
 
-/// Struct to keep track of events (previous player actions).
+/// Every event in a game of hive is a chip_name on a given team attempting a movement
+#[derive(Debug, Eq, PartialEq)]
+struct Event {
+    chip_name: &'static str,
+    team: Team,
+    location: DoubleHeight,
+}
+
+impl Event {
+    /// Create a new event based on input string
+    fn new_by_string(chip_string: String, team: Team, row: i8, col: i8) -> Self {
+        let location = DoubleHeight::from((row, col));
+
+        let chip_name =
+            convert_static(chip_string).expect("Error matching chip name, does not exist.");
+
+        Event {
+            chip_name,
+            team,
+            location,
+        }
+    }
+
+    /// Create a new event based on input chip
+    fn new_by_chip(chip: Chip, location: DoubleHeight) -> Self {
+        Event {
+            chip_name: chip.name,
+            team: chip.team,
+            location,
+        }
+    }
+}
+
+/// History keeps track of Events (previous player actions) using a BTree.
 ///
-/// Events are a BTreeMap where the key = turn number, and value = (chip,location).
+/// The key = turn number, and value = the event.
 /// BTreeMap is used so that turn events are ordered.
 #[derive(Debug, Eq, PartialEq)]
 pub struct History {
-    events: BTreeMap<u32, (Chip, DoubleHeight)>,
+    events: BTreeMap<u32, Event>,
 }
 
 impl Default for History {
@@ -32,7 +65,7 @@ impl History {
 
     /// Add a record of what location a chip moved on a given turn (history doesn't record the reason for a chip moved).
     pub fn add_event(&mut self, turn: u32, chip: Chip, location: DoubleHeight) {
-        self.events.insert(turn, (chip, location));
+        self.events.insert(turn, Event::new_by_chip(chip, location));
     }
 
     /// Save history as a csv in the local saved_games directory
@@ -41,11 +74,11 @@ impl History {
 
         // Write csv line by line
         writeln!(&mut file, "turn,team,name,row,col")?;
-        for (turn, (chip, position)) in self.events.iter() {
+        for (turn, event) in self.events.iter() {
             writeln!(
                 &mut file,
                 "{},{:?},{},{},{}",
-                turn, chip.team, chip.name, position.col, position.row
+                turn, event.team, event.chip_name, event.location.col, event.location.row
             )?;
         }
         Ok(())
@@ -63,13 +96,15 @@ impl History {
     /// Return which chip moved on a given turn
     /// Returns None if no chip moved that turn
     fn which_chip(&self, turn: u32) -> Option<Chip> {
-        self.events.get(&turn).map(|(c, _)| *c)
+        self.events
+            .get(&turn)
+            .map(|e| Chip::new(e.chip_name, e.team))
     }
 }
 
 /// Convert a history csv of given filename into a set of moves that can be emulated
 /// If test_flag == true, then csvs are loaded from ./reference/tests/snapshots directory
-fn load_moves(filename: String, test_flag: bool) -> std::io::Result<Vec<Option<(Team, String, i8, i8)>>> {
+fn load_moves(filename: String, test_flag: bool) -> std::io::Result<Vec<Option<Event>>> {
     // If we're running a test we want to load files from another directory
     let file = match test_flag {
         true => File::open(format!("./reference/tests/snapshots/{}.csv", filename))?,
@@ -80,7 +115,6 @@ fn load_moves(filename: String, test_flag: bool) -> std::io::Result<Vec<Option<(
 
     // A vector for storing moves, teams and chips
     let mut events = Vec::new();
-
 
     // The turn number last turn
     let mut last_turn = -1;
@@ -100,9 +134,12 @@ fn load_moves(filename: String, test_flag: bool) -> std::io::Result<Vec<Option<(
         let items = this_line.split(',').collect::<Vec<&str>>();
 
         // The item[0] is the turn number.
-        let this_turn = items[0].trim().parse::<i16>().expect("Problem parsing turn number");
-        
-        // If the turn numbers don't increase by 1, then we need to push this many Nones to the events vector        
+        let this_turn = items[0]
+            .trim()
+            .parse::<i16>()
+            .expect("Problem parsing turn number");
+
+        // If the turn numbers don't increase by 1, then we need to push this many Nones to the events vector
         let nones_size = this_turn - last_turn - 1;
         for _ in 0..nones_size {
             events.push(None);
@@ -120,7 +157,10 @@ fn load_moves(filename: String, test_flag: bool) -> std::io::Result<Vec<Option<(
         let row = items[3].trim().parse::<i8>().expect("Problem parsing row");
         let col = items[4].trim().parse::<i8>().expect("Problem parsing col");
 
-        events.push(Some((team, chip_name, row, col)));
+        // make a new event
+        let event = Event::new_by_string(chip_name, team, row, col);
+
+        events.push(Some(event));
         last_turn = this_turn;
     }
     Ok(events)
@@ -137,19 +177,13 @@ pub fn emulate<T: Coord>(board: &mut Board<T>, filename: String, test_flag: bool
 
     // Execute each move
     for event in events {
-
         match event {
-            Some((team, chip_name, row, col)) => {
-                let hex_move = board
-                .coord
-                .mapfrom_doubleheight(DoubleHeight::from((row, col))); // Map dheight to board coords
+            Some(event) => {
+                let hex_move = board.coord.mapfrom_doubleheight(event.location); // map movement to board coords
 
-                let chip_str = convert_static(chip_name).expect("Error matching chip name, does not exist");
-                board.move_chip(chip_str, team, hex_move); // execute the move
-
-            },
-            None => board.turns += 1,   // skip the turn
+                board.move_chip(event.chip_name, event.team, hex_move); // execute the move
+            }
+            None => board.turns += 1, // skip the turn
         }
-
     }
 }

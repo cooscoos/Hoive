@@ -7,5 +7,4 @@ snapshot_5neighbours: wa1 has 5 neighbours. for benchmarking counting.
 snapshot_11: wb1 on top of bq1, trying to place a black chip at 1,3 should result in bad neighbour because of opposing beetle covering queen
 snapshot_12: try move wb1 to -1,-1, should be too small a gap
 snapshot_13: testing history's ability to deal with skipped turns, p1 at 1,1 should be able to sumo a1 at 0,2 to 2,0 because of skipped turns
-
-snapshot_14: try sumo bb1 to 0,4, should return not neighbour because b1 is on layer 1
+snapshot_14: use wp1 at 0,-4 to sumo bb1 at 0,-2 (layer 1) to 1,-5, or to sumo wq1 at 0,-2 (layer 0) should return not-neighbour or beetle-stack
