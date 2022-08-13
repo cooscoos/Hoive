@@ -98,14 +98,26 @@ pub fn ladybird_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveS
 pub fn beetle_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
     let placed_hexes = board.get_placed_positions();
 
-    // Get the positions of chips neighbouring source
-    let source_neighbour_hexes = board.coord.neighbour_tiles(*source);
+    // Get the positions of chips neighbouring source, but only on the beetle's current later (this could be tidied up with a new trait method to get neighbours on current layer)
+    let source_neighbour_hexes = board
+        .coord
+        .neighbour_layers(*source)
+        .into_iter()
+        .filter(|p| p.get_layer() == source.get_layer())
+        .collect::<HashSet<T>>();
+
     let source_neighbours = placed_hexes
         .intersection(&source_neighbour_hexes)
         .collect::<HashSet<&T>>();
 
-    // Get the positions of chips neighbouring dest
-    let dest_neighbour_hexes = board.coord.neighbour_tiles(*dest);
+    // Get the positions of chips neighbouring dest on the beetle's current layer
+    let dest_neighbour_hexes = board
+        .coord
+        .neighbour_layers(*dest)
+        .into_iter()
+        .filter(|p| p.get_layer() == dest.get_layer())
+        .collect::<HashSet<T>>();
+
     let dest_neighbours = placed_hexes
         .intersection(&dest_neighbour_hexes)
         .collect::<HashSet<&T>>();

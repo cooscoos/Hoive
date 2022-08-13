@@ -164,13 +164,11 @@ fn sumo_through_beetlegate() {
     // Pillbug attempts to sumo an ant through a beetle gate
     let mut board = pillbug_tests_setup("snapshot_15".to_string());
 
-    // use bp1 at -1,-3 to sumo wa2 at -2,-2 to 0,-4 should not be allowed becuase of beetle gate
+    // use wp1 at 0,-2 to sumo ba1 at 0,0 to 0,-4 should not be allowed because of beetle gate
     let position = board
         .coord
-        .mapfrom_doubleheight(DoubleHeight::from((-1, -3)));
-    let source = board
-        .coord
-        .mapfrom_doubleheight(DoubleHeight::from((-2, -2)));
+        .mapfrom_doubleheight(DoubleHeight::from((0, -2)));
+    let source = board.coord.mapfrom_doubleheight(DoubleHeight::from((0, 0)));
     let dest = board
         .coord
         .mapfrom_doubleheight(DoubleHeight::from((0, -4)));
