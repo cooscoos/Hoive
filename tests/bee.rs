@@ -53,8 +53,8 @@ fn bee_need() {
         (-1, -1), // wa2 turn 2
         (2, -2),  // ba1
         (-2, -2), // wa3  turn 3
-        (2,-4), // bs1
-        (-2,-4), // ws1 turn 4
+        (2, -4),  // bs1
+        (-2, -4), // ws1 turn 4
     ];
 
     // Convert to cube

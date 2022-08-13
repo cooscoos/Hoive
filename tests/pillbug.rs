@@ -115,19 +115,21 @@ fn pillbug_non_neighbouring() {
     );
 }
 
-
-
 #[test]
 fn pillbug_stacksumo() {
     // Pillbug attempts to sumo a beetle from one layer above (on a stack)
-    let mut board = pillbug_tests_setup("snapshot_13".to_string());
+    let mut board = pillbug_tests_setup("snapshot_14".to_string());
 
-    // p1 (0,2 on layer 0) to try sumo bb1 (0,0 on layer 1) to 0,4 on layer 0 should return "not neighbour"
-    let position = board.coord.mapfrom_doubleheight(DoubleHeight::from((0, 2)));
+    // use wp1 at 0,-4 to sumo bb1 at 0,-2 (layer 1) to 1,-5: should return not-neighbour
+    let position = board
+        .coord
+        .mapfrom_doubleheight(DoubleHeight::from((0, -4)));
     let source = board
         .coord
-        .mapfrom_doubleheight(DoubleHeight::new(0,0,1));
-    let dest = board.coord.mapfrom_doubleheight(DoubleHeight::from((0, 4)));
+        .mapfrom_doubleheight(DoubleHeight::new(0, -2, 1));
+    let dest = board
+        .coord
+        .mapfrom_doubleheight(DoubleHeight::from((1, -5)));
 
     assert_eq!(
         MoveStatus::NotNeighbour,
@@ -135,18 +137,21 @@ fn pillbug_stacksumo() {
     );
 }
 
-
 #[test]
 fn pillbug_under_stacksumo() {
     // Pillbug attempts to sumo a qeen from the bottom of a beetle stack
-    let mut board = pillbug_tests_setup("snapshot_13".to_string());
+    let mut board = pillbug_tests_setup("snapshot_14".to_string());
 
-    // p1 (0,2 on layer 0) to try sumo bq1 (0,0 on layer 0) to 0,4 on layer 0 should return "beetle block"
-    let position = board.coord.mapfrom_doubleheight(DoubleHeight::from((0, 2)));
+    // use wp1 at 0,-4 to sumo wq1 at 0,-2 (layer 0): should return beetle-stack
+    let position = board
+        .coord
+        .mapfrom_doubleheight(DoubleHeight::from((0, -4)));
     let source = board
         .coord
-        .mapfrom_doubleheight(DoubleHeight::new(0,0,0));
-    let dest = board.coord.mapfrom_doubleheight(DoubleHeight::from((0, 4)));
+        .mapfrom_doubleheight(DoubleHeight::from((0, -2)));
+    let dest = board
+        .coord
+        .mapfrom_doubleheight(DoubleHeight::from((1, -5)));
 
     assert_eq!(
         MoveStatus::BeetleBlock,

@@ -3,8 +3,8 @@ use hoive::maths::coord::{Coord, Cube};
 
 mod common;
 use common::games::game_snapshot_7;
-use hoive::maths::coord::DoubleHeight;
 use hoive::game::{movestatus::MoveStatus, specials};
+use hoive::maths::coord::DoubleHeight;
 
 #[test]
 fn history_load() {
@@ -49,17 +49,13 @@ fn history_skipturn() {
     let filename = "snapshot_13".to_string();
     history::emulate(&mut board, filename, true);
 
-
-    // wp1 at 1,1 to try sumo wa1 at 0,2 to destination 2,0 
+    // wp1 at 1,1 to try sumo wa1 at 0,2 to destination 2,0
     let position = board.coord.mapfrom_doubleheight(DoubleHeight::from((1, 1)));
-    let source = board
-        .coord
-        .mapfrom_doubleheight(DoubleHeight::from((0,2)));
+    let source = board.coord.mapfrom_doubleheight(DoubleHeight::from((0, 2)));
     let dest = board.coord.mapfrom_doubleheight(DoubleHeight::from((2, 0)));
 
     assert_eq!(
         MoveStatus::Success,
         specials::pillbug_sumo(&mut board, source, dest, position)
     );
-
 }
