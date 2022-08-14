@@ -120,6 +120,23 @@ pub fn beetle_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveSta
     }
 }
 
+/// Check whether grasshopper can move from source to dest
+pub fn ghopper_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
+
+
+    // grasshopper can move in 6 directions only
+    // get the unit vector make sure it's one of the 6 allowed values
+
+
+    // travel one step at a time in the unit vector direction until you reach dest hex, making sure all hexes on the way are occupied
+    // except the last one
+
+
+    MoveStatus::Success
+
+}
+
+
 /// A modified distance-limited flood fill which can find movement ranges around and over obstacles.
 /// Useful for spiders and ladybirds.
 /// See: https://www.redblobgames.com/grids/hexagons/#distances
