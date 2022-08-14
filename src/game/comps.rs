@@ -36,13 +36,13 @@ pub struct Chip {
 }
 
 impl Chip {
-    /// Create a new chip with given name and team.
+    /// Create one new chip with given name and team.
     pub fn new(name: &'static str, team: Team) -> Self {
         Chip { name, team }
     }
 
     /// Create a HashMap of new chips for both teams at position None based a list of names
-    fn new_from_list<T: Coord>(names_list: Vec<&'static str>) -> HashMap<Self, Option<T>> {
+    pub fn new_from_list<T: Coord>(names_list: Vec<&'static str>) -> HashMap<Self, Option<T>> {
         let mut chip_map = HashMap::new();
         names_list.into_iter().for_each(|n| {
             chip_map.insert(Chip::new(n, Team::White), None); // white team

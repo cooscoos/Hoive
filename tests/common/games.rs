@@ -21,28 +21,15 @@ pub fn test_board<T: Coord>(coord: T) -> Board<T> {
 
 fn test_chips<T: Coord>() -> HashMap<Chip, Option<T>> {
     // During some tests we want lots of chips that move freely. Give each team 8 ants, 1 bee
-    HashMap::from([
-        // Black team's chips
-        (Chip::new("a1", Team::Black), None),
-        (Chip::new("a2", Team::Black), None),
-        (Chip::new("a3", Team::Black), None),
-        (Chip::new("a4", Team::Black), None),
-        (Chip::new("a5", Team::Black), None),
-        (Chip::new("a6", Team::Black), None),
-        (Chip::new("a7", Team::Black), None),
-        (Chip::new("a8", Team::Black), None),
-        (Chip::new("q1", Team::Black), None),
-        // White team's chips
-        (Chip::new("a1", Team::White), None),
-        (Chip::new("a2", Team::White), None),
-        (Chip::new("a3", Team::White), None),
-        (Chip::new("a4", Team::White), None),
-        (Chip::new("a5", Team::White), None),
-        (Chip::new("a6", Team::White), None),
-        (Chip::new("a7", Team::White), None),
-        (Chip::new("a8", Team::White), None),
-        (Chip::new("q1", Team::White), None),
-    ])
+
+    let names_list = vec![
+        "a1","a2","a3",
+        "a4","a5","a6",
+        "a7","a8","q1",
+    ];
+
+    Chip::new_from_list(names_list)
+
 }
 
 pub fn game_snapshot_1() -> Board<Cube> {
