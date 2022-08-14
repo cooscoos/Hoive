@@ -125,10 +125,19 @@ pub fn ghopper_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveSt
 
 
     // grasshopper can move in 6 directions only
-    // get the unit vector make sure it's one of the 6 allowed values
+    // get the unit vector of its proposed travel direction
+    let travel_dir = board.coord.get_unitvec(*source, *dest);
+
+    // make sure it's one of the 6 allowed directions: these 6 directions are the same as the coords of neighbours of the origin
+    let allowed_dirs = board.coord.neighbours_layer0(T::new(0,0,0));
+    if !allowed_dirs.contains(&travel_dir) {
+        return MoveStatus::NoJump;
+    }
+
+    // travel one step at a time in travel_dir until you reach dest hex, making sure all hexes on the way are occupied
+    // if they are, then success.
 
 
-    // travel one step at a time in the unit vector direction until you reach dest hex, making sure all hexes on the way are occupied
     // except the last one
 
 
