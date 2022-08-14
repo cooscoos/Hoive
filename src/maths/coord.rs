@@ -25,7 +25,7 @@ pub trait Coord:
     fn get_layer(&self) -> i8;
     fn vector_sqsum(&self) -> u32; // Square sum of vector components
     fn manhattan(&self) -> u32; // Manhattan distance: sum of the abs value of each component
-    fn get_unitvec(&self, a: Self,b: Self) -> Self; // get unit vector going from a to b
+    fn get_unitvec(&self, a: Self, b: Self) -> Self; // get unit vector going from a to b
     fn to_cube(&self) -> Cube; // Convert to cube coordinates
     fn neighbours_layer0<T: Coord>(&self, position: T) -> HashSet<T>; // a list of 6 neighbouring tiles on layer 0
     fn neighbours_all<T: Coord>(&self, position: T) -> HashSet<T>; // a list of up to 8 neighbouring tiles on all layers (neighbours + up and down)
@@ -133,22 +133,16 @@ impl Coord for Cube {
     }
 
     /// Get the unit vector (direction) from a to b
-    fn get_unitvec(&self, a: Self,b: Self) -> Self {
-
+    fn get_unitvec(&self, a: Self, b: Self) -> Self {
         // Get the vector going from a to b
-        let res = b-a;
+        let res = b - a;
 
-        // find normalisation
-        let norm_sq = res.vector_sqsum() as f32;
+        // find normalisation. Divide by 2 because translating from 3-coord cubic to a hex grid needs
+        let norm_sq = (res.vector_sqsum()/2) as f32;
         let norm = norm_sq.sqrt() as i8;
 
         // This is the unit vector going from a to b
-        Cube::new (   
-            res.q/norm,
-            res.r/norm,
-            res.s/norm,
-        )
-
+        Cube::new(res.q / norm, res.r / norm, res.s / norm)
     }
 
     /// Convert to cube coordinates

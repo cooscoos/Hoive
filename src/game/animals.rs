@@ -122,29 +122,42 @@ pub fn beetle_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveSta
 
 /// Check whether grasshopper can move from source to dest
 pub fn ghopper_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
-
-
     // grasshopper can move in 6 directions only
     // get the unit vector of its proposed travel direction
     let travel_dir = board.coord.get_unitvec(*source, *dest);
 
+    println!("Travel_dir = {:?}", travel_dir);
+
     // make sure it's one of the 6 allowed directions: these 6 directions are the same as the coords of neighbours of the origin
-    let allowed_dirs = board.coord.neighbours_layer0(T::new(0,0,0));
+    let allowed_dirs = board.coord.neighbours_layer0(T::new(0, 0, 0));
+
+    println!("Allowed dirs = {:?}", allowed_dirs);
+
     if !allowed_dirs.contains(&travel_dir) {
         return MoveStatus::NoJump;
     }
 
     // travel one step at a time in travel_dir until you reach dest hex, making sure all hexes on the way are occupied
-    // if they are, then success.
 
+    // number of steps to get from source to dest
+    let mut current_pos = *source;
 
-    // except the last one
+    // This needs a bit of a tweak. Make sure it can handle going to a neighbour.
+    while current_pos < *dest {
+        // Add a step
+        
+        current_pos = current_pos + travel_dir;
 
+        println!("Current position of {:?} is empty?: {}", current_pos, board.get_chip(current_pos).is_none());
+        // check if we're going over an occupied hex
+        if board.get_chip(current_pos) == None {
+            return MoveStatus::NoJump;
+        }
+    }
 
+    // othewise success.
     MoveStatus::Success
-
 }
-
 
 /// A modified distance-limited flood fill which can find movement ranges around and over obstacles.
 /// Useful for spiders and ladybirds.

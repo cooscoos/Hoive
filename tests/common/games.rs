@@ -49,7 +49,6 @@ pub fn cubehash_from_list(coord_list: Vec<(i8, i8, i8)>) -> HashSet<Cube> {
     coord_vec
 }
 
-
 pub fn game_snapshot_1() -> Board<Cube> {
     // This function is called by a few subsequent tests
     // Run the game shown in /referenece/tests/bug2.png using cube co-ordinates

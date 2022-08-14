@@ -6,7 +6,7 @@ use std::collections::HashSet;
 use std::vec;
 
 mod common;
-use common::games::{cubes_from_list, cubehash_from_list};
+use common::games::{cubehash_from_list, cubes_from_list};
 
 #[test]
 fn test_dilate() {
@@ -68,9 +68,7 @@ fn test_close_closes() {
         (1, 0, -1),
         (-1, 1, 0),
         (0, 1, -1),
-    ]
-    );
-
+    ]);
 
     let expected = cubehash_from_list(vec![
         (0, -1, 1),
@@ -80,8 +78,7 @@ fn test_close_closes() {
         (1, 0, -1),
         (-1, 1, 0),
         (0, 1, -1),
-    ]
-    );
+    ]);
 
     let coord = Cube::default();
 
@@ -104,8 +101,7 @@ fn test_close_new() {
         (1, 0, -1),
         (-1, 1, 0),
         (0, 1, -1),
-    ]
-    );
+    ]);
 
     let expected = vec![Cube::new(0, 0, 0)];
 
@@ -124,21 +120,19 @@ fn test_close_new() {
 fn test_gap_closure() {
     // Create a gap that an ant shouldn't be able to pass (see /reference/before_gap.png)
 
-
     let before_gap = cubehash_from_list(vec![
-         (-1, 3, -2),
-         (-1, 2, -1),
-         (-1, 1, 0),
-         (0, 0, 0),
-         (1, -1, 0),
-         (2, -1, -1),
-         (2, 0, -2),
-         (2, 1, -3),
-         (1, 2, -3),
-         (-1, 0, 1),
-         (1, -2, 1),
-    ]
-    );
+        (-1, 3, -2),
+        (-1, 2, -1),
+        (-1, 1, 0),
+        (0, 0, 0),
+        (1, -1, 0),
+        (2, -1, -1),
+        (2, 0, -2),
+        (2, 1, -3),
+        (1, 2, -3),
+        (-1, 0, 1),
+        (1, -2, 1),
+    ]);
 
     // Create ghost hexes to close the gaap that the ant can't pass
     let coord = Cube::default();
@@ -146,13 +140,7 @@ fn test_gap_closure() {
 
     // Ghosts should appear at these locations
 
-    let expected = cubes_from_list(vec![
-        (0, 1, -1),
-        (1, 0, -1),
-        (0, 2, -2),
-        (1, 1, -2),
-    ]);
-
+    let expected = cubes_from_list(vec![(0, 1, -1), (1, 0, -1), (0, 2, -2), (1, 1, -2)]);
 
     // Shove both results into a BTreeSet to ensure order is the same
     let ghosts_ordered = ghosts.into_iter().collect::<BTreeSet<_>>();
