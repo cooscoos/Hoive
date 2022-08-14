@@ -77,13 +77,8 @@ impl Chip {
 /// * 2 beetles, 3 grasshoppers,
 /// * 1 each of mosquito, ladybird, pill bug.
 pub fn starting_chips<T: Coord>() -> HashMap<Chip, Option<T>> {
-
     let names_list = vec![
-        "s1","s2",
-        "a1","a2","a3",
-        "q1","l1","p1",
-        "b1","b2",
-        "g1","g2","g3"
+        "s1", "s2", "a1", "a2", "a3", "q1", "l1", "p1", "b1", "b2", "g1", "g2", "g3",
     ];
 
     Chip::new_from_list(names_list)
