@@ -138,7 +138,7 @@ impl Coord for Cube {
         let res = b - a;
 
         // find normalisation. Divide by 2 because translating from 3-coord cubic to a hex grid needs
-        let norm_sq = (res.vector_sqsum()/2) as f32;
+        let norm_sq = (res.vector_sqsum() / 2) as f32;
         let norm = norm_sq.sqrt() as i8;
 
         // This is the unit vector going from a to b

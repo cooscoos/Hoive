@@ -122,40 +122,38 @@ pub fn beetle_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveSta
 
 /// Check whether grasshopper can move from source to dest
 pub fn ghopper_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
-    // grasshopper can move in 6 directions only
-    // get the unit vector of its proposed travel direction
-    let travel_dir = board.coord.get_unitvec(*source, *dest);
-
-    println!("Travel_dir = {:?}", travel_dir);
-
-    // make sure it's one of the 6 allowed directions: these 6 directions are the same as the coords of neighbours of the origin
+    // A grasshopper can move in a straght line in one of 6 directions --- we'll call them the cardinal directions.
+    // The cardinal directions have the same unit vectors as the coordinates of the 6 neighbours of the origin
     let allowed_dirs = board.coord.neighbours_layer0(T::new(0, 0, 0));
 
-    println!("Allowed dirs = {:?}", allowed_dirs);
+    // Get the unit vector of the grasshopper's proposed travel direction and make sure it's moving in an allowed direction.
+    let travel_dir = board.coord.get_unitvec(*source, *dest);
 
     if !allowed_dirs.contains(&travel_dir) {
         return MoveStatus::NoJump;
     }
 
-    // travel one step at a time in travel_dir until you reach dest hex, making sure all hexes on the way are occupied
+    // Start one step away from the grasshopper's location.
+    let mut current_pos = *source + travel_dir;
 
-    // number of steps to get from source to dest
-    let mut current_pos = *source;
+    // If we're already at the destination hex, then we've tried to move to an immediate empty neighbour
+    // without hopping over occupied hexes. Grasshoppr can't do this.
+    if current_pos == *dest {
+        return MoveStatus::NoJump;
+    }
 
-    // This needs a bit of a tweak. Make sure it can handle going to a neighbour.
+    // Now, keep travelling one step at a time until we reach dest, making sure all hexes on the way are occupied
     while current_pos < *dest {
-        // Add a step
-        
-        current_pos = current_pos + travel_dir;
-
-        println!("Current position of {:?} is empty?: {}", current_pos, board.get_chip(current_pos).is_none());
-        // check if we're going over an occupied hex
+        // If we're ever leaping over an unoccupied hex, then we can't do this jump.
         if board.get_chip(current_pos) == None {
             return MoveStatus::NoJump;
         }
+
+        // Add a step
+        current_pos = current_pos + travel_dir;
     }
 
-    // othewise success.
+    // If we passed all of these tests, the jump was okay
     MoveStatus::Success
 }
 
