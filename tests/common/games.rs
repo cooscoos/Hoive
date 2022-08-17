@@ -1,6 +1,6 @@
 // Snapshots of boards used for other tests
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use hoive::game::{board::Board, comps::Chip, comps::Team, history::History};
 use hoive::maths::coord::DoubleHeight;
@@ -21,28 +21,32 @@ pub fn test_board<T: Coord>(coord: T) -> Board<T> {
 
 fn test_chips<T: Coord>() -> HashMap<Chip, Option<T>> {
     // During some tests we want lots of chips that move freely. Give each team 8 ants, 1 bee
-    HashMap::from([
-        // Black team's chips
-        (Chip::new("a1", Team::Black), None),
-        (Chip::new("a2", Team::Black), None),
-        (Chip::new("a3", Team::Black), None),
-        (Chip::new("a4", Team::Black), None),
-        (Chip::new("a5", Team::Black), None),
-        (Chip::new("a6", Team::Black), None),
-        (Chip::new("a7", Team::Black), None),
-        (Chip::new("a8", Team::Black), None),
-        (Chip::new("q1", Team::Black), None),
-        // White team's chips
-        (Chip::new("a1", Team::White), None),
-        (Chip::new("a2", Team::White), None),
-        (Chip::new("a3", Team::White), None),
-        (Chip::new("a4", Team::White), None),
-        (Chip::new("a5", Team::White), None),
-        (Chip::new("a6", Team::White), None),
-        (Chip::new("a7", Team::White), None),
-        (Chip::new("a8", Team::White), None),
-        (Chip::new("q1", Team::White), None),
-    ])
+
+    let names_list = vec!["a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "q1"];
+
+    Chip::new_from_list(names_list)
+}
+
+/// Create a vec of Cubes based on input vec of tuples
+pub fn cubes_from_list(coord_list: Vec<(i8, i8, i8)>) -> Vec<Cube> {
+    let mut coord_vec = Vec::new();
+
+    coord_list.into_iter().for_each(|(q, r, s)| {
+        coord_vec.push(Cube::new(q, r, s));
+    });
+
+    coord_vec
+}
+
+/// Create a HashSet of Cubes based on input vec of tuples
+pub fn cubehash_from_list(coord_list: Vec<(i8, i8, i8)>) -> HashSet<Cube> {
+    let mut coord_vec = HashSet::new();
+
+    coord_list.into_iter().for_each(|(q, r, s)| {
+        coord_vec.insert(Cube::new(q, r, s));
+    });
+
+    coord_vec
 }
 
 pub fn game_snapshot_1() -> Board<Cube> {

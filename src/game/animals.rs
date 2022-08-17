@@ -120,6 +120,43 @@ pub fn beetle_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveSta
     }
 }
 
+/// Check whether grasshopper can move from source to dest
+pub fn ghopper_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
+    // A grasshopper can move in a straght line in one of 6 directions --- we'll call them the cardinal directions.
+    // The cardinal directions have the same unit vectors as the coordinates of the 6 neighbours of the origin
+    let allowed_dirs = board.coord.neighbours_layer0(T::new(0, 0, 0));
+
+    // Get the unit vector of the grasshopper's proposed travel direction and make sure it's moving in an allowed direction.
+    let travel_dir = board.coord.get_unitvec(*source, *dest);
+
+    if !allowed_dirs.contains(&travel_dir) {
+        return MoveStatus::NoJump;
+    }
+
+    // Start one step away from the grasshopper's location.
+    let mut current_pos = *source + travel_dir;
+
+    // If we're already at the destination hex, then we've tried to move to an immediate empty neighbour
+    // without hopping over occupied hexes. Grasshoppr can't do this.
+    if current_pos == *dest {
+        return MoveStatus::NoJump;
+    }
+
+    // Now, keep travelling one step at a time until we reach dest, making sure all hexes on the way are occupied
+    while current_pos < *dest {
+        // If we're ever leaping over an unoccupied hex, then we can't do this jump.
+        if board.get_chip(current_pos) == None {
+            return MoveStatus::NoJump;
+        }
+
+        // Add a step
+        current_pos = current_pos + travel_dir;
+    }
+
+    // If we passed all of these tests, the jump was okay
+    MoveStatus::Success
+}
+
 /// A modified distance-limited flood fill which can find movement ranges around and over obstacles.
 /// Useful for spiders and ladybirds.
 /// See: https://www.redblobgames.com/grids/hexagons/#distances

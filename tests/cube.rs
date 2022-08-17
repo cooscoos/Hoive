@@ -6,6 +6,7 @@ use std::collections::BTreeSet;
 
 mod common;
 use common::basic; // basic tests that work with all co-ordinate systems
+use common::games::cubes_from_list;
 use common::games::{game_snapshot_1, test_board}; // Half played games of Hive
 
 #[test]
@@ -141,22 +142,21 @@ fn cube_from_dheight_complicated() {
     ];
 
     // Map all of these moves to cube co-ords
-    let mut hex_moves = moves_list
+    let hex_moves = moves_list
         .iter()
         .map(|xy| board.coord.mapfrom_doubleheight(DoubleHeight::from((*xy))))
         .collect::<Vec<Cube>>();
 
-    // We'd expect the output to be this
-    let mut expected = vec![
-        Cube::new(0, 0, 0),
-        Cube::new(0, -1, 1),
-        Cube::new(0, -2, 2),
-        Cube::new(1, -2, 1),
-        Cube::new(2, -3, 1),
-        Cube::new(1, 0, -1),
-        Cube::new(0, 1, -1),
-        Cube::new(0, 2, -2),
-    ];
+    let expected = cubes_from_list(vec![
+        (0, 0, 0),
+        (0, -1, 1),
+        (0, -2, 2),
+        (1, -2, 1),
+        (2, -3, 1),
+        (1, 0, -1),
+        (0, 1, -1),
+        (0, 2, -2),
+    ]);
 
     // Shove both results into a BTreeSet to ensure order is the same
     let hex_ordered = hex_moves.into_iter().collect::<BTreeSet<_>>();

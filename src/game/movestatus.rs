@@ -18,6 +18,7 @@ use super::comps::{Chip, Team};
 /// NotNeighbour| Target hex isn't a neighbour
 /// BeetleBlock | A beetle on top of you is blocking your move
 /// BeetleGate | A beetle gate is preventing the move
+/// NoJump | Grasshopper can't make this jump
 #[derive(Debug, Eq, PartialEq)]
 pub enum MoveStatus {
     Success,
@@ -38,4 +39,6 @@ pub enum MoveStatus {
 
     BeetleBlock,
     BeetleGate,
+
+    NoJump,
 }

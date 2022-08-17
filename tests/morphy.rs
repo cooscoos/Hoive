@@ -3,6 +3,10 @@
 use hoive::maths::{coord::Coord, coord::Cube, morphops};
 use std::collections::BTreeSet;
 use std::collections::HashSet;
+use std::vec;
+
+mod common;
+use common::games::{cubehash_from_list, cubes_from_list};
 
 #[test]
 fn test_dilate() {
@@ -12,15 +16,15 @@ fn test_dilate() {
 
     let dilated = morphops::dilate(&coord, &vec);
 
-    let expected = vec![
-        Cube::new(0, -1, 1),
-        Cube::new(1, -1, 0),
-        Cube::new(-1, 0, 1),
-        Cube::new(0, 0, 0),
-        Cube::new(1, 0, -1),
-        Cube::new(-1, 1, 0),
-        Cube::new(0, 1, -1),
-    ];
+    let expected = cubes_from_list(vec![
+        (0, -1, 1),
+        (1, -1, 0),
+        (-1, 0, 1),
+        (0, 0, 0),
+        (1, 0, -1),
+        (-1, 1, 0),
+        (0, 1, -1),
+    ]);
 
     // Shove both results into a BTreeSet to ensure order is the same
     let dilated_ordered = dilated.into_iter().collect::<BTreeSet<_>>();
@@ -56,28 +60,29 @@ fn test_close_reversible() {
 #[test]
 fn test_close_closes() {
     // Close a gap in the centre of a ring
-    let ring = HashSet::from([
-        Cube::new(0, -1, 1),
-        Cube::new(1, -1, 0),
-        Cube::new(-1, 0, 1),
-        Cube::new(1, 0, -1),
-        Cube::new(-1, 1, 0),
-        Cube::new(0, 1, -1),
+
+    let ring = cubehash_from_list(vec![
+        (0, -1, 1),
+        (1, -1, 0),
+        (-1, 0, 1),
+        (1, 0, -1),
+        (-1, 1, 0),
+        (0, 1, -1),
     ]);
 
-    let mut expected = HashSet::from([
-        Cube::new(0, -1, 1),
-        Cube::new(1, -1, 0),
-        Cube::new(-1, 0, 1),
-        Cube::new(0, 0, 0),
-        Cube::new(1, 0, -1),
-        Cube::new(-1, 1, 0),
-        Cube::new(0, 1, -1),
+    let expected = cubehash_from_list(vec![
+        (0, -1, 1),
+        (1, -1, 0),
+        (-1, 0, 1),
+        (0, 0, 0),
+        (1, 0, -1),
+        (-1, 1, 0),
+        (0, 1, -1),
     ]);
 
     let coord = Cube::default();
 
-    let mut closed_ring = morphops::close(&coord, &ring);
+    let closed_ring = morphops::close(&coord, &ring);
 
     // Shove both results into a BTreeSet to ensure order is the same
     let closed_ordered = closed_ring.into_iter().collect::<BTreeSet<_>>();
@@ -89,20 +94,20 @@ fn test_close_closes() {
 #[test]
 fn test_close_new() {
     // Close a gap in the centre of a ring
-    let ring = HashSet::from([
-        Cube::new(0, -1, 1),
-        Cube::new(1, -1, 0),
-        Cube::new(-1, 0, 1),
-        Cube::new(1, 0, -1),
-        Cube::new(-1, 1, 0),
-        Cube::new(0, 1, -1),
+    let ring = cubehash_from_list(vec![
+        (0, -1, 1),
+        (1, -1, 0),
+        (-1, 0, 1),
+        (1, 0, -1),
+        (-1, 1, 0),
+        (0, 1, -1),
     ]);
 
-    let mut expected = vec![Cube::new(0, 0, 0)];
+    let expected = vec![Cube::new(0, 0, 0)];
 
     let coord = Cube::default();
 
-    let mut closed_ring = morphops::close_new(&coord, &ring);
+    let closed_ring = morphops::close_new(&coord, &ring);
 
     // Shove both results into a BTreeSet to ensure order is the same
     let closed_ordered = closed_ring.into_iter().collect::<BTreeSet<_>>();
@@ -114,31 +119,28 @@ fn test_close_new() {
 #[test]
 fn test_gap_closure() {
     // Create a gap that an ant shouldn't be able to pass (see /reference/before_gap.png)
-    let before_gap = HashSet::from([
-        Cube::new(-1, 3, -2),
-        Cube::new(-1, 2, -1),
-        Cube::new(-1, 1, 0),
-        Cube::new(0, 0, 0),
-        Cube::new(1, -1, 0),
-        Cube::new(2, -1, -1),
-        Cube::new(2, 0, -2),
-        Cube::new(2, 1, -3),
-        Cube::new(1, 2, -3),
-        Cube::new(-1, 0, 1),
-        Cube::new(1, -2, 1),
+
+    let before_gap = cubehash_from_list(vec![
+        (-1, 3, -2),
+        (-1, 2, -1),
+        (-1, 1, 0),
+        (0, 0, 0),
+        (1, -1, 0),
+        (2, -1, -1),
+        (2, 0, -2),
+        (2, 1, -3),
+        (1, 2, -3),
+        (-1, 0, 1),
+        (1, -2, 1),
     ]);
 
     // Create ghost hexes to close the gaap that the ant can't pass
     let coord = Cube::default();
-    let mut ghosts = morphops::gap_closure(&coord, &before_gap);
+    let ghosts = morphops::gap_closure(&coord, &before_gap);
 
     // Ghosts should appear at these locations
-    let mut expected = vec![
-        Cube::new(0, 1, -1),
-        Cube::new(1, 0, -1),
-        Cube::new(0, 2, -2),
-        Cube::new(1, 1, -2),
-    ];
+
+    let expected = cubes_from_list(vec![(0, 1, -1), (1, 0, -1), (0, 2, -2), (1, 1, -2)]);
 
     // Shove both results into a BTreeSet to ensure order is the same
     let ghosts_ordered = ghosts.into_iter().collect::<BTreeSet<_>>();

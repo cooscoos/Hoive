@@ -4,12 +4,11 @@ The boardgame Hive, written in Rust.
 Done so far:
 * play the game in terminal with cargo run
 * basic rules working
-* every animal except grasshopper and mosquito
+* every animal except mosquito
 
 ## To do
 ### Other animals
 To finish:
-* grashopper - line drawing - then a check to see if it's straight and only goes over occupied hexes
 * mosquito - special move to become neighbour. Must be beetle if in layer >0.
 
 ### Tidy up

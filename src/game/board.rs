@@ -219,7 +219,8 @@ where
             'q' | 'p' => animals::bee_check(self, source, dest), // bees and pillbugs
             'l' => animals::ladybird_check(self, source, dest), // ladybirds
             'b' => animals::beetle_check(self, source, dest), // beetles
-            _ => MoveStatus::Success,                      // todo, other animals
+            'g' => animals::ghopper_check(self, source, dest), // grasshoppers
+            _ => MoveStatus::Success,                      // todo, mosquito
         }
     }
 

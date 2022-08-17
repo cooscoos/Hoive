@@ -1,6 +1,7 @@
 use crate::maths::coord::{Coord, Cube};
 /// Module with the components of a game: the teams and chips
 use std::collections::HashMap;
+use std::hash::Hash;
 use std::ops::Not;
 
 /// Enum for the two teams, Team::Black and Team::White
@@ -35,9 +36,19 @@ pub struct Chip {
 }
 
 impl Chip {
-    /// Create a new chip with given name and team.
+    /// Create one new chip with given name and team.
     pub fn new(name: &'static str, team: Team) -> Self {
         Chip { name, team }
+    }
+
+    /// Create a HashMap of new chips for both teams at position None based a list of names
+    pub fn new_from_list<T: Coord>(names_list: Vec<&'static str>) -> HashMap<Self, Option<T>> {
+        let mut chip_map = HashMap::new();
+        names_list.into_iter().for_each(|n| {
+            chip_map.insert(Chip::new(n, Team::White), None); // white team
+            chip_map.insert(Chip::new(n, Team::Black), None); // black team
+        });
+        chip_map
     }
 
     /// Elevate a beetle
@@ -66,30 +77,11 @@ impl Chip {
 /// * 2 beetles, 3 grasshoppers,
 /// * 1 each of mosquito, ladybird, pill bug.
 pub fn starting_chips<T: Coord>() -> HashMap<Chip, Option<T>> {
-    HashMap::from([
-        // Black team's chips
-        (Chip::new("s1", Team::Black), None),
-        (Chip::new("s2", Team::Black), None),
-        (Chip::new("a1", Team::Black), None),
-        (Chip::new("a2", Team::Black), None),
-        (Chip::new("a3", Team::Black), None),
-        (Chip::new("q1", Team::Black), None),
-        (Chip::new("l1", Team::Black), None),
-        (Chip::new("p1", Team::Black), None),
-        (Chip::new("b1", Team::Black), None),
-        (Chip::new("b2", Team::Black), None),
-        // White team's chips
-        (Chip::new("s1", Team::White), None),
-        (Chip::new("s2", Team::White), None),
-        (Chip::new("a1", Team::White), None),
-        (Chip::new("a2", Team::White), None),
-        (Chip::new("a3", Team::White), None),
-        (Chip::new("q1", Team::White), None),
-        (Chip::new("l1", Team::White), None),
-        (Chip::new("p1", Team::White), None),
-        (Chip::new("b1", Team::White), None),
-        (Chip::new("b2", Team::White), None),
-    ])
+    let names_list = vec![
+        "s1", "s2", "a1", "a2", "a3", "q1", "l1", "p1", "b1", "b2", "g1", "g2", "g3",
+    ];
+
+    Chip::new_from_list(names_list)
 }
 
 /// Convert a chip_name String (on the heap) to a static str on the stack)
