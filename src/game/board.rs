@@ -5,6 +5,8 @@ use super::comps::{self, Chip, Team}; // Game components (chips, teams)
 use crate::game::{animals, history::History, movestatus::MoveStatus}; // Animal logic, move tracking and history
 use crate::maths::coord::Coord; // Hexagonal coordinate system
 
+
+
 /// The Board struct keeps track of game's progress, history and execution of rules
 #[derive(Debug, Eq, PartialEq)]
 pub struct Board<T: Coord> {
@@ -43,6 +45,7 @@ where
 
         // Increment turns by 1
         self.turns += 1;
+
     }
 
     /// Try move a chip, of given name and team, to a new position.
@@ -116,8 +119,11 @@ where
             return MoveStatus::NoBee;
         }
 
+        // if it's a beetle (or a mosquito imitating one)
+        let is_beetle = chip.name.starts_with('b') || chip.name.ends_with('b');
+
         // Allow the chip to switch layers if it's a beetle
-        let destin = match chip.name.starts_with('b') {
+        let destin = match is_beetle {
             true => animals::layer_adjust(self, dest),
             false => dest,
         };
@@ -215,10 +221,10 @@ where
 
         // If it's a mosquito, we'll treat the chip name as the second char
 
-        let checker = match chip.name.chars().next().unwrap() == 'm' {
-            true =>  chip.name.chars().next().unwrap(), // call next twice
+        let is_mosquito = chip.name.chars().next().unwrap() == 'm';
+        let checker = match is_mosquito {
+            true =>  chip.name.chars().skip(1).next().unwrap(), // skip the first letter if mosquito
             false => chip.name.chars().next().unwrap(), 
-
         };
 
         // Match on chip animal (first character of chip.name)
@@ -231,7 +237,15 @@ where
             'g' => animals::ghopper_check(self, source, dest), // grasshoppers
             _ => !unreachable!(),                      // there are no other valid chip names, mosquitos don't have their own movesets
         }
+
+
+
+
     }
+
+
+
+    
 
     /// Check if there's something one layer above this location
     fn sat_on_me(&self, source: T) -> bool {

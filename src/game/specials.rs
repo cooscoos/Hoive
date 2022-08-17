@@ -2,6 +2,7 @@
 use super::{board::Board, movestatus::MoveStatus};
 use crate::maths::coord::Coord;
 use std::collections::HashSet;
+use crate::game::comps::Team;
 
 /// This checks if a pillbug can sumo another chip (move adjacent chip to an adjacent empty hex)
 /// If it can, it will execute the move and return MoveStatus::Success.
@@ -65,13 +66,39 @@ pub fn mosquito_suck<T: Coord>(
     // Overwrite the chip's name in the board's HashMap
     board.chips.remove(&chip);
 
-    board.chips.insert(chip.remosquito(victim), Some(position));
+    let newchip = chip.remosquito(victim);
 
-    chip.remosquito(victim).name
+    board.chips.insert(newchip, Some(position));
+
+
+    newchip.name
 
 
 }
 
+
+pub fn mosquito_desuck<T: Coord>(
+    board: &mut Board<T>,
+    name: &'static str, // name of mosquito
+    team: Team,         // team of mosquito
+)   {
+    
+    
+
+    let position  = board.get_position_byname(team, name).unwrap();
+        // Get mosquito
+        let chip = board.get_chip(position).unwrap();
+    
+        // Overwrite the chip's name in the board's HashMap
+        board.chips.remove(&chip);
+    
+    
+        let newchip = chip.demosquito();
+    
+        board.chips.insert(newchip, Some(position));
+    
+    
+    }
 /// Doesn't happen often, but there's an obscure rule that a pillbug cannot sumo
 /// through a beetle gate on the layer above, so this will check for the presence
 /// of a beetle gate when sumoing from source to dest

@@ -5,7 +5,7 @@ use std::io; // For parsing player inputs
 
 use crate::draw::{self, show_board};
 use crate::game::comps::{convert_static, Team};
-use crate::game::specials;
+use crate::game::specials::{self, mosquito_desuck};
 use crate::game::{board::Board, movestatus::MoveStatus};
 use crate::maths::coord::Coord;
 use crate::maths::coord::DoubleHeight;
@@ -311,13 +311,26 @@ fn mosquito_prompts<T: Coord>(
         None => return MoveStatus::Nothing, // abort special move
     };
 
+    // have a catch here, we can't have mosquitos sucking mosquitos
+
     // Execute the special move to become the victim for this turn
     let newname = specials::mosquito_suck(board, source, position);
 
     // Do movement as that animal
     println!("Now select a co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
     let textin = get_usr_input();
-    movement_prompts(board, newname, active_team, textin)
+    
+    let returnstatus = movement_prompts(board, newname, active_team, textin);
+
+    // convert mosquito back to normal if it's on layer 0.
+    // we'd need to know its destination
+    if position.get_layer() == 0 {
+        mosquito_desuck(board, newname, active_team);
+    }
+
+    returnstatus
+
+
 
 
 

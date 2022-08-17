@@ -53,13 +53,15 @@ impl Chip {
 
     /// Elevate a beetle
     pub fn elevate(&self) -> Self {
-        if !self.name.starts_with('b') {
-            panic!("This function should only be used to elevate beetles!")
+        // problem here..
+        if !self.name.contains('b') {
+            panic!("This function should only be used to elevate beetles or mosquito-beetles!")
         }
 
         let new_name = match self.name {
             "b1" => "b1*",
             "b2" => "b2*",
+            "mb" => "mb*",
             _ => unreachable!(),
         };
         Chip {
@@ -72,6 +74,12 @@ impl Chip {
     pub fn remosquito(self, append: char) -> Self {
         let new_name = match append {
             'a' => "ma",
+            'q' => "mq",
+            's' => "ms",
+            'g' => "mg",
+            'b' => "mb",
+            'l' => "ml",
+            'p' => "mp",
             _ => "m1",
         };
 
