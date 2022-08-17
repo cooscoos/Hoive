@@ -3,7 +3,7 @@
 use rand::Rng;
 use std::io; // For parsing player inputs
 
-use crate::draw;
+use crate::draw::{self, show_board};
 use crate::game::comps::{convert_static, Team};
 use crate::game::specials;
 use crate::game::{board::Board, movestatus::MoveStatus};
@@ -61,22 +61,25 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
     let chip_name = chip_selection.unwrap();
 
     // Is this chip a mosquito or pillbug and alreaddy on the board?
-    let morp = (chip_name == "p1" || chip_name == "m1")
-        && board.get_position_byname(active_team, chip_name).is_some();
+    let is_pillbug = chip_name == "p1" && board.get_position_byname(active_team, chip_name).is_some();
+    let is_mosquito = chip_name == "m1" && board.get_position_byname(active_team, chip_name).is_some();
 
-    if morp {
-        println!("Hit m to do special move, or select co-ordinate to move to. If moving, input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
+    let mut textin = String::new();
+    if is_pillbug {
+        println!("Hit m to sumo a neighbour, or select co-ordinate to move to. If moving, input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
+        textin = get_usr_input();
+    } else if is_mosquito {
+        textin = "m".to_string(); // mosquitos always have to a special move, they can't move until they do.
     } else {
         println!("Select co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
+        textin = get_usr_input();
     }
-
-    let textin = get_usr_input();
 
     let return_status;
 
-    if textin == "m" && morp {
+    if textin == "m" && (is_pillbug | is_mosquito) {
         return_status = special_prompts(board, chip_name, active_team);
-    } else if textin == "m" && !morp {
+    } else if textin == "m" && !(is_pillbug | is_mosquito) {
         println!("This chip doesn't have special moves!");
         return_status = MoveStatus::Nothing;
     } else {
@@ -260,7 +263,7 @@ pub fn special_prompts<T: Coord>(
     // Find out if we're dealing with a mosquito or pillbug, then lead the player through the prompts to execute special
     match chip_name {
         "p1" => pillbug_prompts(board, chip_name, active_team), //pillbugs
-        "m1" => MoveStatus::Nothing,                            // mosquito is to do
+        "m1" => mosquito_prompts(board, chip_name, active_team),// mosquito
         _ => panic!("Unrecognised chip"),
     }
 }
@@ -271,34 +274,13 @@ fn pillbug_prompts<T: Coord>(
     chip_name: &'static str,
     active_team: Team,
 ) -> MoveStatus {
-    // Get pillbug's position and neighbour chips
+
+    // Get pillbug's position and prompt the user to select a neighbouring chip to sumo, returning the coords of the victim
     let position = board.get_position_byname(active_team, chip_name).unwrap();
-    let neighbours = board.get_neighbour_chips(position);
-
-    // Ask player to select neighbouring chips from a list (presenting options 1-6 for white and black team chips)
-    println!(
-        "Select which chip to sumo by entering a number up to {}. Hit enter to abort.\n {}",
-        neighbours.len() - 1,
-        draw::list_these_chips(neighbours.clone())
-    );
-
-    let textin = get_usr_input();
-
-    // This will abort
-    if textin.is_empty() {
-        return MoveStatus::Nothing;
-    }
-
-    let selection = match textin.parse::<usize>() {
-        Ok(value) if value < neighbours.len() + 1 => value,
-        _ => {
-            println!("Use a number from the list");
-            return MoveStatus::Nothing;
-        }
+    let source = match neighbour_prompts(board, position, "sumo".to_string()){
+        Some(value) => value,
+        None => return MoveStatus::Nothing, // abort special move
     };
-
-    // get the co-ordinate of the selected chip
-    let source = board.chips.get(&neighbours[selection]).unwrap().unwrap();
 
     // Ask player to select a co-ordinate to sumo to
     println!("Select a co-ordinate to sumo this chip to. Input column then row, separated by a comma, e.g.: 0, 0. Hit enter to abort the sumo.");
@@ -313,6 +295,68 @@ fn pillbug_prompts<T: Coord>(
 
     // Try execute the move and show the game's messages.
     specials::pillbug_sumo(board, source, dest, position)
+}
+
+/// Leads the player through executing a mosquito's suck special move.
+fn mosquito_prompts<T: Coord>(
+    board: &mut Board<T>,
+    chip_name: &'static str,
+    active_team: Team,
+) -> MoveStatus {
+
+    // Get mosquitos's position and prompt the user to select a neighbouring chip to suck, returning the coords of the victim
+    let position = board.get_position_byname(active_team, chip_name).unwrap();
+    let source = match neighbour_prompts(board, position, "suck".to_string()){
+        Some(value) => value,
+        None => return MoveStatus::Nothing, // abort special move
+    };
+
+    // Execute the special move to become the victim for this turn
+    let newname = specials::mosquito_suck(board, source, position);
+
+    // Do movement as that animal
+    println!("Now select a co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
+    let textin = get_usr_input();
+    movement_prompts(board, newname, active_team, textin)
+
+
+
+}
+
+fn neighbour_prompts<T: Coord>(
+    board: &mut Board<T>,
+    position: T,
+    movename: String
+)-> Option<T>{
+
+    let neighbours = board.get_neighbour_chips(position);
+
+    // Ask player to select neighbouring chips from a list (presenting options 1-6 for white and black team chips)
+    println!(
+        "Select which chip to {} by entering a number up to {}. Hit enter to abort.\n {}",
+        movename,
+        neighbours.len() - 1,
+        draw::list_these_chips(neighbours.clone())
+    );
+
+    let textin = get_usr_input();
+
+    // Returning none will abort the special move
+    if textin.is_empty() {
+        return None;
+    }
+
+    let selection = match textin.parse::<usize>() {
+        Ok(value) if value < neighbours.len() + 1 => value,
+        _ => {
+            println!("Use a number from the list");
+            return None;
+        }
+    };
+
+    // get the co-ordinate of the selected chip
+    let source = board.chips.get(&neighbours[selection]).unwrap().unwrap();
+    Some(source)
 }
 
 // Request user input into terminal

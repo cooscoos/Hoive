@@ -212,15 +212,24 @@ where
 
     /// Check if any animal-specific constraints of chip prevent a move from source to dest
     fn animal_constraint(&self, chip: Chip, source: &T, dest: &T) -> MoveStatus {
+
+        // If it's a mosquito, we'll treat the chip name as the second char
+
+        let checker = match chip.name.chars().next().unwrap() == 'm' {
+            true =>  chip.name.chars().next().unwrap(), // call next twice
+            false => chip.name.chars().next().unwrap(), 
+
+        };
+
         // Match on chip animal (first character of chip.name)
-        match chip.name.chars().next().unwrap() {
+        match checker {
             'a' => animals::ant_check(self, source, dest), // ants
             's' => animals::spider_check(self, source, dest), // spiders
             'q' | 'p' => animals::bee_check(self, source, dest), // bees and pillbugs
             'l' => animals::ladybird_check(self, source, dest), // ladybirds
             'b' => animals::beetle_check(self, source, dest), // beetles
             'g' => animals::ghopper_check(self, source, dest), // grasshoppers
-            _ => MoveStatus::Success,                      // todo, mosquito
+            _ => !unreachable!(),                      // there are no other valid chip names, mosquitos don't have their own movesets
         }
     }
 

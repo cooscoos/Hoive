@@ -46,6 +46,32 @@ pub fn pillbug_sumo<T: Coord>(
     basic_constraints
 }
 
+pub fn mosquito_suck<T: Coord>(
+    board: &mut Board<T>,
+    source: T,   // place to grab the power from
+    position: T // position of mosquito
+) -> &'static str  {
+
+    // Get the chip name at position source
+    let chip = board.get_chip(source);
+
+    // return the first letter
+    let victim = chip.unwrap().name.chars().next().unwrap();
+
+    // Get mosquito
+    let chip = board.get_chip(position).unwrap();
+
+
+    // Overwrite the chip's name in the board's HashMap
+    board.chips.remove(&chip);
+
+    board.chips.insert(chip.remosquito(victim), Some(position));
+
+    chip.remosquito(victim).name
+
+
+}
+
 /// Doesn't happen often, but there's an obscure rule that a pillbug cannot sumo
 /// through a beetle gate on the layer above, so this will check for the presence
 /// of a beetle gate when sumoing from source to dest

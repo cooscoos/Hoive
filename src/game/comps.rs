@@ -67,6 +67,22 @@ impl Chip {
             team: self.team,
         }
     }
+
+    // Overwrite a chip name
+    pub fn remosquito(self, append: char) -> Self {
+        let new_name = match append {
+            'a' => "ma",
+            _ => "m1",
+        };
+
+        Chip { name: new_name, team: self.team }
+    }
+
+    // Get rid of suck
+    pub fn demosquito(self) -> Self {
+        Chip {name: "m1", team: self.team}
+    }
+
 }
 
 /// Generate the starting chips for both teams.
@@ -78,7 +94,7 @@ impl Chip {
 /// * 1 each of mosquito, ladybird, pill bug.
 pub fn starting_chips<T: Coord>() -> HashMap<Chip, Option<T>> {
     let names_list = vec![
-        "s1", "s2", "a1", "a2", "a3", "q1", "l1", "p1", "b1", "b2", "g1", "g2", "g3",
+        "s1", "s2", "a1", "a2", "a3", "q1", "l1", "p1", "b1", "b2", "g1", "g2", "g3", "m1"
     ];
 
     Chip::new_from_list(names_list)
