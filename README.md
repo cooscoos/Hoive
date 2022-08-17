@@ -7,9 +7,12 @@ Done so far:
 * every animal except mosquito
 
 ## To do
-### Other animals
-To finish:
-* mosquito - special move to become neighbour. Must be beetle if in layer >0.
+### Mosquito
+
+Mosquito - special move to become neighbour.
+need pmoore edits for special move
+Must remain as beetle if in layer >0.
+
 
 ### Tidy up
 
