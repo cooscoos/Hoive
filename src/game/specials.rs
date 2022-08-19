@@ -1,8 +1,8 @@
 /// Module for rules that govern the special moves of the pillbug and mosquito
 use super::{board::Board, movestatus::MoveStatus};
+use crate::game::comps::Team;
 use crate::maths::coord::Coord;
 use std::collections::HashSet;
-use crate::game::comps::Team;
 
 /// This checks if a pillbug can sumo another chip (move adjacent chip to an adjacent empty hex)
 /// If it can, it will execute the move and return MoveStatus::Success.
@@ -47,21 +47,32 @@ pub fn pillbug_sumo<T: Coord>(
     basic_constraints
 }
 
+
+/// Suck power from source using mosquito at position
 pub fn mosquito_suck<T: Coord>(
     board: &mut Board<T>,
     source: T,   // place to grab the power from
-    position: T // position of mosquito
-) -> &'static str  {
-
+    position: T, // position of mosquito
+) -> Option<&'static str> {
     // Get the chip name at position source
     let chip = board.get_chip(source);
 
     // return the first letter
     let victim = chip.unwrap().name.chars().next().unwrap();
 
+    // If the victim's a mosquito, return a problem
+    if victim == 'm' {
+        return None;
+    }
+
     // Get mosquito
     let chip = board.get_chip(position).unwrap();
 
+
+
+    // make sure the suckee is a neighbour
+    let neighbours = board.coord.neighbours_layer0(position);
+    assert!(neighbours.contains(&source));
 
     // Overwrite the chip's name in the board's HashMap
     board.chips.remove(&chip);
@@ -70,35 +81,25 @@ pub fn mosquito_suck<T: Coord>(
 
     board.chips.insert(newchip, Some(position));
 
-
-    newchip.name
-
-
+    Some(newchip.name)
 }
-
 
 pub fn mosquito_desuck<T: Coord>(
     board: &mut Board<T>,
     name: &'static str, // name of mosquito
     team: Team,         // team of mosquito
-)   {
-    
-    
+) {
+    let position = board.get_position_byname(team, name).unwrap();
+    // Get mosquito
+    let chip = board.get_chip(position).unwrap();
 
-    let position  = board.get_position_byname(team, name).unwrap();
-        // Get mosquito
-        let chip = board.get_chip(position).unwrap();
-    
-        // Overwrite the chip's name in the board's HashMap
-        board.chips.remove(&chip);
-    
-    
-        let newchip = chip.demosquito();
-    
-        board.chips.insert(newchip, Some(position));
-    
-    
-    }
+    // Overwrite the chip's name in the board's HashMap
+    board.chips.remove(&chip);
+
+    let newchip = chip.demosquito();
+
+    board.chips.insert(newchip, Some(position));
+}
 /// Doesn't happen often, but there's an obscure rule that a pillbug cannot sumo
 /// through a beetle gate on the layer above, so this will check for the presence
 /// of a beetle gate when sumoing from source to dest

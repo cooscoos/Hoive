@@ -5,8 +5,6 @@ use super::comps::{self, Chip, Team}; // Game components (chips, teams)
 use crate::game::{animals, history::History, movestatus::MoveStatus}; // Animal logic, move tracking and history
 use crate::maths::coord::Coord; // Hexagonal coordinate system
 
-
-
 /// The Board struct keeps track of game's progress, history and execution of rules
 #[derive(Debug, Eq, PartialEq)]
 pub struct Board<T: Coord> {
@@ -45,7 +43,6 @@ where
 
         // Increment turns by 1
         self.turns += 1;
-
     }
 
     /// Try move a chip, of given name and team, to a new position.
@@ -120,7 +117,12 @@ where
         }
 
         // if it's a beetle (or a mosquito on a higher layer imitating one)
-        let is_beetle = chip.name.contains('b') || self.get_position_byname(chip.team, chip.name).unwrap().get_layer() > 0 ;
+        let is_beetle = chip.name.contains('b')
+            || self
+                .get_position_byname(chip.team, chip.name)
+                .unwrap()
+                .get_layer()
+                > 0;
 
         // Allow the chip to switch layers if it's a beetle
         let destin = match is_beetle {
@@ -218,23 +220,25 @@ where
 
     /// Check if any animal-specific constraints of chip prevent a move from source to dest
     fn animal_constraint(&self, chip: Chip, source: &T, dest: &T) -> MoveStatus {
-
         // If it's a mosquito, we'll treat the chip name as the second char
 
-        let is_mosquito = chip.name.chars().next().unwrap() == 'm';
+        let is_mosquito = chip.name.starts_with('m');
         let checker = match is_mosquito {
-            true =>  {
-                match self.get_position_byname(chip.team, chip.name).unwrap().get_layer() > 0 {
+            true => {
+                match self
+                    .get_position_byname(chip.team, chip.name)
+                    .unwrap()
+                    .get_layer()
+                    > 0
+                {
                     true => 'b',
-                    false => chip.name.chars().skip(1).next().unwrap(), // skip the first letter if mosquito
+                    false => chip.name.chars().nth(1).unwrap(), // skip the first letter if mosquito
                 }
-            
             }
-            false => chip.name.chars().next().unwrap(), 
+            false => chip.name.chars().next().unwrap(),
         };
 
         // if it's a mosquito on layer >0, it's really a beetle
-
 
         // Match on chip animal (first character of chip.name)
         match checker {
@@ -244,17 +248,9 @@ where
             'l' => animals::ladybird_check(self, source, dest), // ladybirds
             'b' => animals::beetle_check(self, source, dest), // beetles
             'g' => animals::ghopper_check(self, source, dest), // grasshoppers
-            _ => !unreachable!(),                      // there are no other valid chip names, mosquitos don't have their own movesets
+            _ => panic!("No other animals should exist"), // there are no other valid chip names, mosquitos don't have their own movesets
         }
-
-
-
-
     }
-
-
-
-    
 
     /// Check if there's something one layer above this location
     fn sat_on_me(&self, source: T) -> bool {

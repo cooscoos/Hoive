@@ -9,7 +9,11 @@ Done so far:
 ## To do
 ### Mosquito
 
-Basically working. Just need a good old test, then  tidy up.
+Logic for mosquito is embedded in pmoore. Needs to be embedded in board if things are going to work with history
+
+Get test mosquito working
+
+Tidy up.
 
 
 ### Tidy up

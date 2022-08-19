@@ -3,7 +3,7 @@
 use rand::Rng;
 use std::io; // For parsing player inputs
 
-use crate::draw::{self, show_board};
+use crate::draw::{self};
 use crate::game::comps::{convert_static, Team};
 use crate::game::specials::{self, mosquito_desuck};
 use crate::game::{board::Board, movestatus::MoveStatus};
@@ -65,7 +65,7 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
     let is_pillbug = chip_name == "p1" && on_board.is_some();
     let is_mosquito = chip_name == "m1" && on_board.is_some() && on_board.unwrap().get_layer() == 0;
 
-    let mut textin = String::new();
+    let textin;
     if is_pillbug {
         println!("Hit m to sumo a neighbour, or select co-ordinate to move to. If moving, input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
         textin = get_usr_input();
@@ -149,7 +149,7 @@ fn movement_prompts<T: Coord>(
     chip_name: &'static str,
     active_team: Team,
     textin: String,
-) -> MoveStatus{
+) -> MoveStatus {
     // Ask user to input dheight co-ordinates
     let coord = match coord_prompts(textin) {
         None => return MoveStatus::Nothing, // abort move
@@ -163,8 +163,6 @@ fn movement_prompts<T: Coord>(
 
     // Try execute the move.
     board.move_chip(chip_name, active_team, game_hex)
-
-    
 }
 
 /// Ask user to select a coordinate or hit enter to return None so that we can
@@ -244,6 +242,9 @@ fn message<T: Coord>(board: &mut Board<T>, move_status: &MoveStatus) {
         MoveStatus::NoJump => {
             println!("\n\x1b[31;1m<< Grasshopper can't make this jump >>\x1b[0m\n")
         }
+        MoveStatus::NoSuck => {
+            println!("\n\x1b[31;1m<< Mosquito can't absorb from another mosquito >>\x1b[0m\n")
+        }
         MoveStatus::Win(teamopt) => {
             println!("{}\n", draw::show_board(board, 5));
             match teamopt {
@@ -269,7 +270,7 @@ pub fn special_prompts<T: Coord>(
     // Find out if we're dealing with a mosquito or pillbug, then lead the player through the prompts to execute special
     match chip_name {
         "p1" => pillbug_prompts(board, chip_name, active_team), //pillbugs
-        "m1" => mosquito_prompts(board, chip_name, active_team),// mosquito
+        "m1" => mosquito_prompts(board, chip_name, active_team), // mosquito
         _ => panic!("Unrecognised chip"),
     }
 }
@@ -280,10 +281,9 @@ fn pillbug_prompts<T: Coord>(
     chip_name: &'static str,
     active_team: Team,
 ) -> MoveStatus {
-
     // Get pillbug's position and prompt the user to select a neighbouring chip to sumo, returning the coords of the victim
     let position = board.get_position_byname(active_team, chip_name).unwrap();
-    let source = match neighbour_prompts(board, position, "sumo".to_string()){
+    let source = match neighbour_prompts(board, position, "sumo".to_string()) {
         Some(value) => value,
         None => return MoveStatus::Nothing, // abort special move
     };
@@ -309,10 +309,9 @@ fn mosquito_prompts<T: Coord>(
     chip_name: &'static str,
     active_team: Team,
 ) -> MoveStatus {
-
     // Get mosquitos's position and prompt the user to select a neighbouring chip to suck, returning the coords of the victim
     let position = board.get_position_byname(active_team, chip_name).unwrap();
-    let source = match neighbour_prompts(board, position, "suck".to_string()){
+    let source = match neighbour_prompts(board, position, "suck".to_string()) {
         Some(value) => value,
         None => return MoveStatus::Nothing, // abort special move
     };
@@ -320,13 +319,16 @@ fn mosquito_prompts<T: Coord>(
     // have a catch here, we can't have mosquitos sucking mosquitos
 
     // Execute the special move to become the victim for this turn
-    let newname = specials::mosquito_suck(board, source, position);
+    let newname = match specials::mosquito_suck(board, source, position) {
+        Some(value) => value,
+        None => return MoveStatus::NoSuck,
+    };
 
     // Do movement as that animal
     println!("Now select a co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
     let textin = get_usr_input();
-    
-    let returnstatus= movement_prompts(board, newname, active_team, textin);
+
+    let returnstatus = movement_prompts(board, newname, active_team, textin);
 
     // get the destination based on the chip's new position in the hashmap
     //let dest = board.get_position_byname(active_team, newname).unwrap();
@@ -336,18 +338,10 @@ fn mosquito_prompts<T: Coord>(
     mosquito_desuck(board, newname, active_team);
     //}
 
-    
-
     returnstatus
-
 }
 
-fn neighbour_prompts<T: Coord>(
-    board: &mut Board<T>,
-    position: T,
-    movename: String
-)-> Option<T>{
-
+fn neighbour_prompts<T: Coord>(board: &mut Board<T>, position: T, movename: String) -> Option<T> {
     let neighbours = board.get_neighbour_chips(position);
 
     // Ask player to select neighbouring chips from a list (presenting options 1-6 for white and black team chips)

@@ -53,7 +53,6 @@ impl Chip {
 
     /// Elevate a beetle
     pub fn elevate(&self) -> Self {
-
         let new_name = match self.name {
             "b1" => "b1*",
             "b2" => "b2*",
@@ -79,14 +78,19 @@ impl Chip {
             _ => "m1",
         };
 
-        Chip { name: new_name, team: self.team }
+        Chip {
+            name: new_name,
+            team: self.team,
+        }
     }
 
     // Get rid of suck
     pub fn demosquito(self) -> Self {
-        Chip {name: "m1", team: self.team}
+        Chip {
+            name: "m1",
+            team: self.team,
+        }
     }
-
 }
 
 /// Generate the starting chips for both teams.
@@ -98,11 +102,12 @@ impl Chip {
 /// * 1 each of mosquito, ladybird, pill bug.
 pub fn starting_chips<T: Coord>() -> HashMap<Chip, Option<T>> {
     let names_list = vec![
-        "s1", "s2", "a1", "a2", "a3", "q1", "l1", "p1", "b1", "b2", "g1", "g2", "g3", "m1"
+        "s1", "s2", "a1", "a2", "a3", "q1", "l1", "p1", "b1", "b2", "g1", "g2", "g3", "m1",
     ];
 
     Chip::new_from_list(names_list)
 }
+
 
 /// Convert a chip_name String (on the heap) to a static str on the stack)
 pub fn convert_static(chip_string: String) -> Option<&'static str> {
