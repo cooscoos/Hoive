@@ -9,11 +9,7 @@ Done so far:
 ## To do
 ### Mosquito
 
-Mosquito - special move to become neighbour.
-need pmoore edits for special move
-Must remain as beetle if in layer >0.
-
-Solve issue with mosquito beetles in comps line 57
+Basically working. Just need a good old test, then  tidy up.
 
 
 ### Tidy up
