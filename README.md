@@ -9,7 +9,9 @@ Done so far:
 ## To do
 ### Mosquito
 
-Logic for mosquito is embedded in pmoore. Needs to be embedded in board if things are going to work with history
+Logic for mosquito is embedded in pmoore. Needs to be embedded in board if things are going to work with history.
+
+Logic for mosquito doesn't allow it to sumo. Really the mosquito to completely restart pmoore turn as the sucked beast.
 
 Get test mosquito working
 

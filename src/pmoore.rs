@@ -84,7 +84,10 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
         println!("This chip doesn't have special moves!");
         return_status = MoveStatus::Nothing;
     } else {
-        return_status = movement_prompts(board, chip_name, active_team, textin);
+        return_status = match movement_prompts(board, textin) {
+            Some(value) => board.move_chip(chip_name, active_team, value),
+            None => MoveStatus::Nothing,
+        };
     }
 
     // The board will handle itself. Patrick just needs to print messages for player
@@ -146,13 +149,11 @@ fn chip_select<T: Coord>(board: &Board<T>, active_team: Team) -> Option<&'static
 /// Returns the movestatus and the coordinate the player moved to
 fn movement_prompts<T: Coord>(
     board: &mut Board<T>,
-    chip_name: &'static str,
-    active_team: Team,
     textin: String,
-) -> MoveStatus {
+) -> Option<T> {
     // Ask user to input dheight co-ordinates
     let coord = match coord_prompts(textin) {
-        None => return MoveStatus::Nothing, // abort move
+        None => return None, // abort move
         Some((row, col)) => (row, col),
     };
 
@@ -162,7 +163,9 @@ fn movement_prompts<T: Coord>(
     let game_hex = board.coord.mapfrom_doubleheight(moveto);
 
     // Try execute the move.
-    board.move_chip(chip_name, active_team, game_hex)
+    // Return the hex
+    Some(game_hex)
+
 }
 
 /// Ask user to select a coordinate or hit enter to return None so that we can
@@ -328,16 +331,17 @@ fn mosquito_prompts<T: Coord>(
     println!("Now select a co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
     let textin = get_usr_input();
 
-    let returnstatus = movement_prompts(board, newname, active_team, textin);
-
-    // get the destination based on the chip's new position in the hashmap
-    //let dest = board.get_position_byname(active_team, newname).unwrap();
-
-    // convert mosquito back to normal so that we can grab it next turn.
-    //if dest.get_layer() == 0 {
+    let returnstatus = match movement_prompts(board, textin){
+        Some(value) => {
+            // call something within board to handle mosquito fakename, and do the desuck
+            board.move_chip(newname, active_team,value)
+        }
+        ,
+        None => MoveStatus::Nothing,
+    };
     mosquito_desuck(board, newname, active_team);
-    //}
 
+  
     returnstatus
 }
 

@@ -5,7 +5,10 @@ use std::io::{prelude::*, BufReader};
 
 use super::board::Board;
 use super::comps::{convert_static, Chip, Team};
+use crate::game::comps::starting_chips;
 use crate::maths::coord::{Coord, DoubleHeight};
+
+use super::specials;
 
 /// Every event in a game of hive is a chip_name on a given team attempting a movement
 #[derive(Debug, Eq, PartialEq)]
@@ -175,13 +178,53 @@ pub fn emulate<T: Coord>(board: &mut Board<T>, filename: String, test_flag: bool
         Err(err) => panic!("Error loading history: {}", err),
     };
 
+
+    // mosquito names
+
+
+
     // Execute each move
     for event in events {
+        println!("{:?}",event);
         match event {
             Some(event) => {
-                let hex_move = board.coord.mapfrom_doubleheight(event.location); // map movement to board coords
 
+                
+                // if the chip name ends with an alphabetical char, we got a mosquito, so need to replace m1 with its name
+                if event.chip_name.ends_with(|c:char| c.is_alphabetic()) {
+
+                    // get the second char
+                    let secondchar = event.chip_name.chars().nth(1).unwrap();
+
+                    println!("Second char is {secondchar}");
+
+                    // get the position of mosquito on this team
+                    let position = board.get_position_byname(event.team, "m1").unwrap();
+
+                    // get the neighbours
+                    let neighbours = board.get_neighbour_chips(position);
+
+                    // find one that starts with the second char, that's the victim
+                    let victim = neighbours.into_iter().find(|c| c.name.starts_with(secondchar)).unwrap();
+
+
+                    let suckfrom = board.chips.get(&victim).unwrap().unwrap();
+
+                    // it's sucking the power, do it.
+                    specials::mosquito_suck(board, suckfrom, position);
+                     
+                }
+
+
+                let hex_move = board.coord.mapfrom_doubleheight(event.location); // map movement to board coords
                 board.move_chip(event.chip_name, event.team, hex_move); // execute the move
+
+                // desuck
+                if event.chip_name.ends_with(|c:char| c.is_alphabetic()) {
+                    specials::mosquito_desuck(board, event.chip_name, event.team);
+                }
+
+
             }
             None => board.turns += 1, // skip the turn
         }
