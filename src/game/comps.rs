@@ -53,16 +53,12 @@ impl Chip {
 
     /// Elevate a beetle
     pub fn elevate(&self) -> Self {
-        // problem here..
-        if !self.name.contains('b') {
-            panic!("This function should only be used to elevate beetles or mosquito-beetles!")
-        }
 
         let new_name = match self.name {
             "b1" => "b1*",
             "b2" => "b2*",
-            "mb" => "mb*",
-            _ => unreachable!(),
+            "m1" => "m1*",
+            _ => panic!("Tried to elevate something that can't elevate"),
         };
         Chip {
             name: new_name,

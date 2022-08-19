@@ -61,8 +61,9 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
     let chip_name = chip_selection.unwrap();
 
     // Is this chip a mosquito or pillbug and alreaddy on the board?
-    let is_pillbug = chip_name == "p1" && board.get_position_byname(active_team, chip_name).is_some();
-    let is_mosquito = chip_name == "m1" && board.get_position_byname(active_team, chip_name).is_some();
+    let on_board = board.get_position_byname(active_team, chip_name);
+    let is_pillbug = chip_name == "p1" && on_board.is_some();
+    let is_mosquito = chip_name == "m1" && on_board.is_some() && on_board.unwrap().get_layer() == 0;
 
     let mut textin = String::new();
     if is_pillbug {
@@ -142,23 +143,28 @@ fn chip_select<T: Coord>(board: &Board<T>, active_team: Team) -> Option<&'static
 }
 
 /// Run the player through prompts to execute a chip movement
+/// Returns the movestatus and the coordinate the player moved to
 fn movement_prompts<T: Coord>(
     board: &mut Board<T>,
     chip_name: &'static str,
     active_team: Team,
     textin: String,
-) -> MoveStatus {
+) -> MoveStatus{
     // Ask user to input dheight co-ordinates
     let coord = match coord_prompts(textin) {
         None => return MoveStatus::Nothing, // abort move
         Some((row, col)) => (row, col),
     };
 
+    let moveto = DoubleHeight::from(coord);
+
     // Convert from doubleheight to the board's co-ordinate system
-    let game_hex = board.coord.mapfrom_doubleheight(DoubleHeight::from(coord));
+    let game_hex = board.coord.mapfrom_doubleheight(moveto);
 
     // Try execute the move.
     board.move_chip(chip_name, active_team, game_hex)
+
+    
 }
 
 /// Ask user to select a coordinate or hit enter to return None so that we can
@@ -320,19 +326,19 @@ fn mosquito_prompts<T: Coord>(
     println!("Now select a co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
     let textin = get_usr_input();
     
-    let returnstatus = movement_prompts(board, newname, active_team, textin);
+    let returnstatus= movement_prompts(board, newname, active_team, textin);
 
-    // convert mosquito back to normal if it's on layer 0.
-    // we'd need to know its destination
-    if position.get_layer() == 0 {
-        mosquito_desuck(board, newname, active_team);
-    }
+    // get the destination based on the chip's new position in the hashmap
+    //let dest = board.get_position_byname(active_team, newname).unwrap();
+
+    // convert mosquito back to normal so that we can grab it next turn.
+    //if dest.get_layer() == 0 {
+    mosquito_desuck(board, newname, active_team);
+    //}
+
+    
 
     returnstatus
-
-
-
-
 
 }
 

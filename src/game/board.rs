@@ -119,8 +119,8 @@ where
             return MoveStatus::NoBee;
         }
 
-        // if it's a beetle (or a mosquito imitating one)
-        let is_beetle = chip.name.starts_with('b') || chip.name.ends_with('b');
+        // if it's a beetle (or a mosquito on a higher layer imitating one)
+        let is_beetle = chip.name.contains('b') || self.get_position_byname(chip.team, chip.name).unwrap().get_layer() > 0 ;
 
         // Allow the chip to switch layers if it's a beetle
         let destin = match is_beetle {
@@ -223,9 +223,18 @@ where
 
         let is_mosquito = chip.name.chars().next().unwrap() == 'm';
         let checker = match is_mosquito {
-            true =>  chip.name.chars().skip(1).next().unwrap(), // skip the first letter if mosquito
+            true =>  {
+                match self.get_position_byname(chip.team, chip.name).unwrap().get_layer() > 0 {
+                    true => 'b',
+                    false => chip.name.chars().skip(1).next().unwrap(), // skip the first letter if mosquito
+                }
+            
+            }
             false => chip.name.chars().next().unwrap(), 
         };
+
+        // if it's a mosquito on layer >0, it's really a beetle
+
 
         // Match on chip animal (first character of chip.name)
         match checker {
