@@ -110,18 +110,15 @@ pub fn starting_chips<T: Coord>() -> HashMap<Chip, Option<T>> {
 
 fn possible_chips<T: Coord>() -> HashMap<Chip, Option<T>> {
     let names_list = vec![
-        "s1", "s2", "a1", "a2", "a3", "q1", "l1", "p1", "b1", "b2", "g1", "g2", "g3", "m1",
-        "ms","ma","mq","ml","mp","mb","mg"
+        "s1", "s2", "a1", "a2", "a3", "q1", "l1", "p1", "b1", "b2", "g1", "g2", "g3", "m1", "ms",
+        "ma", "mq", "ml", "mp", "mb", "mg",
     ];
 
     Chip::new_from_list(names_list)
 }
 
-
-
 /// Convert a chip_name String (on the heap) to a static str on the stack)
 pub fn convert_static(chip_string: String) -> Option<&'static str> {
-
     // Get all possible chip names. We can use any coordinate system we want.
     let chips = possible_chips::<Cube>();
 

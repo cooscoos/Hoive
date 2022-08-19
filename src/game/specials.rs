@@ -47,11 +47,10 @@ pub fn pillbug_sumo<T: Coord>(
     basic_constraints
 }
 
-
 /// Suck power from source using mosquito at position
 pub fn mosquito_suck<T: Coord>(
     board: &mut Board<T>,
-    suckfrom: T,   // place to grab the power from
+    suckfrom: T, // place to grab the power from
     position: T, // position of mosquito
 ) -> Option<&'static str> {
     // Get the chip name at position source
@@ -68,18 +67,12 @@ pub fn mosquito_suck<T: Coord>(
     // Get mosquito
     let chip = board.get_chip(position).unwrap();
 
-
-
     // make sure the suckee is a neighbour
     let neighbours = board.coord.neighbours_layer0(position);
     assert!(neighbours.contains(&suckfrom));
 
-
-
     // Overwrite the chip's name in the board's HashMap
     board.chips.remove(&chip);
-
-
 
     let newchip = chip.remosquito(victim);
 

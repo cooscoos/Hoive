@@ -147,10 +147,7 @@ fn chip_select<T: Coord>(board: &Board<T>, active_team: Team) -> Option<&'static
 
 /// Run the player through prompts to execute a chip movement
 /// Returns the movestatus and the coordinate the player moved to
-fn movement_prompts<T: Coord>(
-    board: &mut Board<T>,
-    textin: String,
-) -> Option<T> {
+fn movement_prompts<T: Coord>(board: &mut Board<T>, textin: String) -> Option<T> {
     // Ask user to input dheight co-ordinates
     let coord = match coord_prompts(textin) {
         None => return None, // abort move
@@ -165,7 +162,6 @@ fn movement_prompts<T: Coord>(
     // Try execute the move.
     // Return the hex
     Some(game_hex)
-
 }
 
 /// Ask user to select a coordinate or hit enter to return None so that we can
@@ -331,17 +327,15 @@ fn mosquito_prompts<T: Coord>(
     println!("Now select a co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
     let textin = get_usr_input();
 
-    let returnstatus = match movement_prompts(board, textin){
+    let returnstatus = match movement_prompts(board, textin) {
         Some(value) => {
             // call something within board to handle mosquito fakename, and do the desuck
-            board.move_chip(newname, active_team,value)
+            board.move_chip(newname, active_team, value)
         }
-        ,
         None => MoveStatus::Nothing,
     };
     mosquito_desuck(board, newname, active_team);
 
-  
     returnstatus
 }
 
