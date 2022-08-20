@@ -19,6 +19,7 @@ use super::comps::{Chip, Team};
 /// BeetleBlock | A beetle on top of you is blocking your move
 /// BeetleGate | A beetle gate is preventing the move
 /// NoJump | Grasshopper can't make this jump
+/// NoSuck| Mosquito can't suck this
 #[derive(Debug, Eq, PartialEq)]
 pub enum MoveStatus {
     Success,
@@ -41,4 +42,5 @@ pub enum MoveStatus {
     BeetleGate,
 
     NoJump,
+    NoSuck,
 }

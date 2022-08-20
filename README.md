@@ -1,22 +1,18 @@
 # Hoive
 The boardgame Hive, written in Rust.
 
-Done so far:
-* play the game in terminal with cargo run
-* basic rules working
-* every animal except mosquito
+Play the game in terminal with cargo run.
+
 
 ## To do
 ### Mosquito
 
-Mosquito - special move to become neighbour.
-need pmoore edits for special move
-Must remain as beetle if in layer >0.
-
+- done, tidy up pmoore etc and then have a good playtest and write some tests because that was a nighmare.
 
 ### Tidy up
 
-Have a really good tidy up and benchmark of the code once all animals done, and start to think about how it interacts with online module.
+- does sumo need a bee check?
+- Have a good tidy up and benchmark of the code once all animals done, and start to think about how it interacts with online module.
 
 ### Online
 Make it so that two people can play on t'internet and other weirdos can just watch.

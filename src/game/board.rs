@@ -2,6 +2,7 @@
 use std::collections::{HashMap, HashSet};
 
 use super::comps::{self, Chip, Team}; // Game components (chips, teams)
+use crate::game::specials;
 use crate::game::{animals, history::History, movestatus::MoveStatus}; // Animal logic, move tracking and history
 use crate::maths::coord::Coord; // Hexagonal coordinate system
 
@@ -34,8 +35,13 @@ where
 
     /// Execute the move of chip to destination, update the board's history and increment turn number.
     pub fn update(&mut self, chip: Chip, dest: T) {
+
+
         // Overwrite the chip's position in the board's HashMap
         self.chips.insert(chip, Some(dest));
+
+        // refresh all mosquito names so that history logs record m1 for mosquito
+        //specials::mosquito_desuck(self);
 
         // Update history (in dheight coords)
         self.history
@@ -43,6 +49,7 @@ where
 
         // Increment turns by 1
         self.turns += 1;
+
     }
 
     /// Try move a chip, of given name and team, to a new position.
@@ -116,8 +123,16 @@ where
             return MoveStatus::NoBee;
         }
 
+        // if it's a beetle (or a mosquito on a higher layer imitating one)
+        let is_beetle = chip.name.contains('b')
+            || self
+                .get_position_byname(chip.team, chip.name)
+                .unwrap()
+                .get_layer()
+                > 0;
+
         // Allow the chip to switch layers if it's a beetle
-        let destin = match chip.name.starts_with('b') {
+        let destin = match is_beetle {
             true => animals::layer_adjust(self, dest),
             false => dest,
         };
@@ -212,15 +227,35 @@ where
 
     /// Check if any animal-specific constraints of chip prevent a move from source to dest
     fn animal_constraint(&self, chip: Chip, source: &T, dest: &T) -> MoveStatus {
+        // If it's a mosquito, we'll treat the chip name as the second char
+
+        let is_mosquito = chip.name.starts_with('m');
+        let checker = match is_mosquito {
+            true => {
+                match self
+                    .get_position_byname(chip.team, chip.name)
+                    .unwrap()
+                    .get_layer()
+                    > 0
+                {
+                    true => 'b',
+                    false => chip.name.chars().nth(1).unwrap(), // skip the first letter if mosquito
+                }
+            }
+            false => chip.name.chars().next().unwrap(),
+        };
+
+        // if it's a mosquito on layer >0, it's really a beetle
+
         // Match on chip animal (first character of chip.name)
-        match chip.name.chars().next().unwrap() {
+        match checker {
             'a' => animals::ant_check(self, source, dest), // ants
             's' => animals::spider_check(self, source, dest), // spiders
             'q' | 'p' => animals::bee_check(self, source, dest), // bees and pillbugs
             'l' => animals::ladybird_check(self, source, dest), // ladybirds
             'b' => animals::beetle_check(self, source, dest), // beetles
             'g' => animals::ghopper_check(self, source, dest), // grasshoppers
-            _ => MoveStatus::Success,                      // todo, mosquito
+            _ => panic!("No other animals should exist"), // there are no other valid chip names, mosquitos don't have their own movesets
         }
     }
 
@@ -317,6 +352,7 @@ where
 
     /// Return a chip's position based on its name and team
     pub fn get_position_byname(&self, team: Team, name: &'static str) -> Option<T> {
+
         let chip_select = Chip::new(name, team); // Select the chip
 
         // Get its location

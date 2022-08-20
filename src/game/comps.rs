@@ -53,17 +53,42 @@ impl Chip {
 
     /// Elevate a beetle
     pub fn elevate(&self) -> Self {
-        if !self.name.starts_with('b') {
-            panic!("This function should only be used to elevate beetles!")
-        }
-
         let new_name = match self.name {
             "b1" => "b1*",
             "b2" => "b2*",
-            _ => unreachable!(),
+            "mb" => "mb*",
+            "m1" => "mb*",
+            _ => panic!("Tried to elevate something that can't elevate"),
         };
         Chip {
             name: new_name,
+            team: self.team,
+        }
+    }
+
+    // Overwrite a chip name
+    pub fn remosquito(self, append: char) -> Self {
+        let new_name = match append {
+            'a' => "ma",
+            'q' => "mq",
+            's' => "ms",
+            'g' => "mg",
+            'b' => "mb",
+            'l' => "ml",
+            'p' => "mp",
+            _ => "m1",
+        };
+
+        Chip {
+            name: new_name,
+            team: self.team,
+        }
+    }
+
+    // Get rid of suck
+    pub fn demosquito(self) -> Self {
+        Chip {
+            name: "m1",
             team: self.team,
         }
     }
@@ -78,7 +103,16 @@ impl Chip {
 /// * 1 each of mosquito, ladybird, pill bug.
 pub fn starting_chips<T: Coord>() -> HashMap<Chip, Option<T>> {
     let names_list = vec![
-        "s1", "s2", "a1", "a2", "a3", "q1", "l1", "p1", "b1", "b2", "g1", "g2", "g3",
+        "s1", "s2", "a1", "a2", "a3", "q1", "l1", "p1", "b1", "b2", "g1", "g2", "g3", "m1",
+    ];
+
+    Chip::new_from_list(names_list)
+}
+
+fn possible_chips<T: Coord>() -> HashMap<Chip, Option<T>> {
+    let names_list = vec![
+        "s1", "s2", "a1", "a2", "a3", "q1", "l1", "p1", "b1", "b2", "g1", "g2", "g3", "m1", "ms",
+        "ma", "mq", "ml", "mp", "mb", "mg",
     ];
 
     Chip::new_from_list(names_list)
@@ -86,6 +120,18 @@ pub fn starting_chips<T: Coord>() -> HashMap<Chip, Option<T>> {
 
 /// Convert a chip_name String (on the heap) to a static str on the stack)
 pub fn convert_static(chip_string: String) -> Option<&'static str> {
+    // Get all possible chip names. We can use any coordinate system we want.
+    let chips = possible_chips::<Cube>();
+
+    // Find the chip name that matches the chip_string and return that chip's name as static str
+    chips
+        .into_iter()
+        .map(|(c, _)| c.name)
+        .find(|n| *n.to_string() == chip_string)
+}
+
+/// Convert a chip_name String (on the heap) to a static str on the stack). Except use starting chips
+pub fn convert_static_basic(chip_string: String) -> Option<&'static str> {
     // Get all possible chip names. We can use any coordinate system we want.
     let chips = starting_chips::<Cube>();
 
