@@ -5,7 +5,7 @@ use std::io; // For parsing player inputs
 
 use crate::draw::{self};
 use crate::game::comps::{convert_static_basic, Team};
-use crate::game::specials::{self, mosquito_desuck};
+use crate::game::specials;
 use crate::game::{board::Board, movestatus::MoveStatus};
 use crate::maths::coord::Coord;
 use crate::maths::coord::DoubleHeight;
@@ -48,8 +48,6 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
         chip_selection = chip_select(board, active_team)
     }
 
-
-
     if chip_selection == Some("w") {
         // skip turn
         println!(
@@ -69,7 +67,7 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
     let is_mosquito =
         temp_chip_name == "m1" && on_board.is_some() && on_board.unwrap().get_layer() == 0;
 
-    let mut chip_name = match is_mosquito {
+    let chip_name = match is_mosquito {
         true => {
             match mosquito_prompts(board, temp_chip_name, active_team) {
                 Some(value) => value,
@@ -78,7 +76,6 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
         }
         false => temp_chip_name,
     };
-
 
     println!("go here ok");
     // if the user selected m1 but its mosquito is a beetle, overwrite chip name
@@ -92,14 +89,13 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
     // Is this chip a pillbug?, this should also catch mosquitopillbugs
     let is_pillbug = chip_name.contains('p') && on_board.is_some();
 
-    let textin;
-    if is_pillbug {
+    let textin = if is_pillbug {
         println!("Hit m to sumo a neighbour, or select co-ordinate to move to. If moving, input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
-        textin = get_usr_input();
+        get_usr_input()
     } else {
         println!("Select co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
-        textin = get_usr_input();
-    }
+        get_usr_input()
+    };
 
     let return_status;
 
@@ -350,7 +346,7 @@ fn mosquito_prompts<T: Coord>(
         Some(value) => Some(value),
         None => {
             println!("Cannot suck from another mosquito!");
-            return None;
+            None
         }
     }
 }

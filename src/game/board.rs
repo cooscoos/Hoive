@@ -2,7 +2,6 @@
 use std::collections::{HashMap, HashSet};
 
 use super::comps::{self, Chip, Team}; // Game components (chips, teams)
-use crate::game::specials;
 use crate::game::{animals, history::History, movestatus::MoveStatus}; // Animal logic, move tracking and history
 use crate::maths::coord::Coord; // Hexagonal coordinate system
 
@@ -35,8 +34,6 @@ where
 
     /// Execute the move of chip to destination, update the board's history and increment turn number.
     pub fn update(&mut self, chip: Chip, dest: T) {
-
-
         // Overwrite the chip's position in the board's HashMap
         self.chips.insert(chip, Some(dest));
 
@@ -49,7 +46,6 @@ where
 
         // Increment turns by 1
         self.turns += 1;
-
     }
 
     /// Try move a chip, of given name and team, to a new position.
@@ -352,7 +348,6 @@ where
 
     /// Return a chip's position based on its name and team
     pub fn get_position_byname(&self, team: Team, name: &'static str) -> Option<T> {
-
         let chip_select = Chip::new(name, team); // Select the chip
 
         // Get its location

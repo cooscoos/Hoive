@@ -5,7 +5,6 @@ use std::io::{prelude::*, BufReader};
 
 use super::board::Board;
 use super::comps::{convert_static, Chip, Team};
-use crate::game::comps::starting_chips;
 use crate::maths::coord::{Coord, DoubleHeight};
 
 use super::specials;

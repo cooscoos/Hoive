@@ -1,9 +1,8 @@
 /// Module for rules that govern the special moves of the pillbug and mosquito
 use super::{board::Board, movestatus::MoveStatus};
-use crate::game::comps::Team;
+use crate::game::comps::Chip;
 use crate::maths::coord::Coord;
 use std::collections::HashSet;
-use crate::game::comps::Chip;
 
 /// This checks if a pillbug can sumo another chip (move adjacent chip to an adjacent empty hex)
 /// If it can, it will execute the move and return MoveStatus::Success.
@@ -19,13 +18,15 @@ pub fn pillbug_sumo<T: Coord>(
     // If the pillbug or sumo-ee moved within last two turns, we can't sumo
     let recent_movers = board.history.last_two_turns(board.turns);
 
-
     // if the sumoer is a mosquito, change its name to m1 for the purposes of this check
     let sumoer = match the_pillbug.unwrap().name.contains('m') {
         true => Some(Chip::new("m1", the_pillbug.unwrap().team)),
         false => the_pillbug,
     };
-    println!("Recent movers were {:?}, sumoer: {:?}, sumoee: {:?}", recent_movers,sumoer,sumoee);
+    println!(
+        "Recent movers were {:?}, sumoer: {:?}, sumoee: {:?}",
+        recent_movers, sumoer, sumoee
+    );
 
     // Prioritise returning the pillbug if both moved
     if recent_movers.contains(&sumoer) {
@@ -91,9 +92,7 @@ pub fn mosquito_suck<T: Coord>(
 }
 
 /// Return all mosquitos in layer 0 to normal
-pub fn mosquito_desuck<T: Coord>(
-    board: &mut Board<T>,
-) {
+pub fn mosquito_desuck<T: Coord>(board: &mut Board<T>) {
     // get the position of both mosquitos
 
     let positions = board
@@ -103,18 +102,14 @@ pub fn mosquito_desuck<T: Coord>(
         .map(|(_, p)| *p)
         .collect::<Vec<Option<T>>>();
 
-    
-
     for positiony in positions {
-
         match positiony {
             Some(position) => {
+                // Get mosquito
+                let chip = board.get_chip(position).unwrap();
 
-            // Get mosquito
-            let chip = board.get_chip(position).unwrap();
-
-            // if it's in layer 0
-            //if position.get_layer() == 0 {
+                // if it's in layer 0
+                //if position.get_layer() == 0 {
                 // Overwrite the chip's name in the board's HashMap
                 board.chips.remove(&chip);
 
