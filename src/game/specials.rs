@@ -111,7 +111,6 @@ pub fn mosquito_desuck<T: Coord>(board: &mut Board<T>) {
     }
 }
 
-
 /// Doesn't happen often, but there's an obscure rule that a pillbug cannot sumo
 /// through a beetle gate on the layer above, so this will check for the presence
 /// of a beetle gate when sumoing from source to dest
