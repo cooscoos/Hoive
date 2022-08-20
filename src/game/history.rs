@@ -185,7 +185,7 @@ pub fn emulate<T: Coord>(board: &mut Board<T>, filename: String, test_flag: bool
         match event {
             Some(event) => {
                 // If the chip name ends with an alphabetical char, we've got a mosquito which
-                // needs to absorb a power from another chip before it can move. 
+                // needs to absorb a power from another chip before it can move.
                 if event.chip_name.ends_with(|c: char| c.is_alphabetic()) {
                     emulate_mosquito(board, &event);
                 }

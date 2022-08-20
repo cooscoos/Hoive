@@ -24,6 +24,14 @@ pub fn pillbug_sumo<T: Coord>(
         false => the_pillbug,
     };
 
+    // if the pillbug is covered by a beetle, it can't sumo
+    if board
+        .get_chip(position + T::new_layer(0, 0, 0, 1))
+        .is_some()
+    {
+        return MoveStatus::BeetleBlock;
+    }
+
     // Prioritise returning the pillbug if both moved
     if recent_movers.contains(&sumoer) {
         return MoveStatus::RecentMove(sumoer.unwrap());

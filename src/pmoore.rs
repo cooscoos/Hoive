@@ -141,12 +141,16 @@ fn chip_select<T: Coord>(board: &mut Board<T>, active_team: Team) -> Option<&'st
             None
         }
         _ if textin == "w" => {
-            // skip turn
-            println!(
-                "\n{} team skipped their turn.\n",
-                draw::team_string(active_team)
-            );
-            board.turns += 1;
+            // skip turn, only if both bees have been placed
+            if board.bee_placed(active_team) && board.bee_placed(!active_team) {
+                println!(
+                    "\n{} team skipped their turn.\n",
+                    draw::team_string(active_team)
+                );
+                board.turns += 1;
+            } else {
+                println!("Can't skip turns until both bees placed");
+            }
             Some("w") // return this so that the main loop can return MoveStatus::Nothing
         }
         _ if textin == "mb" => {
@@ -276,7 +280,7 @@ fn message<T: Coord>(board: &mut Board<T>, move_status: &MoveStatus) {
             println!("\n\x1b[31;1m<< That is not a neighbouring hex >>\x1b[0m\n")
         }
         MoveStatus::BeetleBlock => {
-            println!("\n\x1b[31;1m<< A beetle on top of you prevents you from moving >>\x1b[0m\n")
+            println!("\n\x1b[31;1m<< A beetle on top of you prevents you from taking action >>\x1b[0m\n")
         }
         MoveStatus::BeetleGate => {
             println!("\n\x1b[31;1m<< A beetle gate prevents this move >>\x1b[0m\n")

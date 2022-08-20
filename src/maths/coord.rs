@@ -63,6 +63,7 @@ impl DoubleHeight {
             l: 0,
         }
     }
+
 }
 
 /// Cube coordinate system, used by game logic

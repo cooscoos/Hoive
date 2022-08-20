@@ -14,7 +14,6 @@ Play the game in terminal with cargo run.
 
 ### Bugcheck and tidy up
 
-- skipping turn on turn 1 is bad. shouldn't be allowed to skip before placing bee.
 - does sumoing need a bee check for either party?
 - Have a good tidy up and benchmark of the code once all animals done, and start to think about how it interacts with online module.
 

@@ -154,7 +154,7 @@ where
     }
 
     /// Check if a team has placed their bee
-    fn bee_placed(&self, team: Team) -> bool {
+    pub fn bee_placed(&self, team: Team) -> bool {
         self.get_placed_chips(team).iter().any(|c| c.name == "q1")
     }
 

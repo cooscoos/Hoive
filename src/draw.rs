@@ -38,6 +38,30 @@ pub fn show_board<T: Coord>(board: &Board<T>, size: i8) -> String {
     // Create dheight hashmap
     let dheight_hashmap = to_dheight(board, size);
 
+
+    // // dynamic changing
+    // // check the board extremeties to define the size
+    // let chip_positions = board.get_placed_positions();
+
+    // // map to doubleheight
+    // let dheighters = chip_positions.into_iter().map(|p| board.coord.to_doubleheight(p)).collect::<Vec<DoubleHeight>>();
+
+
+    // // find the biggest row and col placement of a chip
+    // let max_col = dheighters.iter().map(|d| d.col.abs()).max().unwrap();
+    // let max_row = dheighters.iter().map(|d| d.row.abs()).max().unwrap();
+
+ 
+    // let grouping = [max_row,max_col];
+    // // get the biggest of row or col
+    // // round to the nearest odd number, (min 5)
+    // let scope = grouping.iter().max().unwrap();
+
+    // let mut size = scope%2 + 1;
+    // if size <= 5 {
+    //     size = 5;
+    // }
+
     // pass to the parser
     parse_to_ascii(dheight_hashmap, size)
 }
