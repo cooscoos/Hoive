@@ -7,7 +7,8 @@ Play the game in terminal with cargo run.
 ## To do
 ### Mosquito
 
-- done, tidy up pmoore etc and then have a good playtest and write some tests because that was a nighmare.
+- done, have a good playtest and write some tests because that was a nighmare.
+- once tests are working, tidy up pmoore, history, etc as i'm not sure some fns are used anymore (e.g. possible chips)
 
 ### Tidy up
 
