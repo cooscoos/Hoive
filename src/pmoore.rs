@@ -164,7 +164,7 @@ fn chip_select<T: Coord>(board: &mut Board<T>, active_team: Team) -> Option<&'st
             }
             convert_static_basic(first.to_string())
         }
-        _ if textin.starts_with(|c| c == 'l' || c== 'p'|| c=='q') => {
+        _ if textin.starts_with(|c| c == 'l' || c == 'p' || c == 'q') => {
             let proper_str = match textin.chars().next().unwrap() {
                 'l' => "l1",
                 'p' => "p1",
@@ -173,7 +173,6 @@ fn chip_select<T: Coord>(board: &mut Board<T>, active_team: Team) -> Option<&'st
             };
 
             convert_static_basic(proper_str.to_string())
-            
         }
         c => {
             // Try and match a chip by this name

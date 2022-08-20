@@ -184,27 +184,10 @@ pub fn emulate<T: Coord>(board: &mut Board<T>, filename: String, test_flag: bool
         println!("{:?}", event);
         match event {
             Some(event) => {
-                // if the chip name ends with an alphabetical char, we got a mosquito, so need to replace m1 with its name
+                // If the chip name ends with an alphabetical char, we've got a mosquito which
+                // needs to absorb a power from another chip before it can move. 
                 if event.chip_name.ends_with(|c: char| c.is_alphabetic()) {
-                    // get the second char
-                    let secondchar = event.chip_name.chars().nth(1).unwrap();
-
-                    // get the position of mosquito on this team
-                    let position = board.get_position_byname(event.team, "m1").unwrap();
-
-                    // get the neighbours
-                    let neighbours = board.get_neighbour_chips(position);
-
-                    // find one that starts with the second char, that's the victim
-                    let victim = neighbours
-                        .into_iter()
-                        .find(|c| c.name.starts_with(secondchar))
-                        .unwrap();
-
-                    let suckfrom = board.chips.get(&victim).unwrap().unwrap();
-
-                    // it's sucking the power, do it.
-                    specials::mosquito_suck(board, suckfrom, position);
+                    emulate_mosquito(board, &event);
                 }
 
                 let hex_move = board.coord.mapfrom_doubleheight(event.location); // map movement to board coords
@@ -216,4 +199,28 @@ pub fn emulate<T: Coord>(board: &mut Board<T>, filename: String, test_flag: bool
             None => board.turns += 1, // skip the turn
         }
     }
+}
+
+/// Figures out where the mosquito and its victim are, and then
+/// makes the mosquito absorb the power from its victim.
+fn emulate_mosquito<T: Coord>(board: &mut Board<T>, event: &Event) {
+    // Get the second char of the mosquito, this is its victim's first char
+    let secondchar = event.chip_name.chars().nth(1).unwrap();
+
+    // Get the position of mosquito on the current team
+    let position = board.get_position_byname(event.team, "m1").unwrap();
+
+    // Get the mosquito's neighbours
+    let neighbours = board.get_neighbour_chips(position);
+
+    // Find the neighbour that starts with second char, that's the victim
+    let victim = neighbours
+        .into_iter()
+        .find(|c| c.name.starts_with(secondchar))
+        .unwrap();
+
+    let suck_from = board.chips.get(&victim).unwrap().unwrap();
+
+    // Perform the suck
+    specials::mosquito_suck(board, suck_from, position);
 }

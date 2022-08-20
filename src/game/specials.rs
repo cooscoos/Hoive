@@ -99,14 +99,13 @@ fn find_beetle_gates<T: Coord>(board: &mut Board<T>, location: T) -> HashSet<T> 
         .collect::<HashSet<T>>()
 }
 
-
 /// Absorb power from chip at location suck_from using mosquito at location position.
 /// Doing this renames the mosquito from "m1" to m followed by the char of the victim,
 /// e.g. "mb", "ma", "mq" so that it can pass board logic checks as if it were the victim.
 pub fn mosquito_suck<T: Coord>(
     board: &mut Board<T>,
     suck_from: T, // place to grab the power from
-    position: T, // position of mosquito
+    position: T,  // position of mosquito
 ) -> Option<&'static str> {
     // Get the sucker
     let mosquito = board.get_chip(position).unwrap();
@@ -144,7 +143,6 @@ pub fn mosquito_desuck<T: Coord>(board: &mut Board<T>) {
         .map(|(_, p)| *p)
         .collect::<Vec<Option<T>>>();
 
-    
     for positiony in positions {
         match positiony {
             Some(position) => {
