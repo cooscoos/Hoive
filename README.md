@@ -1,10 +1,8 @@
 # Hoive
 The boardgame Hive, written in Rust.
 
-Done so far:
-* play the game in terminal with cargo run
-* basic rules working
-* every animal except mosquito
+Play the game in terminal with cargo run.
+
 
 ## To do
 ### Mosquito
@@ -14,8 +12,7 @@ Done so far:
 ### Tidy up
 
 - does sumo need a bee check?
-
-- Have a really good tidy up and benchmark of the code once all animals done, and start to think about how it interacts with online module.
+- Have a good tidy up and benchmark of the code once all animals done, and start to think about how it interacts with online module.
 
 ### Online
 Make it so that two people can play on t'internet and other weirdos can just watch.
