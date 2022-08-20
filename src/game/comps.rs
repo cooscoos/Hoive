@@ -56,7 +56,8 @@ impl Chip {
         let new_name = match self.name {
             "b1" => "b1*",
             "b2" => "b2*",
-            "m1" => "m1*",
+            "mb" => "mb*",
+            "m1" => "mb*",
             _ => panic!("Tried to elevate something that can't elevate"),
         };
         Chip {
@@ -121,6 +122,18 @@ fn possible_chips<T: Coord>() -> HashMap<Chip, Option<T>> {
 pub fn convert_static(chip_string: String) -> Option<&'static str> {
     // Get all possible chip names. We can use any coordinate system we want.
     let chips = possible_chips::<Cube>();
+
+    // Find the chip name that matches the chip_string and return that chip's name as static str
+    chips
+        .into_iter()
+        .map(|(c, _)| c.name)
+        .find(|n| *n.to_string() == chip_string)
+}
+
+/// Convert a chip_name String (on the heap) to a static str on the stack). Except use starting chips
+pub fn convert_static_basic(chip_string: String) -> Option<&'static str> {
+    // Get all possible chip names. We can use any coordinate system we want.
+    let chips = starting_chips::<Cube>();
 
     // Find the chip name that matches the chip_string and return that chip's name as static str
     chips

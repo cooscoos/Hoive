@@ -9,18 +9,13 @@ Done so far:
 ## To do
 ### Mosquito
 
-Logic for mosquito is embedded in pmoore. Needs to be embedded in board if things are going to work with history.
-
-Logic for mosquito doesn't allow it to sumo. Really the mosquito to completely restart pmoore turn as the sucked beast.
-
-Get test mosquito working
-
-Tidy up.
-
+- done, tidy up pmoore etc and then write some very good tests because that was a nighmare.
 
 ### Tidy up
 
-Have a really good tidy up and benchmark of the code once all animals done, and start to think about how it interacts with online module.
+- does sumo need a bee check?
+
+- Have a really good tidy up and benchmark of the code once all animals done, and start to think about how it interacts with online module.
 
 ### Online
 Make it so that two people can play on t'internet and other weirdos can just watch.

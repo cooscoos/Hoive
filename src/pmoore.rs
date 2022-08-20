@@ -4,7 +4,7 @@ use rand::Rng;
 use std::io; // For parsing player inputs
 
 use crate::draw::{self};
-use crate::game::comps::{convert_static, Team};
+use crate::game::comps::{convert_static_basic, Team};
 use crate::game::specials::{self, mosquito_desuck};
 use crate::game::{board::Board, movestatus::MoveStatus};
 use crate::maths::coord::Coord;
@@ -48,6 +48,8 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
         chip_selection = chip_select(board, active_team)
     }
 
+
+
     if chip_selection == Some("w") {
         // skip turn
         println!(
@@ -58,19 +60,42 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
         return MoveStatus::Success;
     }
 
-    let chip_name = chip_selection.unwrap();
+    let temp_chip_name = chip_selection.unwrap();
 
-    // Is this chip a mosquito or pillbug and alreaddy on the board?
-    let on_board = board.get_position_byname(active_team, chip_name);
-    let is_pillbug = chip_name == "p1" && on_board.is_some();
-    let is_mosquito = chip_name == "m1" && on_board.is_some() && on_board.unwrap().get_layer() == 0;
+    // check if it's on the board
+    let on_board = board.get_position_byname(active_team, temp_chip_name);
+
+    // if it's a mosquito, on the board, on layer 0, then do the suck
+    let is_mosquito =
+        temp_chip_name == "m1" && on_board.is_some() && on_board.unwrap().get_layer() == 0;
+
+    let mut chip_name = match is_mosquito {
+        true => {
+            match mosquito_prompts(board, temp_chip_name, active_team) {
+                Some(value) => value,
+                None => return MoveStatus::Nothing, // aborted move
+            }
+        }
+        false => temp_chip_name,
+    };
+
+
+    println!("go here ok");
+    // if the user selected m1 but its mosquito is a beetle, overwrite chip name
+    // if temp_chip_name == "m1" && on_board.is_some() && on_board.unwrap().get_layer() !=0 {
+    //     println!("changin name");
+    //     chip_name = "mb";
+    // }
+
+    println!("new name is:{chip_name}");
+
+    // Is this chip a pillbug?, this should also catch mosquitopillbugs
+    let is_pillbug = chip_name.contains('p') && on_board.is_some();
 
     let textin;
     if is_pillbug {
         println!("Hit m to sumo a neighbour, or select co-ordinate to move to. If moving, input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
         textin = get_usr_input();
-    } else if is_mosquito {
-        textin = "m".to_string(); // mosquitos always have to a special move, they can't move until they do.
     } else {
         println!("Select co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
         textin = get_usr_input();
@@ -78,7 +103,7 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
 
     let return_status;
 
-    if textin == "m" && (is_pillbug | is_mosquito) {
+    if textin == "m" && is_pillbug {
         return_status = special_prompts(board, chip_name, active_team);
     } else if textin == "m" && !(is_pillbug | is_mosquito) {
         println!("This chip doesn't have special moves!");
@@ -92,6 +117,10 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
 
     // The board will handle itself. Patrick just needs to print messages for player
     message(board, &return_status);
+
+    // refresh all mosquito names
+    // do it here in case move fails
+    specials::mosquito_desuck(board);
 
     return_status
 }
@@ -132,7 +161,7 @@ fn chip_select<T: Coord>(board: &Board<T>, active_team: Team) -> Option<&'static
         _ if textin == "w" => Some("w"), // this will skip turn in the main loop
         c => {
             // Try and match a chip by this name
-            let chip_str = convert_static(c);
+            let chip_str = convert_static_basic(c);
 
             match chip_str.is_some() {
                 true => chip_str,
@@ -267,10 +296,9 @@ pub fn special_prompts<T: Coord>(
     active_team: Team,
 ) -> MoveStatus {
     // Find out if we're dealing with a mosquito or pillbug, then lead the player through the prompts to execute special
-    match chip_name {
-        "p1" => pillbug_prompts(board, chip_name, active_team), //pillbugs
-        "m1" => mosquito_prompts(board, chip_name, active_team), // mosquito
-        _ => panic!("Unrecognised chip"),
+    match chip_name.contains('p') {
+        true => pillbug_prompts(board, chip_name, active_team), //pillbugs
+        false => panic!("Unrecognised chip"),
     }
 }
 
@@ -307,36 +335,24 @@ fn mosquito_prompts<T: Coord>(
     board: &mut Board<T>,
     chip_name: &'static str,
     active_team: Team,
-) -> MoveStatus {
+) -> Option<&'static str> {
     // Get mosquitos's position and prompt the user to select a neighbouring chip to suck, returning the coords of the victim
     let position = board.get_position_byname(active_team, chip_name).unwrap();
     let source = match neighbour_prompts(board, position, "suck".to_string()) {
         Some(value) => value,
-        None => return MoveStatus::Nothing, // abort special move
+        None => return None, // abort special move
     };
 
     // have a catch here, we can't have mosquitos sucking mosquitos
 
     // Execute the special move to become the victim for this turn
-    let newname = match specials::mosquito_suck(board, source, position) {
-        Some(value) => value,
-        None => return MoveStatus::NoSuck,
-    };
-
-    // Do movement as that animal
-    println!("Now select a co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
-    let textin = get_usr_input();
-
-    let returnstatus = match movement_prompts(board, textin) {
-        Some(value) => {
-            // call something within board to handle mosquito fakename, and do the desuck
-            board.move_chip(newname, active_team, value)
+    match specials::mosquito_suck(board, source, position) {
+        Some(value) => Some(value),
+        None => {
+            println!("Cannot suck from another mosquito!");
+            return None;
         }
-        None => MoveStatus::Nothing,
-    };
-    mosquito_desuck(board, newname, active_team);
-
-    returnstatus
+    }
 }
 
 fn neighbour_prompts<T: Coord>(board: &mut Board<T>, position: T, movename: String) -> Option<T> {

@@ -3,6 +3,7 @@ use super::{board::Board, movestatus::MoveStatus};
 use crate::game::comps::Team;
 use crate::maths::coord::Coord;
 use std::collections::HashSet;
+use crate::game::comps::Chip;
 
 /// This checks if a pillbug can sumo another chip (move adjacent chip to an adjacent empty hex)
 /// If it can, it will execute the move and return MoveStatus::Success.
@@ -18,9 +19,17 @@ pub fn pillbug_sumo<T: Coord>(
     // If the pillbug or sumo-ee moved within last two turns, we can't sumo
     let recent_movers = board.history.last_two_turns(board.turns);
 
+
+    // if the sumoer is a mosquito, change its name to m1 for the purposes of this check
+    let sumoer = match the_pillbug.unwrap().name.contains('m') {
+        true => Some(Chip::new("m1", the_pillbug.unwrap().team)),
+        false => the_pillbug,
+    };
+    println!("Recent movers were {:?}, sumoer: {:?}, sumoee: {:?}", recent_movers,sumoer,sumoee);
+
     // Prioritise returning the pillbug if both moved
-    if recent_movers.contains(&the_pillbug) {
-        return MoveStatus::RecentMove(the_pillbug.unwrap());
+    if recent_movers.contains(&sumoer) {
+        return MoveStatus::RecentMove(sumoer.unwrap());
     }
     if recent_movers.contains(&sumoee) {
         return MoveStatus::RecentMove(sumoee.unwrap());
@@ -81,21 +90,43 @@ pub fn mosquito_suck<T: Coord>(
     Some(newchip.name)
 }
 
+/// Return all mosquitos in layer 0 to normal
 pub fn mosquito_desuck<T: Coord>(
     board: &mut Board<T>,
-    name: &'static str, // name of mosquito
-    team: Team,         // team of mosquito
 ) {
-    let position = board.get_position_byname(team, name).unwrap();
-    // Get mosquito
-    let chip = board.get_chip(position).unwrap();
+    // get the position of both mosquitos
 
-    // Overwrite the chip's name in the board's HashMap
-    board.chips.remove(&chip);
+    let positions = board
+        .chips
+        .iter()
+        .filter(|(c, _)| c.name.contains('m'))
+        .map(|(_, p)| *p)
+        .collect::<Vec<Option<T>>>();
 
-    let newchip = chip.demosquito();
+    
 
-    board.chips.insert(newchip, Some(position));
+    for positiony in positions {
+
+        match positiony {
+            Some(position) => {
+
+            // Get mosquito
+            let chip = board.get_chip(position).unwrap();
+
+            // if it's in layer 0
+            //if position.get_layer() == 0 {
+                // Overwrite the chip's name in the board's HashMap
+                board.chips.remove(&chip);
+
+                let newchip = chip.demosquito();
+
+                board.chips.insert(newchip, Some(position));
+            }
+
+            //}
+            None => (),
+        }
+    }
 }
 /// Doesn't happen often, but there's an obscure rule that a pillbug cannot sumo
 /// through a beetle gate on the layer above, so this will check for the presence

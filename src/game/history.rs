@@ -215,7 +215,7 @@ pub fn emulate<T: Coord>(board: &mut Board<T>, filename: String, test_flag: bool
 
                 // desuck
                 if event.chip_name.ends_with(|c: char| c.is_alphabetic()) {
-                    specials::mosquito_desuck(board, event.chip_name, event.team);
+                    specials::mosquito_desuck(board);
                 }
             }
             None => board.turns += 1, // skip the turn

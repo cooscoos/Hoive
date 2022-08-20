@@ -46,7 +46,7 @@ fn mosquito_beetle_backdown() {
     board.move_chip(newname, Team::Black, source);
 
     // revert to a mosquito
-    specials::mosquito_desuck(&mut board, newname, Team::Black);
+    specials::mosquito_desuck(&mut board);
 
     // move to -1,-1
     let legal_move = board
