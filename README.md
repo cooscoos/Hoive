@@ -3,20 +3,19 @@ The boardgame Hive, written in Rust.
 
 Play the game in terminal with cargo run.
 
-
 ## To do
 ### Mosquito
 
-- done, have a good playtest and write some tests because that was a nighmare.
-- once tests are working, tidy up pmoore, history, etc as i'm not sure some fns are used anymore (e.g. possible chips)
+- have a good playtest and write some tests
+- are some fns still used? why? (e.g. possible chips)
 
 ### Quality of life
-
 - increase the drawn board size once limits are reached
 
-### Tidy up
+### Bugcheck and tidy up
 
-- does sumo need a bee check?
+- skipping turn on turn 1 is bad. shouldn't be allowed to skip before placing bee.
+- does sumoing need a bee check for either party?
 - Have a good tidy up and benchmark of the code once all animals done, and start to think about how it interacts with online module.
 
 ### Online
