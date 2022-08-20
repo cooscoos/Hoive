@@ -119,7 +119,9 @@ where
             return MoveStatus::NoBee;
         }
 
-        // if it's a beetle (or a mosquito on a higher layer imitating one)
+        // Is the chip is a beetle (or a mosquito imitating one)?
+        // Mosquitos on layer > 0 are still called "m1" but need to be classed as
+        // beetles while the roam on top of the hive.
         let is_beetle = chip.name.contains('b')
             || self
                 .get_position_byname(chip.team, chip.name)
