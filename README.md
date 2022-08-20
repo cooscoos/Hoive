@@ -10,6 +10,10 @@ Play the game in terminal with cargo run.
 - done, have a good playtest and write some tests because that was a nighmare.
 - once tests are working, tidy up pmoore, history, etc as i'm not sure some fns are used anymore (e.g. possible chips)
 
+### Quality of life
+
+- increase the drawn board size once limits are reached
+
 ### Tidy up
 
 - does sumo need a bee check?
