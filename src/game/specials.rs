@@ -100,21 +100,18 @@ pub fn mosquito_desuck<T: Coord>(board: &mut Board<T>) {
                 // Get mosquito
                 let chip = board.get_chip(position).unwrap();
 
-                // if it's in layer 0
-                //if position.get_layer() == 0 {
                 // Overwrite the chip's name in the board's HashMap
                 board.chips.remove(&chip);
-
-                let newchip = chip.demosquito();
-
-                board.chips.insert(newchip, Some(position));
+                let mosquito = chip.demosquito();
+                board.chips.insert(mosquito, Some(position));
             }
 
-            //}
             None => (),
         }
     }
 }
+
+
 /// Doesn't happen often, but there's an obscure rule that a pillbug cannot sumo
 /// through a beetle gate on the layer above, so this will check for the presence
 /// of a beetle gate when sumoing from source to dest
