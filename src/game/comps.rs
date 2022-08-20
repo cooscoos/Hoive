@@ -51,6 +51,13 @@ impl Chip {
         chip_map
     }
 
+    pub fn get_char(&self) -> char {
+        match self.name.chars().next() {
+            Some(chara) => chara,
+            None => panic!("Chip has invalid name"),
+        }
+    }
+
     /// Elevate a beetle
     pub fn elevate(&self) -> Self {
         let new_name = match self.name {
@@ -66,8 +73,13 @@ impl Chip {
         }
     }
 
-    // Overwrite a chip name
-    pub fn remosquito(self, append: char) -> Self {
+    /// Renames a mosquito from "m1" to "mc" where c is the first char of
+    /// the victim chip, e.g. if victim is ant, rename to "ma".
+    pub fn morph(self, victim: Chip) -> Option<Self> {
+        // Get the first letter of the victim
+        let append = victim.get_char();
+
+        // If the victim is another mosquito, we can't suck, return None
         let new_name = match append {
             'a' => "ma",
             'q' => "mq",
@@ -76,13 +88,14 @@ impl Chip {
             'b' => "mb",
             'l' => "ml",
             'p' => "mp",
-            _ => "m1",
+            'm' => return None,
+            _ => panic!("Just tried to morph a mosquito into an unknown chip"),
         };
 
-        Chip {
+        Some(Chip {
             name: new_name,
             team: self.team,
-        }
+        })
     }
 
     // Get rid of suck

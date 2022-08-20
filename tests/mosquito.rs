@@ -45,7 +45,7 @@ fn mosquito_beetle_backdown() {
     // move on top of beetle
     board.move_chip(newname, Team::Black, source);
 
-    // revert to a mosquito
+    // Revert to a mosquito
     specials::mosquito_desuck(&mut board);
 
     // move to -1,-1
@@ -85,17 +85,14 @@ fn mosquito_ant() {
 
 #[test]
 fn mosquito_on_mosquito() {
-    println!("sff");
     let mut board = mosquito_tests_setup("snapshot_19".to_string());
 
-    println!("okkf");
     // get the white mosquito
     let position = board.get_position_byname(Team::White, "m1").unwrap();
 
     // ask it to suck the black mosquito
     let source = board.get_position_byname(Team::Black, "m1").unwrap();
 
-    println!("source {:?} dest {:?}", source, position);
-
+    // Make sure we return no &str to show the suck failed
     assert_eq!(None, specials::mosquito_suck(&mut board, source, position));
 }

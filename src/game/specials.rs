@@ -18,15 +18,11 @@ pub fn pillbug_sumo<T: Coord>(
     // If the pillbug or sumo-ee moved within last two turns, we can't sumo
     let recent_movers = board.history.last_two_turns(board.turns);
 
-    // if the sumoer is a mosquito, change its name to m1 for the purposes of this check
+    // if the sumoer is a mosquito, change its name to m1 for the purposes of the recent move check
     let sumoer = match the_pillbug.unwrap().name.contains('m') {
         true => Some(Chip::new("m1", the_pillbug.unwrap().team)),
         false => the_pillbug,
     };
-    println!(
-        "Recent movers were {:?}, sumoer: {:?}, sumoee: {:?}",
-        recent_movers, sumoer, sumoee
-    );
 
     // Prioritise returning the pillbug if both moved
     if recent_movers.contains(&sumoer) {
@@ -57,38 +53,34 @@ pub fn pillbug_sumo<T: Coord>(
     basic_constraints
 }
 
-/// Suck power from source using mosquito at position
+/// Suck power from location suckfrom using mosquito at location position
 pub fn mosquito_suck<T: Coord>(
     board: &mut Board<T>,
     suckfrom: T, // place to grab the power from
     position: T, // position of mosquito
 ) -> Option<&'static str> {
-    // Get the chip name at position source
-    let chip = board.get_chip(suckfrom);
+    // Get the mosquito who is sucking
+    let mosquito = board.get_chip(position).unwrap();
 
-    // return the first letter
-    let victim = chip.unwrap().name.chars().next().unwrap();
-
-    // If the victim's a mosquito, return a problem
-    if victim == 'm' {
-        return None;
-    }
-
-    // Get mosquito
-    let chip = board.get_chip(position).unwrap();
-
-    // make sure the suckee is a neighbour
+    // Make sure the victim is a neighbour
     let neighbours = board.coord.neighbours_layer0(position);
     assert!(neighbours.contains(&suckfrom));
 
-    // Overwrite the chip's name in the board's HashMap
-    board.chips.remove(&chip);
+    // Get the victim chip
+    let victim = match board.get_chip(suckfrom) {
+        Some(value) => value,
+        None => panic!("There's no chip here to suck from!"),
+    };
 
-    let newchip = chip.remosquito(victim);
-
-    board.chips.insert(newchip, Some(position));
-
-    Some(newchip.name)
+    // Otherwise, rename the mosquito from m1 to m followed by the char of the victim
+    match mosquito.morph(victim) {
+        Some(morphed_mosquito) => {
+            board.chips.remove(&mosquito);
+            board.chips.insert(morphed_mosquito, Some(position));
+            Some(morphed_mosquito.name)
+        }
+        None => None, // return none if we tried to morph into another mosquito
+    }
 }
 
 /// Return all mosquitos in layer 0 to normal

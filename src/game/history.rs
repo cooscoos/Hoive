@@ -189,8 +189,6 @@ pub fn emulate<T: Coord>(board: &mut Board<T>, filename: String, test_flag: bool
                     // get the second char
                     let secondchar = event.chip_name.chars().nth(1).unwrap();
 
-                    println!("Second char is {secondchar}");
-
                     // get the position of mosquito on this team
                     let position = board.get_position_byname(event.team, "m1").unwrap();
 
@@ -212,10 +210,8 @@ pub fn emulate<T: Coord>(board: &mut Board<T>, filename: String, test_flag: bool
                 let hex_move = board.coord.mapfrom_doubleheight(event.location); // map movement to board coords
                 board.move_chip(event.chip_name, event.team, hex_move); // execute the move
 
-                // desuck
-                if event.chip_name.ends_with(|c: char| c.is_alphabetic()) {
-                    specials::mosquito_desuck(board);
-                }
+                // Refresh mosquito names back to originals
+                specials::mosquito_desuck(board);
             }
             None => board.turns += 1, // skip the turn
         }
