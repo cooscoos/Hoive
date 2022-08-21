@@ -34,36 +34,12 @@ pub fn to_dheight<T: Coord>(board: &Board<T>, size: i8) -> HashMap<DoubleHeight,
 }
 
 // Draw the board / table
-pub fn show_board<T: Coord>(board: &Board<T>, size: i8) -> String {
+pub fn show_board<T: Coord>(board: &Board<T>) -> String {
     // Create dheight hashmap
-    let dheight_hashmap = to_dheight(board, size);
-
-
-    // // dynamic changing
-    // // check the board extremeties to define the size
-    // let chip_positions = board.get_placed_positions();
-
-    // // map to doubleheight
-    // let dheighters = chip_positions.into_iter().map(|p| board.coord.to_doubleheight(p)).collect::<Vec<DoubleHeight>>();
-
-
-    // // find the biggest row and col placement of a chip
-    // let max_col = dheighters.iter().map(|d| d.col.abs()).max().unwrap();
-    // let max_row = dheighters.iter().map(|d| d.row.abs()).max().unwrap();
-
- 
-    // let grouping = [max_row,max_col];
-    // // get the biggest of row or col
-    // // round to the nearest odd number, (min 5)
-    // let scope = grouping.iter().max().unwrap();
-
-    // let mut size = scope%2 + 1;
-    // if size <= 5 {
-    //     size = 5;
-    // }
+    let dheight_hashmap = to_dheight(board, board.size);
 
     // pass to the parser
-    parse_to_ascii(dheight_hashmap, size)
+    parse_to_ascii(dheight_hashmap, board.size)
 }
 
 // Parse a doubleheight hashmap of chips into an ascii string to print board to terminal
@@ -113,7 +89,7 @@ fn parse_to_ascii(dheight_hashmap: HashMap<DoubleHeight, Option<Chip>>, size: i8
 
     // Make a header for the ascii board
     let mut header_info = String::new();
-    for col_no in -size..size + 1 {
+    for col_no in -size+2..size + 1-2 { // 4 fewer cols than rows
         let mut s = String::new();
         let _ = write!(s, "{}\t", col_no);
         header_info.push_str(&s);
@@ -157,6 +133,8 @@ fn parse_to_ascii(dheight_hashmap: HashMap<DoubleHeight, Option<Chip>>, size: i8
     ascii_board
 }
 
+/// Parse a chip to a string for the ascii renderer. If there's no chip, this will
+/// return a dot "."
 fn chip_to_str(chip: Option<Chip>) -> String {
     // Convert chip to a string character (if None then display as ".")
 
@@ -182,7 +160,7 @@ pub fn empty(n: i8) -> HashMap<DoubleHeight, Option<Chip>> {
     let mut dheight_display = HashSet::new();
 
     // Generate tile positions over the range n: the size of the board
-    for col in -n..n + 1 {
+    for col in -n+2..n + 1 -2 { // 4 fewer columns than there are rows because doubleheight requires more rows
         for row in -n..n + 1 {
             for layer in 0..4 {
                 // if both col row share oddness or evenness (this defines doubleheight coords)

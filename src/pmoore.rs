@@ -118,7 +118,7 @@ fn chip_select<T: Coord>(board: &mut Board<T>, active_team: Team) -> Option<&'st
             // hard-coded 5 for show_board here but can adapt based on game extremeties later.
             println!(
                 "{}\n Hand:{}\n",
-                draw::show_board(board, 5),
+                draw::show_board(board),
                 draw::list_chips(board, active_team)
             );
             None
@@ -244,7 +244,7 @@ fn coord_prompts(mut textin: String) -> Option<(i8, i8)> {
 fn message<T: Coord>(board: &mut Board<T>, move_status: &MoveStatus) {
     match move_status {
         MoveStatus::Success => {
-            println!("{}\n", draw::show_board(board, 5));
+            println!("{}\n", draw::show_board(board));
             println!("Successful.");
         }
         MoveStatus::BadNeighbour => {
@@ -280,7 +280,9 @@ fn message<T: Coord>(board: &mut Board<T>, move_status: &MoveStatus) {
             println!("\n\x1b[31;1m<< That is not a neighbouring hex >>\x1b[0m\n")
         }
         MoveStatus::BeetleBlock => {
-            println!("\n\x1b[31;1m<< A beetle on top of you prevents you from taking action >>\x1b[0m\n")
+            println!(
+                "\n\x1b[31;1m<< A beetle on top of you prevents you from taking action >>\x1b[0m\n"
+            )
         }
         MoveStatus::BeetleGate => {
             println!("\n\x1b[31;1m<< A beetle gate prevents this move >>\x1b[0m\n")
@@ -289,7 +291,7 @@ fn message<T: Coord>(board: &mut Board<T>, move_status: &MoveStatus) {
             println!("\n\x1b[31;1m<< Grasshopper can't make this jump >>\x1b[0m\n")
         }
         MoveStatus::Win(teamopt) => {
-            println!("{}\n", draw::show_board(board, 5));
+            println!("{}\n", draw::show_board(board));
             match teamopt {
                 Some(team) => {
                     let team_str = draw::team_string(*team);
