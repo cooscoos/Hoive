@@ -69,7 +69,10 @@ where
             .unwrap();
 
         // let the biggest of row or col define the board size
-        let max_rowcol = [max_row, max_col];
+        // we multiply col (x) by 2 because we're using doubleheight coords, so
+        // each 1 step horizontal is 2 steps vertical. Multiplying cols by 2
+        // gives the cols and rows equivalent scaling.
+        let max_rowcol = [max_row, max_col*2];
         let biggest = max_rowcol.iter().max().unwrap();
 
         // The size of the board should be an odd number >= 5
