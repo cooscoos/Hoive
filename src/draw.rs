@@ -35,7 +35,6 @@ pub fn to_dheight<T: Coord>(board: &Board<T>, size: i8) -> HashMap<DoubleHeight,
 
 // Draw the board / table
 pub fn show_board<T: Coord>(board: &Board<T>) -> String {
-
     // Create dheight hashmap
     let dheight_hashmap = to_dheight(board, board.size);
 

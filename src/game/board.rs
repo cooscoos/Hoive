@@ -12,7 +12,7 @@ pub struct Board<T: Coord> {
     pub turns: u32,                      // number of turns that have elapsed
     pub coord: T,                        // coordinate sytem for the board e.g. Cube, HECS
     pub history: History,                // record of all previous moves
-    pub size: i8,                       // the size of the board in dheight
+    pub size: i8,                        // the size of the board in dheight
 }
 
 impl<T> Board<T>
@@ -39,7 +39,6 @@ where
         // Overwrite the chip's position in the board's HashMap
         self.chips.insert(chip, Some(dest));
 
-
         // update the size of the board
         self.size = self.find_size();
 
@@ -51,29 +50,36 @@ where
         self.turns += 1;
     }
 
-
+    /// Finds the size of the board based on the chips that are placed at the extremeties.
+    /// Will return an odd number >= 5. Value is used by ascii renderer to draw a sensibly sized board
     fn find_size(&self) -> i8 {
-
         // check the board extremeties to define the size
         let chip_positions = self.get_placed_positions();
 
         // find the biggest row and col placement of a chip in doubleheight
-        let max_col = chip_positions.iter().map(|d| self.coord.to_doubleheight(*d).col.abs()).max().unwrap();
-        let max_row = chip_positions.iter().map(|d| self.coord.to_doubleheight(*d).row.abs()).max().unwrap();
+        let max_col = chip_positions
+            .iter()
+            .map(|d| self.coord.to_doubleheight(*d).col.abs())
+            .max()
+            .unwrap();
+        let max_row = chip_positions
+            .iter()
+            .map(|d| self.coord.to_doubleheight(*d).row.abs())
+            .max()
+            .unwrap();
 
         // let the biggest of row or col define the board size
         let max_rowcol = [max_row, max_col];
         let biggest = max_rowcol.iter().max().unwrap();
 
-        // The size of the board should be an odd number >5
-        let mut size = (biggest - (biggest%2)) + 3;
+        // The size of the board should be an odd number >= 5
+        let mut size = (biggest - (biggest % 2)) + 3;
 
         if size <= 5 {
             size = 5;
         }
 
         size
-
     }
 
     /// Try move a chip, of given name and team, to a new position.

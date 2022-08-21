@@ -280,7 +280,9 @@ fn message<T: Coord>(board: &mut Board<T>, move_status: &MoveStatus) {
             println!("\n\x1b[31;1m<< That is not a neighbouring hex >>\x1b[0m\n")
         }
         MoveStatus::BeetleBlock => {
-            println!("\n\x1b[31;1m<< A beetle on top of you prevents you from taking action >>\x1b[0m\n")
+            println!(
+                "\n\x1b[31;1m<< A beetle on top of you prevents you from taking action >>\x1b[0m\n"
+            )
         }
         MoveStatus::BeetleGate => {
             println!("\n\x1b[31;1m<< A beetle gate prevents this move >>\x1b[0m\n")
