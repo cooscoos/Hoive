@@ -9,9 +9,6 @@ Play the game in terminal with cargo run.
 - have a good playtest and write some tests
 - are some fns still used? why? (e.g. possible chips)
 
-### Quality of life
-- increase the drawn board size once limits are reached
-
 ### Bugcheck and tidy up
 
 - does sumoing need a bee check for either party?
