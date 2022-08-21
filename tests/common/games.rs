@@ -16,6 +16,7 @@ pub fn test_board<T: Coord>(coord: T) -> Board<T> {
         turns: 0,
         coord,
         history,
+        size: 5,
     }
 }
 

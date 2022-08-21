@@ -78,20 +78,20 @@ fn test_doubleheight_converter() {
     assert_eq!(expected_tree, dheight_tree);
 }
 
-#[test]
-fn test_parseout() {
-    //put down lots of chips in Cube co-ords
-    let mut board = test_board(Cube::default());
-    board.move_chip("a1", Team::Black, Cube::new(0, 0, 0)); // centre
-    board.move_chip("a1", Team::White, Cube::new(-1, 1, 0)); // down and left
-    board.move_chip("a2", Team::Black, Cube::new(1, -1, 0)); // up and right
+// #[test]
+// fn test_parseout() {
+//     //put down lots of chips in Cube co-ords
+//     let mut board = test_board(Cube::default());
+//     board.move_chip("a1", Team::Black, Cube::new(0, 0, 0)); // centre
+//     board.move_chip("a1", Team::White, Cube::new(-1, 1, 0)); // down and left
+//     board.move_chip("a2", Team::Black, Cube::new(1, -1, 0)); // up and right
 
-    // Size of the board
-    let size = 3;
+//     // Size of the board
+//     let size = 3;
 
-    // Draw the board
-    let print_string = draw::show_board(&board, size);
+//     // Draw the board
+//     let print_string = draw::show_board(&board, size);
 
-    // run cargo test -- --nocapture to see if the board looks correct
-    println!("{print_string}");
-}
+//     // run cargo test -- --nocapture to see if the board looks correct
+//     println!("{print_string}");
+// }

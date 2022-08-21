@@ -34,36 +34,13 @@ pub fn to_dheight<T: Coord>(board: &Board<T>, size: i8) -> HashMap<DoubleHeight,
 }
 
 // Draw the board / table
-pub fn show_board<T: Coord>(board: &Board<T>, size: i8) -> String {
+pub fn show_board<T: Coord>(board: &Board<T>) -> String {
+
     // Create dheight hashmap
-    let dheight_hashmap = to_dheight(board, size);
-
-
-    // // dynamic changing
-    // // check the board extremeties to define the size
-    // let chip_positions = board.get_placed_positions();
-
-    // // map to doubleheight
-    // let dheighters = chip_positions.into_iter().map(|p| board.coord.to_doubleheight(p)).collect::<Vec<DoubleHeight>>();
-
-
-    // // find the biggest row and col placement of a chip
-    // let max_col = dheighters.iter().map(|d| d.col.abs()).max().unwrap();
-    // let max_row = dheighters.iter().map(|d| d.row.abs()).max().unwrap();
-
- 
-    // let grouping = [max_row,max_col];
-    // // get the biggest of row or col
-    // // round to the nearest odd number, (min 5)
-    // let scope = grouping.iter().max().unwrap();
-
-    // let mut size = scope%2 + 1;
-    // if size <= 5 {
-    //     size = 5;
-    // }
+    let dheight_hashmap = to_dheight(board, board.size);
 
     // pass to the parser
-    parse_to_ascii(dheight_hashmap, size)
+    parse_to_ascii(dheight_hashmap, board.size)
 }
 
 // Parse a doubleheight hashmap of chips into an ascii string to print board to terminal

@@ -12,6 +12,7 @@ pub struct Board<T: Coord> {
     pub turns: u32,                      // number of turns that have elapsed
     pub coord: T,                        // coordinate sytem for the board e.g. Cube, HECS
     pub history: History,                // record of all previous moves
+    pub size: i8,                       // the size of the board in dheight
 }
 
 impl<T> Board<T>
@@ -29,6 +30,7 @@ where
             turns: 0,
             coord,
             history,
+            size: 5,
         }
     }
 
@@ -37,8 +39,9 @@ where
         // Overwrite the chip's position in the board's HashMap
         self.chips.insert(chip, Some(dest));
 
-        // refresh all mosquito names so that history logs record m1 for mosquito
-        //specials::mosquito_desuck(self);
+
+        // update the size of the board
+        self.size = self.find_size();
 
         // Update history (in dheight coords)
         self.history
@@ -46,6 +49,31 @@ where
 
         // Increment turns by 1
         self.turns += 1;
+    }
+
+
+    fn find_size(&self) -> i8 {
+
+        // check the board extremeties to define the size
+        let chip_positions = self.get_placed_positions();
+
+        // find the biggest row and col placement of a chip in doubleheight
+        let max_col = chip_positions.iter().map(|d| self.coord.to_doubleheight(*d).col.abs()).max().unwrap();
+        let max_row = chip_positions.iter().map(|d| self.coord.to_doubleheight(*d).row.abs()).max().unwrap();
+
+        // let the biggest of row or col define the board size
+        let max_rowcol = [max_row, max_col];
+        let biggest = max_rowcol.iter().max().unwrap();
+
+        // The size of the board should be an odd number >5
+        let mut size = (biggest - (biggest%2)) + 3;
+
+        if size <= 5 {
+            size = 5;
+        }
+
+        size
+
     }
 
     /// Try move a chip, of given name and team, to a new position.
