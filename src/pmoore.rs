@@ -54,8 +54,8 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
         Some("w") | None => return MoveStatus::Nothing, // w means turn was skipped
         Some("quit") => {
             message(board, &MoveStatus::Win(Some(!active_team)));
-            return MoveStatus::Win(Some(!active_team))
-         } // the team forfeited
+            return MoveStatus::Win(Some(!active_team));
+        } // the team forfeited
         Some(value) => value,
     };
 
@@ -131,9 +131,7 @@ fn chip_select<T: Coord>(board: &mut Board<T>, active_team: Team) -> Option<&'st
             xylophone();
             None
         }
-        _ if textin == "quit" => {
-            Some("quit")
-        }
+        _ if textin == "quit" => Some("quit"),
         _ if textin == "h" => {
             println!("{}", help_me());
             None
