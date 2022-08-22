@@ -1,5 +1,5 @@
 # Hoive
-The boardgame Hive, written in Rust.
+The boardgame [Hive](https://en.wikipedia.org/wiki/Hive_(game), written in Rust.
 
 Play the game in terminal with cargo run.
 
