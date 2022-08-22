@@ -440,6 +440,8 @@ Each player starts the game with the following peices in their hand:\n
 Select one of the peices above using the codes given in brackets,
 and then enter a location to move the peice to on the board using
 comma separated values e.g. 1,-3.\n
+The dots in the terminal represent the centres of hexagons: positions
+where each hexagonal peice can be placed. Each hex is surrounded by 6 neighbours.\n
 Press enter at any time to abort moves, or to see the peices
 on the board and in your hand.\n
 You can attempt to move any peice you own that is in your hand
