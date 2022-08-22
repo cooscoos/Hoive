@@ -8,7 +8,8 @@ use crate::maths::{coord::Coord, morphops};
 /// If there is a small gap between source and dest then this will return
 /// MoveStatus::SmallGap.
 ///
-/// This function is also used by bees, spiders and pillbugs.
+/// This function can also used by e.g. bees, spiders and pillbugs,
+/// but it's more efficient to use a beetle_check for those.
 pub fn ant_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
     // Get current chip positions
     let mut chip_positions = board.get_placed_positions();
