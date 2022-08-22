@@ -121,7 +121,7 @@ fn chip_select<T: Coord>(board: &mut Board<T>, active_team: Team) -> Option<&'st
         _ if textin.is_empty() => {
             // hard-coded 5 for show_board here but can adapt based on game extremeties later.
             println!(
-                "{}\n Hand:{}\n",
+                "{}\n\n-------------------- PLAYER HAND --------------------\n\n{}\n\n-----------------------------------------------------\n",
                 draw::show_board(board),
                 draw::list_chips(board, active_team)
             );
