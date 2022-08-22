@@ -9,10 +9,9 @@ Play the game in terminal with cargo run.
 - make the chips in hand display a bit nicer, labelled subsections for different animals
 - play test
 - does pillbug sumoing need a bee check for either party?
-- make code nicer
 
 ### Online
-Make hostable on server so can play on t'internet with observers
+Make hostable on server so can play on internet with observers
 <!-- 
 ### "House rules"
 Then it might be "fun" to add new animals in a non-standard version of the game e.g.:
