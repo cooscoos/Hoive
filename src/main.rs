@@ -3,6 +3,10 @@ use hoive::maths::coord::Coord;
 use hoive::pmoore;
 
 fn main() {
+    play_game();
+}
+
+fn play_game() {
     // Initialise game board in cube co-ordinates
     let coord = hoive::maths::coord::Cube::default();
     let mut board = Board::new(coord);
@@ -16,7 +20,7 @@ fn main() {
             println!("Play again? y/n");
             let textin = pmoore::get_usr_input();
             match textin {
-                _ if textin == "y" => main(),
+                _ if textin == "y" => play_game(),
                 _ => break,
             }
         }
