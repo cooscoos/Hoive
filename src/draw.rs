@@ -4,7 +4,8 @@ use crate::game::comps::{Chip, Team};
 use crate::maths::coord::Coord;
 use crate::maths::coord::DoubleHeight;
 use std::collections::{BTreeMap, HashMap, HashSet};
-use std::fmt::Write as _; // import without risk of name clash
+use std::fmt::Write as _;
+use std::vec; // import without risk of name clash
 
 // Players will interact with the hex grid using "double-height offset co-ordinates"
 // See: https://www.redblobgames.com/grids/hexagons/
@@ -203,7 +204,7 @@ pub fn list_chips<T: Coord>(board: &Board<T>, team: Team) -> String {
     make_chip_string(chip_list)
 }
 
-// List chips that you are passed and return a colourful single string for display
+/// Lists the chips that are passed and returns a colourful single string for display
 pub fn list_these_chips(chips_vec: Vec<Chip>) -> String {
     let chip_list = chips_vec
         .into_iter()
@@ -213,21 +214,64 @@ pub fn list_these_chips(chips_vec: Vec<Chip>) -> String {
     make_numbered_chip_string(chip_list)
 }
 
-// Do the colourful bit
+/// Makes a formatted string to display the chips in a player's hand
 fn make_chip_string(mut chip_list: Vec<String>) -> String {
     // sort alphabetically
     chip_list.sort();
 
-    // Create a single tring to return
-    let mut chip_string = chip_list
-        .iter()
-        .map(|c| format!(" {},", c))
-        .collect::<String>();
+    // Look for chips with the following names, grouped as follows
+    let char_groups = vec![
+        vec!['a', 's', 'q'],
+        vec!['b', 'l', 'p'],
+        vec!['g', 'm'],
+    ];
 
-    // Delete the trailing comma
+    // names for the groups
+    let group_names = vec![
+        "ant, queen, spider: ",
+        "beetle, ladybug, pillbug: ",
+        "grasshopper, mosquito:",
+    ];
+
+    // Group the ants spiders and queens, then the beetles and ladybirds, then pillbug, mosquito, grasshoppers
+    let mut chip_string = find_chip_chars(char_groups, &chip_list, group_names);
+
+    // Delete the trailing newline and comma
     chip_string.pop();
 
     chip_string
+}
+
+/// Finds and returns chips that begin with the letters in the char groups, and returns
+/// them as a formatted string with group_names.
+fn find_chip_chars(
+    char_groups: Vec<Vec<char>>,
+    chip_list: &[String],
+    group_names: Vec<&str>,
+) -> String {
+    let mut return_string = String::new();
+
+    for (i, char_list) in char_groups.iter().enumerate() {
+
+        // Because of the colour encoding, we search the 5th char to see if it matches
+        let mut string_iterator = chip_list
+            .iter()
+            .filter(|c| char_list.iter().any(|p| c.chars().nth(5).unwrap() == *p))
+            .peekable();
+
+        // if there were some chips in this group
+        if string_iterator.peek().is_some() {
+            let mut next_set = string_iterator
+                .map(|c| format!(" {},", c))
+                .collect::<String>();
+
+            // drop the trailing comma, push it to the return string and add a newline
+            next_set.pop();
+            return_string.push_str(&format!("{:<28}{}\n", group_names[i], next_set));
+        }
+    }
+
+    return_string
 }
 
 // Make a numbered list
