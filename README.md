@@ -6,6 +6,7 @@ Play the game in terminal with cargo run.
 ## To do
 ### Bugcheck and tidy up
 
+- make the chips in hand display a bit nicer, labelled subsections for different animals
 - play test
 - does pillbug sumoing need a bee check for either party?
 - make code nicer
