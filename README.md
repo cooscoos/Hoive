@@ -10,6 +10,7 @@ Play the game in terminal with cargo run.
 ### Bugcheck and tidy up
 
 - play test
+- add load game
 - does pillbug sumoing need a bee check for either party?
 
 ### Online
