@@ -12,7 +12,7 @@ Play the game in terminal with cargo run.
 - make code nicer
 
 ### Online
-Make it so that two people can play on t'internet with observers
+Make hostable on server so can play on t'internet with observers
 <!-- 
 ### "House rules"
 Then it might be "fun" to add new animals in a non-standard version of the game e.g.:
