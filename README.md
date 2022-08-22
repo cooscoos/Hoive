@@ -3,6 +3,9 @@ The boardgame [Hive](https://en.wikipedia.org/wiki/Hive_(game)), written in Rust
 
 Play the game in terminal with cargo run.
 
+
+![snapshot of the app](/reference/gameplay.png "snapshot of the app")
+
 ## To do
 ### Bugcheck and tidy up
 
