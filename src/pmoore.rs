@@ -113,7 +113,7 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
 
 /// Ask user on active team to select chip. Returns None if user input invalid.
 fn chip_select<T: Coord>(board: &mut Board<T>, active_team: Team) -> Option<&'static str> {
-    println!("Select a tile from the board or your hand to move. Hit enter to see the board and your hand, h for help, s to save, w to skip turn, 'quit' to forfeit.");
+    println!("Hit enter to see the board and your hand, h (help), s (save), w (skip turn), 'quit' (forfeit).\nSelect a tile from the board or your hand to move.");
 
     let textin = get_usr_input();
 
