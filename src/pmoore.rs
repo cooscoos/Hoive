@@ -52,6 +52,10 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
     // The user's entry decides what chip to select
     let temp_chip_name = match chip_selection {
         Some("w") | None => return MoveStatus::Nothing, // w means turn was skipped
+        Some("quit") => {
+            message(board, &MoveStatus::Win(Some(!active_team)));
+            return MoveStatus::Win(Some(!active_team))
+         } // the team forfeited
         Some(value) => value,
     };
 
@@ -109,7 +113,7 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
 
 /// Ask user on active team to select chip. Returns None if user input invalid.
 fn chip_select<T: Coord>(board: &mut Board<T>, active_team: Team) -> Option<&'static str> {
-    println!("Select a tile from the board or your hand to move. Hit enter to see the board and your hand, h for help, s to save, w to skip turn.");
+    println!("Select a tile from the board or your hand to move. Hit enter to see the board and your hand, h for help, s to save, w to skip turn, 'quit' to forfeit.");
 
     let textin = get_usr_input();
 
@@ -126,6 +130,9 @@ fn chip_select<T: Coord>(board: &mut Board<T>, active_team: Team) -> Option<&'st
         _ if textin == "xylophone" => {
             xylophone();
             None
+        }
+        _ if textin == "quit" => {
+            Some("quit")
         }
         _ if textin == "h" => {
             println!("{}", help_me());
@@ -391,7 +398,7 @@ fn neighbour_prompts<T: Coord>(board: &mut Board<T>, position: T, movename: Stri
 }
 
 /// Request user input into terminal, return a trimmed string
-fn get_usr_input() -> String {
+pub fn get_usr_input() -> String {
     let mut textin = String::new();
 
     io::stdin()
