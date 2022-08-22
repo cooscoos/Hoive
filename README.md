@@ -10,7 +10,7 @@ Play the game in terminal with cargo run.
 ### Bugcheck and tidy up
 
 - play test
-- add load game
+- add load game -- could match on MoveStatus::Load to quit out, restart and emulate moves
 - does pillbug sumoing need a bee check for either party?
 
 ### Online
