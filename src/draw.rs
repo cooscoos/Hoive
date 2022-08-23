@@ -291,3 +291,5 @@ fn make_numbered_chip_string(mut chip_list: Vec<String>) -> String {
 
     chip_string
 }
+
+/// Parse the board into 
