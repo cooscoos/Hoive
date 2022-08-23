@@ -15,6 +15,7 @@ Play the game in terminal with cargo run.
 
 ### Online
 Make this a server application so that people can play on the internet
+- The first step is to create a db using diesel to store game state, then interact with the game via this db [good ref](https://fdeantoni.medium.com/rust-actix-diesel-sqlite-d67a1c3ef0e)
 - The first step is to modularise pmoore and make it more like a general api that can be interacted with by any front-end. To start, the front end will still be the (local) terminal window
 - Then, make it so you can use a remote terminal, [this](https://github.com/vascokk/fullstack-rust/tree/main/server/src) is a good reference
 - You then have a server. Could later create a web-based front end.
