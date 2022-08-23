@@ -14,7 +14,10 @@ Play the game in terminal with cargo run.
 - does pillbug sumoing need a bee check for either party?
 
 ### Online
-Make hostable on server so can play on internet with observers
+Make this a server application so that people can play on the internet
+- The first step is to modularise pmoore and make it more like a general api that can be interacted with by any front-end. To start, the front end will still be the (local) terminal window
+- Then, make it so you can use a remote terminal, [this](https://github.com/vascokk/fullstack-rust/tree/main/server/src) is a good reference
+- You then have a server. Could later create a web-based front end.
 <!-- 
 ### "House rules"
 Then it might be "fun" to add new animals in a non-standard version of the game e.g.:
