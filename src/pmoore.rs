@@ -1,4 +1,4 @@
-/// Patrick Moore is the GamesMaster, who:
+/// Patrick Moore is the GamesMaster, an API who:
 /// - provides a human-readable interface between players and the game logic;
 /// - orchestrates normal/special moves in a way that tries to comply with game rules.
 ///
