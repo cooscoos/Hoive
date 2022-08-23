@@ -44,6 +44,7 @@ pub fn create_new_user(name: &str, team: &str, conn: &SqliteConnection) -> Resul
 
 }
 
+// Probably not required, but is good toy example
 pub fn get_posts() -> Vec<GameState> {
     let connection = establish_connection();
     game_state
