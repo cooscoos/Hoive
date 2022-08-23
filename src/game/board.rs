@@ -408,4 +408,22 @@ where
         // Count the common elements
         neighbour_hexes.intersection(&chip_positions).count()
     }
+
+    /// Convert board into a spiral notation string
+    pub fn spiral_string(&self) -> String {
+
+        // The coordinate system needs to define a mapping from spiral
+        // 0,1,2,... to a visiting order for the chips on the board
+        // keep branching out until we've found every chip on the board (always check layers above when visiting)
+
+
+        "GATACCA".to_string()
+
+    }
+
+    /// Convert from spiral notation string into a live board
+    /// Take in a co-ordinate system or an empty board?
+    pub fn from_spiral_string(self, board_string: String) -> Self{
+        self
+    }
 }

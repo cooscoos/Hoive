@@ -37,6 +37,7 @@ pub trait Coord:
     fn ascend(&mut self); // increase or decrease the layer number
     fn descend(&mut self);
     fn to_bottom(&self) -> Self; // drop to layer 0
+    fn mapfrom_spiral(&self,hex: Spiral) -> Self; // convert from spiral coordinates to self
 }
 
 /// Doubleheight coordinate system used by the ascii renderer
@@ -63,6 +64,11 @@ impl DoubleHeight {
             l: 0,
         }
     }
+}
+
+/// Spiral coordinate system used to save the game board state as a string
+pub struct Spiral {
+    pub u: u16,
 }
 
 /// Cube coordinate system, used by game logic
@@ -229,16 +235,31 @@ impl Coord for Cube {
         Cube { q, r, s, l: hex.l }
     }
 
+    /// Go up one layer
     fn ascend(&mut self) {
         self.l += 1;
     }
 
+    /// Go down one layer
     fn descend(&mut self) {
         self.l -= 1;
     }
 
+    /// Go to layer 0
     fn to_bottom(&self) -> Self {
         Cube::new(self.q, self.r, self.s)
+    }
+
+    /// Map an input spiral coordinate to Cube coordinate
+    fn mapfrom_spiral(&self, hex: Spiral) -> Self {
+
+        // Find the ring number, this comes down to factoring quadratics, and easiest way
+        // to solve it in our case is trial and error
+
+        
+
+        Cube::new(self.q, self.r, self.s)
+        
     }
 }
 
