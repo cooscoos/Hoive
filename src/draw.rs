@@ -220,11 +220,7 @@ fn make_chip_string(mut chip_list: Vec<String>) -> String {
     chip_list.sort();
 
     // Look for chips with the following names, grouped as follows
-    let char_groups = vec![
-        vec!['a', 's', 'q'],
-        vec!['b', 'l', 'p'],
-        vec!['g', 'm'],
-    ];
+    let char_groups = vec![vec!['a', 's', 'q'], vec!['b', 'l', 'p'], vec!['g', 'm']];
 
     // names for the groups
     let group_names = vec![
@@ -252,7 +248,6 @@ fn find_chip_chars(
     let mut return_string = String::new();
 
     for (i, char_list) in char_groups.iter().enumerate() {
-
         // Because of the colour encoding, we search the 5th char to see if it matches
         let mut string_iterator = chip_list
             .iter()
@@ -291,4 +286,3 @@ fn make_numbered_chip_string(mut chip_list: Vec<String>) -> String {
 
     chip_string
 }
-

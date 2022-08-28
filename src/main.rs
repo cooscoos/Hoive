@@ -27,7 +27,6 @@ fn play_game() {
     }
 }
 
-
 // #[macro_use]
 // extern crate diesel;
 

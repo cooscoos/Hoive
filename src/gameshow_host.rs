@@ -5,7 +5,4 @@
 // 1. Tells the API to start a new instance of a game
 // 2. loops until completion
 
-
-fn unused(){
-    
-}
+fn unused() {}

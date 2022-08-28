@@ -1,3 +1,4 @@
+use hex_spiral::{ring, ring_offset};
 /// Module defining hexagonal co-ordinate systems for the board to use.
 use std::collections::HashSet;
 use std::fmt::Debug;
@@ -37,7 +38,8 @@ pub trait Coord:
     fn ascend(&mut self); // increase or decrease the layer number
     fn descend(&mut self);
     fn to_bottom(&self) -> Self; // drop to layer 0
-    fn mapfrom_spiral(&self,hex: Spiral) -> Self; // convert from spiral coordinates to self
+    fn mapfrom_spiral(&self, hex: Spiral) -> Self; // convert from spiral coordinates to self
+    fn mapto_spiral(&self) -> Result<Spiral, &'static str>;
 }
 
 /// Doubleheight coordinate system used by the ascii renderer
@@ -67,8 +69,9 @@ impl DoubleHeight {
 }
 
 /// Spiral coordinate system used to save the game board state as a string
+#[derive(Debug, PartialEq, Eq)]
 pub struct Spiral {
-    pub u: u16,
+    pub u: usize,
 }
 
 /// Cube coordinate system, used by game logic
@@ -250,17 +253,99 @@ impl Coord for Cube {
         Cube::new(self.q, self.r, self.s)
     }
 
-    /// Map an input spiral coordinate to Cube coordinate
+    /// Convert spiral hex coordinate x to cube coords (q,r,s).
     fn mapfrom_spiral(&self, hex: Spiral) -> Self {
+        let x = hex.u;
+        // The origin is a special case: return (0,0,0)
+        if x == 0 {
+            return Cube::default();
+        }
 
-        // Find the ring number, this comes down to factoring quadratics, and easiest way
-        // to solve it in our case is trial and error
+        // Find the ring index and ring-offset for this spiral
+        let ring_index = ring(x) as f32;
+        let ring_offset = ring_offset(ring_index as usize) as f32;
 
-        
+        // Calculate q and r
+        let q = growing_trunc_tri(x as f32, ring_index, ring_offset, 0.0);
+        let r = growing_trunc_tri(x as f32, ring_index, ring_offset, 4.0);
 
-        Cube::new(self.q, self.r, self.s)
-        
+        // Could alternatively manually calculate s as:
+        // let s = growing_trunc_tri(x, ring_offset, p, ring_index, -4.0);
+        let s = -q - r;
+
+        Cube::new(q as i8, r as i8, s as i8)
     }
+
+    fn mapto_spiral(&self) -> Result<Spiral, &'static str> {
+        // The origin is a special case, return 0.
+        if *self == Cube::default() {
+            return Ok(Spiral { u: 0 });
+        }
+
+        // Make sure we've been passed a valid cube coordinate. The components should sum to 0.
+        if self.q + self.r + self.s != 0 {
+            return Err("q + r + s != 0");
+        }
+
+        // Find the ring index based on the maximum absolute value of q, r or s.
+
+        let ring_index = [self.q.abs(), self.r.abs(), self.s.abs()]
+            .into_iter()
+            .max()
+            .unwrap() as usize;
+
+        let ring_offset = ring_offset(ring_index);
+
+        // We now know approximately where we are in the truncated triangle wave.
+        // If we start at x = ring_offset and calculate q,r,s values from this point up to
+        // x = (ring_offset + ring_index * 6), we should find matching q, r, s values for some value of x.
+
+        let x = ring_offset..(ring_offset + ring_index * 6);
+
+        match x
+            .into_iter()
+            .map(|u| (u, self.mapfrom_spiral(Spiral { u })))
+            .find(|(_, c)| c == self)
+            .map(|(x, _)| x)
+        {
+            Some(value) => Ok(Spiral { u: value }),
+            None => Err("Couldn't find a solution"),
+        }
+    }
+}
+
+/// Calculates y = f(x) where f is a truncated triangle wave of initial period, p = 6, and amplitude, a = 1.5
+/// The amplitude and period increase each cycle.
+/// - c is the cycle number that we're currently on (i.e. c=1 for the first cycle, and so on)
+/// - x_prime is the value of x that this cycle began on
+/// - phi is a phase shift in the triangle wave
+fn growing_trunc_tri(x: f32, c: f32, x_prime: f32, phi: f32) -> i32 {
+    // The base period of the triangle wave during cycle 1 (the number of sides a hexagon has)
+    let p = 6.0;
+
+    // How far along we are in the current cycle
+    let offset_x = x - x_prime;
+
+    // We'll use the modulo version of the equation for a triangle wave
+    // https://en.wikipedia.org/wiki/Triangle_wave
+    // But we'll modify it so that the cycle number is used to multiply the amplitude and period,
+    // making the triangle wave get taller and broader each cyle. Define some params used in the calc:
+    let s = offset_x - (c / 4.0) * (2.0 * phi + p);
+    let p_star = c * p;
+
+    // Here y_1 = g(x), where g is the triangle wave before it's truncated
+    let y_1 = 6.0 / p * (modulo(s, p_star) - c * p / 2.0).abs() - 1.5 * (c);
+
+    // We now truncate the wave so that it never has an amplitude greater than the cycle number
+    match y_1 > c {
+        true => (y_1.signum() * c) as i32,
+        false => y_1 as i32,
+    }
+}
+
+/// In Rust, a % b finds the remainder of a / b. This function finds the actual modulo (not the remainder) of a and b.
+fn modulo<T: std::ops::Rem<Output = T> + std::ops::Add<Output = T> + Copy>(a: T, b: T) -> T {
+    ((a % b) + b) % b
 }
 
 // Hexagonal Efficient Coordinate (HECS) co-ordinate system
