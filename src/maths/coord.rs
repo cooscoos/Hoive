@@ -279,7 +279,7 @@ impl Coord for Cube {
 
     fn mapto_spiral(&self) -> Result<Spiral, &'static str> {
         // The origin is a special case, return 0.
-        if self.q == 0 && self.r ==0 && self.s == 0 {
+        if self.q == 0 && self.r == 0 && self.s == 0 {
             return Ok(Spiral { u: 0, l: self.l });
         }
 
@@ -303,7 +303,7 @@ impl Coord for Cube {
 
         let x = ring_offset..(ring_offset + ring_index * 6);
 
-        println!("Search area is..{:?}",x);
+        println!("Search area is..{:?}", x);
 
         match x
             .into_iter()

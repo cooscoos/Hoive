@@ -414,77 +414,51 @@ where
 
     /// Convert board into a spiral notation string
     pub fn spiral_string(&self) -> String {
-
         // Return nothing if we got an empty board
-        if self.get_placed_positions().is_empty(){
-            return "".to_string()
+        if self.get_placed_positions().is_empty() {
+            return "".to_string();
         }
 
-        let mwah =  self.chips.iter().filter(|(_,p)| p.is_some()).map(|(c,p)| (p.unwrap(),*c)).collect::<BTreeMap<T,Chip>>();
-
-        println!("Input is: {:?}", mwah);
-
-        // Get a list of all objects on the board in spiral coordinates as a BTree to sort
-        let moo = self
+        // Get spiral position (key) of chips (value), using BTree to sort
+        let spiral_tree = self
             .chips
             .iter()
             .filter(|(_, p)| p.is_some())
             .map(|(c, p)| (p.unwrap().mapto_spiral().unwrap(), *c))
             .collect::<BTreeMap<Spiral, Chip>>();
-        
-        println!("BTree is: {:?}", moo);
-
-        // The coordinate system needs to define a mapping from spiral
-        // 0,1,2,... to a visiting order for the chips on the board
-        // keep branching out until we've found every chip on the board (always check layers above when visiting
-
-        let max_hex = moo.keys().max().unwrap();
 
         let mut stringer = String::new();
-        for i in 0..=max_hex.u {
+        // Get the first coordinate
+        let mut last_coord = *spiral_tree.keys().next().unwrap();
+        for (coord, chip) in spiral_tree {
+            // declone later
 
-            let check = &Spiral{u:i, l:0};
-            // get the one here
-            
-            if moo.get(check).is_some(){
-                // Get the chip's name
-                let chippy = moo.get(check).unwrap();
-
-                // If it's black team, allcaps it
-                let namey = match chippy.team == Team::Black{
-                    true => chippy.name.to_uppercase(),
-                    false => chippy.name.to_string(),
-                };
-
-
-                stringer.push_str(&namey);
-
-                // check if there's anything above it ad infinitum
-                let mut mycoords = self.coord.mapfrom_spiral(*check);
-                loop {
-                    mycoords.ascend();
-                    match self.get_chip(mycoords) {
-                        Some(chip) => {
-                            // If it's black team, allcaps it
-                            let namey = match chip.team == Team::Black{
-                                true => format!("[{}]",chip.name.to_uppercase()),
-                                false => format!("[{}]",chip.name),
-                            };
-
-                            stringer.push_str(&namey)
-
-
-                        },
-                        None => break,
-                    }
-                }
-
-
-            } else {
-                stringer.push_str(".") // dots for now
+            println!(
+                "Last was {:?}, this is {:?} so we're {}",
+                last_coord,
+                coord,
+                coord.u != last_coord.u
+            );
+            // If we haven't moved a single hex, record how many gaps there are
+            if coord.u != last_coord.u && coord.u != last_coord.u + 1 {
+                println!("Here we go");
+                stringer.push_str(&format!("({})", coord.u - last_coord.u - 1));
             }
 
+            // Then get the chip and push it
+            // If it's black team, allcaps it
+            let mut namey = match chip.team == Team::Black {
+                true => chip.name.to_uppercase(),
+                false => chip.name.to_string(),
+            };
 
+            // If it's on a layer above 0, add some brackets
+            if coord.l > 0 {
+                namey = format!("[{namey}]");
+            }
+
+            stringer.push_str(&namey);
+            last_coord = coord;
         }
         stringer
     }

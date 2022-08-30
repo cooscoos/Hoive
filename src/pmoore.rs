@@ -43,7 +43,6 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
 
     println!("{} team's turn.\n", draw::team_string(active_team));
 
-
     // Keep asking player to select chip until Some(value) happens
     let mut chip_selection = None;
     while chip_selection == None {
@@ -111,8 +110,6 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
     specials::mosquito_desuck(board);
 
     return_status
-
-    
 }
 
 /// Ask user on active team to select chip. Returns None if user input invalid.

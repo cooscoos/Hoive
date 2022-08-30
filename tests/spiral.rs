@@ -17,10 +17,17 @@ fn convert_spiral_to_cube() {
         .collect::<Vec<Cube>>();
 
     // This is the result we expect to get
-    let expected = [(0, 0, 0), (0, -1, 1), (0, 1, -1), (0, -2, 2), (1,-2,1), (4, 0, -4)]
-        .into_iter()
-        .map(|(q, r, s)| Cube::new(q, r, s))
-        .collect::<Vec<Cube>>();
+    let expected = [
+        (0, 0, 0),
+        (0, -1, 1),
+        (0, 1, -1),
+        (0, -2, 2),
+        (1, -2, 1),
+        (4, 0, -4),
+    ]
+    .into_iter()
+    .map(|(q, r, s)| Cube::new(q, r, s))
+    .collect::<Vec<Cube>>();
 
     assert_eq!(expected, result);
 }
@@ -28,9 +35,16 @@ fn convert_spiral_to_cube() {
 #[test]
 fn convert_cube_to_spiral() {
     // Test a few input values in cube coordinates
-    let cube = [(0, 0, 0), (0, -1, 1), (0, 1, -1), (0, -2, 2), (1,-2, 1), (4, 0, -4)]
-        .into_iter()
-        .map(|(q, r, s)| Cube::new(q, r, s));
+    let cube = [
+        (0, 0, 0),
+        (0, -1, 1),
+        (0, 1, -1),
+        (0, -2, 2),
+        (1, -2, 1),
+        (4, 0, -4),
+    ]
+    .into_iter()
+    .map(|(q, r, s)| Cube::new(q, r, s));
 
     // Try find their spiral coords
     let result = cube
@@ -53,7 +67,6 @@ fn convert_invalid_qrs() {
     // An invalid set of cube coords
     assert_eq!(Err("q + r + s != 0"), cube.mapto_spiral())
 }
-
 
 #[test]
 fn spiral_ring_test() {
