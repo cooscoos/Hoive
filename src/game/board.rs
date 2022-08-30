@@ -412,14 +412,14 @@ where
         neighbour_hexes.intersection(&chip_positions).count()
     }
 
-    /// Convert board into a spiral notation string
-    pub fn spiral_string(&self) -> String {
-        // Return nothing if we got an empty board
+    /// Convert the current board into a spiral notation string
+    pub fn encode_spiral(&self) -> String {
+        // Return blank string if board is empty
         if self.get_placed_positions().is_empty() {
-            return "".to_string();
+            return String::new();
         }
 
-        // Get spiral position (key) of chips (value), using BTree to sort
+        // Get spiral coord (key) of each chip (value) on board, as sorted BTree
         let spiral_tree = self
             .chips
             .iter()
@@ -427,45 +427,123 @@ where
             .map(|(c, p)| (p.unwrap().mapto_spiral().unwrap(), *c))
             .collect::<BTreeMap<Spiral, Chip>>();
 
-        let mut stringer = String::new();
-        // Get the first coordinate
-        let mut last_coord = *spiral_tree.keys().next().unwrap();
-        for (coord, chip) in spiral_tree {
-            // declone later
+        let mut return_string = String::new();
 
-            println!(
-                "Last was {:?}, this is {:?} so we're {}",
-                last_coord,
-                coord,
-                coord.u != last_coord.u
-            );
-            // If we haven't moved a single hex, record how many gaps there are
-            if coord.u != last_coord.u && coord.u != last_coord.u + 1 {
-                println!("Here we go");
-                stringer.push_str(&format!("({})", coord.u - last_coord.u - 1));
+        // Create a variable to keep track of the previous hex coord we checked
+        let mut previous = *spiral_tree.keys().next().unwrap(); // initialise as the first value in BTree
+        for (coord, chip) in spiral_tree {
+            // If we've moved more than 1 spiral hex, record how many gaps there are after a forward slash
+            if coord.u - previous.u > 1 {
+                return_string.push_str(&format!("/{}", coord.u - previous.u - 1));
             }
 
-            // Then get the chip and push it
-            // If it's black team, allcaps it
-            let mut namey = match chip.team == Team::Black {
+            // Black chips are recorded in allcaps
+            let mut chip_str = match chip.team == Team::Black {
                 true => chip.name.to_uppercase(),
                 false => chip.name.to_string(),
             };
 
-            // If it's on a layer above 0, add some brackets
+            // If it's on a layer above 0, it's an elevated beetle or a mosquito. Re-encode these.
             if coord.l > 0 {
-                namey = format!("[{namey}]");
+                chip_str = match chip_str.chars().next() {
+                    Some('B') => chip_str.replace("B", "["),
+                    Some('b') => chip_str.replace("b", "("),
+                    Some('M') => chip_str.replace("M", ">"),
+                    Some('m') => chip_str.replace("m", "<"),
+                    _ => panic!("Error in conversion of layer>0 chip str"),
+                };
             }
 
-            stringer.push_str(&namey);
-            last_coord = coord;
+            return_string.push_str(&chip_str);
+            previous = coord; // update the previous for the next loop
         }
-        stringer
+        return_string
     }
 
+    
     /// Convert from spiral notation string into a live board
     /// Take in a co-ordinate system or an empty board?
-    pub fn from_spiral_string(self, board_string: String) -> Self {
-        self
+    pub fn decode_spiral(&self, spiral_code: String) -> Self {
+
+
+        let mut newboard = Board::new(self.coord);
+
+        // Maybe the first two or 3 define the turn number and board size
+        // 1: 99
+        // 2: 99
+        // 3: boardsize
+        // trim them off first and then 
+
+
+        // String needs decoding in couplets
+        let first_char_iter = spiral_code.chars().step_by(2); // this gets the first.
+        let second_char_iter = spiral_code.chars().skip(1).step_by(2); // this gets the second char
+
+        // For each couplet
+        let mut hex = 0 as usize;
+        let mut layer = 0;
+        for (a,b) in first_char_iter.zip(second_char_iter) {
+            
+            
+
+            // Match on the first char
+            match a {
+                _ if a.is_alphabetic() => {
+                    // We have a chip on layer 0
+                    layer = 0;
+                    newboard.subdecode(a, b, hex, layer);
+                    hex+=1;
+
+                }
+                _ if a == '/' => {
+                    // Skip some spaces
+                    let skip: usize = b.to_string().parse().unwrap();
+                    hex += skip;
+                }
+                _ if ['[','(','<','>'].iter().any(|c| *c==a) => {
+                    // If it starts with one of these characters, it's going up one layer
+                    layer += 1;
+
+                    // Decide what it is
+                    let new_a = match a {
+                        '[' => 'B',
+                        '(' => 'b',
+                        '<' => 'm',
+                        '>' => 'M',
+                        _ => panic!("Rust broke, we tried to match on something unreachable"),
+                    };
+
+                    newboard.subdecode(new_a, b, hex, layer);
+
+                }
+                _ => panic!("Got a naughty chip name"),
+                
+            }
+
+        }
+
+        newboard
+
+        
+
+        
     }
+
+    /// Updates a mutable board based on a char code couplet, hex position and layer
+    fn subdecode(&mut self, a: char, b:char, hex: usize, layer: i8) {
+        // Build a chip and its position from the available info
+        let team = match a.is_uppercase() {
+            true => Team::Black,
+            false => Team::White, 
+        };
+
+        let name = format!("{}{}",a.to_lowercase(),b);
+        let position = self.coord.mapfrom_spiral(Spiral{u: hex, l:layer});
+        let chip = Chip::new(comps::convert_static(name).unwrap(),team);
+
+        // Force override the chip's position on the board without rule checks
+        self.chips.insert(chip, Some(position));
+
+    }
+
 }

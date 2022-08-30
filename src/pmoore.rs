@@ -46,7 +46,12 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
     // Keep asking player to select chip until Some(value) happens
     let mut chip_selection = None;
     while chip_selection == None {
-        println!("The spiral string is:\n {}", board.spiral_string());
+        let encoded = board.encode_spiral();
+        println!("The spiral string is:\n {}", encoded);
+        let mong = board.decode_spiral(encoded);
+
+        println!("SPIRAL BOARD\n{}", draw::show_board(&mong));
+
         chip_selection = chip_select(board, active_team)
     }
 
