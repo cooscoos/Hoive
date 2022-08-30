@@ -4,6 +4,7 @@ use std::collections::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::{Add, Sub};
+use crate::maths::funcs;
 
 /// A trait ensuring all genetic hex coordinate systems utilise the same methods
 /// Any coordinate system that is used by game logic must implement this trait.
@@ -340,7 +341,7 @@ fn growing_trunc_tri(x: f32, c: f32, x_prime: f32, phi: f32) -> i32 {
     let p_star = c * p;
 
     // Here y_1 = g(x), where g is the triangle wave before it's truncated
-    let y_1 = 6.0 / p * (modulo(s, p_star) - c * p / 2.0).abs() - 1.5 * (c);
+    let y_1 = 6.0 / p * (funcs::modulo(s, p_star) - c * p / 2.0).abs() - 1.5 * (c);
 
     // We now truncate the wave so that it never has an amplitude greater than the cycle number
     match y_1.abs() > c {
@@ -349,10 +350,7 @@ fn growing_trunc_tri(x: f32, c: f32, x_prime: f32, phi: f32) -> i32 {
     }
 }
 
-/// In Rust, a % b finds the remainder of a / b. This function finds the actual modulo (not the remainder) of a and b.
-pub fn modulo<T: std::ops::Rem<Output = T> + std::ops::Add<Output = T> + Copy>(a: T, b: T) -> T {
-    ((a % b) + b) % b
-}
+
 
 // Hexagonal Efficient Coordinate (HECS) co-ordinate system
 // https://en.wikipedia.org/wiki/Hexagonal_Efficient_Coordinate_System

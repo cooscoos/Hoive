@@ -1,7 +1,7 @@
 /// Board module tracks the chips and executes their moves
 use std::collections::{BTreeMap, HashMap, HashSet};
 
-use diesel::dsl::max;
+use crate::maths::funcs;
 
 use super::comps::{self, Chip, Team}; // Game components (chips, teams)
 use crate::game::{animals, history::History, movestatus::MoveStatus}; // Animal logic, move tracking and history
@@ -444,7 +444,7 @@ where
             if coord.u - previous.u > 1 {
                 // The first part is a numeric, and the second part can be 0-9, A-F
                 return_string.push_str(&format!("{:0>2}", coord.u - previous.u - 1));
-                println!("The gap was {}, in hex this is {}", coord.u-previous.u-1,to_hex(coord.u-previous.u-1));
+                println!("The gap was {}, in hex this is {}", coord.u-previous.u-1,funcs::decimal_to_duo(coord.u-previous.u-1));
             }
 
             // Black chips are recorded in allcaps
@@ -547,19 +547,3 @@ where
     }
 }
 
-    /// Converts a number to hex 0-9,A-F, replacing B with X
-    fn to_hex(number: usize) -> String {
-        
-        // Get the remainder
-        let rem1 = number%16;
-
-        let rem2 = match (number - rem1)  == 0 {
-            true=> 0,
-            false => rem1%16,
-        };
-    
-        // Convert rem1 and rem2 to A-F if they're above 
-        // need 131 max, use duodecimal (XY)? max 143
-        format!("{rem2}{rem1}")
-
-    }
