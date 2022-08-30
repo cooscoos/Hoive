@@ -350,7 +350,7 @@ fn growing_trunc_tri(x: f32, c: f32, x_prime: f32, phi: f32) -> i32 {
 }
 
 /// In Rust, a % b finds the remainder of a / b. This function finds the actual modulo (not the remainder) of a and b.
-fn modulo<T: std::ops::Rem<Output = T> + std::ops::Add<Output = T> + Copy>(a: T, b: T) -> T {
+pub fn modulo<T: std::ops::Rem<Output = T> + std::ops::Add<Output = T> + Copy>(a: T, b: T) -> T {
     ((a % b) + b) % b
 }
 

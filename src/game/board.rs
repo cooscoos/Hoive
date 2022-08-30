@@ -414,9 +414,16 @@ where
 
     /// Convert the current board into a spiral notation string
     pub fn encode_spiral(&self) -> String {
-        // Return blank string if board is empty
+
+        let mut return_string = String::new();
+
+        // The first 3 couplets will define the turn number (0-9999), and the board size (0-99)
+        return_string.push_str(&format!("{:0>4}",self.turns));
+        return_string.push_str(&format!("{:0>2}",self.size));
+
+        // Return nothing for the board if it's empty
         if self.get_placed_positions().is_empty() {
-            return String::new();
+            return return_string;
         }
 
         // Get spiral coord (key) of each chip (value) on board, as sorted BTree
@@ -427,14 +434,17 @@ where
             .map(|(c, p)| (p.unwrap().mapto_spiral().unwrap(), *c))
             .collect::<BTreeMap<Spiral, Chip>>();
 
-        let mut return_string = String::new();
 
         // Create a variable to keep track of the previous hex coord we checked
         let mut previous = *spiral_tree.keys().next().unwrap(); // initialise as the first value in BTree
         for (coord, chip) in spiral_tree {
+
+   
             // If we've moved more than 1 spiral hex, record how many gaps there are after a forward slash
             if coord.u - previous.u > 1 {
-                return_string.push_str(&format!("/{}", coord.u - previous.u - 1));
+                // The first part is a numeric, and the second part can be 0-9, A-F
+                return_string.push_str(&format!("{:0>2}", coord.u - previous.u - 1));
+                println!("The gap was {}, in hex this is {}", coord.u-previous.u-1,to_hex(coord.u-previous.u-1));
             }
 
             // Black chips are recorded in allcaps
@@ -460,20 +470,20 @@ where
         return_string
     }
 
-    
+
+
     /// Convert from spiral notation string into a live board
     /// Take in a co-ordinate system or an empty board?
     pub fn decode_spiral(&self, spiral_code: String) -> Self {
-
-
         let mut newboard = Board::new(self.coord);
 
-        // Maybe the first two or 3 define the turn number and board size
-        // 1: 99
-        // 2: 99
-        // 3: boardsize
-        // trim them off first and then 
 
+        // The first 2 couplets are the board turn number, the third couplet is the board size
+        let (turn_size, spiral_code) = spiral_code.split_at(6);
+        let (turn,size) = turn_size.split_at(4);
+
+        newboard.turns = turn.parse().unwrap();
+        newboard.size = size.parse().unwrap();
 
         // String needs decoding in couplets
         let first_char_iter = spiral_code.chars().step_by(2); // this gets the first.
@@ -482,26 +492,23 @@ where
         // For each couplet
         let mut hex = 0 as usize;
         let mut layer = 0;
-        for (a,b) in first_char_iter.zip(second_char_iter) {
-            
-            
-
+        for (a, b) in first_char_iter.zip(second_char_iter) {
             // Match on the first char
             match a {
                 _ if a.is_alphabetic() => {
                     // We have a chip on layer 0
                     layer = 0;
                     newboard.subdecode(a, b, hex, layer);
-                    hex+=1;
-
+                    hex += 1;
                 }
-                _ if a == '/' => {
+                _ if a.is_ascii_digit() => {
                     // Skip some spaces
-                    let skip: usize = b.to_string().parse().unwrap();
+                    let skip: usize = format!("{a}{b}").parse().unwrap();
                     hex += skip;
                 }
-                _ if ['[','(','<','>'].iter().any(|c| *c==a) => {
+                _ if ['[', '(', '<', '>'].iter().any(|c| *c == a) => {
                     // If it starts with one of these characters, it's going up one layer
+                    hex -= 1;
                     layer += 1;
 
                     // Decide what it is
@@ -514,36 +521,45 @@ where
                     };
 
                     newboard.subdecode(new_a, b, hex, layer);
-
+                    hex += 1;
                 }
-                _ => panic!("Got a naughty chip name"),
-                
+                _ => panic!("Chip name not recognised."),
             }
-
         }
 
         newboard
-
-        
-
-        
     }
 
     /// Updates a mutable board based on a char code couplet, hex position and layer
-    fn subdecode(&mut self, a: char, b:char, hex: usize, layer: i8) {
+    fn subdecode(&mut self, a: char, b: char, hex: usize, layer: i8) {
         // Build a chip and its position from the available info
         let team = match a.is_uppercase() {
             true => Team::Black,
-            false => Team::White, 
+            false => Team::White,
         };
 
-        let name = format!("{}{}",a.to_lowercase(),b);
-        let position = self.coord.mapfrom_spiral(Spiral{u: hex, l:layer});
-        let chip = Chip::new(comps::convert_static(name).unwrap(),team);
+        let name = format!("{}{}", a.to_lowercase(), b);
+        let position = self.coord.mapfrom_spiral(Spiral { u: hex, l: layer });
+        let chip = Chip::new(comps::convert_static(name).unwrap(), team);
 
         // Force override the chip's position on the board without rule checks
         self.chips.insert(chip, Some(position));
+    }
+}
+
+    /// Converts a number to hex 0-9,A-F, replacing B with X
+    fn to_hex(number: usize) -> String {
+        
+        // Get the remainder
+        let rem1 = number%16;
+
+        let rem2 = match (number - rem1)  == 0 {
+            true=> 0,
+            false => rem1%16,
+        };
+    
+        // Convert rem1 and rem2 to A-F if they're above 
+        // need 131 max, use duodecimal (XY)? max 143
+        format!("{rem2}{rem1}")
 
     }
-
-}
