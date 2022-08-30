@@ -69,9 +69,10 @@ impl DoubleHeight {
 }
 
 /// Spiral coordinate system used to save the game board state as a string
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Spiral {
     pub u: usize,
+    pub l: i8, // the layer
 }
 
 /// Cube coordinate system, used by game logic
@@ -273,13 +274,13 @@ impl Coord for Cube {
         // let s = growing_trunc_tri(x, ring_offset, p, ring_index, -4.0);
         let s = -q - r;
 
-        Cube::new(q as i8, r as i8, s as i8)
+        Cube::new_layer(q as i8, r as i8, s as i8, hex.l)
     }
 
     fn mapto_spiral(&self) -> Result<Spiral, &'static str> {
         // The origin is a special case, return 0.
         if *self == Cube::default() {
-            return Ok(Spiral { u: 0 });
+            return Ok(Spiral { u: 0, l: 0 });
         }
 
         // Make sure we've been passed a valid cube coordinate. The components should sum to 0.
@@ -302,13 +303,18 @@ impl Coord for Cube {
 
         let x = ring_offset..(ring_offset + ring_index * 6);
 
+        println!("Search area is..{:?}",x);
+
         match x
             .into_iter()
-            .map(|u| (u, self.mapfrom_spiral(Spiral { u })))
+            .map(|u| (u, self.mapfrom_spiral(Spiral { u, l: self.l })))
             .find(|(_, c)| c == self)
             .map(|(x, _)| x)
         {
-            Some(value) => Ok(Spiral { u: value }),
+            Some(value) => Ok(Spiral {
+                u: value,
+                l: self.l,
+            }),
             None => Err("Couldn't find a solution"),
         }
     }
@@ -337,7 +343,7 @@ fn growing_trunc_tri(x: f32, c: f32, x_prime: f32, phi: f32) -> i32 {
     let y_1 = 6.0 / p * (modulo(s, p_star) - c * p / 2.0).abs() - 1.5 * (c);
 
     // We now truncate the wave so that it never has an amplitude greater than the cycle number
-    match y_1 > c {
+    match y_1.abs() > c {
         true => (y_1.signum() * c) as i32,
         false => y_1 as i32,
     }

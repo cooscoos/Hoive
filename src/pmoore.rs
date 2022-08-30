@@ -108,7 +108,11 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
     // Refresh all mosquito names back to m1
     specials::mosquito_desuck(board);
 
+    println!("The spiral string is:\n {}", board.spiral_string());
+
     return_status
+
+    
 }
 
 /// Ask user on active team to select chip. Returns None if user input invalid.

@@ -1,9 +1,12 @@
 /// Board module tracks the chips and executes their moves
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
+
+use diesel::dsl::max;
 
 use super::comps::{self, Chip, Team}; // Game components (chips, teams)
 use crate::game::{animals, history::History, movestatus::MoveStatus}; // Animal logic, move tracking and history
 use crate::maths::coord::Coord; // Hexagonal coordinate system
+use crate::maths::coord::Spiral;
 
 /// The Board struct keeps track of game's progress, history and execution of rules
 #[derive(Debug, Eq, PartialEq)]
@@ -411,11 +414,53 @@ where
 
     /// Convert board into a spiral notation string
     pub fn spiral_string(&self) -> String {
+
+        let mwah =  self.chips.iter().filter(|(_,p)| p.is_some()).map(|(c,p)| (p.unwrap(),*c)).collect::<BTreeMap<T,Chip>>();
+
+        println!("Input is: {:?}", mwah);
+
+        // Get a list of all objects on the board in spiral coordinates as a BTree to sort
+        let moo = self
+            .chips
+            .iter()
+            .filter(|(_, p)| p.is_some())
+            .map(|(c, p)| (p.unwrap().mapto_spiral().unwrap(), *c))
+            .collect::<BTreeMap<Spiral, Chip>>();
+        
+        println!("BTree is: {:?}", moo);
+
         // The coordinate system needs to define a mapping from spiral
         // 0,1,2,... to a visiting order for the chips on the board
-        // keep branching out until we've found every chip on the board (always check layers above when visiting)
+        // keep branching out until we've found every chip on the board (always check layers above when visiting
 
-        "GATACCA".to_string()
+        let max_hex = moo.keys().max().unwrap();
+
+        let mut stringer = String::new();
+        for i in 0..max_hex.u {
+            
+            let check = &Spiral{u:i, l:0};
+            // get the one here
+            
+            if moo.get(check).is_some(){
+                // Get the chip's name
+                let chippy = moo.get(check).unwrap();
+
+                // If it's black team, allcaps it
+                let namey = match chippy.team == Team::Black{
+                    true => chippy.name.to_uppercase(),
+                    false => chippy.name.to_string(),
+
+                };
+
+
+                stringer.push_str(&namey)
+            } else {
+                stringer.push_str(".") // dots for now
+            }
+
+
+        }
+        stringer
     }
 
     /// Convert from spiral notation string into a live board

@@ -3,22 +3,21 @@ use hoive::maths::coord::Coord;
 use hoive::maths::coord::Cube;
 use hoive::maths::coord::Spiral;
 
-
 #[test]
 fn convert_spiral_to_cube() {
     // Test a few input values in spiral coordinates
-    let spiral_vals: Vec<usize> = vec![0, 1, 4, 7, 45];
+    let spiral_vals: Vec<usize> = vec![0, 1, 4, 7, 8, 45];
 
     let cube = Cube::default();
 
     // Try find their cube coords
     let result = spiral_vals
         .into_iter()
-        .map(|u| cube.mapfrom_spiral(Spiral{u}))
+        .map(|u| cube.mapfrom_spiral(Spiral { u, l: 0 }))
         .collect::<Vec<Cube>>();
 
     // This is the result we expect to get
-    let expected = [(0, 0, 0), (0, -1, 1), (0, 1, -1), (0, -2, 2), (4, 0, -4)]
+    let expected = [(0, 0, 0), (0, -1, 1), (0, 1, -1), (0, -2, 2), (1,-2,1), (4, 0, -4)]
         .into_iter()
         .map(|(q, r, s)| Cube::new(q, r, s))
         .collect::<Vec<Cube>>();
@@ -29,10 +28,9 @@ fn convert_spiral_to_cube() {
 #[test]
 fn convert_cube_to_spiral() {
     // Test a few input values in cube coordinates
-    let cube = [(0, 0, 0), (0, -1, 1), (0, 1, -1), (0, -2, 2), (4, 0, -4)]
+    let cube = [(0, 0, 0), (0, -1, 1), (0, 1, -1), (0, -2, 2), (1,-2, 1), (4, 0, -4)]
         .into_iter()
         .map(|(q, r, s)| Cube::new(q, r, s));
-
 
     // Try find their spiral coords
     let result = cube
@@ -40,14 +38,16 @@ fn convert_cube_to_spiral() {
         .map(|c| c.mapto_spiral().unwrap())
         .collect::<Vec<Spiral>>();
 
-        let expected =[0, 1, 4, 7, 45].into_iter().map(|u| Spiral{u}).collect::<Vec<Spiral>>();
+    let expected = [0, 1, 4, 7, 8, 45]
+        .into_iter()
+        .map(|u| Spiral { u, l: 0 })
+        .collect::<Vec<Spiral>>();
 
     assert_eq!(expected, result);
 }
 
 #[test]
 fn convert_invalid_qrs() {
-
     let cube = Cube::new(-1, -1, 0);
 
     // An invalid set of cube coords
