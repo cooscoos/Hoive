@@ -1,10 +1,10 @@
+use crate::maths::funcs;
 use hex_spiral::{ring, ring_offset};
 /// Module defining hexagonal co-ordinate systems for the board to use.
 use std::collections::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::{Add, Sub};
-use crate::maths::funcs;
 
 /// A trait ensuring all genetic hex coordinate systems utilise the same methods
 /// Any coordinate system that is used by game logic must implement this trait.
@@ -349,8 +349,6 @@ fn growing_trunc_tri(x: f32, c: f32, x_prime: f32, phi: f32) -> i32 {
         false => y_1 as i32,
     }
 }
-
-
 
 // Hexagonal Efficient Coordinate (HECS) co-ordinate system
 // https://en.wikipedia.org/wiki/Hexagonal_Efficient_Coordinate_System

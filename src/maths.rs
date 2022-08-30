@@ -1,3 +1,3 @@
 pub mod coord;
-pub mod morphops;
 pub mod funcs;
+pub mod morphops;
