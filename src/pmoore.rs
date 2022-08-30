@@ -43,9 +43,11 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
 
     println!("{} team's turn.\n", draw::team_string(active_team));
 
+
     // Keep asking player to select chip until Some(value) happens
     let mut chip_selection = None;
     while chip_selection == None {
+        println!("The spiral string is:\n {}", board.spiral_string());
         chip_selection = chip_select(board, active_team)
     }
 
@@ -107,8 +109,6 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
 
     // Refresh all mosquito names back to m1
     specials::mosquito_desuck(board);
-
-    println!("The spiral string is:\n {}", board.spiral_string());
 
     return_status
 

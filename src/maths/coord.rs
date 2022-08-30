@@ -69,7 +69,7 @@ impl DoubleHeight {
 }
 
 /// Spiral coordinate system used to save the game board state as a string
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub struct Spiral {
     pub u: usize,
     pub l: i8, // the layer
@@ -279,8 +279,8 @@ impl Coord for Cube {
 
     fn mapto_spiral(&self) -> Result<Spiral, &'static str> {
         // The origin is a special case, return 0.
-        if *self == Cube::default() {
-            return Ok(Spiral { u: 0, l: 0 });
+        if self.q == 0 && self.r ==0 && self.s == 0 {
+            return Ok(Spiral { u: 0, l: self.l });
         }
 
         // Make sure we've been passed a valid cube coordinate. The components should sum to 0.

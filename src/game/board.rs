@@ -415,6 +415,11 @@ where
     /// Convert board into a spiral notation string
     pub fn spiral_string(&self) -> String {
 
+        // Return nothing if we got an empty board
+        if self.get_placed_positions().is_empty(){
+            return "".to_string()
+        }
+
         let mwah =  self.chips.iter().filter(|(_,p)| p.is_some()).map(|(c,p)| (p.unwrap(),*c)).collect::<BTreeMap<T,Chip>>();
 
         println!("Input is: {:?}", mwah);
@@ -436,8 +441,8 @@ where
         let max_hex = moo.keys().max().unwrap();
 
         let mut stringer = String::new();
-        for i in 0..max_hex.u {
-            
+        for i in 0..=max_hex.u {
+
             let check = &Spiral{u:i, l:0};
             // get the one here
             
@@ -449,11 +454,32 @@ where
                 let namey = match chippy.team == Team::Black{
                     true => chippy.name.to_uppercase(),
                     false => chippy.name.to_string(),
-
                 };
 
 
-                stringer.push_str(&namey)
+                stringer.push_str(&namey);
+
+                // check if there's anything above it ad infinitum
+                let mut mycoords = self.coord.mapfrom_spiral(*check);
+                loop {
+                    mycoords.ascend();
+                    match self.get_chip(mycoords) {
+                        Some(chip) => {
+                            // If it's black team, allcaps it
+                            let namey = match chip.team == Team::Black{
+                                true => format!("[{}]",chip.name.to_uppercase()),
+                                false => format!("[{}]",chip.name),
+                            };
+
+                            stringer.push_str(&namey)
+
+
+                        },
+                        None => break,
+                    }
+                }
+
+
             } else {
                 stringer.push_str(".") // dots for now
             }
