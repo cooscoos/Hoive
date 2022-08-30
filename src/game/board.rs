@@ -438,13 +438,11 @@ where
         for (coord, chip) in spiral_tree {
             // If we've moved more than 1 spiral hex, record how many gaps there are after a forward slash
             if coord.u - previous.u > 1 {
-                // The first part is a numeric, and the second part can be 0-9, A-F
-                return_string.push_str(&format!("{:0>2}", coord.u - previous.u - 1));
-                println!(
-                    "The gap was {}, in hex this is {}",
-                    coord.u - previous.u - 1,
+                // Record the number of spaces to skip in duodecimal (0-143)
+                return_string.push_str(&format!(
+                    "{}",
                     funcs::decimal_to_duo(coord.u - previous.u - 1)
-                );
+                ));
             }
 
             // Black chips are recorded in allcaps
@@ -498,9 +496,9 @@ where
                     newboard.subdecode(a, b, hex, layer);
                     hex += 1;
                 }
-                _ if a.is_ascii_digit() => {
-                    // Skip some spaces
-                    let skip: usize = format!("{a}{b}").parse().unwrap();
+                _ if a.is_ascii_digit() || a == 'x' || a == 'y' => {
+                    // We have a duodecimal number. Skip some spaces.
+                    let skip = funcs::duo_to_decimal(format!("{a}{b}"));
                     hex += skip;
                 }
                 _ if ['[', '(', '<', '>'].iter().any(|c| *c == a) => {
