@@ -9,6 +9,8 @@ Play the game in terminal with cargo run.
 ## To do
 ### Bugcheck and tidy up
 
+- There's a bug where beetle at 0-4 can move over q at 0,0 - beetles can move any number of spaces?! oops.
+- beetle rendering on stringboard is weird
 - play test
 - add load game -- could match on MoveStatus::Load to quit out, restart and emulate moves
 - does pillbug sumoing need a bee check for either party?

@@ -1,9 +1,12 @@
 /// Board module tracks the chips and executes their moves
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
+
+use crate::maths::funcs;
 
 use super::comps::{self, Chip, Team}; // Game components (chips, teams)
 use crate::game::{animals, history::History, movestatus::MoveStatus}; // Animal logic, move tracking and history
 use crate::maths::coord::Coord; // Hexagonal coordinate system
+use crate::maths::coord::Spiral;
 
 /// The Board struct keeps track of game's progress, history and execution of rules
 #[derive(Debug, Eq, PartialEq)]
@@ -407,5 +410,131 @@ where
 
         // Count the common elements
         neighbour_hexes.intersection(&chip_positions).count()
+    }
+
+    /// Convert the current board into a spiral notation string
+    pub fn encode_spiral(&self) -> String {
+        let mut return_string = String::new();
+
+        // The first 3 couplets will define the turn number (0-9999), and the board size (0-99)
+        return_string.push_str(&format!("{:0>4}", self.turns));
+        return_string.push_str(&format!("{:0>2}", self.size));
+
+        // Return nothing for the board if it's empty
+        if self.get_placed_positions().is_empty() {
+            return return_string;
+        }
+
+        // Get spiral coord (key) of each chip (value) on board, as sorted BTree
+        let spiral_tree = self
+            .chips
+            .iter()
+            .filter(|(_, p)| p.is_some())
+            .map(|(c, p)| (p.unwrap().mapto_spiral().unwrap(), *c))
+            .collect::<BTreeMap<Spiral, Chip>>();
+
+        // Create a variable to keep track of the previous hex coord we checked
+        let mut previous = *spiral_tree.keys().next().unwrap(); // initialise as the first value in BTree
+        for (coord, chip) in spiral_tree {
+            // If we've moved more than 1 spiral hex, record how many gaps there are after a forward slash
+            if coord.u - previous.u > 1 {
+                // Record the number of spaces to skip in duodecimal (0-143)
+                return_string.push_str(&(funcs::decimal_to_duo(coord.u - previous.u - 1).to_string()));
+            }
+
+            // Black chips are recorded in allcaps
+            let mut chip_str = match chip.team == Team::Black {
+                true => chip.name.to_uppercase(),
+                false => chip.name.to_string(),
+            };
+
+            // If it's on a layer above 0, it's an elevated beetle or a mosquito. Re-encode these.
+            if coord.l > 0 {
+                chip_str = match chip_str.chars().next() {
+                    Some('B') => chip_str.replace('B', "["),
+                    Some('b') => chip_str.replace('b', "("),
+                    Some('M') => chip_str.replace('M', ">"),
+                    Some('m') => chip_str.replace('m', "<"),
+                    _ => panic!("Error in conversion of layer>0 chip str"),
+                };
+            }
+
+            return_string.push_str(&chip_str);
+            previous = coord; // update the previous for the next loop
+        }
+        return_string
+    }
+
+    /// Convert from spiral notation string into a live board
+    /// Take in a co-ordinate system or an empty board?
+    pub fn decode_spiral(&self, spiral_code: String) -> Self {
+        let mut newboard = Board::new(self.coord);
+
+        // The first 2 couplets are the board turn number, the third couplet is the board size
+        let (turn_size, spiral_code) = spiral_code.split_at(6);
+        let (turn, size) = turn_size.split_at(4);
+
+        newboard.turns = turn.parse().unwrap();
+        newboard.size = size.parse().unwrap();
+
+        // String needs decoding in couplets
+        let first_char_iter = spiral_code.chars().step_by(2); // this gets the first.
+        let second_char_iter = spiral_code.chars().skip(1).step_by(2); // this gets the second char
+
+        // For each couplet
+        let mut hex = 0_usize;
+        let mut layer = 0;
+        for (a, b) in first_char_iter.zip(second_char_iter) {
+            // Match on the first char
+            match a {
+                _ if a.is_alphabetic() => {
+                    // We have a chip on layer 0
+                    layer = 0;
+                    newboard.subdecode(a, b, hex, layer);
+                    hex += 1;
+                }
+                _ if a.is_ascii_digit() || a == 'x' || a == 'y' => {
+                    // We have a duodecimal number. Skip some spaces.
+                    let skip = funcs::duo_to_decimal(format!("{a}{b}"));
+                    hex += skip;
+                }
+                _ if ['[', '(', '<', '>'].iter().any(|c| *c == a) => {
+                    // If it starts with one of these characters, it's going up one layer
+                    hex -= 1;
+                    layer += 1;
+
+                    // Decide what it is
+                    let new_a = match a {
+                        '[' => 'B',
+                        '(' => 'b',
+                        '<' => 'm',
+                        '>' => 'M',
+                        _ => panic!("Rust broke, we tried to match on something unreachable"),
+                    };
+
+                    newboard.subdecode(new_a, b, hex, layer);
+                    hex += 1;
+                }
+                _ => panic!("Chip name not recognised."),
+            }
+        }
+
+        newboard
+    }
+
+    /// Updates a mutable board based on a char code couplet, hex position and layer
+    fn subdecode(&mut self, a: char, b: char, hex: usize, layer: i8) {
+        // Build a chip and its position from the available info
+        let team = match a.is_uppercase() {
+            true => Team::Black,
+            false => Team::White,
+        };
+
+        let name = format!("{}{}", a.to_lowercase(), b);
+        let position = self.coord.mapfrom_spiral(Spiral { u: hex, l: layer });
+        let chip = Chip::new(comps::convert_static(name).unwrap(), team);
+
+        // Force override the chip's position on the board without rule checks
+        self.chips.insert(chip, Some(position));
     }
 }

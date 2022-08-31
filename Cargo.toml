@@ -6,6 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+hex-spiral ="0.1.0" # supports converting to and from hex spiral coords
+
 rand = "0.8.5"  # For randomising which player goes first
 serde = "1.0.126"
 serde_json = "1.0.64"
@@ -13,6 +15,7 @@ diesel = { version = "1.4.6", features =["sqlite", "r2d2"]} # managing the vario
 dotenv = "0.15.0"   # required by diesel
 actix = "0.11.0"
 actix-web = "3.3.2"
+
 
 #actix-rt = "1.1.1"
 #actix-files = "0.5.0"
