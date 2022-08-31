@@ -1,7 +1,7 @@
 /// Converts a duodecimal number to decimal (in range 0-143)
 pub fn duo_to_decimal(number: String) -> usize {
     let first = number.chars().next().unwrap();
-    let second = number.chars().skip(1).next().unwrap();
+    let second = number.chars().nth(1).unwrap();
 
     12 * duodec_decoder(first) + duodec_decoder(second)
 }

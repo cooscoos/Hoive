@@ -439,10 +439,7 @@ where
             // If we've moved more than 1 spiral hex, record how many gaps there are after a forward slash
             if coord.u - previous.u > 1 {
                 // Record the number of spaces to skip in duodecimal (0-143)
-                return_string.push_str(&format!(
-                    "{}",
-                    funcs::decimal_to_duo(coord.u - previous.u - 1)
-                ));
+                return_string.push_str(&(funcs::decimal_to_duo(coord.u - previous.u - 1).to_string()));
             }
 
             // Black chips are recorded in allcaps
@@ -454,10 +451,10 @@ where
             // If it's on a layer above 0, it's an elevated beetle or a mosquito. Re-encode these.
             if coord.l > 0 {
                 chip_str = match chip_str.chars().next() {
-                    Some('B') => chip_str.replace("B", "["),
-                    Some('b') => chip_str.replace("b", "("),
-                    Some('M') => chip_str.replace("M", ">"),
-                    Some('m') => chip_str.replace("m", "<"),
+                    Some('B') => chip_str.replace('B', "["),
+                    Some('b') => chip_str.replace('b', "("),
+                    Some('M') => chip_str.replace('M', ">"),
+                    Some('m') => chip_str.replace('m', "<"),
                     _ => panic!("Error in conversion of layer>0 chip str"),
                 };
             }
@@ -485,7 +482,7 @@ where
         let second_char_iter = spiral_code.chars().skip(1).step_by(2); // this gets the second char
 
         // For each couplet
-        let mut hex = 0 as usize;
+        let mut hex = 0_usize;
         let mut layer = 0;
         for (a, b) in first_char_iter.zip(second_char_iter) {
             // Match on the first char
