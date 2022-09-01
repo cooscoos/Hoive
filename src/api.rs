@@ -14,7 +14,6 @@ pub use crate::models;
 pub use crate::schema;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use diesel::SqliteConnection;
-use std::ops::Deref;
 use uuid::Uuid;
 
 const SESSION_ID_KEY: &str = "session_id";
@@ -138,11 +137,42 @@ pub async fn game_state(session: Session, req: HttpRequest) -> Result<HttpRespon
         // let id = session_id.into_inner();
         let res = db::get_game_state(&session_id, &mut conn);
         match res {
-            Ok(game_state) => Ok(HttpResponse::Ok().body(json!(game_state))),
+            Ok(game_state) => Ok(HttpResponse::Ok().body(format!("{:?}",game_state))),
             _ => Err(error::ErrorInternalServerError(format!("Can't find game with session id {session_id}"))),
         }
     } else {
         Err(error::ErrorInternalServerError("Can't find game session"))
+    }
+}
+
+/// Take some sort of action on the board
+pub async fn make_action(
+    path: web::Path<u32>,
+    session: Session,
+    req: HttpRequest,
+) -> Result<HttpResponse, Error> {
+    // For now the thing passed is a number, but we'll later pass a string command like "bq1,0,-2" or "bp1,s,from,to" etc
+    let column = path.into_inner();
+    println!("REQ: {:?}", req);
+    let conn = get_db_connection(req)?;
+    if let (Some(session_id), Some(user_id)) = (
+        session.get::<Uuid>(SESSION_ID_KEY)?,
+        session.get::<Uuid>(USER_ID_KEY)?,
+    ) {
+        // THIS is where we get a result out. Their version of game is probably my pmoore, sort of.
+        // pmoore is kind of doing two jobs at the moment which is bad (he's the front end and the logic)
+        //let res = game::user_move(session_id, user_id, column as usize, conn.deref());
+        let res:Result<&str,&str> = Ok("placeholder");
+
+        match res {
+            Ok(game_state) => {
+                println!("API make_move returns: {:?}", game_state);
+                Ok(HttpResponse::Ok().json(game_state))
+            }
+            Err(msg) => Err(error::ErrorInternalServerError(msg)),
+        }
+    } else {
+        Err(error::ErrorInternalServerError("[user_move] No session info"))
     }
 }
 
