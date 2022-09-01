@@ -1,19 +1,17 @@
 pub mod models;
 pub mod schema;
 
-//use diesel::sqlite::SqliteConnection;
-use diesel::prelude::*;
-use dotenvy::dotenv;
-use std::env;
-
 use models::*;
-use schema::{game_state, user};
-
-use uuid::Uuid;
+use schema::user;
 
 use diesel::connection::SimpleConnection;
+use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
+
+use dotenvy::dotenv;
+use std::env;
 use std::time::Duration;
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct ConnectionOptions {
