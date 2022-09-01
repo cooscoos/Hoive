@@ -1,6 +1,7 @@
 pub mod models;
 pub mod schema;
 
+//use diesel::sqlite::SqliteConnection;
 use diesel::prelude::*;
 use dotenvy::dotenv;
 use std::env;
@@ -21,16 +22,16 @@ fn establish_connection() -> SqliteConnection {
 }
 
 pub fn get_posts() -> Vec<Post> {
-    let connection = establish_connection();
+    let connection = &mut establish_connection();
     posts
         .filter(published.eq(true))
         .limit(5)
-        .load::<Post>(&connection)
+        .load::<Post>(connection)
         .expect("Error loading posts")
 }
 
 pub fn create_post(t: &str, b: &str) -> String {
-    let connection = establish_connection();
+    let connection = &mut establish_connection();
 
     let uuid = Uuid::new_v4().hyphenated().to_string();
 
@@ -38,17 +39,17 @@ pub fn create_post(t: &str, b: &str) -> String {
 
     diesel::insert_into(posts::table)
         .values(&new_post)
-        .execute(&connection)
+        .execute(connection)
         .expect("Error saving new post");
 
     uuid
 }
 
 pub fn publish_post(key: String) -> usize {
-    let connection = establish_connection();
+    let connection = &mut establish_connection();
 
     diesel::update(posts.find(key))
         .set(published.eq(true))
-        .execute(&connection)
+        .execute(connection)
         .expect("Unable to find post")
 }

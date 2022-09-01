@@ -76,7 +76,7 @@ fn main() {
             .route("/create", web::post().to(create))
             .route("/publish/{id}", web::put().to(publish))
     })
-        .bind("127.0.0.1:8889")
+        .bind("127.0.0.1:8880")
         .unwrap()
         .run()
         .unwrap();

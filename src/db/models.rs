@@ -1,5 +1,6 @@
 use super::schema::posts;
 
+
 #[derive(Serialize, Queryable)]
 pub struct Post {
     pub id: String,
