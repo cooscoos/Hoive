@@ -1,17 +1,21 @@
-pub mod models;
-pub mod schema;
-
-use models::*;
-use schema::user;
-
 use diesel::connection::SimpleConnection;
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
+
+use diesel::result::QueryResult;
+use diesel::SqliteConnection;
+
+use std::result::Result;
 
 use dotenvy::dotenv;
 use std::env;
 use std::time::Duration;
 use uuid::Uuid;
+
+pub use crate::models;
+use crate::models::{GameState,NewGameState,User};
+pub use crate::schema;
+
 
 #[derive(Debug)]
 pub struct ConnectionOptions {
@@ -64,17 +68,10 @@ fn establish_connection() -> SqliteConnection {
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
-// pub fn get_gamestates() -> Vec<GameState> {
-//     let connection = &mut establish_connection();
-//     game_state
-//         .limit(5)
-//         .load::<GameState>(connection)
-//         .expect("Error loading gamestates")
-// }
-
 /// Creates a new user on the db with a given name and team
-pub fn create_user(name: &str, team: &str) -> Result<Uuid, String> {
-    let conn = &mut establish_connection();
+pub fn create_user(name: &str, team: &str, conn: &mut SqliteConnection) -> Result<Uuid, String> {
+    use super::schema::user::dsl::*;
+    //let conn = &mut establish_connection();
 
     let uuid = Uuid::new_v4();
 
@@ -84,7 +81,7 @@ pub fn create_user(name: &str, team: &str) -> Result<Uuid, String> {
         user_color: team.to_owned(),
     };
 
-    match diesel::insert_into(user::table)
+    match diesel::insert_into(user)
         .values(&new_user)
         .execute(conn)
     {
@@ -94,11 +91,11 @@ pub fn create_user(name: &str, team: &str) -> Result<Uuid, String> {
 }
 
 /// Creates a new game session (a new board) on the db, with a given player1
-pub fn create_session(user: &Uuid) -> Result<Uuid, String> {
+pub fn create_session(user: &Uuid, conn: &mut SqliteConnection) -> Result<Uuid, String> {
     // We have the use statement here rather than at the top of the module because in some functions we'll
     // want to use schema::user::dsl::* in functions that deal with the user part of the db, and we don't want ambiguity.
     use schema::game_state::dsl::*;
-    let conn = &mut establish_connection();
+    //let conn = &mut establish_connection();
 
     let session_id = Uuid::new_v4();
 
@@ -118,9 +115,9 @@ pub fn create_session(user: &Uuid) -> Result<Uuid, String> {
 }
 
 /// Finds an existing game session that a second user can join
-pub fn find_live_session() -> Option<models::GameState> {
+pub fn find_live_session(conn: &mut SqliteConnection) -> Option<models::GameState> {
     use schema::game_state::dsl::*;
-    let conn = &mut establish_connection();
+    //let conn = &mut establish_connection();
 
     // Search the db for active games where there's no player 2
     let results = game_state
@@ -129,13 +126,13 @@ pub fn find_live_session() -> Option<models::GameState> {
         .expect("Error loading gamestates");
 
     // Return the first (oldest) result if it exists, otherwise none
-    results.first().map(|g| g.clone())
+    results.first().cloned()
 }
 
 /// Lets a user_2 join a live session
-pub fn join_live_session(session_id: &Uuid, user2_id: &Uuid) -> QueryResult<usize> {
+pub fn join_live_session(session_id: &Uuid, user2_id: &Uuid, conn: &mut SqliteConnection) -> QueryResult<usize> {
     use schema::game_state::dsl::*;
-    let conn = &mut establish_connection();
+    //let conn = &mut establish_connection();
 
     diesel::update(game_state)
         .set(user_2.eq(user2_id.to_string()))
@@ -144,9 +141,9 @@ pub fn join_live_session(session_id: &Uuid, user2_id: &Uuid) -> QueryResult<usiz
 }
 
 /// Gets the board from a given game session in the db
-pub fn get_board(session_id: &Uuid) -> Result<String, String> {
+pub fn get_board(session_id: &Uuid, conn: &mut SqliteConnection) -> Result<String, String> {
     use schema::game_state::dsl::*;
-    let conn = &mut establish_connection();
+    //let conn = &mut establish_connection();
 
     let results = game_state
         .filter(id.eq(session_id.to_string()))
@@ -166,9 +163,10 @@ pub fn update_game_state(
     board_str: &str,
     is_winner: bool,
     game_over: bool,
+    conn: &mut SqliteConnection,
 ) -> QueryResult<usize> {
     use schema::game_state::dsl::*;
-    let conn = &mut establish_connection();
+    //let conn = &mut establish_connection();
 
     diesel::update(game_state)
         .filter(id.eq(session_id.to_string()))
@@ -182,9 +180,9 @@ pub fn update_game_state(
 }
 
 /// Get the team of a user of given id
-pub fn get_user_team(user_id: &Uuid) -> QueryResult<char> {
+pub fn get_user_team(user_id: &Uuid, conn: &mut SqliteConnection) -> QueryResult<char> {
     use schema::user::dsl::*;
-    let conn = &mut establish_connection();
+    //let conn = &mut establish_connection();
 
     let result = user
         .select(user_color)
@@ -198,9 +196,9 @@ pub fn get_user_team(user_id: &Uuid) -> QueryResult<char> {
 }
 
 /// Get the general game state of the selected session_id
-pub fn get_game_state(session_id: &Uuid) -> QueryResult<models::GameState> {
+pub fn get_game_state(session_id: &Uuid, conn: &mut SqliteConnection) -> QueryResult<models::GameState> {
     use super::schema::game_state::dsl::*;
-    let conn = &mut establish_connection();
+    //let conn = &mut establish_connection();
 
     let res = game_state
         .filter(id.eq(session_id.to_string()))
@@ -211,11 +209,11 @@ pub fn get_game_state(session_id: &Uuid) -> QueryResult<models::GameState> {
 }
 
 /// Clear the db (wipe all gamestates and users)
-pub fn clean_db() {
+pub fn clean_db(conn: &mut SqliteConnection) {
     use super::schema::game_state::dsl::*;
     use super::schema::user::dsl::*;
 
-    let conn = &mut establish_connection();
+    //let conn = &mut establish_connection();
 
     diesel::delete(game_state).execute(conn).unwrap();
     diesel::delete(user).execute(conn).unwrap();

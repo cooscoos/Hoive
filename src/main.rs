@@ -26,47 +26,6 @@
 //         }
 //     }
 // }
-
-#[macro_use]
-extern crate diesel;
-extern crate dotenvy;
-
-mod db;
-use db::*;
-
-#[macro_use]
-extern crate serde_derive;
-use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder};
-
-#[derive(Debug, Serialize, Deserialize)]
-struct CreatePost {
-    title: String,
-    body: String,
-}
-
-fn create(post: web::Json<CreatePost>, req: HttpRequest) -> impl Responder {
-    println!("request: {:?}", req);
-    println!("model: {:?}", post);
-
-    let result = create_user(post.0.title.as_ref(), post.0.body.as_ref());
-
-    HttpResponse::Ok().json(result)
-}
-
-// fn index() -> impl Responder {
-//     let posts = get_gamestates();
-//     HttpResponse::Ok().json(posts)
-// }
-
-fn main() {
-    HttpServer::new(|| {
-        App::new()
-            .data(web::JsonConfig::default().limit(4096))
-            //      .route("/", web::get().to(index))
-            .route("/create", web::post().to(create))
-    })
-    .bind("127.0.0.1:8880")
-    .unwrap()
-    .run()
-    .unwrap();
+fn main(){
+    hoive::start_server();
 }
