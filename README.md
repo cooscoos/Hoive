@@ -19,6 +19,8 @@ Play the game in terminal with cargo run.
 
 Make this a server application so that people can play on the internet. Steps:
 
+- line 65 of api used to be a json and i think it needs to be to work properly
+
 #### Sqlite db
 
 - Create a db using diesel to store and load game state, then interact with the game via this db [good ref](https://fdeantoni.medium.com/rust-actix-diesel-sqlite-d67a1c3ef0e) [good ref 2](https://github.com/vascokk/fullstack-rust/tree/main/server/src) [half done, now finish]

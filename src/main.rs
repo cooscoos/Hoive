@@ -27,5 +27,5 @@
 //     }
 // }
 fn main(){
-    hoive::start_server();
+    let _result = hoive::start_server();
 }

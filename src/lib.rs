@@ -35,7 +35,8 @@ pub async fn start_server() -> std::io::Result<()> {
                 web::scope("/api")
                     .service(
                         web::resource("/register/{user_name}/{user_color}")
-                            .route(web::post().to(api::register_user)),
+                            //.route(web::post().to(api::register_user)),
+                            .route(web::get().to(api::register_user)),
                     )
                     .service(web::resource("/new").route(web::get().to(api::new_game)))
                     .service(web::resource("/find").route(web::get().to(api::find)))
@@ -49,7 +50,7 @@ pub async fn start_server() -> std::io::Result<()> {
             )
             .service(fs::Files::new("/", "./static").index_file("index.html"))
     })
-    .bind("127.0.0.1:8888")?
+    .bind("127.0.0.1:8899")?
     .run()
     .await
 }
