@@ -27,10 +27,11 @@
 //     }
 // }
 
+
+
 #[macro_use]
 extern crate diesel;
-
-extern crate dotenv;
+extern crate dotenvy;
 
 mod db;
 use db::*;
@@ -38,7 +39,6 @@ use db::*;
 #[macro_use]
 extern crate serde_derive;
 use actix_web::{web, App, HttpResponse, HttpServer, HttpRequest, Responder};
-
 
 #[derive(Debug, Serialize, Deserialize)]
 struct CreatePost {
@@ -76,7 +76,7 @@ fn main() {
             .route("/create", web::post().to(create))
             .route("/publish/{id}", web::put().to(publish))
     })
-        .bind("127.0.0.1:8888")
+        .bind("127.0.0.1:8889")
         .unwrap()
         .run()
         .unwrap();

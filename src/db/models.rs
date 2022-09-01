@@ -1,4 +1,6 @@
-use super::schema::posts;#[derive(Serialize, Queryable)]
+use super::schema::posts;
+
+#[derive(Serialize, Queryable)]
 pub struct Post {
     pub id: String,
     pub title: String,

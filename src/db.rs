@@ -2,7 +2,7 @@ pub mod models;
 pub mod schema;
 
 use diesel::prelude::*;
-use dotenv::dotenv;
+use dotenvy::dotenv;
 use std::env;
 
 use models::*;
@@ -32,7 +32,7 @@ pub fn get_posts() -> Vec<Post> {
 pub fn create_post(t: &str, b: &str) -> String {
     let connection = establish_connection();
 
-    let uuid = Uuid::new_v4().to_hyphenated().to_string();
+    let uuid = Uuid::new_v4().hyphenated().to_string();
 
     let new_post = NewPost { id: &uuid,  title: t, body: b };
 
