@@ -1,3 +1,4 @@
+use actix::fut::future::result;
 use diesel::connection::SimpleConnection;
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
@@ -117,7 +118,7 @@ pub fn create_session(user: &Uuid, conn: &mut SqliteConnection) -> Result<Uuid, 
 /// Finds an existing game session that a second user can join
 pub fn find_live_session(conn: &mut SqliteConnection) -> Option<models::GameState> {
     use schema::game_state::dsl::*;
-    //let conn = &mut establish_connection();
+ 
 
     // Search the db for active games where there's no player 2
     let results = game_state
@@ -126,6 +127,7 @@ pub fn find_live_session(conn: &mut SqliteConnection) -> Option<models::GameStat
         .expect("Error loading gamestates");
 
     // Return the first (oldest) result if it exists, otherwise none
+    println!("Results from db are: {:?}",results);
     results.first().cloned()
 }
 

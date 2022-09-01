@@ -57,6 +57,8 @@ pub async fn register_user(
             session.insert(USER_ID_KEY, user_id.to_string())?;
             session.insert(USER_COLOR_KEY, user_color.clone())?;
             
+            println!("{}",user_id);
+
             let user = models::User {
                 id: user_id.to_string(),
                 user_name: user_name.to_owned(),

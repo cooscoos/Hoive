@@ -19,7 +19,8 @@ Play the game in terminal with cargo run.
 
 Make this a server application so that people can play on the internet. Steps:
 
-- line 65 of api used to be a json and i think it needs to be to work properly
+- some issue with session data as current user not being stored. Figure this out next.
+- line 65 of api used to be a json and i think it needs to be to work properly? nah
 
 #### Sqlite db
 

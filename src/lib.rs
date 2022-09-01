@@ -50,7 +50,7 @@ pub async fn start_server() -> std::io::Result<()> {
             )
             .service(fs::Files::new("/", "./static").index_file("index.html"))
     })
-    .bind("127.0.0.1:8899")?
+    .bind("127.0.0.1:8779")?
     .run()
     .await
 }
