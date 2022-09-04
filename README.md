@@ -19,6 +19,7 @@ Play the game in terminal with cargo run.
 
 Make this a server application so that people can play on the internet. Steps:
 
+- add a basic front end for web, will make bug testing a lot easier.
 - some issue with session data as current user not being stored. Figure this out next -- cookies on line 23 of lib.rs
 - line 65 of api used to be a json, any benefit in this?
 
