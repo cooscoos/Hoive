@@ -49,14 +49,13 @@
             name="username" id="username" value="player1" />
         </div>
       </form>
-      <!-- how to handle json response-->
-      <p>Current username is: </p>
+      <!-- how to handle json response?-->
     </div>
 
-    
+   
 
 
-      <!-- New and join buttons -->
+    <!-- New and join buttons -->
     <div class="row">
         <div class="two columns">
           <form action="/api/new" method="get">
@@ -70,16 +69,11 @@
           </form>
         </div>  
     </div>
-  
-  
 
     <div class="row">
       <h6>Enter session id to join</h6>
       <form action="/api/join" method="post">
-        <div class="three columns">
-          <input type="text" 
-            name="session-id" id="session-id" value="" />
-        </div>
+        <input class="text" type="text" name="_method" value="Find game" />
       </form>
     </div>
 
