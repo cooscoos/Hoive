@@ -7,12 +7,11 @@ Play the game in terminal with cargo run.
 ![snapshot of the app](/reference/gameplay.png "snapshot of the app")
 
 ## To do
-### Bugcheck and tidy up
+### Base game
 
 - There's a bug where beetle at 0-4 can move over q at 0,0 - beetles can move any number of spaces?! oops.
 - beetle rendering on stringboard is weird
 - play test
-- add load game -- could match on MoveStatus::Load to quit out, restart and emulate moves
 - does pillbug sumoing need a bee check for either party?
 
 ### Online
@@ -20,9 +19,7 @@ Play the game in terminal with cargo run.
 Make this a server application so that people can play on the internet. Steps:
 
 - add a basic front end for web, will make bug testing a lot easier.
-- some issue with session data as current user not being stored. Figure this out next -- cookies on line 23 of lib.rs
-- line 65 of api used to be a json, any benefit in this?
-
+- figure out how to handle json responses in html, stringify
 #### Sqlite db
 
 - Create a db using diesel to store and load game state, then interact with the game via this db [good ref](https://fdeantoni.medium.com/rust-actix-diesel-sqlite-d67a1c3ef0e) [good ref 2](https://github.com/vascokk/fullstack-rust/tree/main/server/src) [half done, now finish]
