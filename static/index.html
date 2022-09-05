@@ -38,104 +38,55 @@
       <!-- Title and flash cookie messages -->
     <div class="row">
         <h4>Hoive</h4>
-        <div class="twelve columns">
-          {% if flash %}
-              <small class="field-{{flash.0}}-msg">
-                {{ flash.1 }}
-              </small>
-            {% endif %}
-        </div>
     </div>
 
     <!-- Register the user's name -->
-
     <div class="row">
-      <h6>Pick a player name and colour</h6>
+      <h6>Pick a player name</h6>
       <form action="/api/register" method="post">
         <div class="three columns">
           <input type="text" 
             name="username" id="username" value="player1" />
         </div>
       </form>
-  </div>
+    </div>
 
 
-      <!-- Some buttons -->
+      <!-- New and join buttons -->
     <div class="row">
         <div class="two columns">
-          <form action="/logs/start" method="post">
-            <input class="button-primary" type="submit" value="Start logs">
+          <form action="/api/new" method="get">
+            <input class="button-primary" type="submit" value="New game">
           </form>
         </div>
+
         <div class="four columns">
-          <form action="/logs/stop" method="post">
-            <input class="button-primary" type="submit" name="_method" value="stop logs" />
+          <form action="/api/find" method="get">
+            <input class="button-primary" type="submit" name="_method" value="Find game" />
           </form>
         </div>  
-  
-        <div class="four columns">
-          <form action="/logs/delete" method="post">
-            <input type="submit" name="_method" value="delete all" />
-          </form>
-        </div>
-  
-
-        <!-- For graceful shutdown -->
-
-        <div class="two columns">
-          <form action="/shutdown" method="post">
-            <input type="submit" name="_method" value="shutdown" />
-          </form>
-        </div>
     </div>
+  
   
 
     <div class="row">
-        <h6>Log display options, show:</h6>
-  
-        <form action="/logs/show" method="post">
-          <div class="two columns">
-            <input type="submit" value="Most recent">
-          </div>
-          <div class="three columns">
-            <input type="number" 
-              name="numlogs" id="numlogs" value="5" min="1" />
-          </div>
-        </form>
-    </div>
-  
-
-    <div class="row">
+      <h6>Enter session id to join</h6>
+      <form action="/api/join" method="post">
         <div class="three columns">
-            <form action="/logs/show" method="post" >
-            <input type="submit" name="_method" value="all available logs" />
-            </form> 
+          <input type="text" 
+            name="session-id" id="session-id" value="" />
         </div>
+      </form>
     </div>
 
-      <!-- Table with variables -->
-    
-    <table class="u-full-width">
-        <thead>
-          <tr>
-            <th> <p>Date</p> <p>yyyy-mm-dd</p></th>
-            <th> <p>Time</p> <p>hh:mm:ss</p></th>
-            <th> <p>CPU Temp</p><p>&#176;C</p></th>
-            <th> <p>Memory</p><p>used / available GB</p></th>
-          </tr>
-        </thead>
-  
-        <tbody> 
-          {% for task in logged_stats %}
-                    <tr>
-                      <td> {{ task.localdate }} </td>
-                        <td> {{ task.localtime }} </td>
-                      <td> {{task.cpu_temp}} </td>
-                      <td> {{task.memuse}} / {{task.mem}} </td>
-                    </tr>
-                {% endfor %}
-        </tbody>
-    </table> 
+
+    <div class="row">
+      <div class="two columns">
+        <form action="/api/game-state" method="get">
+          <input class="button-primary" type="submit" value="Get board state">
+        </form>
+      </div>
+    </div>
 
 
 <!-- End Document

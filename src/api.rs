@@ -147,6 +147,7 @@ pub async fn game_state(session: Session, req: HttpRequest) -> Result<HttpRespon
         // let id = session_id.into_inner();
         let res = db::get_game_state(&session_id, &mut conn);
         match res {
+            // This should return a json
             Ok(game_state) => Ok(HttpResponse::Ok().body(format!("{:?}",game_state))),
             _ => Err(error::ErrorInternalServerError(format!("Can't find game with session id {session_id}"))),
         }
