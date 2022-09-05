@@ -16,5 +16,5 @@ CREATE TABLE user (
     user_color TEXT(1) NOT NULL
 );
 
-INSERT INTO user VALUES ('1', 'user1', 'b');
-INSERT INTO user VALUES ('2', 'user2', 'w');
+INSERT INTO user VALUES ('1', 'user1', 'X');
+INSERT INTO user VALUES ('2', 'user2', 'O');

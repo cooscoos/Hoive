@@ -6,27 +6,28 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+
+# Gameplay
 hex-spiral ="0.1.0" # supports converting to and from hex spiral coords
-
 rand = "0.8.5"  # For randomising which player goes first
-serde = "1.0.126"
-serde_json = "1.0.64"
-diesel = { version = "1.4.6", features =["sqlite", "r2d2"]} # managing the various game sessions in sqlite db
-dotenv = "0.15.0"   # required by diesel
-actix = "0.11.0"
-actix-web = "3.3.2"
 
-#actix-rt = "1.1.1"
-#actix-files = "0.5.0"
-#actix-session = "0.4.1"
-#bytes = "1.0.1"
-#itertools = "0.10.0"
-uuid = { version = "1.1.2", features = ["serde", "v4"] } # generate user ids
-#log = "0.4.11"
-serde_derive = "1.0"
+# Diesel and actix-web
 
-# For benchmarking
+actix="0.13.0"
+actix-web = "4"
 
+actix-rt = "2.7.0"
+actix-files = "0.6.2"
+actix-session = {version="0.7.1", features=["cookie-session"]}
+
+serde = {version = "1.0.144", features=["derive"]}
+serde_json = "1.0.85"
+
+diesel = { version = "2.0.0", features = ["sqlite", "r2d2"] }
+dotenvy = "0.15"
+uuid = { version = "1.1.2", features = ["serde", "v4"] }
+
+# Benchmarking
 [dev-dependencies]
 criterion = "0.3"
 
