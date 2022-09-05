@@ -48,7 +48,7 @@ pub async fn start_server() -> std::io::Result<()> {
                     .service(web::resource("/new").route(web::get().to(api::new_game)))
                     .service(web::resource("/find").route(web::get().to(api::find)))
                     .service(
-                        web::resource("/join/{game_session_id}").route(web::post().to(api::join)),
+                        web::resource("/join").route(web::get().to(api::join)),
                     )
                     .service(web::resource("/game-state").route(web::get().to(api::game_state)))
                     .service(

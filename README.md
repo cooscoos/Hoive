@@ -18,6 +18,7 @@ Play the game in terminal with cargo run.
 
 Make this a server application so that people can play on the internet. Steps:
 
+- figure out how to get join working
 - add a basic front end for web, will make bug testing a lot easier.
 - figure out how to handle json responses in html, stringify
 #### Sqlite db
