@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <!-- Basic Page Needs
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta charset="utf-8">
+  <title>Hoive</title>
+  <meta name="description" content="Simple web front-end for Hoive">
+  <meta name="author" content="cooscoos">
+
+  <!-- Mobile Specific Metas
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- FONT
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+
+  <!-- CSS
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="css/skeleton.css">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <!-- Favicon
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="icon" type="image/png" href="images/favicon.png">
+
+</head>
+<body>
+
+  <!-- Primary Page Layout
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <div class="container">
+
+
+      <!-- Title and flash cookie messages -->
+    <div class="row">
+        <h4>Hoive</h4>
+        <div class="twelve columns">
+          {% if flash %}
+              <small class="field-{{flash.0}}-msg">
+                {{ flash.1 }}
+              </small>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Register the user's name -->
+
+    <div class="row">
+      <h6>Pick a player name and colour</h6>
+      <form action="/api/register" method="post">
+        <div class="three columns">
+          <input type="text" 
+            name="username" id="username" value="player1" />
+        </div>
+      </form>
+  </div>
+
+
+      <!-- Some buttons -->
+    <div class="row">
+        <div class="two columns">
+          <form action="/logs/start" method="post">
+            <input class="button-primary" type="submit" value="Start logs">
+          </form>
+        </div>
+        <div class="four columns">
+          <form action="/logs/stop" method="post">
+            <input class="button-primary" type="submit" name="_method" value="stop logs" />
+          </form>
+        </div>  
+  
+        <div class="four columns">
+          <form action="/logs/delete" method="post">
+            <input type="submit" name="_method" value="delete all" />
+          </form>
+        </div>
+  
+
+        <!-- For graceful shutdown -->
+
+        <div class="two columns">
+          <form action="/shutdown" method="post">
+            <input type="submit" name="_method" value="shutdown" />
+          </form>
+        </div>
+    </div>
+  
+
+    <div class="row">
+        <h6>Log display options, show:</h6>
+  
+        <form action="/logs/show" method="post">
+          <div class="two columns">
+            <input type="submit" value="Most recent">
+          </div>
+          <div class="three columns">
+            <input type="number" 
+              name="numlogs" id="numlogs" value="5" min="1" />
+          </div>
+        </form>
+    </div>
+  
+
+    <div class="row">
+        <div class="three columns">
+            <form action="/logs/show" method="post" >
+            <input type="submit" name="_method" value="all available logs" />
+            </form> 
+        </div>
+    </div>
+
+      <!-- Table with variables -->
+    
+    <table class="u-full-width">
+        <thead>
+          <tr>
+            <th> <p>Date</p> <p>yyyy-mm-dd</p></th>
+            <th> <p>Time</p> <p>hh:mm:ss</p></th>
+            <th> <p>CPU Temp</p><p>&#176;C</p></th>
+            <th> <p>Memory</p><p>used / available GB</p></th>
+          </tr>
+        </thead>
+  
+        <tbody> 
+          {% for task in logged_stats %}
+                    <tr>
+                      <td> {{ task.localdate }} </td>
+                        <td> {{ task.localtime }} </td>
+                      <td> {{task.cpu_temp}} </td>
+                      <td> {{task.memuse}} / {{task.mem}} </td>
+                    </tr>
+                {% endfor %}
+        </tbody>
+    </table> 
+
+
+<!-- End Document
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+</body>
+</html>

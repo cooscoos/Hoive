@@ -2,7 +2,7 @@
 /// end into commands the board understands, and converts responses from the board into human-readable strings.
 ///
 use actix_session::Session;
-use actix_web::{error, web, Error, HttpRequest, HttpResponse};
+use actix_web::{error, web, Error, HttpRequest, HttpResponse, post};
 
 use serde_json::json;
 use std::result::Result;
@@ -19,6 +19,15 @@ use uuid::Uuid;
 const SESSION_ID_KEY: &str = "session_id";
 const USER_ID_KEY: &str = "user_id";
 const USER_COLOR_KEY: &str = "user_color";
+
+use serde::Deserialize;
+
+/// Info grabbed about player from form
+#[derive(Deserialize)]
+pub struct Info {
+    username: String,
+}
+
 
 /// Get a connection to the db
 fn get_db_connection(
@@ -38,14 +47,14 @@ fn get_db_connection(
 
 /// Register a new user with given name/team (input within path)
 pub async fn register_user(
-    path: web::Path<(String, String)>,
+    form_input: web::Form<Info>,
     session: Session,
     req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
 
     // First and second parts of path will be username and team
-    let user_name = &path.0;
-    let user_color = &path.1;
+    let user_name = form_input.username.to_owned();
+    let user_color = "red".to_string();
     println!("REQ: {:?}", req);
     println!("User Name: {:?}", user_name);
     println!("User Color: {:?}", user_color);
