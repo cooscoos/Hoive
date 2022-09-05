@@ -44,13 +44,14 @@ fn get_db_connection(
         ))
     }
 }
+use actix_web::Responder;
 
 /// Register a new user with given name/team (input within path)
 pub async fn register_user(
     form_input: web::Form<Info>,
     session: Session,
     req: HttpRequest,
-) -> Result<HttpResponse, Error> {
+) -> Result<impl Responder, Error> {
 
     // First and second parts of path will be username and team
     let user_name = form_input.username.to_owned();
@@ -74,7 +75,8 @@ pub async fn register_user(
                 user_color: user_color.to_owned(),
             };
             // This used to be a json and i think it needs to be.
-            Ok(HttpResponse::Ok().body(format!("user id: {}",user_id)))
+            Ok(web::Json(user_id))
+            //Ok(HttpResponse::Ok().body(format!("user id: {}",user_id)))
         }
         Err(error) => Err(error::ErrorBadGateway(format!("Cant register new user: {error}"))),
     }
