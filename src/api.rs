@@ -74,9 +74,7 @@ pub async fn register_user(
                 user_name: user_name.to_owned(),
                 user_color: user_color.to_owned(),
             };
-            // This used to be a json and i think it needs to be.
             Ok(web::Json(user_id))
-            //Ok(HttpResponse::Ok().body(format!("user id: {}",user_id)))
         }
         Err(error) => Err(error::ErrorBadGateway(format!("Cant register new user: {error}"))),
     }
