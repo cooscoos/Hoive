@@ -1,5 +1,6 @@
-/// Patrick Moore is the GamesMaster. He orchestrates normal/special moves
-///  in a way that tries to comply with game rules.
+/// Patrick Moore is the GamesMaster, an API who:
+/// - provides a human-readable interface between players and the game logic;
+/// - orchestrates normal/special moves in a way that tries to comply with game rules.
 ///
 use rand::Rng;
 // To randomise which player goes first

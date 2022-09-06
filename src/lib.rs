@@ -14,11 +14,10 @@ use actix_session::storage::SessionKey;
 pub mod api;
 pub mod db;
 pub mod draw;
-pub mod front_end;
 pub mod game;
 pub mod maths;
 pub mod models;
-pub mod pmoore;
+pub mod local_pmoore;
 pub mod schema;
 
 fn get_secret_key() -> Key {

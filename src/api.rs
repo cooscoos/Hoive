@@ -1,5 +1,6 @@
 /// API is the middleman between the game's logic and the front-end. It converts string commands from the front
-/// end into commands the board understands, and converts responses from the board into human-readable strings.
+/// end (passed as Httprequests) into commands to set up and use the board and database. It also converts and passes responses
+/// back (usually as jsons).
 ///
 use actix_session::Session;
 use actix_web::{error, post, web, Error, HttpRequest, HttpResponse};
