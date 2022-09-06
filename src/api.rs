@@ -82,7 +82,7 @@ pub async fn register_user(
 
 
 /// Create a new game
-pub async fn new_game(session: Session, req: HttpRequest) -> Result<HttpResponse, Error> {
+pub async fn new_game(session: Session, req: HttpRequest) -> Result<impl Responder, Error> {
     println!("NEW GAME REQ: {:?}", req);
 
     let mut conn = get_db_connection(req)?;
@@ -91,7 +91,7 @@ pub async fn new_game(session: Session, req: HttpRequest) -> Result<HttpResponse
         match db::create_session(&user_id, &mut conn) {
             Ok(session_id) => {
                 session.insert(SESSION_ID_KEY, session_id.to_string())?;
-                Ok(HttpResponse::Ok().body(format!("SESSION_ID_KEY: {}",session_id)))
+                Ok(web::Json(session_id))
             }
             Err(error) => Err(error::ErrorBadGateway(format!("Cant register new session: {error}"))),
             }
