@@ -2,11 +2,10 @@
 /// end into commands the board understands, and converts responses from the board into human-readable strings.
 ///
 use actix_session::Session;
-use actix_web::{error, web, Error, HttpRequest, HttpResponse, post};
+use actix_web::{error, post, web, Error, HttpRequest, HttpResponse};
 
 use serde_json::json;
 use std::result::Result;
-
 
 pub use crate::db;
 pub use crate::game;
@@ -24,10 +23,15 @@ use serde::Deserialize;
 
 /// Info grabbed about player from form
 #[derive(Deserialize)]
-pub struct Info {
+pub struct PlayerInfo {
     username: String,
 }
 
+/// Info grabbed about session from form
+#[derive(Deserialize)]
+pub struct SessionInfo {
+    id: Uuid,
+}
 
 /// Get a connection to the db
 fn get_db_connection(
@@ -48,11 +52,10 @@ use actix_web::Responder;
 
 /// Register a new user with given name/team (input within path)
 pub async fn register_user(
-    form_input: web::Form<Info>,
+    form_input: web::Form<PlayerInfo>,
     session: Session,
     req: HttpRequest,
 ) -> Result<impl Responder, Error> {
-
     // First and second parts of path will be username and team
     let user_name = form_input.username.to_owned();
     let user_color = "red".to_string();
@@ -66,8 +69,8 @@ pub async fn register_user(
         Ok(user_id) => {
             session.insert(USER_ID_KEY, user_id.to_string())?;
             session.insert(USER_COLOR_KEY, user_color.clone())?;
-            
-            println!("{}",user_id);
+
+            println!("{}", user_id);
 
             let user = models::User {
                 id: user_id.to_string(),
@@ -76,10 +79,11 @@ pub async fn register_user(
             };
             Ok(web::Json(user_id))
         }
-        Err(error) => Err(error::ErrorBadGateway(format!("Cant register new user: {error}"))),
+        Err(error) => Err(error::ErrorBadGateway(format!(
+            "Cant register new user: {error}"
+        ))),
     }
 }
-
 
 /// Create a new game
 pub async fn new_game(session: Session, req: HttpRequest) -> Result<impl Responder, Error> {
@@ -91,48 +95,73 @@ pub async fn new_game(session: Session, req: HttpRequest) -> Result<impl Respond
         match db::create_session(&user_id, &mut conn) {
             Ok(session_id) => {
                 session.insert(SESSION_ID_KEY, session_id.to_string())?;
+                println!("Created session id {}", session_id);
                 Ok(web::Json(session_id))
             }
-            Err(error) => Err(error::ErrorBadGateway(format!("Cant register new session: {error}"))),
-            }
+            Err(error) => Err(error::ErrorBadGateway(format!(
+                "Cant register new session: {error}"
+            ))),
         }
-    else {
-        Err(error::ErrorBadGateway("Cant find the current user ID in this session"))
+    } else {
+        Err(error::ErrorBadGateway(
+            "Cant find the current user ID in this session",
+        ))
     }
 }
 
 /// Find a live session without a player 2
-pub async fn find(session: Session, req: HttpRequest) -> Result<HttpResponse, Error> {
+pub async fn find(session: Session, req: HttpRequest) -> Result<impl Responder, Error> {
     println!("REQ: {:?}", req);
     let mut conn = get_db_connection(req)?;
     match db::find_live_session(&mut conn) {
         Some(game_state) => {
             session.insert(SESSION_ID_KEY, game_state.id.to_owned())?;
-            Ok(HttpResponse::Ok().body(game_state.id))
+            Ok(web::Json(game_state.id))
         }
-        None => Err(error::ErrorNotFound("No live sessions with a single player found")),
+        None => Err(error::ErrorNotFound(
+            "No live sessions with a single player found",
+        )),
     }
 }
 
-
 /// Join a session with given session_id
 pub async fn join(
-    session_id: web::Path<Uuid>,
+    //session_id: web::Path<Uuid>,
+    form_input: web::Form<SessionInfo>,
     session: Session,
     req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
     println!("REQ: {:?}", req);
     let mut conn = get_db_connection(req)?;
-    let game_id = session_id.into_inner();
+    let session_id = form_input.id.to_owned();
+    let game_id = session_id;
+
+    match session.get::<Uuid>(USER_ID_KEY) {
+        Ok(value) => println!("{:?}",value),
+        Err(err) => println!("error: {}", err),
+
+    }
+
     if let Some(user_2_id) = session.get::<Uuid>(USER_ID_KEY)? {
         match db::join_live_session(&game_id, &user_2_id, &mut conn) {
-            Ok(0) => Err(error::ErrorNotFound(format!("No waiting sessions with id {game_id}"))),
-            Ok(1) => Ok(HttpResponse::Ok().body("Ok")),
+            Ok(0) => Err(error::ErrorNotFound(format!(
+                "No waiting sessions with id {game_id}"
+            ))),
+            Ok(1) => {
+                println!("User joined successfully");
+                Ok(HttpResponse::Ok().body("Ok"))
+            },
             Ok(_) => Err(error::ErrorBadGateway("Multiple sessions updated")),
-            Err(error) => Err(error::ErrorBadGateway(format!("Cant join session: {}", error))),
+            Err(error) => Err(error::ErrorBadGateway(format!(
+                "Cant join session: {}",
+                error
+            ))),
         }
     } else {
-        Err(error::ErrorBadGateway("Cant find the current user ID in this session"))
+        println!("Cant find the current user ID in this session");
+        Err(error::ErrorBadGateway(
+            "Cant find the current user ID in this session",
+        ))
     }
 }
 
@@ -148,8 +177,10 @@ pub async fn game_state(session: Session, req: HttpRequest) -> Result<HttpRespon
         let res = db::get_game_state(&session_id, &mut conn);
         match res {
             // This should return a json
-            Ok(game_state) => Ok(HttpResponse::Ok().body(format!("{:?}",game_state))),
-            _ => Err(error::ErrorInternalServerError(format!("Can't find game with session id {session_id}"))),
+            Ok(game_state) => Ok(HttpResponse::Ok().body(format!("{:?}", game_state))),
+            _ => Err(error::ErrorInternalServerError(format!(
+                "Can't find game with session id {session_id}"
+            ))),
         }
     } else {
         Err(error::ErrorInternalServerError("Can't find game session"))
@@ -173,7 +204,7 @@ pub async fn make_action(
         // THIS is where we get a result out. Their version of game is probably my pmoore, sort of.
         // pmoore is kind of doing two jobs at the moment which is bad (he's the front end and the logic)
         //let res = game::user_move(session_id, user_id, column as usize, conn.deref());
-        let res:Result<&str,&str> = Ok("placeholder");
+        let res: Result<&str, &str> = Ok("placeholder");
 
         match res {
             Ok(game_state) => {
@@ -183,8 +214,19 @@ pub async fn make_action(
             Err(msg) => Err(error::ErrorInternalServerError(msg)),
         }
     } else {
-        Err(error::ErrorInternalServerError("[user_move] No session info"))
+        Err(error::ErrorInternalServerError(
+            "[user_move] No session info",
+        ))
     }
+}
+
+pub async fn delete_all(session: Session, req: HttpRequest) -> Result<HttpResponse, Error> {
+    let mut conn = get_db_connection(req).unwrap();
+
+    db::clean_db(&mut conn);
+    println!("Database cleared");
+
+    Ok(HttpResponse::Ok().body("Cleared"))
 }
 
 // use crate::game::{board::Board, movestatus::MoveStatus};

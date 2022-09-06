@@ -14,9 +14,8 @@ use std::time::Duration;
 use uuid::Uuid;
 
 pub use crate::models;
-use crate::models::{GameState,NewGameState,User};
+use crate::models::{GameState, NewGameState, User};
 pub use crate::schema;
-
 
 #[derive(Debug)]
 pub struct ConnectionOptions {
@@ -82,10 +81,7 @@ pub fn create_user(name: &str, team: &str, conn: &mut SqliteConnection) -> Resul
         user_color: team.to_owned(),
     };
 
-    match diesel::insert_into(user)
-        .values(&new_user)
-        .execute(conn)
-    {
+    match diesel::insert_into(user).values(&new_user).execute(conn) {
         Ok(_) => Ok(uuid),
         Err(e) => Err(format!("Can't create new user because {}", e)),
     }
@@ -118,7 +114,6 @@ pub fn create_session(user: &Uuid, conn: &mut SqliteConnection) -> Result<Uuid, 
 /// Finds an existing game session that a second user can join
 pub fn find_live_session(conn: &mut SqliteConnection) -> Option<models::GameState> {
     use schema::game_state::dsl::*;
- 
 
     // Search the db for active games where there's no player 2
     let results = game_state
@@ -127,12 +122,16 @@ pub fn find_live_session(conn: &mut SqliteConnection) -> Option<models::GameStat
         .expect("Error loading gamestates");
 
     // Return the first (oldest) result if it exists, otherwise none
-    println!("Results from db are: {:?}",results);
+    println!("Results from db are: {:?}", results);
     results.first().cloned()
 }
 
 /// Lets a user_2 join a live session
-pub fn join_live_session(session_id: &Uuid, user2_id: &Uuid, conn: &mut SqliteConnection) -> QueryResult<usize> {
+pub fn join_live_session(
+    session_id: &Uuid,
+    user2_id: &Uuid,
+    conn: &mut SqliteConnection,
+) -> QueryResult<usize> {
     use schema::game_state::dsl::*;
     //let conn = &mut establish_connection();
 
@@ -198,7 +197,10 @@ pub fn get_user_team(user_id: &Uuid, conn: &mut SqliteConnection) -> QueryResult
 }
 
 /// Get the general game state of the selected session_id
-pub fn get_game_state(session_id: &Uuid, conn: &mut SqliteConnection) -> QueryResult<models::GameState> {
+pub fn get_game_state(
+    session_id: &Uuid,
+    conn: &mut SqliteConnection,
+) -> QueryResult<models::GameState> {
     use super::schema::game_state::dsl::*;
     //let conn = &mut establish_connection();
 

@@ -26,6 +26,6 @@
 //         }
 //     }
 // }
-fn main(){
+fn main() {
     let _result = hoive::start_server();
 }
