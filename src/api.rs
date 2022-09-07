@@ -6,6 +6,7 @@ use actix_session::Session;
 use actix_web::{error, post, web, Error, HttpRequest, HttpResponse};
 
 use actix_web::Responder;
+use rustrict::CensorStr;
 use serde_json::json;
 use std::result::Result;
 
@@ -68,6 +69,13 @@ pub async fn register_user(
 ) -> Result<impl Responder, Error> {
     // First and second parts of path will be username and team
     let user_name = form_input.username.to_owned();
+
+    // Check the username isn't profane
+    if user_name.is_inappropriate() {
+        return Ok(web::Json("invalid".to_string()));
+    }
+    
+
     let user_color = "red".to_string();
     println!("REQ: {:?}", req);
     println!("User Name: {:?}", user_name);
@@ -87,7 +95,7 @@ pub async fn register_user(
                 user_name: user_name.to_owned(),
                 user_color: user_color.to_owned(),
             };
-            Ok(web::Json(user_id))
+            Ok(web::Json(user_id.to_string()))
         }
         Err(error) => Err(error::ErrorBadGateway(format!(
             "Cant register new user: {error}"

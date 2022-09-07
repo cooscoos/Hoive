@@ -27,6 +27,9 @@ diesel = { version = "2.0.0", features = ["sqlite", "r2d2"] }
 dotenvy = "0.15"
 uuid = { version = "1.1.2", features = ["serde", "v4"] }
 
+# other stuff
+rustrict = "0.5.0"
+
 # Benchmarking
 [dev-dependencies]
 criterion = "0.3"
