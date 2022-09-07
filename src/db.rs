@@ -196,6 +196,21 @@ pub fn get_user_team(user_id: &Uuid, conn: &mut SqliteConnection) -> QueryResult
     Ok(result[0].chars().collect::<Vec<char>>()[0])
 }
 
+// /// Get the name of a user of given id
+// pub fn get_user_name(user_id: &Uuid, conn: &mut SqliteConnection) -> QueryResult<char> {
+//     use schema::user::dsl::*;
+
+//     let result = user
+//         .select(user_name)
+//         .filter(id.eq(user_id.to_string()))
+//         .limit(1)
+//         .load::<String>(conn)
+//         .into_iter()
+//         .collect::<Vec<_>>()[0]
+//         .clone();
+//     Ok(result[0].chars().collect::<Vec<char>>()[0])
+// }
+
 /// Get the general game state of the selected session_id
 pub fn get_game_state(
     session_id: &Uuid,

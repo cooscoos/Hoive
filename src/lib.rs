@@ -44,10 +44,7 @@ pub async fn start_server() -> std::io::Result<()> {
             .service(
                 web::scope("/api")
                 .service(web::resource("/").route(web::get().to(api::index)))
-                    .service(
-                        // web::resource("/register/{user_name}/{user_color}")
-                        web::resource("/register").route(web::post().to(api::register_user)),
-                    )
+                    .service(web::resource("/register").route(web::post().to(api::register_user)))
                     .service(web::resource("/new").route(web::get().to(api::new_game)))
                     .service(web::resource("/find").route(web::get().to(api::find)))
                     .service(web::resource("/join").route(web::post().to(api::join)))

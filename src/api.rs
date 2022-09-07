@@ -12,7 +12,7 @@ use std::result::Result;
 
 pub use crate::db;
 pub use crate::game;
-pub use crate::models;
+pub use crate::models::{self, User};
 pub use crate::schema;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use diesel::SqliteConnection;
@@ -24,18 +24,12 @@ const USER_COLOR_KEY: &str = "user_color";
 
 use serde::Deserialize;
 
-/// Info grabbed about player from form
-#[derive(Deserialize)]
-pub struct PlayerInfo {
-    username: String,
-}
 
 /// Info grabbed about session from form
 #[derive(Deserialize)]
 pub struct SessionInfo {
     id: Uuid,
 }
-
 
 
 /// Get a connection to the db
@@ -63,12 +57,12 @@ pub async fn index() -> HttpResponse {
 
 /// Register a new user with given name/team (input within path)
 pub async fn register_user(
-    form_input: web::Form<PlayerInfo>,
+    form_input: web::Form<User>,
     session: Session,
     req: HttpRequest,
 ) -> Result<impl Responder, Error> {
     // First and second parts of path will be username and team
-    let user_name = form_input.username.to_owned();
+    let user_name = form_input.user_name.to_owned();
 
     // Check the username isn't profane
     if user_name.is_inappropriate() {
@@ -102,6 +96,7 @@ pub async fn register_user(
         ))),
     }
 }
+
 
 /// Create a new game
 pub async fn new_game(session: Session, req: HttpRequest) -> Result<impl Responder, Error> {
@@ -182,18 +177,17 @@ pub async fn join(
 }
 
 /// Get the current state of the board in a session
-pub async fn game_state(session: Session, req: HttpRequest) -> Result<HttpResponse, Error> {
+pub async fn game_state(session: Session, req: HttpRequest) -> Result<impl Responder, Error> {
     println!("REQ: {:?}", req);
     let mut conn = get_db_connection(req)?;
     if let Some(session_id) = session.get::<Uuid>(SESSION_ID_KEY)? {
         println!("API: board, session_id: {:?}", session_id);
         session.insert(SESSION_ID_KEY, session_id)?;
 
-        // let id = session_id.into_inner();
         let res = db::get_game_state(&session_id, &mut conn);
         match res {
             // This should return a json
-            Ok(game_state) => Ok(HttpResponse::Ok().body(format!("{:?}", game_state))),
+            Ok(game_state) => Ok(web::Json(game_state)),
             _ => Err(error::ErrorInternalServerError(format!(
                 "Can't find game with session id {session_id}"
             ))),
