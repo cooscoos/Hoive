@@ -136,9 +136,7 @@ pub async fn find(session: Session, req: HttpRequest) -> Result<impl Responder, 
             session.insert(SESSION_ID_KEY, game_state.id.to_owned())?;
             Ok(web::Json(game_state.id))
         }
-        None => Err(error::ErrorNotFound(
-            "No live sessions with a single player found",
-        )),
+        None =>Ok(web::Json("None".to_string())),
     }
 }
 
