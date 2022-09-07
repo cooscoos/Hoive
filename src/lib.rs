@@ -5,6 +5,7 @@ extern crate dotenvy;
 use std::convert::TryInto;
 
 use actix_files as fs;
+use actix_web::HttpResponse;
 //use actix_session::CookieSession;
 use actix_web::{cookie::Key, web, App, HttpServer};
 
@@ -19,16 +20,18 @@ pub mod maths;
 pub mod models;
 pub mod local_pmoore;
 pub mod schema;
+pub const VERSION: &'static str = "0.01";
 
 fn get_secret_key() -> Key {
     Key::generate()
 }
 
+
+
 #[actix_web::main]
 pub async fn start_server() -> std::io::Result<()> {
     //Todo: understand this https://docs.rs/actix-session/latest/actix_session/
     // The secret key would usually be read from a configuration file/environment variables.
-
     let secret_key = get_secret_key();
 
     HttpServer::new(move || {
@@ -40,6 +43,7 @@ pub async fn start_server() -> std::io::Result<()> {
             ))
             .service(
                 web::scope("/api")
+                .service(web::resource("/").route(web::get().to(api::index)))
                     .service(
                         // web::resource("/register/{user_name}/{user_color}")
                         web::resource("/register").route(web::post().to(api::register_user)),
@@ -54,7 +58,8 @@ pub async fn start_server() -> std::io::Result<()> {
                             .route(web::post().to(api::make_action)),
                     ),
             )
-            .service(fs::Files::new("/", "./static").index_file("index.html"))
+            //.service(fs::Files::new("/", "./static").index_file("index.html"))
+            
     })
     .bind("127.0.0.1:8080")?
     .run()

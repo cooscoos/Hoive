@@ -5,6 +5,7 @@
 use actix_session::Session;
 use actix_web::{error, post, web, Error, HttpRequest, HttpResponse};
 
+use actix_web::Responder;
 use serde_json::json;
 use std::result::Result;
 
@@ -34,6 +35,8 @@ pub struct SessionInfo {
     id: Uuid,
 }
 
+
+
 /// Get a connection to the db
 fn get_db_connection(
     req: HttpRequest,
@@ -49,7 +52,13 @@ fn get_db_connection(
         ))
     }
 }
-use actix_web::Responder;
+
+pub async fn index() -> HttpResponse {
+
+    HttpResponse::Ok()
+    .body(format!("Hoive-server v{}", crate::VERSION))
+    
+}
 
 /// Register a new user with given name/team (input within path)
 pub async fn register_user(
