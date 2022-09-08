@@ -98,6 +98,21 @@ pub async fn register_user(
 }
 
 
+/// Get a user name based on an input user id
+pub async fn get_username(form_input: web::Form<User>, session: Session, req: HttpRequest) -> Result<HttpResponse, Error> {
+
+    println!("REQ: {:?}", req);
+
+    let user_id = Uuid::parse_str(&form_input.id).unwrap();
+    let mut conn = get_db_connection(req)?;
+
+    match db::get_user_name(&user_id, &mut conn) {
+        Ok(username) => Ok(HttpResponse::Ok().body(username)),
+        Err(err) => Err(error::ErrorBadGateway(format!("Cant find username for given user id because {err}"))),
+    }
+
+}
+
 /// Create a new game
 pub async fn new_game(session: Session, req: HttpRequest) -> Result<impl Responder, Error> {
     println!("NEW GAME REQ: {:?}", req);
