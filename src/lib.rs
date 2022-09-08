@@ -49,6 +49,7 @@ pub async fn start_server() -> std::io::Result<()> {
                     .service(web::resource("/join").route(web::post().to(api::join)))
                     .service(web::resource("/game-state").route(web::get().to(api::game_state)))
                     .service(web::resource("/wipe").route(web::get().to(api::delete_all)))
+                   // .service(web::resource("/coin-toss").route(web::get().to(api::coin_toss)))
                     .service(
                         web::resource("/make-move/{column}")
                             .route(web::post().to(api::make_action)),

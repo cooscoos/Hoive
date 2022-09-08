@@ -160,14 +160,13 @@ pub fn get_board(session_id: &Uuid, conn: &mut SqliteConnection) -> Result<Strin
 /// Update the game state of a given session_id with new info on last user, board state, whether there's a winner or game over
 pub fn update_game_state(
     session_id: &Uuid,
-    l_user_id: &Uuid,
+    l_user_id: &str,
     board_str: &str,
     is_winner: bool,
     game_over: bool,
     conn: &mut SqliteConnection,
 ) -> QueryResult<usize> {
     use schema::game_state::dsl::*;
-    //let conn = &mut establish_connection();
 
     diesel::update(game_state)
         .filter(id.eq(session_id.to_string()))

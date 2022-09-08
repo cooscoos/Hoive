@@ -10,6 +10,8 @@ use rustrict::CensorStr;
 use serde_json::json;
 use std::result::Result;
 
+use rand::Rng;
+
 pub use crate::db;
 pub use crate::game;
 pub use crate::models::{self, User};
@@ -171,7 +173,23 @@ pub async fn join(
             ))),
             Ok(1) => {
                 println!("User joined successfully");
-                Ok(HttpResponse::Ok().body("Ok"))
+                
+                // Toss a coin to see who goes first
+                let mut rand = rand::thread_rng();
+                let second = match rand.gen() {
+                    true => "B",
+                    false => "W",
+                };
+
+
+                // Update the db and return a string
+                match db::update_game_state(&game_id, second, "", false, false, &mut conn) {
+                    Ok(_) => Ok(HttpResponse::Ok().body(second)),
+                    Err(err) => Err(error::ErrorInternalServerError(format!(
+                        "Can't update game state of {session_id} because {err}"
+                    ))),
+                }
+
             }
             Ok(_) => Err(error::ErrorBadGateway("Multiple sessions updated")),
             Err(error) => Err(error::ErrorBadGateway(format!(
@@ -186,6 +204,33 @@ pub async fn join(
         ))
     }
 }
+
+// /// Pick a player to go first and update the db (happens once at the start of a game)
+// async fn coin_toss(session: Session, req: HttpRequest) -> Result<HttpResponse, Error> {
+//     // Select a random team to go second
+//     let mut rand = rand::thread_rng();
+//     let second = match rand.gen() {
+//         true => "B",
+//         false => "W",
+//     };
+
+//     println!("{second} is going second");
+//     // Up date the db and return the player who goes second
+//     let mut conn = get_db_connection(req)?;
+
+//     if let Some(session_id) = session.get::<Uuid>(SESSION_ID_KEY)? {
+//         match db::update_game_state(&session_id, second, "", false, false, &mut conn) {
+//             Ok(_) => Ok(HttpResponse::Ok().body(second)),
+//             Err(err) => Err(error::ErrorInternalServerError(format!(
+//                 "Can't update game state of {session_id} because {err}"
+//             ))),
+//         }
+//     } else {
+//         Err(error::ErrorInternalServerError(format!(
+//             "Can't find game session"
+//         )))
+//     }
+// }
 
 /// Get the current state of the board in a session
 pub async fn game_state(session: Session, req: HttpRequest) -> Result<impl Responder, Error> {
@@ -207,6 +252,8 @@ pub async fn game_state(session: Session, req: HttpRequest) -> Result<impl Respo
         Err(error::ErrorInternalServerError("Can't find game session"))
     }
 }
+
+
 
 /// Take some sort of action on the board
 pub async fn make_action(
