@@ -194,7 +194,6 @@ pub fn get_user_name(user_id: &Uuid, conn: &mut SqliteConnection) -> QueryResult
     Ok(result[0].clone())
 }
 
-
 /// Get the general game state of the selected session_id
 pub fn get_game_state(
     session_id: &Uuid,

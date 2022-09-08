@@ -16,17 +16,15 @@ pub mod api;
 pub mod db;
 pub mod draw;
 pub mod game;
+pub mod local_pmoore;
 pub mod maths;
 pub mod models;
-pub mod local_pmoore;
 pub mod schema;
 pub const VERSION: &'static str = "0.01";
 
 fn get_secret_key() -> Key {
     Key::generate()
 }
-
-
 
 #[actix_web::main]
 pub async fn start_server() -> std::io::Result<()> {
@@ -43,7 +41,7 @@ pub async fn start_server() -> std::io::Result<()> {
             ))
             .service(
                 web::scope("/api")
-                .service(web::resource("/").route(web::get().to(api::index)))
+                    .service(web::resource("/").route(web::get().to(api::index)))
                     .service(web::resource("/register").route(web::post().to(api::register_user)))
                     .service(web::resource("/user-name").route(web::post().to(api::get_username)))
                     .service(web::resource("/new").route(web::get().to(api::new_game)))
@@ -56,8 +54,7 @@ pub async fn start_server() -> std::io::Result<()> {
                             .route(web::post().to(api::make_action)),
                     ),
             )
-            //.service(fs::Files::new("/", "./static").index_file("index.html"))
-            
+        //.service(fs::Files::new("/", "./static").index_file("index.html"))
     })
     .bind("127.0.0.1:8080")?
     .run()

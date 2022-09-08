@@ -18,7 +18,6 @@ pub struct GameState {
     pub user_2: Option<String>,
     pub winner: bool,
     pub last_user_id: Option<String>,
-    pub last_user_color: Option<String>,
     pub ended: bool,
 }
 

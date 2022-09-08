@@ -24,13 +24,11 @@ const USER_COLOR_KEY: &str = "user_color";
 
 use serde::Deserialize;
 
-
 /// Info grabbed about session from form
 #[derive(Deserialize)]
 pub struct SessionInfo {
     id: Uuid,
 }
-
 
 /// Get a connection to the db
 fn get_db_connection(
@@ -49,10 +47,7 @@ fn get_db_connection(
 }
 
 pub async fn index() -> HttpResponse {
-
-    HttpResponse::Ok()
-    .body(format!("Hoive-server v{}", crate::VERSION))
-    
+    HttpResponse::Ok().body(format!("Hoive-server v{}", crate::VERSION))
 }
 
 /// Register a new user with given name/team (input within path)
@@ -68,7 +63,6 @@ pub async fn register_user(
     if user_name.is_inappropriate() {
         return Ok(web::Json("invalid".to_string()));
     }
-    
 
     let user_color = "red".to_string();
     println!("REQ: {:?}", req);
@@ -97,10 +91,12 @@ pub async fn register_user(
     }
 }
 
-
 /// Get a user name based on an input user id
-pub async fn get_username(form_input: web::Form<User>, session: Session, req: HttpRequest) -> Result<HttpResponse, Error> {
-
+pub async fn get_username(
+    form_input: web::Form<User>,
+    session: Session,
+    req: HttpRequest,
+) -> Result<HttpResponse, Error> {
     println!("REQ: {:?}", req);
 
     let user_id = Uuid::parse_str(&form_input.id).unwrap();
@@ -108,9 +104,10 @@ pub async fn get_username(form_input: web::Form<User>, session: Session, req: Ht
 
     match db::get_user_name(&user_id, &mut conn) {
         Ok(username) => Ok(HttpResponse::Ok().body(username)),
-        Err(err) => Err(error::ErrorBadGateway(format!("Cant find username for given user id because {err}"))),
+        Err(err) => Err(error::ErrorBadGateway(format!(
+            "Cant find username for given user id because {err}"
+        ))),
     }
-
 }
 
 /// Create a new game
@@ -146,7 +143,7 @@ pub async fn find(session: Session, req: HttpRequest) -> Result<impl Responder, 
             session.insert(SESSION_ID_KEY, game_state.id.to_owned())?;
             Ok(web::Json(game_state.id))
         }
-        None =>Ok(web::Json("None".to_string())),
+        None => Ok(web::Json("None".to_string())),
     }
 }
 
@@ -163,9 +160,8 @@ pub async fn join(
     let game_id = session_id;
 
     match session.get::<Uuid>(USER_ID_KEY) {
-        Ok(value) => println!("{:?}",value),
+        Ok(value) => println!("{:?}", value),
         Err(err) => println!("error: {}", err),
-
     }
 
     if let Some(user_2_id) = session.get::<Uuid>(USER_ID_KEY)? {
@@ -176,7 +172,7 @@ pub async fn join(
             Ok(1) => {
                 println!("User joined successfully");
                 Ok(HttpResponse::Ok().body("Ok"))
-            },
+            }
             Ok(_) => Err(error::ErrorBadGateway("Multiple sessions updated")),
             Err(error) => Err(error::ErrorBadGateway(format!(
                 "Cant join session: {}",
