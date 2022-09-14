@@ -262,8 +262,6 @@ pub async fn game_state(session: Session, req: HttpRequest) -> Result<impl Respo
     }
 }
 
-
-
 /// Take some sort of action on the board
 pub async fn make_action(
     form_input: web::Json<BoardAction>,
