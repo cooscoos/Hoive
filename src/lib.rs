@@ -51,7 +51,7 @@ pub async fn start_server() -> std::io::Result<()> {
                     .service(web::resource("/wipe").route(web::get().to(api::delete_all)))
                    // .service(web::resource("/coin-toss").route(web::get().to(api::coin_toss)))
                     .service(
-                        web::resource("/make-move/{column}")
+                        web::resource("/do-action")
                             .route(web::post().to(api::make_action)),
                     ),
             )

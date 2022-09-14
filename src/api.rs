@@ -14,6 +14,8 @@ use rand::Rng;
 
 pub use crate::db;
 pub use crate::game;
+use crate::game::movestatus::MoveStatus;
+use crate::models::GameState;
 pub use crate::models::{self, User};
 pub use crate::schema;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
@@ -30,6 +32,13 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 pub struct SessionInfo {
     id: Uuid,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct BoardAction{
+    pub name: String,   // chip name
+    pub rowcol: (i8,i8), // destination row,col
+    pub special: Option<String>, // stores special move info (e.g. p,sourcerow,sourcecol)
 }
 
 /// Get a connection to the db
@@ -257,41 +266,110 @@ pub async fn game_state(session: Session, req: HttpRequest) -> Result<impl Respo
 
 /// Take some sort of action on the board
 pub async fn make_action(
-    path: web::Path<u32>,
+    form_input: web::Form<BoardAction>,
     session: Session,
     req: HttpRequest,
-) -> Result<HttpResponse, Error> {
-    // Pass it a request for a move, it will check if the move is legal on its own copy of the board,
-    // and then update the game_state board and return okay if it is -- otherwise it'll return a movestatus
-    
-    // This is kind of like anti-cheat on the server.
+) -> Result<impl Responder, Error> {
+ 
+    use crate::maths::coord::DoubleHeight;
+    use crate::game::board::Board;
+    use crate::maths::coord::{Cube,Coord};
+    use crate::game::comps::Team;
+    use crate::game::comps::convert_static_basic;
 
-    // For now the thing passed is a number, but we'll later pass a string command like "bq1,0,-2" or "bp1,s,from,to" etc
-    let column = path.into_inner();
     println!("REQ: {:?}", req);
-    let conn = get_db_connection(req)?;
-    if let (Some(session_id), Some(user_id)) = (
-        session.get::<Uuid>(SESSION_ID_KEY)?,
-        session.get::<Uuid>(USER_ID_KEY)?,
-    ) {
-        // THIS is where we get a result out. Their version of game is probably my pmoore, sort of.
-        // pmoore is kind of doing two jobs at the moment which is bad (he's the front end and the logic)
-        //let res = game::user_move(session_id, user_id, column as usize, conn.deref());
-        let res: Result<&str, &str> = Ok("placeholder");
 
-        match res {
-            Ok(game_state) => {
-                println!("API make_move returns: {:?}", game_state);
-                Ok(HttpResponse::Ok().json(game_state))
-            }
-            Err(msg) => Err(error::ErrorInternalServerError(msg)),
-        }
+    // Later, we will
+    if form_input.special.is_none(){
+        // Do special move
     } else {
-        Err(error::ErrorInternalServerError(
-            "[user_move] No session info",
-        ))
+        // Do movement
+    };
+
+    // See if the action is valid
+    // Get the board state...
+
+    // This is almost a carbon copy of pub async fn game_state so it's silly
+    let mut conn = get_db_connection(req)?;
+    let mut gamey: Result<GameState,_>;
+
+    if let Some(session_id) = session.get::<Uuid>(SESSION_ID_KEY)? {
+        println!("API: board, session_id: {:?}", session_id);
+        session.insert(SESSION_ID_KEY, session_id)?;
+
+        let res = db::get_game_state(&session_id, &mut conn);
+        gamey = match res {
+            Ok(game_state) => Ok(game_state),
+            _ => Err(error::ErrorInternalServerError(format!(
+                "Can't find game with session id {session_id}"
+            ))),
+        };
+    } else {
+        gamey = Err(error::ErrorInternalServerError("Can't find game session"));
     }
+
+    let board_state = gamey?.board.unwrap(); // this might die if we have an empty board
+
+    // generate a board based on the existing state
+    let board = Board::new(Cube::default());
+    let mut board = board.decode_spiral(board_state);
+
+
+    // Convert the input move into DoubleHeight coordinates
+    let moveto = DoubleHeight::from(form_input.rowcol);
+
+    // Convert from doubleheight to the board's co-ordinate system
+    let game_hex = board.coord.mapfrom_doubleheight(moveto);
+
+    // Parse the input string to find the team
+    let active_team = match form_input.name.chars().next().unwrap().is_uppercase() {
+        true => Team::Black,
+        false => Team::White,
+    };
+
+    let chip_name = form_input.name.to_lowercase();
+
+    // convert to static
+    let chip_name = convert_static_basic(chip_name).unwrap();
+
+
+    // Try and do the move, see what happens. If it's successful the board will update itself
+    let move_status = board.move_chip(chip_name, active_team, game_hex);
+
+    if move_status == MoveStatus::Success {
+        // update the board on the server
+        // get the spiral string
+        let board_str = board.encode_spiral();
+        let l_user_id = match active_team {
+            Team::Black => "B",
+            Team::White => "W",
+        };
+
+        // again hacky
+        let session_id = session.get::<Uuid>(SESSION_ID_KEY)?.unwrap();
+        let res = db::update_game_state(
+            &session_id,
+            l_user_id,
+            &board_str,
+            false, // to do later, code to try movestatus = win 
+            false, // again
+            &mut conn,
+        );
+        
+        match res {
+            Ok(_) => Ok(web::Json(move_status)),
+            Err(err) => Err(error::ErrorInternalServerError(format!(
+                "Problem updating gamestate because {err}"))),
+        }
+
+
+    } else {
+        Ok(web::Json(move_status))
+    }
+
+
 }
+
 
 pub async fn delete_all(session: Session, req: HttpRequest) -> Result<HttpResponse, Error> {
     let mut conn = get_db_connection(req).unwrap();
@@ -302,24 +380,3 @@ pub async fn delete_all(session: Session, req: HttpRequest) -> Result<HttpRespon
     Ok(HttpResponse::Ok().body("Cleared"))
 }
 
-// use crate::game::{board::Board, movestatus::MoveStatus};
-// use crate::maths::coord::Coord;
-// use crate::maths::coord::Cube;
-
-// /// Start a new game, create a db respond with how it went
-// fn new_game() {
-//     // Initialise game board in cube co-ordinates
-//     let coord = Cube::default();
-//     let mut board = Board::new(coord);
-// }
-
-// We need a way of storing a board as a string in an sqlitedb
-// need a table called gamestate which has:
-// session id, a board (string representing board), user1, user2, current-player, ended (bool)
-
-// Then have the option to find an existing session without a user2 and join it as a player
-
-// let encoded = board.encode_spiral();
-// println!("The spiral string is:\n {}", encoded);
-// let newboard = board.decode_spiral(encoded);
-// println!("SPIRAL BOARD\n{}", draw::show_board(&newboard));

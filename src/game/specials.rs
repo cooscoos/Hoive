@@ -34,10 +34,10 @@ pub fn pillbug_sumo<T: Coord>(
 
     // Prioritise returning the pillbug if both moved
     if recent_movers.contains(&sumoer) {
-        return MoveStatus::RecentMove(sumoer.unwrap());
+        return MoveStatus::RecentMove(sumoer.unwrap().name.to_string());
     }
     if recent_movers.contains(&sumoee) {
-        return MoveStatus::RecentMove(sumoee.unwrap());
+        return MoveStatus::RecentMove(sumoee.unwrap().name.to_string());
     }
 
     // Ensure source and destination hexes both neighbour the pillbug on layer 0

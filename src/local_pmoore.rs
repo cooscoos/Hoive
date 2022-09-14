@@ -279,7 +279,7 @@ fn message<T: Coord>(board: &mut Board<T>, move_status: &MoveStatus) {
             )
         }
         MoveStatus::RecentMove(chip) => {
-            println!("\n\x1b[31;1m<< Can't do that this turn because chip {} moved last turn  >>\x1b[0m\n", chip.name)
+            println!("\n\x1b[31;1m<< Can't do that this turn because chip {} moved last turn  >>\x1b[0m\n", chip)
         }
         MoveStatus::NotNeighbour => {
             println!("\n\x1b[31;1m<< That is not a neighbouring hex >>\x1b[0m\n")

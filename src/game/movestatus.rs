@@ -1,4 +1,5 @@
 use super::comps::{Chip, Team};
+use serde::{Serialize};
 
 /// Enum to return the result of a player action
 /// MoveStatus::Selection | Meaning
@@ -19,7 +20,7 @@ use super::comps::{Chip, Team};
 /// BeetleBlock | A beetle on top of you is blocking your move
 /// BeetleGate | A beetle gate is preventing the move
 /// NoJump | Grasshopper can't make this jump
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Serialize)]
 pub enum MoveStatus {
     Success,
     Win(Option<Team>),
@@ -34,7 +35,7 @@ pub enum MoveStatus {
 
     SmallGap,
     BadDistance(u32),
-    RecentMove(Chip),
+    RecentMove(String),
     NotNeighbour,
 
     BeetleBlock,

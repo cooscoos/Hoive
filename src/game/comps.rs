@@ -3,9 +3,10 @@ use crate::maths::coord::{Coord, Cube};
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::ops::Not;
+use serde::{Serialize};
 
 /// Enum for the two teams, Team::Black and Team::White
-#[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
+#[derive(Hash, Eq, PartialEq, Debug, Clone, Copy, Serialize)]
 pub enum Team {
     Black,
     White,

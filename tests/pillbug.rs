@@ -31,7 +31,7 @@ fn pillbug_me_too_soon() {
     let dest = board.coord.mapfrom_doubleheight(DoubleHeight::from((0, 2)));
 
     assert_eq!(
-        MoveStatus::RecentMove(pillchip),
+        MoveStatus::RecentMove(pillchip.name.to_string()),
         specials::pillbug_sumo(&mut board, source, dest, position)
     );
 }
@@ -56,7 +56,7 @@ fn pillbug_you_too_soon() {
         .mapfrom_doubleheight(DoubleHeight::from((-1, -1)));
 
     assert_eq!(
-        MoveStatus::RecentMove(antchip),
+        MoveStatus::RecentMove(antchip.name.to_string()),
         specials::pillbug_sumo(&mut board, source, dest, position)
     );
 }
