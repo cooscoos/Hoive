@@ -468,8 +468,14 @@ where
 
     /// Convert from spiral notation string into a live board
     /// Take in a co-ordinate system or an empty board?
-    pub fn decode_spiral(&self, spiral_code: String) -> Self {
+    pub fn decode_spiral(&self, spiral_code_opt: String) -> Self {
         let mut newboard = Board::new(self.coord);
+
+        // Return a blank board if there's no string
+        let spiral_code = match spiral_code_opt.is_empty() {
+            true => return newboard,
+            false => spiral_code_opt,
+        };
 
         // The first 2 couplets are the board turn number, the third couplet is the board size
         let (turn_size, spiral_code) = spiral_code.split_at(6);

@@ -266,7 +266,7 @@ pub async fn game_state(session: Session, req: HttpRequest) -> Result<impl Respo
 
 /// Take some sort of action on the board
 pub async fn make_action(
-    form_input: web::Form<BoardAction>,
+    form_input: web::Json<BoardAction>,
     session: Session,
     req: HttpRequest,
 ) -> Result<impl Responder, Error> {
@@ -276,6 +276,7 @@ pub async fn make_action(
     use crate::maths::coord::{Cube,Coord};
     use crate::game::comps::Team;
     use crate::game::comps::convert_static_basic;
+    use crate::draw;
 
     println!("REQ: {:?}", req);
 
@@ -285,6 +286,8 @@ pub async fn make_action(
     } else {
         // Do movement
     };
+
+    println!("I recieved this: {:?}", form_input);
 
     // See if the action is valid
     // Get the board state...
@@ -314,7 +317,6 @@ pub async fn make_action(
     let board = Board::new(Cube::default());
     let mut board = board.decode_spiral(board_state);
 
-
     // Convert the input move into DoubleHeight coordinates
     let moveto = DoubleHeight::from(form_input.rowcol);
 
@@ -338,8 +340,11 @@ pub async fn make_action(
 
     if move_status == MoveStatus::Success {
         // update the board on the server
+        // for debugging, print the board
+        println!("{}",draw::show_board(&board));
         // get the spiral string
         let board_str = board.encode_spiral();
+        println!("Spiral string is {}", board_str);
         let l_user_id = match active_team {
             Team::Black => "B",
             Team::White => "W",
@@ -361,7 +366,6 @@ pub async fn make_action(
             Err(err) => Err(error::ErrorInternalServerError(format!(
                 "Problem updating gamestate because {err}"))),
         }
-
 
     } else {
         Ok(web::Json(move_status))
