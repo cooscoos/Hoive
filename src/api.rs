@@ -261,6 +261,11 @@ pub async fn make_action(
     session: Session,
     req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
+    // Pass it a request for a move, it will check if the move is legal on its own copy of the board,
+    // and then update the game_state board and return okay if it is -- otherwise it'll return a movestatus
+    
+    // This is kind of like anti-cheat on the server.
+
     // For now the thing passed is a number, but we'll later pass a string command like "bq1,0,-2" or "bp1,s,from,to" etc
     let column = path.into_inner();
     println!("REQ: {:?}", req);

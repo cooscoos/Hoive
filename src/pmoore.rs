@@ -13,15 +13,12 @@ use crate::maths::coord::{Coord, DoubleHeight};
 /// Introduction: say hello and define which team goes first
 pub fn intro() -> Team {
 
-
-
     // Select a random team to go first
     let mut rand = rand::thread_rng();
     let first = match rand.gen() {
         true => Team::Black,
         false => Team::White,
     };
-
 
 
     // Update the db so that "last_user_id" is set to the colour who goes second.

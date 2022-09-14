@@ -153,4 +153,6 @@ pub fn convert_static_basic(chip_string: String) -> Option<&'static str> {
         .into_iter()
         .map(|(c, _)| c.name)
         .find(|n| *n.to_string() == chip_string)
+
+    
 }
