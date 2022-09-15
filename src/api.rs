@@ -323,6 +323,9 @@ pub async fn make_action(
 
         let boardo = gamey.as_ref().unwrap().board.as_ref().unwrap();
 
+        // This doesn't allow a waiting player to see they win because it doesn't update l-user-id properly.
+        // For this to work properly, we need to generate a last user id to be the opposite of this
+        // Create some functions that map between B and W as string and team.
         let l_user_id = gamey.as_ref().unwrap().last_user_id.as_ref().unwrap();
 
         let res = db::update_game_state(
