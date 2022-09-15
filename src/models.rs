@@ -16,9 +16,8 @@ pub struct GameState {
     pub board: Option<String>,
     pub user_1: Option<String>,
     pub user_2: Option<String>,
-    pub winner: bool,
+    pub winner: Option<String>,
     pub last_user_id: Option<String>,
-    pub ended: bool,
 }
 
 #[derive(Deserialize, Serialize, Insertable)]

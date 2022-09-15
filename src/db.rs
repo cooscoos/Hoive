@@ -162,8 +162,7 @@ pub fn update_game_state(
     session_id: &Uuid,
     l_user_id: &str,
     board_str: &str,
-    is_winner: bool,
-    game_over: bool,
+    is_winner: &str,
     conn: &mut SqliteConnection,
 ) -> QueryResult<usize> {
     use schema::game_state::dsl::*;
@@ -174,7 +173,6 @@ pub fn update_game_state(
             last_user_id.eq(l_user_id.to_string()),
             board.eq(board_str),
             winner.eq(is_winner),
-            ended.eq(game_over),
         ))
         .execute(conn)
 }

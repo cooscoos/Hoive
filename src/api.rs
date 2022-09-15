@@ -192,7 +192,7 @@ pub async fn join(
 
 
                 // Update the db and return a string
-                match db::update_game_state(&game_id, second, "", false, false, &mut conn) {
+                match db::update_game_state(&game_id, second, "", "", &mut conn) {
                     Ok(_) => Ok(HttpResponse::Ok().body(second)),
                     Err(err) => Err(error::ErrorInternalServerError(format!(
                         "Can't update game state of {session_id} because {err}"
@@ -278,17 +278,10 @@ pub async fn make_action(
 
     println!("REQ: {:?}", req);
 
-    // Later, we will
-    if form_input.special.is_none(){
-        // Do special move
-    } else {
-        // Do movement
-    };
 
-    println!("I recieved this: {:?}", form_input);
 
     // See if the action is valid
-    // Get the board state...
+    // Get the current board state...
 
     // This is almost a carbon copy of pub async fn game_state so it's silly
     let mut conn = get_db_connection(req)?;
@@ -309,6 +302,52 @@ pub async fn make_action(
         gamey = Err(error::ErrorInternalServerError("Can't find game session"));
     }
 
+
+
+    println!("Recieved {:?} as form_input.special", form_input.special);
+
+    match &form_input.special {
+        None => (), //do normal movement
+        Some(value) if value == "forfeit" => {
+            // Flag the opposing player as the winner
+            
+                    // again hacky
+        let session_id = session.get::<Uuid>(SESSION_ID_KEY)?.unwrap();
+        // get the not current user
+        let winstring = gamey.as_ref().unwrap().last_user_id.as_ref().unwrap();
+
+        // l-user will be the one that forfeit
+        let winstring = match winstring {
+            _ if winstring == "B" => "BF",
+            _ if winstring == "W" => "WF",
+            _ => panic!("Unrecognised player string"),
+        };
+
+        let boardo = gamey.as_ref().unwrap().board.as_ref().unwrap();
+
+        let l_user_id = gamey.as_ref().unwrap().last_user_id.as_ref().unwrap();
+
+        let res = db::update_game_state(
+            &session_id,
+            &l_user_id,
+            &boardo, 
+            winstring,
+            &mut conn,
+        );
+        
+        match res {
+            Ok(_) => return Ok(web::Json(MoveStatus::Success)),
+            Err(err) => return Err(error::ErrorInternalServerError(format!(
+                "Problem updating gamestate because {err}"))),
+        };
+        
+
+        }
+        , //forfeit
+        Some(value) => (), // do specials
+    }
+
+
     let board_state = gamey?.board.unwrap(); // this might die if we have an empty board
 
     // generate a board based on the existing state
@@ -322,6 +361,7 @@ pub async fn make_action(
     let game_hex = board.coord.mapfrom_doubleheight(moveto);
 
     // Parse the input string to find the team
+    // better to use gamey.unwrap().last_user_id
     let active_team = match form_input.name.chars().next().unwrap().is_uppercase() {
         true => Team::Black,
         false => Team::White,
@@ -343,6 +383,8 @@ pub async fn make_action(
         // get the spiral string
         let board_str = board.encode_spiral();
         println!("Spiral string is {}", board_str);
+
+        // better to use gamey.unwrap().last_user_id
         let l_user_id = match active_team {
             Team::Black => "B",
             Team::White => "W",
@@ -354,8 +396,7 @@ pub async fn make_action(
             &session_id,
             l_user_id,
             &board_str,
-            false, // to do later, code to try movestatus = win 
-            false, // again
+            "", // to do later, code to try movestatus = win 
             &mut conn,
         );
         

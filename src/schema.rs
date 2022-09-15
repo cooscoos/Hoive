@@ -4,9 +4,8 @@ table! {
         board -> Nullable<Text>,
         user_1 -> Nullable<Text>,
         user_2 -> Nullable<Text>,
-        winner -> Bool,
+        winner -> Nullable<Text>,
         last_user_id -> Nullable<Text>,
-        ended -> Bool,
     }
 }
 
@@ -18,4 +17,7 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(game_state, user,);
+allow_tables_to_appear_in_same_query!(
+    game_state,
+    user,
+);

@@ -4,9 +4,8 @@ CREATE TABLE game_state (
     board TEXT,
     user_1 TEXT,
     user_2 TEXT,
-    winner BOOLEAN NOT NULL DEFAULT 'f',
-    last_user_id TEXT,
-    ended BOOLEAN NOT NULL DEFAULT 'f'
+    winner TEXT,
+    last_user_id TEXT
 );
 
 CREATE TABLE user (
