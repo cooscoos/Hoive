@@ -1,5 +1,5 @@
-use super::comps::{Chip, Team};
-use serde::{Serialize};
+use super::comps::Team;
+use serde::Serialize;
 
 /// Enum to return the result of a player action
 /// MoveStatus::Selection | Meaning

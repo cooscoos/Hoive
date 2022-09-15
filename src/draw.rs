@@ -140,7 +140,7 @@ fn parse_to_ascii(dheight_hashmap: HashMap<DoubleHeight, Option<Chip>>, size: i8
 fn chip_to_str(chip: Option<Chip>) -> String {
     // Convert chip to a string character (if None then display as ".")
 
-    let return_string = match chip {
+    match chip {
         Some(value) => {
             let colour_char = match value.team {
                 Team::Black => '4', // black chips coloured blue
@@ -149,8 +149,8 @@ fn chip_to_str(chip: Option<Chip>) -> String {
             format!("\x1b[3{}m{}\x1b[0m", colour_char, value.name) // uses hex colour for terminal
         }
         None => ".".to_string(),
-    };
-    return_string
+    }
+
 }
 
 pub fn empty(n: i8) -> HashMap<DoubleHeight, Option<Chip>> {
@@ -262,7 +262,9 @@ fn find_chip_chars(
 
             // drop the trailing comma, push it to the return string and add a newline
             next_set.pop();
-            return_string.push_str(&format!("{:<28}{}\n", group_names[i], next_set));
+            //return_string.push_str(&format!("{:<28}{}\n", group_names[i], next_set));
+
+            let _ = writeln!(return_string,"{:<28}{}", group_names[i], next_set);
         }
     }
 

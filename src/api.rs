@@ -3,11 +3,10 @@
 /// back (usually as jsons).
 ///
 use actix_session::Session;
-use actix_web::{error, post, web, Error, HttpRequest, HttpResponse};
+use actix_web::{error, web, Error, HttpRequest, HttpResponse};
 
 use actix_web::Responder;
 use rustrict::CensorStr;
-use serde_json::json;
 use std::result::Result;
 
 use rand::Rng;
@@ -89,11 +88,11 @@ pub async fn register_user(
 
             println!("{}", user_id);
 
-            let user = models::User {
-                id: user_id.to_string(),
-                user_name: user_name.to_owned(),
-                user_color: user_color.to_owned(),
-            };
+            // let user = models::User {
+            //     id: user_id.to_string(),
+            //     user_name: user_name.to_owned(),
+            //     user_color: user_color.to_owned(),
+            // };
             Ok(web::Json(user_id.to_string()))
         }
         Err(error) => Err(error::ErrorBadGateway(format!(
@@ -105,7 +104,6 @@ pub async fn register_user(
 /// Get a user name based on an input user id
 pub async fn get_username(
     form_input: web::Form<User>,
-    session: Session,
     req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
     println!("REQ: {:?}", req);
@@ -285,7 +283,7 @@ pub async fn make_action(
 
     // This is almost a carbon copy of pub async fn game_state so it's silly
     let mut conn = get_db_connection(req)?;
-    let mut gamey: Result<GameState,_>;
+    let gamey: Result<GameState,_>;
 
     if let Some(session_id) = session.get::<Uuid>(SESSION_ID_KEY)? {
         println!("API: board, session_id: {:?}", session_id);
@@ -329,8 +327,8 @@ pub async fn make_action(
 
         let res = db::update_game_state(
             &session_id,
-            &l_user_id,
-            &boardo, 
+            l_user_id,
+            boardo, 
             winstring,
             &mut conn,
         );
@@ -344,7 +342,7 @@ pub async fn make_action(
 
         }
         , //forfeit
-        Some(value) => (), // do specials
+        Some(_value) => (), // do specials
     }
 
 
@@ -414,7 +412,7 @@ pub async fn make_action(
 }
 
 
-pub async fn delete_all(session: Session, req: HttpRequest) -> Result<HttpResponse, Error> {
+pub async fn delete_all(req: HttpRequest) -> Result<HttpResponse, Error> {
     let mut conn = get_db_connection(req).unwrap();
 
     db::clean_db(&mut conn);

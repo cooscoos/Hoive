@@ -2,16 +2,13 @@
 extern crate diesel;
 extern crate dotenvy;
 
-use std::convert::TryInto;
 
-use actix_files as fs;
-use actix_web::HttpResponse;
 //use actix_session::CookieSession;
 use actix_web::{cookie::Key, web, App, HttpServer};
 
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 
-use actix_session::storage::SessionKey;
+
 pub mod api;
 pub mod db;
 pub mod draw;
@@ -20,7 +17,7 @@ pub mod local_pmoore;
 pub mod maths;
 pub mod models;
 pub mod schema;
-pub const VERSION: &'static str = "0.01";
+pub const VERSION: &str = "0.01";
 
 fn get_secret_key() -> Key {
     Key::generate()

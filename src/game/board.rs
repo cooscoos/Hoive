@@ -1,5 +1,6 @@
 /// Board module tracks the chips and executes their moves
 use std::collections::{BTreeMap, HashMap, HashSet};
+use std::fmt::Write as _;
 
 use crate::maths::funcs;
 
@@ -417,8 +418,11 @@ where
         let mut return_string = String::new();
 
         // The first 3 couplets will define the turn number (0-9999), and the board size (0-99)
-        return_string.push_str(&format!("{:0>4}", self.turns));
-        return_string.push_str(&format!("{:0>2}", self.size));
+        let _ = write!(return_string, "{:0>4}", self.turns);
+        let _ = write!(return_string, "{:0>2}", self.size);
+
+        //return_string.push_str(&format!("{:0>4}", self.turns));
+        //return_string.push_str(&format!("{:0>2}", self.size));
 
         // Return nothing for the board if it's empty
         if self.get_placed_positions().is_empty() {

@@ -1,4 +1,4 @@
-use actix::fut::future::result;
+
 use diesel::connection::SimpleConnection;
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
@@ -60,13 +60,13 @@ pub fn create_conn_pool() -> Pool<ConnectionManager<SqliteConnection>> {
 }
 
 /// Establish connection to db
-fn establish_connection() -> SqliteConnection {
-    dotenv().ok();
+// fn establish_connection() -> SqliteConnection {
+//     dotenv().ok();
 
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    SqliteConnection::establish(&database_url)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
-}
+//     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+//     SqliteConnection::establish(&database_url)
+//         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+// }
 
 /// Creates a new user on the db with a given name and team
 pub fn create_user(name: &str, team: &str, conn: &mut SqliteConnection) -> Result<Uuid, String> {

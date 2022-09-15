@@ -3,7 +3,8 @@ use super::schema::user;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Default, Queryable, Insertable, Debug, Clone)]
-#[table_name = "user"]
+//#[table_name = "user"]
+#[diesel(table_name = user)]
 pub struct User {
     pub id: String,
     pub user_name: String,
@@ -21,7 +22,8 @@ pub struct GameState {
 }
 
 #[derive(Deserialize, Serialize, Insertable)]
-#[table_name = "game_state"]
+//#[table_name = "game_state"]
+#[diesel(table_name = game_state)]
 pub struct NewGameState {
     pub id: String,
     pub board: Option<String>,
