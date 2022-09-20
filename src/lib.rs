@@ -2,12 +2,10 @@
 extern crate diesel;
 extern crate dotenvy;
 
-
 //use actix_session::CookieSession;
 use actix_web::{cookie::Key, web, App, HttpServer};
 
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
-
 
 pub mod api;
 pub mod db;
@@ -46,11 +44,8 @@ pub async fn start_server() -> std::io::Result<()> {
                     .service(web::resource("/join").route(web::post().to(api::join)))
                     .service(web::resource("/game-state").route(web::get().to(api::game_state)))
                     .service(web::resource("/wipe").route(web::get().to(api::delete_all)))
-                   // .service(web::resource("/coin-toss").route(web::get().to(api::coin_toss)))
-                    .service(
-                        web::resource("/do-action")
-                            .route(web::post().to(api::make_action)),
-                    ),
+                    // .service(web::resource("/coin-toss").route(web::get().to(api::coin_toss)))
+                    .service(web::resource("/do-action").route(web::post().to(api::make_action))),
             )
         //.service(fs::Files::new("/", "./static").index_file("index.html"))
     })

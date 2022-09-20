@@ -17,7 +17,4 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(
-    game_state,
-    user,
-);
+allow_tables_to_appear_in_same_query!(game_state, user,);

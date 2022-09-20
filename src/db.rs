@@ -1,4 +1,3 @@
-
 use diesel::connection::SimpleConnection;
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
@@ -177,6 +176,21 @@ pub fn update_game_state(
         .execute(conn)
 }
 
+/// Update the winner only
+pub fn update_winner(
+    session_id: &Uuid,
+    l_user_id: &str,
+    is_winner: &str,
+    conn: &mut SqliteConnection,
+) -> QueryResult<usize> {
+    use schema::game_state::dsl::*;
+
+    diesel::update(game_state)
+        .filter(id.eq(session_id.to_string()))
+        .set((last_user_id.eq(l_user_id.to_string()), winner.eq(is_winner)))
+        .execute(conn)
+}
+
 /// Get the username of a user of given id
 pub fn get_user_name(user_id: &Uuid, conn: &mut SqliteConnection) -> QueryResult<String> {
     use schema::user::dsl::*;
@@ -197,7 +211,6 @@ pub fn get_game_state(
     conn: &mut SqliteConnection,
 ) -> QueryResult<models::GameState> {
     use super::schema::game_state::dsl::*;
-    //let conn = &mut establish_connection();
 
     let res = game_state
         .filter(id.eq(session_id.to_string()))
@@ -211,8 +224,6 @@ pub fn get_game_state(
 pub fn clean_db(conn: &mut SqliteConnection) {
     use super::schema::game_state::dsl::*;
     use super::schema::user::dsl::*;
-
-    //let conn = &mut establish_connection();
 
     diesel::delete(game_state).execute(conn).unwrap();
     diesel::delete(user).execute(conn).unwrap();

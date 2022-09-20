@@ -1,9 +1,11 @@
 use crate::maths::coord::{Coord, Cube};
+use serde::Serialize;
 /// Module with the components of a game: the teams and chips
 use std::collections::HashMap;
+use std::fmt::Error;
 use std::hash::Hash;
 use std::ops::Not;
-use serde::{Serialize};
+use std::str::FromStr;
 
 /// Enum for the two teams, Team::Black and Team::White
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy, Serialize)]
@@ -20,6 +22,28 @@ impl Not for Team {
         match self {
             Team::Black => Team::White,
             Team::White => Team::Black,
+        }
+    }
+}
+
+// Converts team to a string "B", "W"
+impl ToString for Team {
+    fn to_string(&self) -> String {
+        match self {
+            Team::Black => "B".to_string(),
+            Team::White => "W".to_string(),
+        }
+    }
+}
+
+// Converts "B" or "W" into a Team
+impl FromStr for Team {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "B" => Ok(Team::Black),
+            "W" => Ok(Team::White),
+            _ => panic!("Unrecognised team str"),
         }
     }
 }
@@ -154,6 +178,4 @@ pub fn convert_static_basic(chip_string: String) -> Option<&'static str> {
         .into_iter()
         .map(|(c, _)| c.name)
         .find(|n| *n.to_string() == chip_string)
-
-    
 }

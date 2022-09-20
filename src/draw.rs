@@ -150,7 +150,6 @@ fn chip_to_str(chip: Option<Chip>) -> String {
         }
         None => ".".to_string(),
     }
-
 }
 
 pub fn empty(n: i8) -> HashMap<DoubleHeight, Option<Chip>> {
@@ -264,7 +263,7 @@ fn find_chip_chars(
             next_set.pop();
             //return_string.push_str(&format!("{:<28}{}\n", group_names[i], next_set));
 
-            let _ = writeln!(return_string,"{:<28}{}", group_names[i], next_set);
+            let _ = writeln!(return_string, "{:<28}{}", group_names[i], next_set);
         }
     }
 
