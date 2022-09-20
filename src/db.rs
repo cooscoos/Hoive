@@ -191,6 +191,20 @@ pub fn update_winner(
         .execute(conn)
 }
 
+/// Update the active team only
+pub fn update_active_team(
+    session_id: &Uuid,
+    l_user_id: &str,
+    conn: &mut SqliteConnection,
+) -> QueryResult<usize> {
+    use schema::game_state::dsl::*;
+
+    diesel::update(game_state)
+        .filter(id.eq(session_id.to_string()))
+        .set((last_user_id.eq(l_user_id.to_string())))
+        .execute(conn)
+}
+
 /// Get the username of a user of given id
 pub fn get_user_name(user_id: &Uuid, conn: &mut SqliteConnection) -> QueryResult<String> {
     use schema::user::dsl::*;

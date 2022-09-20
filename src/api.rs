@@ -14,8 +14,11 @@ use rand::Rng;
 
 pub use crate::db;
 pub use crate::game;
+use crate::game::comps::convert_static;
 use crate::game::comps::Team;
 use crate::game::movestatus::MoveStatus;
+use crate::maths::coord::DoubleHeight;
+use crate::maths::coord::{Coord, Cube};
 use crate::models::GameState;
 pub use crate::models::{self, User};
 pub use crate::schema;
@@ -30,6 +33,7 @@ const USER_COLOR_KEY: &str = "user_color";
 use serde::Deserialize;
 
 use self::game::board::Board;
+use self::game::specials;
 
 /// Info grabbed about session from form
 #[derive(Deserialize)]
@@ -274,7 +278,6 @@ pub async fn make_action(
     // For debug
     println!("Recieved {:?} as form_input.special", form_input.special);
 
-
     if let Some(session_id) = session.get::<Uuid>(SESSION_ID_KEY)? {
         // Retrieve the game_state and current player
         let game_state = retrieve_game_state(&session, &mut conn).await?;
@@ -283,8 +286,93 @@ pub async fn make_action(
         // Find out if we have a special action
         match &form_input.special {
             None => {
+                assert!(cheat_check(&form_input, &active_team));
                 // No special action, do standard chip movement and return response
-                match do_movement(game_state, form_input, active_team, &session_id, &mut conn).await
+
+                // Get the board
+                let board_state = game_state.board.unwrap(); // this might die if we have an empty board
+
+                // generate a board in Cube coords based on the existing state
+                let board = Board::new(Cube::default());
+                let mut board = board.decode_spiral(board_state);
+
+                // Convert the input move into DoubleHeight coordinates
+                let moveto = DoubleHeight::from(form_input.rowcol);
+                let chip_name = form_input.name.as_str();
+
+                match do_movement(
+                    &mut board,
+                    chip_name,
+                    moveto,
+                    active_team,
+                    &session_id,
+                    &mut conn,
+                )
+                .await
+                {
+                    Ok(move_status) => Ok(web::Json(move_status)),
+                    Err(err) => Err(error::ErrorInternalServerError(format!(
+                        "Problem updating gamestate because {err}"
+                    ))),
+                }
+            }
+            Some(value) if value.starts_with("m") => {
+                // Mosquito special. Need to adjust board and then do the move
+                // Deconstruct the special
+                assert!(cheat_check(&form_input, &active_team));
+                let items = value.split(',').collect::<Vec<&str>>();
+
+                // items[0]
+                // this will be m
+
+                let vic_row = items[1]
+                    .trim()
+                    .parse::<i8>()
+                    .expect("Problem parsing turn number");
+
+                let vic_col = items[2]
+                    .trim()
+                    .parse::<i8>()
+                    .expect("Problem parsing turn number");
+
+                let indheight = DoubleHeight {
+                    row: vic_row,
+                    col: vic_col,
+                    l: 0,
+                };
+
+                println!("Victim is at {:?}", indheight);
+
+                // Get the board
+                let board_state = game_state.board.unwrap(); // this might die if we have an empty board
+
+                // generate a board in Cube coords based on the existing state
+                let board = Board::new(Cube::default());
+                let mut board = board.decode_spiral(board_state);
+
+                let suck_from = board.coord.mapfrom_doubleheight(indheight);
+
+                // position needs to be my position.
+                let position = board.get_position_byname(active_team, "m1").unwrap();
+                let newname = match specials::mosquito_suck(&mut board, suck_from, position) {
+                    Some(value) => value,
+                    None => return Ok(web::Json(MoveStatus::BadNeighbour)), // Todo, proper movestatus for suck fail
+                };
+
+                // Convert the input move into DoubleHeight coordinates
+                let moveto = DoubleHeight::from(form_input.rowcol);
+
+                // chip name is going to cause issues with black team because M not made capital
+
+                match do_movement(
+                    &mut board,
+                    newname,
+                    moveto,
+                    active_team,
+                    &session_id,
+                    &mut conn,
+                )
+                .await
                 {
                     Ok(move_status) => Ok(web::Json(move_status)),
                     Err(err) => Err(error::ErrorInternalServerError(format!(
@@ -301,55 +389,52 @@ pub async fn make_action(
                     ))),
                 }
             }
+            Some(value) if value == "skip" => {
+                // Try and skip the current player's turn
+                match skip_turn(game_state, active_team, &session_id, &mut conn).await {
+                    Ok(move_status) => Ok(web::Json(move_status)),
+                    Err(err) => Err(error::ErrorInternalServerError(format!(
+                        "Problem updating gamestate because {err}"
+                    ))),
+                }
+            }
             Some(_value) => {
                 // Anything else means we're doing a special move
                 !unimplemented!();
-            } 
+            }
         }
     } else {
         return Err(error::ErrorInternalServerError("Can't find game session"));
     }
 }
 
-/// Try and execute movement
-async fn do_movement(
-    game_state: GameState,
-    form_input: web::Json<BoardAction>,
-    active_team: Team,
-    session_id: &Uuid,
-    conn: &mut SqliteConnection,
-) -> Result<MoveStatus, Error> {
-    use crate::game::comps::convert_static_basic;
-    use crate::maths::coord::DoubleHeight;
-    use crate::maths::coord::{Coord, Cube};
-
-    // Get the board
-    let board_state = game_state.board.unwrap(); // this might die if we have an empty board
-
-    // generate a board in Cube coords based on the existing state
-    let board = Board::new(Cube::default());
-    let mut board = board.decode_spiral(board_state);
-
-    // Convert the input move into DoubleHeight coordinates
-    let moveto = DoubleHeight::from(form_input.rowcol);
-
-    // Convert from doubleheight to the board's co-ordinate system
-    let game_hex = board.coord.mapfrom_doubleheight(moveto);
+fn cheat_check(form_input: &web::Json<BoardAction>, active_team: &Team) -> bool {
+    let chip_name = form_input.name.as_str();
 
     // Make sure the active team is trying to move their own chips. Black chips
     // get passed as uppercase, white as lowercase
-    let team_chips = match form_input.name.chars().next().unwrap().is_uppercase() {
+    let team_chips = match chip_name.chars().next().unwrap().is_uppercase() {
         true => Team::Black,
         false => Team::White,
     };
 
-    if team_chips != active_team {
-        return Err(error::ErrorBadRequest("Opposing team cannot move chips"));
-    }
+    team_chips == *active_team
+}
+
+/// Try and execute movement
+async fn do_movement<T: Coord>(
+    board: &mut Board<T>,
+    chip_name: &str,
+    moveto: DoubleHeight,
+    active_team: Team,
+    session_id: &Uuid,
+    conn: &mut SqliteConnection,
+) -> Result<MoveStatus, Error> {
+    // Convert from doubleheight to the board's co-ordinate system
+    let game_hex = board.coord.mapfrom_doubleheight(moveto);
 
     // Convert the input chipname to a static str
-    let chip_name =
-        convert_static_basic(form_input.name.to_lowercase()).expect("Couldn't parse chip name");
+    let chip_name = convert_static(chip_name.to_lowercase()).expect("Couldn't parse chip name");
 
     // Try and do the move, see what happens. If it's successful the board struct will update itself
     let move_status = board.move_chip(chip_name, active_team, game_hex);
@@ -357,6 +442,8 @@ async fn do_movement(
     if move_status == MoveStatus::Success {
         // update the board on the server
         //println!("{}", draw::show_board(&board));
+        // Refresh all mosquito names back to m1 (do this on the server)
+        specials::mosquito_desuck(board);
         // get the spiral string
         let board_str = board.encode_spiral();
         //println!("Spiral string is {}", board_str);
@@ -373,6 +460,34 @@ async fn do_movement(
         }
     } else {
         Ok(move_status)
+    }
+}
+
+async fn skip_turn(
+    game_state: GameState,
+    active_team: Team,
+    session_id: &Uuid,
+    conn: &mut SqliteConnection,
+) -> Result<MoveStatus, Error> {
+    // Get the board
+    let board_state = game_state.board.unwrap(); // this might die if we have an empty board
+
+    // generate a board in Cube coords based on the existing state
+    let board = Board::new(Cube::default());
+    let board = board.decode_spiral(board_state);
+
+    // skip turn, only if both bees have been placed
+    match board.bee_placed(active_team) && board.bee_placed(!active_team) {
+        true => {
+            // Do skip, change the active team in the db
+            match db::update_active_team(session_id, &active_team.to_string(), conn) {
+                Ok(_) => return Ok(MoveStatus::Success),
+                Err(err) => return Err(error::ErrorInternalServerError(err)),
+            }
+        }
+        false => {
+            return Ok(MoveStatus::NoSkip);
+        }
     }
 }
 

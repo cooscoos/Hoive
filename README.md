@@ -18,8 +18,7 @@ Play the game in terminal with cargo run.
 
 Make this a server application so that people can play on the internet. Steps:
 
-- get rid of won/ended nonsense, just have won.
-- tidy up api make_action, it's cluttered and hacky
+- mosquitos working, need a good old tidy up
 
 #### Sqlite db
 

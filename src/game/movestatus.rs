@@ -9,6 +9,7 @@ use serde::Serialize;
 /// Nothing| Nothing happened (used to abort action)
 /// NoBee| Haven't placed bee yet so can't relocate chips
 /// BeeNeed| You need to place a bee on this turn
+/// NoSkip | Can't skip turn
 /// Occupied| Target already occupied
 /// Unconnected| Target has no neighbours
 /// BadNeighbour| Target is next to opposing team
@@ -27,6 +28,7 @@ pub enum MoveStatus {
     Nothing,
     NoBee,
     BeeNeed,
+    NoSkip,
 
     Occupied,
     Unconnected,

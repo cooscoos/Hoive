@@ -267,6 +267,9 @@ fn message<T: Coord>(board: &mut Board<T>, move_status: &MoveStatus) {
         MoveStatus::SmallGap => {
             println!("\n\x1b[31;1m<< Gap too small for this piece to move into  >>\x1b[0m\n")
         }
+        MoveStatus::NoSkip => {
+            println!("\n\x1b[31;1m<< Can't skip turn until both bees are placed  >>\x1b[0m\n")
+        }
         MoveStatus::BadDistance(value) => {
             println!("\n\x1b[31;1m<<  No: this peice must move {value} space(s)  >>\x1b[0m\n")
         }
