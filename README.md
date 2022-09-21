@@ -18,6 +18,7 @@ Play the game in terminal with cargo run.
 
 Make this a server application so that people can play on the internet. Steps:
 
+- mosquito can suck mosquito with no error.
 - mosquitos working, need a good old tidy up
 
 #### Sqlite db

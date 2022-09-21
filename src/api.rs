@@ -285,101 +285,6 @@ pub async fn make_action(
 
         // Find out if we have a special action
         match &form_input.special {
-            None => {
-                assert!(cheat_check(&form_input, &active_team));
-                // No special action, do standard chip movement and return response
-
-                // Get the board
-                let board_state = game_state.board.unwrap(); // this might die if we have an empty board
-
-                // generate a board in Cube coords based on the existing state
-                let board = Board::new(Cube::default());
-                let mut board = board.decode_spiral(board_state);
-
-                // Convert the input move into DoubleHeight coordinates
-                let moveto = DoubleHeight::from(form_input.rowcol);
-                let chip_name = form_input.name.as_str();
-
-                match do_movement(
-                    &mut board,
-                    chip_name,
-                    moveto,
-                    active_team,
-                    &session_id,
-                    &mut conn,
-                )
-                .await
-                {
-                    Ok(move_status) => Ok(web::Json(move_status)),
-                    Err(err) => Err(error::ErrorInternalServerError(format!(
-                        "Problem updating gamestate because {err}"
-                    ))),
-                }
-            }
-            Some(value) if value.starts_with("m") => {
-                // Mosquito special. Need to adjust board and then do the move
-                // Deconstruct the special
-                assert!(cheat_check(&form_input, &active_team));
-                let items = value.split(',').collect::<Vec<&str>>();
-
-                // items[0]
-                // this will be m
-
-                let vic_row = items[1]
-                    .trim()
-                    .parse::<i8>()
-                    .expect("Problem parsing turn number");
-
-                let vic_col = items[2]
-                    .trim()
-                    .parse::<i8>()
-                    .expect("Problem parsing turn number");
-
-                let indheight = DoubleHeight {
-                    row: vic_row,
-                    col: vic_col,
-                    l: 0,
-                };
-
-                println!("Victim is at {:?}", indheight);
-
-                // Get the board
-                let board_state = game_state.board.unwrap(); // this might die if we have an empty board
-
-                // generate a board in Cube coords based on the existing state
-                let board = Board::new(Cube::default());
-                let mut board = board.decode_spiral(board_state);
-
-                let suck_from = board.coord.mapfrom_doubleheight(indheight);
-
-                // position needs to be my position.
-                let position = board.get_position_byname(active_team, "m1").unwrap();
-                let newname = match specials::mosquito_suck(&mut board, suck_from, position) {
-                    Some(value) => value,
-                    None => return Ok(web::Json(MoveStatus::BadNeighbour)), // Todo, proper movestatus for suck fail
-                };
-
-                // Convert the input move into DoubleHeight coordinates
-                let moveto = DoubleHeight::from(form_input.rowcol);
-
-                // chip name is going to cause issues with black team because M not made capital
-
-                match do_movement(
-                    &mut board,
-                    newname,
-                    moveto,
-                    active_team,
-                    &session_id,
-                    &mut conn,
-                )
-                .await
-                {
-                    Ok(move_status) => Ok(web::Json(move_status)),
-                    Err(err) => Err(error::ErrorInternalServerError(format!(
-                        "Problem updating gamestate because {err}"
-                    ))),
-                }
-            }
             Some(value) if value == "forfeit" => {
                 // Forfeit means active player is giving up
                 match forfeit(active_team, &session_id, &mut conn).await {
@@ -398,9 +303,61 @@ pub async fn make_action(
                     ))),
                 }
             }
-            Some(_value) => {
-                // Anything else means we're doing a special move
-                !unimplemented!();
+            _ => {
+                // None, startswith m or p
+                assert!(cheat_check(&form_input, &active_team));
+
+                // Get the board
+                let board_state = game_state.board.unwrap(); // this might die if we have an empty board
+
+                // generate a board in Cube coords based on the existing state
+                let board = Board::new(Cube::default());
+                let mut board = board.decode_spiral(board_state);
+
+                // Convert the input move into DoubleHeight coordinates
+                let moveto = DoubleHeight::from(form_input.rowcol);
+                let mut chip_name = form_input.name.as_str();
+
+                let value = form_input.special.as_ref();
+
+                // Mosquitos
+                if value.is_some() && value.unwrap().starts_with("m") {
+
+                    let items = value.unwrap().split(',').collect::<Vec<&str>>();
+
+                    // items[0] will be "m"
+                    // items[1] and [2] are col,row
+                    let colrow = items.into_iter().skip(1).map(|v| v.trim().parse::<i8>().expect("Probelm parsing value")).collect::<Vec<i8>>();
+                    let indheight = DoubleHeight::from((colrow[0],colrow[1]));
+
+                    let suck_from = board.coord.mapfrom_doubleheight(indheight);
+
+                    // position needs to be my position.
+                    let position = board.get_position_byname(active_team, "m1").unwrap();
+                    let newname = match specials::mosquito_suck(&mut board, suck_from, position) {
+                        Some(value) => value,
+                        None => return Ok(web::Json(MoveStatus::BadNeighbour)), // Todo, proper movestatus for suck fail
+                    };
+
+                    chip_name = newname;
+
+                }
+
+                match do_movement(
+                    &mut board,
+                    chip_name,
+                    moveto,
+                    active_team,
+                    &session_id,
+                    &mut conn,
+                )
+                .await
+                {
+                    Ok(move_status) => Ok(web::Json(move_status)),
+                    Err(err) => Err(error::ErrorInternalServerError(format!(
+                        "Problem updating gamestate because {err}"
+                    ))),
+                }
             }
         }
     } else {
@@ -408,11 +365,12 @@ pub async fn make_action(
     }
 }
 
+/// Make sure the requested move is for the active player 
+/// Will need to do some more thorough checks later such as making sure the playerid matches
 fn cheat_check(form_input: &web::Json<BoardAction>, active_team: &Team) -> bool {
     let chip_name = form_input.name.as_str();
 
-    // Make sure the active team is trying to move their own chips. Black chips
-    // get passed as uppercase, white as lowercase
+    // Black chips get passed as uppercase, white as lowercase
     let team_chips = match chip_name.chars().next().unwrap().is_uppercase() {
         true => Team::Black,
         false => Team::White,
