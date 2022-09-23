@@ -304,7 +304,7 @@ pub async fn make_action(
                 }
             }
             _ => {
-                // None, startswith m or p
+                // None, or startswith m or p
                 assert!(cheat_check(&form_input, &active_team));
 
                 // Get the board
@@ -318,29 +318,22 @@ pub async fn make_action(
                 let moveto = DoubleHeight::from(form_input.rowcol);
                 let mut chip_name = form_input.name.as_str();
 
-                let value = form_input.special.as_ref();
+                let special_move = form_input.special.as_ref();
 
                 // Mosquitos
-                if value.is_some() && value.unwrap().starts_with("m") {
+                if special_move.is_some() && special_move.unwrap().starts_with("m") {
 
-                    let items = value.unwrap().split(',').collect::<Vec<&str>>();
+                    // Find the victim's coordinates
+                    let suck_from = parse_special(special_move.unwrap(), &board);
 
-                    // items[0] will be "m"
-                    // items[1] and [2] are col,row
-                    let colrow = items.into_iter().skip(1).map(|v| v.trim().parse::<i8>().expect("Probelm parsing value")).collect::<Vec<i8>>();
-                    let indheight = DoubleHeight::from((colrow[0],colrow[1]));
-
-                    let suck_from = board.coord.mapfrom_doubleheight(indheight);
-
-                    // position needs to be my position.
+                    // Get the mosquito's current position.
                     let position = board.get_position_byname(active_team, "m1").unwrap();
                     let newname = match specials::mosquito_suck(&mut board, suck_from, position) {
                         Some(value) => value,
-                        None => return Ok(web::Json(MoveStatus::BadNeighbour)), // Todo, proper movestatus for suck fail
+                        None => return Ok(web::Json(MoveStatus::NoSuck)),
                     };
 
                     chip_name = newname;
-
                 }
 
                 match do_movement(
@@ -365,7 +358,25 @@ pub async fn make_action(
     }
 }
 
-/// Make sure the requested move is for the active player 
+fn parse_special<T: Coord>(special_str: &str, board: &Board<T>) -> T {
+
+    let items = special_str.split(',').collect::<Vec<&str>>();
+
+    // items[0] will be "m" or "p"
+    // items[1] and [2] are col,row. Convert these to doubleheight and then board coords
+    let colrow = items
+        .into_iter()
+        .skip(1)
+        .map(|v| v.trim().parse::<i8>().expect("Problem parsing value"))
+        .collect::<Vec<i8>>();
+    
+    let d_colrow = DoubleHeight::from((colrow[0], colrow[1]));
+
+    board.coord.mapfrom_doubleheight(d_colrow)
+
+}
+
+/// Make sure the requested move is for the active player
 /// Will need to do some more thorough checks later such as making sure the playerid matches
 fn cheat_check(form_input: &web::Json<BoardAction>, active_team: &Team) -> bool {
     let chip_name = form_input.name.as_str();

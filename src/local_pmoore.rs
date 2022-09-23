@@ -298,6 +298,9 @@ fn message<T: Coord>(board: &mut Board<T>, move_status: &MoveStatus) {
         MoveStatus::NoJump => {
             println!("\n\x1b[31;1m<< Grasshopper can't make this jump >>\x1b[0m\n")
         }
+        MoveStatus::NoSuck => {
+            println!("\n\x1b[31;1m<< Mosquito can't suck another mosquito >>\x1b[0m\n")
+        }
         MoveStatus::Win(teamopt) => {
             println!("{}\n", draw::show_board(board));
             match teamopt {
