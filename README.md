@@ -18,7 +18,7 @@ Play the game in terminal with cargo run.
 
 Make this a server application so that people can play on the internet. Steps:
 
-- get pillbug working at both ends then have a tidy up
+- everything broadly works --have a good old tidy up
 
 #### Sqlite db
 

@@ -318,23 +318,128 @@ pub async fn make_action(
                 let moveto = DoubleHeight::from(form_input.rowcol);
                 let mut chip_name = form_input.name.as_str();
 
-                let special_move = form_input.special.as_ref();
+                let special_str = form_input.special.as_ref();
 
-                // Mosquitos
-                if special_move.is_some() && special_move.unwrap().starts_with("m") {
+                // split the special move out into a vec and run through it one item at a time
+                // until you reach the end of the vec.
 
-                    // Find the victim's coordinates
-                    let suck_from = parse_special(special_move.unwrap(), &board);
+                if special_str.is_some() {
+                    let items = special_str.unwrap().split(',').collect::<Vec<&str>>();
 
-                    // Get the mosquito's current position.
-                    let position = board.get_position_byname(active_team, "m1").unwrap();
-                    let newname = match specials::mosquito_suck(&mut board, suck_from, position) {
-                        Some(value) => value,
-                        None => return Ok(web::Json(MoveStatus::NoSuck)),
-                    };
+                    for (i, item) in items.clone().into_iter().enumerate() {
+                        if item == "m" || item == "p" {
+                            let colrowstr = [items[i + 1], items[i + 2]];
 
-                    chip_name = newname;
+                            // the next two items will define the mosquito / pillbug's victim
+                            // let colrow = items.clone()
+                            // .into_iter()
+                            // .skip(i+1)
+                            // .map(|v| v.trim().parse::<i8>().expect("Problem parsing value, probably isn't an integer"))
+                            // .collect::<Vec<i8>>();
+
+                            let colrow = colrowstr
+                                .into_iter()
+                                .map(|v| {
+                                    v.trim()
+                                        .parse::<i8>()
+                                        .expect("Problem parsing value, probably isn't an integer")
+                                })
+                                .collect::<Vec<i8>>();
+
+                            let d_colrow = DoubleHeight::from((colrow[0], colrow[1]));
+
+                            let victim_coords = board.coord.mapfrom_doubleheight(d_colrow);
+
+                            if item == "m" {
+                                // Get the mosquito's current position.
+                                let position =
+                                    board.get_position_byname(active_team, "m1").unwrap();
+                                let newname = match specials::mosquito_suck(
+                                    &mut board,
+                                    victim_coords,
+                                    position,
+                                ) {
+                                    Some(value) => value,
+                                    None => return Ok(web::Json(MoveStatus::NoSuck)),
+                                };
+
+                                chip_name = newname;
+                            }
+                            if item == "p" {
+                                // Convert the input chipname to a static str
+                                let chip_name = convert_static(chip_name.to_lowercase())
+                                    .expect("Couldn't parse chip name");
+
+                                // get chip_name's poition
+                                let position =
+                                    board.get_position_byname(active_team, chip_name).unwrap();
+                                let dest = board.coord.mapfrom_doubleheight(moveto);
+
+                                // sumo-from position is wrong - it'* being sent completely wrong at the client end
+                                // sumo to position is wrong we're getting the rows and cols mixed
+                                println!(
+                                    "Asked to use pillbug at {:?} to sumo from {:?} to {:?}",
+                                    position.to_doubleheight(position),
+                                    victim_coords.to_doubleheight(victim_coords),
+                                    dest.to_doubleheight(dest)
+                                );
+
+                                let move_status = specials::pillbug_sumo(
+                                    &mut board,
+                                    victim_coords,
+                                    dest,
+                                    position,
+                                );
+
+                                if move_status == MoveStatus::Success {
+                                    // update the board on the server
+                                    //println!("{}", draw::show_board(&board));
+                                    // Refresh all mosquito names back to m1 (do this on the server)
+                                    specials::mosquito_desuck(&mut board);
+                                    // get the spiral string
+                                    let board_str = board.encode_spiral();
+                                    //println!("Spiral string is {}", board_str);
+
+                                    // Update db
+                                    let res = db::update_game_state(
+                                        &session_id,
+                                        &active_team.to_string(),
+                                        &board_str,
+                                        "",
+                                        &mut conn,
+                                    );
+
+                                    match res {
+                                        Ok(_) => return Ok(web::Json(move_status)),
+                                        Err(err) => {
+                                            return Err(error::ErrorInternalServerError(format!(
+                                                "Problem updating gamestate because {err}"
+                                            )))
+                                        }
+                                    }
+                                } else {
+                                    return Ok(web::Json(move_status));
+                                }
+                            }
+                        }
+                    }
                 }
+
+                // // Mosquitos
+                // if special_str.is_some() && special_str.unwrap().starts_with("m") {
+
+                //     // Find the victim's coordinates
+                //     let suck_from = parse_special(special_str.unwrap(), &board);
+
+                //     // Get the mosquito's current position.
+                //     let position = board.get_position_byname(active_team, "m1").unwrap();
+                //     let newname = match specials::mosquito_suck(&mut board, suck_from, position) {
+                //         Some(value) => value,
+                //         None => return Ok(web::Json(MoveStatus::NoSuck)),
+                //     };
+
+                //     chip_name = newname;
+                // }
 
                 match do_movement(
                     &mut board,
@@ -359,7 +464,6 @@ pub async fn make_action(
 }
 
 fn parse_special<T: Coord>(special_str: &str, board: &Board<T>) -> T {
-
     let items = special_str.split(',').collect::<Vec<&str>>();
 
     // items[0] will be "m" or "p"
@@ -369,11 +473,10 @@ fn parse_special<T: Coord>(special_str: &str, board: &Board<T>) -> T {
         .skip(1)
         .map(|v| v.trim().parse::<i8>().expect("Problem parsing value"))
         .collect::<Vec<i8>>();
-    
+
     let d_colrow = DoubleHeight::from((colrow[0], colrow[1]));
 
     board.coord.mapfrom_doubleheight(d_colrow)
-
 }
 
 /// Make sure the requested move is for the active player
