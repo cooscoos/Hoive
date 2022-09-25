@@ -3,24 +3,24 @@
 pub mod play;
 pub mod setup;
 
-use std::{error::Error, io};
+use std::error::Error;
 
 use crate::comms;
-use crate::game::board::Board;
-use crate::maths::coord::{Coord, Cube};
-use crate::models::Winner;
+use hoive::game::board::Board;
+use hoive::maths::coord::{Coord, Cube};
+use server::models::Winner;
 
 /// Set up connection to Hoive server, set user id, and play some games
 pub async fn play_games() -> Result<(), Box<dyn Error>> {
     // Welcome user with sweet ascii graphics
-    setup::welcome();
+    hoive::pmoore::welcome();
 
     // Run user through prompts to join a Hoive server
     let (client, base_url) = setup::join_server().await?;
 
     // For development, option to wipe the server clean
     println!("Dev wipe db? Enter nothing to do so.");
-    if get_usr_input().is_empty() {
+    if hoive::pmoore::get_usr_input().is_empty() {
         comms::wipe_db(&client, &base_url).await?;
     }
 
@@ -60,13 +60,3 @@ pub async fn play_games() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-/// Request user input into terminal, return a trimmed string:
-pub fn get_usr_input() -> String {
-    let mut textin = String::new();
-
-    io::stdin()
-        .read_line(&mut textin)
-        .expect("Failed to read line");
-
-    textin.trim().to_string()
-}

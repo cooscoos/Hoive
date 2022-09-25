@@ -4,23 +4,10 @@ use reqwest::Client;
 use uuid::Uuid;
 
 use crate::comms;
-use crate::draw;
-use crate::game::comps::Team;
-use crate::models::GameState;
-use super::get_usr_input;
-
-/// Say hello to the player
-pub fn welcome() {
-    println!(
-        "
-░█░█░█▀█░▀█▀░█░█░█▀▀
-░█▀█░█░█░░█░░▀▄▀░█▀▀
-░▀░▀░▀▀▀░▀▀▀░░▀░░▀▀▀
-
-The boardgame Hive, in Rust.
-"
-    );
-}
+use hoive::draw;
+use hoive::game::comps::Team;
+use server::models::GameState;
+use hoive::pmoore::get_usr_input;
 
 /// Return the address of a live Hoive server based on user inputs
 pub async fn join_server() -> Result<(Client, String), Box<dyn Error>> {

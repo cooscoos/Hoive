@@ -2,7 +2,7 @@
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 
-use crate::{game::comps::Team, maths::coord::DoubleHeight};
+use hoive::{game::comps::Team, maths::coord::DoubleHeight};
 
 /// GameState mimics the Gamestate struct found in the server's version of models.rs
 /// In the client, it doesn't need the trait Serialize.

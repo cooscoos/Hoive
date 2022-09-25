@@ -1,14 +1,14 @@
 use crate::maths::coord::{Coord, Cube};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 /// Module with the components of a game: the teams and chips
 use std::collections::HashMap;
-use std::fmt::Error;
 use std::hash::Hash;
 use std::ops::Not;
 use std::str::FromStr;
+use std::fmt::Error;
 
 /// Enum for the two teams, Team::Black and Team::White
-#[derive(Hash, Eq, PartialEq, Debug, Clone, Copy, Serialize)]
+#[derive(Hash, Eq, Ord, PartialOrd, PartialEq, Debug, Clone, Copy, Deserialize, Serialize)]
 pub enum Team {
     Black,
     White,
@@ -25,6 +25,7 @@ impl Not for Team {
         }
     }
 }
+
 
 // Converts team to a string "B", "W"
 impl ToString for Team {
@@ -54,7 +55,7 @@ impl FromStr for Team {
 /// For example:
 /// * the first spider chip is s1,
 /// * the third ant chip is a3.
-#[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
+#[derive(Hash, Eq, PartialEq, PartialOrd, Ord, Debug, Clone, Copy, Deserialize, Serialize)]
 pub struct Chip {
     pub name: &'static str,
     pub team: Team,

@@ -10,7 +10,7 @@ use crate::maths::coord::{Coord, DoubleHeight};
 use super::specials;
 
 /// Every event in a game of hive is a chip_name on a given team attempting a movement
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 struct Event {
     chip_name: &'static str,
     team: Team,
@@ -46,7 +46,7 @@ impl Event {
 ///
 /// The key = turn number, and value = the event.
 /// BTreeMap is used so that turn events are ordered.
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct History {
     events: BTreeMap<u32, Event>,
 }
@@ -109,7 +109,7 @@ impl History {
 fn load_moves(filename: String, test_flag: bool) -> std::io::Result<Vec<Option<Event>>> {
     // If we're running a test we want to load files from another directory
     let file = match test_flag {
-        true => File::open(format!("./reference/tests/snapshots/{}.csv", filename))?,
+        true => File::open(format!("./tests/snapshots/{}.csv", filename))?,
         false => File::open(format!("./saved_games/{}.csv", filename))?,
     };
 

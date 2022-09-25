@@ -27,10 +27,10 @@ uuid = { version = "1.1.2", features = ["serde", "v4"] }
 
 
 # client
+server = {path = "server"} # access to structs used by the server
 reqwest = {version = "0.11.11", features =["blocking", "json", "cookies"]}
 tokio = {version = "1.21.0", features = ["full"]}
 futures = "0.3.24"
-
 
 # other stuff
 rustrict = "0.5.0"

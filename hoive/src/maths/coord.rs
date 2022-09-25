@@ -46,7 +46,7 @@ pub trait Coord:
 /// Doubleheight coordinate system used by the ascii renderer
 /// It doesn't need to implement the Coord trait because it is
 /// never used by the game logic.
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Default, Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct DoubleHeight {
     pub col: i8,
     pub row: i8,

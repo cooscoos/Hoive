@@ -3,8 +3,8 @@ use std::error::Error;
 
 use reqwest::{Client, StatusCode};
 
-use crate::game::movestatus::MoveStatus;
-use crate::models::{BoardAction, GameState};
+use hoive::game::movestatus::MoveStatus;
+use server::models::{BoardAction, GameState};
 use uuid::Uuid;
 
 /// Check base_url to make sure it's an active Hoive server of same version as client.
@@ -147,31 +147,12 @@ pub async fn get_gamestate(
     Ok(game_state)
 }
 
-/// Valid queries that one can make of the api
-/// - coin-toss: pick a player to go first (the function will return who goes second)
-pub enum ApiQuery {
-    CoinToss,
-}
-
-impl ApiQuery {
-    fn get_str(&self) -> &str {
-        use ApiQuery::*;
-        match self {
-            CoinToss => "coin-toss",
-        }
-    }
-}
-
-/// Ask the db for a string response to a query. Valid request names are:
-///
-///
-///
-pub async fn get_string_response(
+/// Ask the db to pick a random player to go first
+pub async fn get_coin_toss(
     client: &Client,
     base_url: &String,
-    request_name: ApiQuery,
 ) -> Result<String, Box<dyn Error>> {
-    let url = format!("{base_url}{}", request_name.get_str());
+    let url = format!("{base_url}{}", "coin-toss");
     let response_string = client.get(&url).send().await?.text().await?;
     Ok(response_string)
 }

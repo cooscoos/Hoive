@@ -10,7 +10,7 @@ use crate::maths::coord::Coord; // Hexagonal coordinate system
 use crate::maths::coord::Spiral;
 
 /// The Board struct keeps track of game's progress, history and execution of rules
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Board<T: Coord> {
     pub chips: HashMap<Chip, Option<T>>, // player chips (both teams)
     pub turns: u32,                      // number of turns that have elapsed
