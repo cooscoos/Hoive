@@ -6,12 +6,12 @@ use std::{error::Error, thread, time::Duration};
 
 use super::get_usr_input;
 use crate::comms;
-use crate::draw;
-use crate::game::comps::{convert_static_basic, Team};
-use crate::game::{board::Board, movestatus::MoveStatus, specials};
-use crate::maths::coord::{Coord, DoubleHeight};
+use hoive::draw;
+use hoive::game::comps::{convert_static_basic, Team};
+use hoive::game::{board::Board, movestatus::MoveStatus, specials};
+use hoive::maths::coord::{Coord, DoubleHeight};
 use crate::models::{BoardAction, GameState, Winner};
-use crate::game::comps::Chip;
+use hoive::game::comps::Chip;
 
 /// Ask player to take a turn
 pub async fn take_turn<T: Coord>(

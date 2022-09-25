@@ -10,7 +10,8 @@ use crate::draw;
 use crate::game::comps::{convert_static_basic, Team};
 use crate::game::{board::Board, movestatus::MoveStatus, specials};
 use crate::maths::coord::{Coord, DoubleHeight};
-
+use std::collections::BTreeSet;
+use crate::game::comps::Chip;
 
 
 pub fn play_game() {
@@ -395,6 +396,9 @@ fn mosquito_prompts<T: Coord>(
 fn neighbour_prompts<T: Coord>(board: &mut Board<T>, position: T, movename: String) -> Option<T> {
     let neighbours = board.get_neighbour_chips(position);
 
+        // stick them into a BTree to preserve order.
+        let neighbours = neighbours.into_iter().collect::<BTreeSet<Chip>>();
+
     // Ask player to select neighbouring chips from a list (presenting options 0-6 for white and black team chips)
     println!(
         "Select which chip to {} by entering a number up to {}. Hit enter to abort.\n {}",
@@ -418,9 +422,10 @@ fn neighbour_prompts<T: Coord>(board: &mut Board<T>, position: T, movename: Stri
             return None;
         }
     };
+    let selected = neighbours.into_iter().nth(selection).unwrap();
 
     // get the co-ordinate of the selected chip and return them
-    let source = board.chips.get(&neighbours[selection]).unwrap().unwrap();
+    let source = board.chips.get(&selected).unwrap().unwrap();
     Some(source)
 }
 

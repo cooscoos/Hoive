@@ -4,6 +4,7 @@ use crate::game::comps::{Chip, Team};
 use crate::maths::coord::Coord;
 use crate::maths::coord::DoubleHeight;
 use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::BTreeSet;
 use std::fmt::Write as _;
 use std::vec; // import without risk of name clash
 
@@ -204,7 +205,7 @@ pub fn list_chips<T: Coord>(board: &Board<T>, team: Team) -> String {
 }
 
 /// Lists the chips that are passed and returns a colourful single string for display
-pub fn list_these_chips(chips_vec: Vec<Chip>) -> String {
+pub fn list_these_chips(chips_vec: BTreeSet<Chip>) -> String {
     let chip_list = chips_vec
         .into_iter()
         .map(|c| chip_to_str(Some(c)))
@@ -261,8 +262,8 @@ fn find_chip_chars(
 
             // drop the trailing comma, push it to the return string and add a newline
             next_set.pop();
-            //return_string.push_str(&format!("{:<28}{}\n", group_names[i], next_set));
 
+            //return_string.push_str(&format!("{:<28}{}\n", group_names[i], next_set));
             let _ = writeln!(return_string, "{:<28}{}", group_names[i], next_set);
         }
     }

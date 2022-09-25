@@ -2,8 +2,5 @@
 pub const VERSION: &str = "0.01";
 
 pub mod comms;
-pub mod draw;
-pub mod game;
-pub mod maths;
 pub mod models;
 pub mod ui;

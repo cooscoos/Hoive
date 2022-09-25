@@ -1,9 +1,8 @@
 [package]
-name = "client"
+name = "common"
 version.workspace = true
 author.workspace = true
 edition.workspace = true
-
 
 [dependencies]
 hoive = {workspace = true}

@@ -494,6 +494,20 @@ name = "client"
 version = "0.1.0"
 dependencies = [
  "hex-spiral",
+ "hoive",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
+name = "common"
+version = "0.1.0"
+dependencies = [
+ "hex-spiral",
+ "hoive",
  "reqwest",
  "serde",
  "serde_json",

@@ -4,8 +4,8 @@ use reqwest::Client;
 use uuid::Uuid;
 
 use crate::comms;
-use crate::draw;
-use crate::game::comps::Team;
+use hoive::draw;
+use hoive::game::comps::Team;
 use crate::models::GameState;
 use super::get_usr_input;
 

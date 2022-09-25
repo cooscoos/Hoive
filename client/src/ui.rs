@@ -6,8 +6,8 @@ pub mod setup;
 use std::{error::Error, io};
 
 use crate::comms;
-use crate::game::board::Board;
-use crate::maths::coord::{Coord, Cube};
+use hoive::game::board::Board;
+use hoive::maths::coord::{Coord, Cube};
 use crate::models::Winner;
 
 /// Set up connection to Hoive server, set user id, and play some games

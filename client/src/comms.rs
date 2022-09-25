@@ -3,7 +3,7 @@ use std::error::Error;
 
 use reqwest::{Client, StatusCode};
 
-use crate::game::movestatus::MoveStatus;
+use hoive::game::movestatus::MoveStatus;
 use crate::models::{BoardAction, GameState};
 use uuid::Uuid;
 
