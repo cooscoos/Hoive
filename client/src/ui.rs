@@ -8,7 +8,7 @@ use std::{error::Error, io};
 use crate::comms;
 use hoive::game::board::Board;
 use hoive::maths::coord::{Coord, Cube};
-use crate::models::Winner;
+use server::models::Winner;
 
 /// Set up connection to Hoive server, set user id, and play some games
 pub async fn play_games() -> Result<(), Box<dyn Error>> {

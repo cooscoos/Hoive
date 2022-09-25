@@ -6,7 +6,7 @@ use uuid::Uuid;
 use crate::comms;
 use hoive::draw;
 use hoive::game::comps::Team;
-use crate::models::GameState;
+use server::models::GameState;
 use super::get_usr_input;
 
 /// Say hello to the player

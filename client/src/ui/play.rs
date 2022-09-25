@@ -10,7 +10,7 @@ use hoive::draw;
 use hoive::game::comps::{convert_static_basic, Team};
 use hoive::game::{board::Board, movestatus::MoveStatus, specials};
 use hoive::maths::coord::{Coord, DoubleHeight};
-use crate::models::{BoardAction, GameState, Winner};
+use server::models::{BoardAction, GameState, Winner};
 use hoive::game::comps::Chip;
 
 /// Ask player to take a turn

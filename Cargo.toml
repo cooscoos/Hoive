@@ -1,5 +1,5 @@
 [workspace]
-members =["hoive", "client", "server", "common"]
+members =["hoive", "client", "server"]
 
 [workspace.package]
 version = "0.1.0"
@@ -10,6 +10,7 @@ edition = "2021"
 
 # Gameplay
 hoive = {path = "hoive"} # the main game logic
+server = {path = "server"}
 hex-spiral ="0.1.0" # supports converting to and from hex spiral coords
 rand = "0.8.5"  # For randomising which player goes first
 

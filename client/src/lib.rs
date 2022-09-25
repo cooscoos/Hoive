@@ -2,5 +2,4 @@
 pub const VERSION: &str = "0.01";
 
 pub mod comms;
-pub mod models;
 pub mod ui;

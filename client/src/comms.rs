@@ -4,7 +4,7 @@ use std::error::Error;
 use reqwest::{Client, StatusCode};
 
 use hoive::game::movestatus::MoveStatus;
-use crate::models::{BoardAction, GameState};
+use server::models::{BoardAction, GameState};
 use uuid::Uuid;
 
 /// Check base_url to make sure it's an active Hoive server of same version as client.
