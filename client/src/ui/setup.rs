@@ -7,7 +7,7 @@ use crate::comms;
 use hoive::draw;
 use hoive::game::comps::Team;
 use server::models::GameState;
-use super::get_usr_input;
+use hoive::pmoore::get_usr_input;
 
 /// Return the address of a live Hoive server based on user inputs
 pub async fn join_server() -> Result<(Client, String), Box<dyn Error>> {

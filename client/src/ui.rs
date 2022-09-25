@@ -3,7 +3,7 @@
 pub mod play;
 pub mod setup;
 
-use std::{error::Error, io};
+use std::error::Error;
 
 use crate::comms;
 use hoive::game::board::Board;
@@ -20,7 +20,7 @@ pub async fn play_games() -> Result<(), Box<dyn Error>> {
 
     // For development, option to wipe the server clean
     println!("Dev wipe db? Enter nothing to do so.");
-    if get_usr_input().is_empty() {
+    if hoive::pmoore::get_usr_input().is_empty() {
         comms::wipe_db(&client, &base_url).await?;
     }
 
@@ -60,13 +60,3 @@ pub async fn play_games() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-/// Request user input into terminal, return a trimmed string:
-pub fn get_usr_input() -> String {
-    let mut textin = String::new();
-
-    io::stdin()
-        .read_line(&mut textin)
-        .expect("Failed to read line");
-
-    textin.trim().to_string()
-}

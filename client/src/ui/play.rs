@@ -4,7 +4,7 @@ use reqwest::Client;
 use std::collections::BTreeSet;
 use std::{error::Error, thread, time::Duration};
 
-use super::get_usr_input;
+use hoive::pmoore::get_usr_input;
 use crate::comms;
 use hoive::draw;
 use hoive::game::comps::{convert_static_basic, Team};
