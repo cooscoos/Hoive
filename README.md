@@ -1,10 +1,10 @@
 # Hoive
 The boardgame [Hive](https://en.wikipedia.org/wiki/Hive_(game)), written in Rust.
 
-Do cargo run in the terminal within the following directories:
+Choose one of the following directories and do `cargo run`:
 
-- hoive: Run and play the game locally (couch co-op)
-- server: Host a web server to allow people to play online via a client
+- hoive: Run and play the game locally (couch co-op);
+- server: Host a web server to allow people to play online via a client, or;
 - client: Play on an active web server
 
 ![snapshot of the app](/misc/gameplay.png "snapshot of the app")
