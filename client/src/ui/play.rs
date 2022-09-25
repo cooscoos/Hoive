@@ -23,11 +23,15 @@ pub async fn take_turn<T: Coord>(
     println!("{}\n", draw::show_board(&board));
     'turn: loop {
         // Ask player to do action, provide them with response message, break loop if move was successful
+        // We're not quite there but we want to achieve this:
+        //let temp_move_status = hoive::pmoore::local_act(&mut board.clone(), active_team)?;
         let temp_move_status = act(&mut board.clone(), active_team, &client, &base_url).await?;
 
         let move_status = match temp_move_status {
             MoveStatus::SkipTurn => comms::send_action(BoardAction::skip(), client, base_url).await?,
             MoveStatus::Forfeit => comms::send_action(BoardAction::forfeit(), client, base_url).await?,
+            // MoveStatus::Action(action) => 
+            //     comms::send_action(action, client, base_url).await?,
             _ => temp_move_status,
         };
 
