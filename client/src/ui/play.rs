@@ -4,14 +4,13 @@ use reqwest::Client;
 use std::collections::BTreeSet;
 use std::{error::Error, thread, time::Duration};
 
-use hoive::pmoore::get_usr_input;
 use crate::comms;
-use hoive::draw;
-use hoive::game::comps::{convert_static_basic, Team};
+use server::models::{BoardAction, GameState, Winner};
+
+use hoive::{draw, pmoore::get_usr_input};
+use hoive::game::comps::{convert_static_basic, Team, Chip};
 use hoive::game::{board::Board, movestatus::MoveStatus, specials};
 use hoive::maths::coord::{Coord, DoubleHeight};
-use server::models::{BoardAction, GameState, Winner};
-use hoive::game::comps::Chip;
 
 /// Ask player to take a turn
 pub async fn take_turn<T: Coord>(

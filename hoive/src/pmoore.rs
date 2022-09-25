@@ -148,7 +148,6 @@ fn chip_select<T: Coord>(board: &mut Board<T>, active_team: Team) -> Option<&'st
 
     match textin {
         _ if textin.is_empty() => {
-            // hard-coded 5 for show_board here but can adapt based on game extremeties later.
             println!(
                 "{}\n\n-------------------- PLAYER HAND --------------------\n\n{}\n\n-----------------------------------------------------\n",
                 draw::show_board(board),
