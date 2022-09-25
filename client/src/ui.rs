@@ -13,7 +13,7 @@ use server::models::Winner;
 /// Set up connection to Hoive server, set user id, and play some games
 pub async fn play_games() -> Result<(), Box<dyn Error>> {
     // Welcome user with sweet ascii graphics
-    setup::welcome();
+    hoive::pmoore::welcome();
 
     // Run user through prompts to join a Hoive server
     let (client, base_url) = setup::join_server().await?;

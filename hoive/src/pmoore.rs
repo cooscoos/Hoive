@@ -14,6 +14,19 @@ use std::collections::BTreeSet;
 use crate::game::comps::Chip;
 
 
+/// Say hello to the player
+pub fn welcome() {
+    println!(
+        "
+░█░█░█▀█░▀█▀░█░█░█▀▀
+░█▀█░█░█░░█░░▀▄▀░█▀▀
+░▀░▀░▀▀▀░▀▀▀░░▀░░▀▀▀
+
+The boardgame Hive, in Rust.
+"
+    );
+}
+
 pub fn play_game() {
     // Initialise game board in cube co-ordinates
     let coord = crate::maths::coord::Cube::default();
@@ -37,15 +50,7 @@ pub fn play_game() {
 
 /// Introduction: say hello and define which team goes first
 pub fn intro() -> Team {
-    println!(
-        "
-░█░█░█▀█░▀█▀░█░█░█▀▀
-░█▀█░█░█░░█░░▀▄▀░█▀▀
-░▀░▀░▀▀▀░▀▀▀░░▀░░▀▀▀
-
-The boardgame Hive, in Rust.
-"
-    );
+    welcome();
 
     // Select a random team to go first
     let mut rand = rand::thread_rng();
