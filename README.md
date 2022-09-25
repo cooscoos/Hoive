@@ -10,6 +10,10 @@ Choose one of the following directories and do `cargo run`:
 ![snapshot of the app](/misc/gameplay.png "snapshot of the app")
 
 ## To do
+
+### Deduplication
+
+Would like hoive::pmoore and ui::play to be able to call the same act/local_act function
 ### Base game (hoive)
 
 - There's a bug where beetle at 0-4 can move over q at 0,0 - beetles can move any number of spaces?! oops.
