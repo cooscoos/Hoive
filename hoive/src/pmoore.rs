@@ -5,6 +5,7 @@
 use rand::Rng;
 // To randomise which player goes first
 use std::io; // For parsing player inputs
+use std::error::Error;
 
 use crate::draw;
 use crate::game::comps::{convert_static_basic, Team};
@@ -12,6 +13,7 @@ use crate::game::{board::Board, movestatus::MoveStatus, specials};
 use crate::maths::coord::{Coord, DoubleHeight};
 use std::collections::BTreeSet;
 use crate::game::comps::Chip;
+
 
 
 /// Say hello to the player
@@ -27,7 +29,7 @@ The boardgame Hive, in Rust.
     );
 }
 
-pub fn play_game() {
+pub fn play_game() -> Result<(), Box<dyn Error>> {
     // Initialise game board in cube co-ordinates
     let coord = crate::maths::coord::Cube::default();
     let mut board = Board::new(coord);
@@ -37,15 +39,24 @@ pub fn play_game() {
 
     // Loop game until someone wins
     loop {
-        if let MoveStatus::Win(_) = take_turn(&mut board, first) {
+        let move_status = take_turn(&mut board, first)?;
+        message(&mut board, &move_status);
+        // Refresh all mosquito names back to m1
+        specials::mosquito_desuck(&mut board);
+        match move_status {
+        MoveStatus::Win(_) =>
+        {
             println!("Play again? y/n");
             let textin = get_usr_input();
             match textin {
-                _ if textin == "y" => play_game(),
+                _ if textin == "y" => {let _result = play_game();},
                 _ => break,
             }
-        }
+        },
+        _ => (),
     }
+}
+    Ok(())
 }
 
 /// Introduction: say hello and define which team goes first
@@ -64,13 +75,13 @@ pub fn intro() -> Team {
 }
 
 /// The game loop. Pass the team which goes first and this will handle the rest.
-pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
+pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> Result<MoveStatus, Box<dyn Error>> {
     let active_team = match board.turns % 2 {
         0 => first,
         _ => !first,
     };
 
-    println!("{} team's turn.\n", draw::team_string(active_team));
+    println!("Team {}, it's your turn!", draw::team_string(active_team));
 
     // Keep asking player to select chip until Some(value) happens
     let mut chip_selection = None;
@@ -79,71 +90,98 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> MoveStatus {
     }
 
     // The user's entry decides what chip to select
-    let temp_chip_name = match chip_selection {
-        Some("w") | None => return MoveStatus::Nothing, // w means turn was skipped
-        Some("quit") => {
-            message(board, &MoveStatus::Win(Some(!active_team)));
-            return MoveStatus::Win(Some(!active_team));
+    // Safe to unwrap because of loop above
+    let base_chip_name = match chip_selection.unwrap() {
+        "w" => {
+            // skip turn, only if both bees have been placed
+            let move_status = try_skip_turn(board, active_team);
+            return Ok(move_status);
+        }
+        "quit" => {
+            return Ok(MoveStatus::Win(Some(!active_team)));
         } // the team forfeited
-        Some(value) => value,
+        valid_name => valid_name,
     };
 
+    // This version of chip_name might change if the mosquito becomes a pillbug
+    let mut chip_name = base_chip_name;
+
     // Try and find a chip on the board with this name
-    let on_board = board.get_position_byname(active_team, temp_chip_name);
+    let on_board = board.get_position_byname(active_team, chip_name);
 
     // If it's a mosquito, on the board, on layer 0, then it needs to suck a power
     let mosquito_suck =
-        temp_chip_name == "m1" && on_board.is_some() && on_board.unwrap().get_layer() == 0;
+        chip_name == "m1" && on_board.is_some() && on_board.unwrap().get_layer() == 0;
 
-    // Update the chip name if it's a mosquito
-    let chip_name = match mosquito_suck {
-        true => {
-            match mosquito_prompts(board, temp_chip_name, active_team) {
-                Some(morphed_name) => morphed_name, // mosquito morphs into another piece
-                None => return MoveStatus::Nothing, // aborted suck
-            }
-        }
-        false => temp_chip_name,
-    };
+    if mosquito_suck {
+        //let victim_pos;
+        // Change local version of the mosquito's name on the board to catch a pillbug prompt
+        (_, chip_name) = match mosquito_prompts(board, chip_name, active_team) {
+            Some((new_name,vic_pos)) => (vic_pos, new_name), // mosquito morphs into another piece at T
+            None => return Ok(MoveStatus::Nothing), // aborted suck
+        };
+    }
 
     // Is this chip a pillbug (or a mosquito acting like one?) and on the board?
     let is_pillbug = chip_name.contains('p') && on_board.is_some();
-
-    let textin = if is_pillbug {
+    if is_pillbug {
         println!("Hit m to sumo a neighbour, or select co-ordinate to move to. If moving, input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
-        get_usr_input()
     } else {
         println!("Select co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
-        get_usr_input()
     };
+
+    let textin = get_usr_input();
 
     // If the user hits m then try execute a pillbug's special move
     let return_status = if textin == "m" && is_pillbug {
-        pillbug_prompts(board, chip_name, active_team)
+        let (victim_source, victim_dest) = match pillbug_prompts(board, chip_name, active_team) {
+            Some(value) => value,
+            None => return Ok(MoveStatus::Nothing),
+        };
+        // Try execute the move and show the game's messages.
+        let position = board.get_position_byname(active_team, chip_name).unwrap();
+        Ok(specials::pillbug_sumo(board, board.coord.mapfrom_doubleheight(victim_source), board.coord.mapfrom_doubleheight(victim_dest), position))
     } else if textin == "m" && !is_pillbug {
         println!("This chip doesn't have special moves!");
-        MoveStatus::Nothing
+        Ok(MoveStatus::Nothing)
     } else {
-        match movement_prompts(board, textin) {
-            // Otherwise try move the chip if the movement prompts are valid
-            Some(value) => board.move_chip(chip_name, active_team, value),
-            None => MoveStatus::Nothing,
+
+        match coord_prompts(textin) {
+            Some(coord) => {
+            let moveto = DoubleHeight::from(coord);
+            // Convert from doubleheight to the board's co-ordinate system
+            let game_hex = board.coord.mapfrom_doubleheight(moveto);
+            Ok(board.move_chip(chip_name, active_team, game_hex))
+            },
+            None => Ok(MoveStatus::Nothing),
         }
+
     };
-
-    // The board will handle itself. Patrick just needs to print messages for player
-    message(board, &return_status);
-
-    // Refresh all mosquito names back to m1
-    specials::mosquito_desuck(board);
 
     return_status
 }
 
-/// Ask user on active team to select chip. Returns None if user input invalid.
-fn chip_select<T: Coord>(board: &mut Board<T>, active_team: Team) -> Option<&'static str> {
-    println!("Hit enter to see the board and your hand, h (help), s (save), w (skip turn), 'quit' (forfeit).\nSelect a tile from the board or your hand to move.");
 
+/// Try skip turn
+fn try_skip_turn<T: Coord>(board: &mut Board<T>, active_team: Team) -> MoveStatus {
+    if board.bee_placed(active_team) && board.bee_placed(!active_team) {
+        println!(
+            "\n{} team skipped their turn.\n",
+            draw::team_string(active_team)
+        );
+        board.turns += 1;
+        MoveStatus::Success
+    } else {
+        MoveStatus::NoSkip
+    }
+}
+
+/// Ask user on active team to select chip. Returns None if user input invalid.
+pub fn chip_select<T: Coord>(board: &mut Board<T>, active_team: Team) -> Option<&'static str> {
+    println!("Hit enter to see the board and your hand, h (help), w (skip turn), 'quit' (forfeit).\nSelect a tile from the board or your hand to move.");
+    #[cfg(feature = "debug")]
+    println!("Or hit s to save");
+    
     let textin = get_usr_input();
 
     match textin {
@@ -165,27 +203,17 @@ fn chip_select<T: Coord>(board: &mut Board<T>, active_team: Team) -> Option<&'st
             None
         }
         _ if textin == "s" => {
-            println!("Enter a filename:");
-            let filename = get_usr_input();
-            match board.history.save(filename) {
-                Ok(()) => println!("Successfully saved to ./saved_games/"),
-                Err(err) => println!("Could not save because: {}", err),
+            #[cfg(feature = "debug")] {
+                println!("Enter a filename:");
+                let filename = get_usr_input();
+                match board.history.save(filename) {
+                    Ok(()) => println!("Successfully saved to ./saved_games/"),
+                    Err(err) => println!("Could not save because: {}", err),
+                }
             }
             None
         }
-        _ if textin == "w" => {
-            // skip turn, only if both bees have been placed
-            if board.bee_placed(active_team) && board.bee_placed(!active_team) {
-                println!(
-                    "\n{} team skipped their turn.\n",
-                    draw::team_string(active_team)
-                );
-                board.turns += 1;
-            } else {
-                println!("Can't skip turns until both bees placed");
-            }
-            Some("w") // return this so that the main loop can return MoveStatus::Nothing
-        }
+        _ if textin == "w" => Some("w"), // skip turn
         _ if textin == "mb" => {
             // The player is probably trying to select their mosquito acting like a beetle
             convert_static_basic("m1".to_string())
@@ -201,11 +229,12 @@ fn chip_select<T: Coord>(board: &mut Board<T>, active_team: Team) -> Option<&'st
             }
             convert_static_basic(first.to_string())
         }
-        _ if textin.starts_with(|c| c == 'l' || c == 'p' || c == 'q') => {
+        _ if textin.starts_with(|c| c == 'l' || c == 'p' || c == 'q' || c =='m') => {
             let proper_str = match textin.chars().next().unwrap() {
                 'l' => "l1",
                 'p' => "p1",
                 'q' => "q1",
+                'm' => "m1",
                 _ => panic!("unreachable"),
             };
 
@@ -350,35 +379,36 @@ fn pillbug_prompts<T: Coord>(
     board: &mut Board<T>,
     chip_name: &'static str,
     active_team: Team,
-) -> MoveStatus {
+) -> Option<(DoubleHeight, DoubleHeight)> {
     // Get pillbug's position and prompt the user to select a neighbouring chip to sumo, returning the coords of the victim
     let position = board.get_position_byname(active_team, chip_name).unwrap();
     let source = match neighbour_prompts(board, position, "sumo".to_string()) {
         Some(value) => value,
-        None => return MoveStatus::Nothing, // abort special move
+        None => return None, // abort special move
     };
 
     // Ask player to select a co-ordinate to sumo to
     println!("Select a co-ordinate to sumo this chip to. Input column then row, separated by a comma, e.g.: 0, 0. Hit enter to abort the sumo.");
     let textin = get_usr_input();
     let coord = match coord_prompts(textin) {
-        None => return MoveStatus::Nothing, // abort move
+        None => return None, // abort move
         Some((row, col)) => (row, col),
     };
 
     // Convert from doubleheight to the game's co-ordinate system
     let dest = board.coord.mapfrom_doubleheight(DoubleHeight::from(coord));
 
-    // Try execute the move and show the game's messages.
-    specials::pillbug_sumo(board, source, dest, position)
+    Some((source.to_doubleheight(source), dest.to_doubleheight(dest)))
+
+
 }
 
 /// Leads the player through executing a mosquito's suck
-fn mosquito_prompts<T: Coord>(
+pub fn mosquito_prompts<T: Coord>(
     board: &mut Board<T>,
     chip_name: &'static str,
     active_team: Team,
-) -> Option<&'static str> {
+) -> Option<(&'static str, DoubleHeight)> {
     // Get mosquitos's position and prompt the user to select a neighbouring chip to suck, returning the coords of the victim
     let position = board.get_position_byname(active_team, chip_name).unwrap();
     let source = match neighbour_prompts(board, position, "suck".to_string()) {
@@ -386,9 +416,11 @@ fn mosquito_prompts<T: Coord>(
         None => return None, // abort special move
     };
 
+    println!("You selected {:?}", source);
+
     // Execute the special move to become the victim for this turn
     match specials::mosquito_suck(board, source, position) {
-        Some(value) => Some(value),
+        Some(value) => Some((value, source.to_doubleheight(source))),
         None => {
             println!("Cannot suck from another mosquito!");
             None

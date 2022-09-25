@@ -93,7 +93,7 @@ pub async fn act<T: Coord>(
     // Keep asking player to select chip until Some(value) happens
     let mut chip_selection = None;
     while chip_selection == None {
-        chip_selection = chip_select(board, active_team)
+        chip_selection = hoive::pmoore::chip_select(board, active_team)
     }
 
     // The user's entry decides what chip to select (or what to do next)
@@ -129,7 +129,7 @@ pub async fn act<T: Coord>(
     if mosquito_suck {
         let victim_pos;
         // Change local version of the mosquito's name on the board to catch a pillbug prompt
-        (victim_pos, chip_name) = match mosquito_prompts(board, chip_name, active_team) {
+        (victim_pos, chip_name) = match hoive::pmoore::mosquito_prompts(board, chip_name, active_team) {
             Some((new_name,vic_pos)) => (vic_pos, new_name), // mosquito morphs into another piece at T
             None => return Ok(MoveStatus::Nothing), // aborted suck
         };
@@ -193,71 +193,6 @@ pub async fn act<T: Coord>(
     // later countdown timer for turn
 }
 
-/// Ask user on active team to select chip. Returns None if user input invalid.
-fn chip_select<T: Coord>(board: &mut Board<T>, active_team: Team) -> Option<&'static str> {
-    println!("Hit enter to see the board and your hand, h (help), w (skip turn), 'quit' (forfeit).\nSelect a tile from the board or your hand to move.");
-
-    let textin = get_usr_input();
-
-    match textin {
-        _ if textin.is_empty() => {
-            println!(
-                "{}\n\n-------------------- PLAYER HAND --------------------\n\n{}\n\n-----------------------------------------------------\n",
-                draw::show_board(board),
-                draw::list_chips(board, active_team)
-            );
-            None
-        }
-        _ if textin == "xylophone" => {
-            xylophone();
-            None
-        }
-        _ if textin == "quit" => Some("quit"), // forfeit
-        _ if textin == "h" => {
-            println!("{}", help_me());
-            None
-        }
-        _ if textin == "w" => Some("w"), // skip turn
-        _ if textin == "mb" => {
-            // The player is probably trying to select their mosquito acting like a beetle
-            convert_static_basic("m1".to_string())
-        }
-        _ if textin.contains('*') => {
-            // The player is probably trying to select a beetle (or a mosquito acting like one).
-            // Grab the first 2 chars of the string
-            let (mut first, _) = textin.split_at(2);
-
-            // If the first two chars are mosquito, convert to m1
-            if first.contains('m') {
-                first = "m1";
-            }
-            convert_static_basic(first.to_string())
-        }
-        _ if textin.starts_with(|c| c == 'l' || c == 'p' || c == 'q' || c =='m') => {
-            let proper_str = match textin.chars().next().unwrap() {
-                'l' => "l1",
-                'p' => "p1",
-                'q' => "q1",
-                'm' => "m1",
-                _ => panic!("unreachable"),
-            };
-
-            convert_static_basic(proper_str.to_string())
-        }
-        c => {
-            // Try and match a chip by this name
-            let chip_str = convert_static_basic(c);
-
-            match chip_str.is_some() {
-                true => chip_str,
-                false => {
-                    println!("You don't have this tile in your hand.");
-                    None
-                }
-            }
-        }
-    }
-}
 
 /// Ask user to select a coordinate or hit enter to return None so that we can
 /// abort the parent function.
@@ -323,30 +258,6 @@ fn pillbug_prompts<T: Coord>(
 
 }
 
-/// Leads the player through executing a mosquito's suck
-fn mosquito_prompts<T: Coord>(
-    board: &mut Board<T>,
-    chip_name: &'static str,
-    active_team: Team,
-) -> Option<(&'static str, DoubleHeight)> {
-    // Get mosquitos's position and prompt the user to select a neighbouring chip to suck, returning the coords of the victim
-    let position = board.get_position_byname(active_team, chip_name).unwrap();
-    let source = match neighbour_prompts(board, position, "suck".to_string()) {
-        Some(value) => value,
-        None => return None, // abort special move
-    };
-
-    println!("You selected {:?}", source);
-
-    // Execute the special move to become the victim for this turn
-    match specials::mosquito_suck(board, source, position) {
-        Some(value) => Some((value, source.to_doubleheight(source))),
-        None => {
-            println!("Cannot suck from another mosquito!");
-            None
-        }
-    }
-}
 
 /// Ask the player to select neighbouring chips from a list (will present colour-coded options 0-5)
 fn neighbour_prompts<T: Coord>(board: &mut Board<T>, position: T, movename: String) -> Option<T> {

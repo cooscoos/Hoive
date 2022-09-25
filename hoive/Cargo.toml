@@ -16,3 +16,6 @@ criterion = "0.3"
 [[bench]]
 name = "benchmark3"
 harness = false
+
+[features]
+debug = []
