@@ -81,6 +81,7 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> Result<MoveStat
         _ => !first,
     };
 
+    // SAME STARTS HERE
     println!("Team {}, it's your turn!", draw::team_string(active_team));
 
     // Keep asking player to select chip until Some(value) happens
@@ -109,17 +110,24 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> Result<MoveStat
     // Try and find a chip on the board with this name
     let on_board = board.get_position_byname(active_team, chip_name);
 
+
+    // Create a special_string to store info on special moves
+    let mut special_string = String::new();
+
     // If it's a mosquito, on the board, on layer 0, then it needs to suck a power
     let mosquito_suck =
         chip_name == "m1" && on_board.is_some() && on_board.unwrap().get_layer() == 0;
 
     if mosquito_suck {
-        //let victim_pos;
+        let victim_pos;
         // Change local version of the mosquito's name on the board to catch a pillbug prompt
-        (_, chip_name) = match mosquito_prompts(board, chip_name, active_team) {
+        (victim_pos, chip_name) = match mosquito_prompts(board, chip_name, active_team) {
             Some((new_name,vic_pos)) => (vic_pos, new_name), // mosquito morphs into another piece at T
             None => return Ok(MoveStatus::Nothing), // aborted suck
         };
+
+        // Generate a special string to signify mosquito sucking victim at row,col
+        special_string.push_str(&format!("m,{},{}",victim_pos.col, victim_pos.row));
     }
 
     // Is this chip a pillbug (or a mosquito acting like one?) and on the board?
@@ -131,6 +139,9 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> Result<MoveStat
     };
 
     let textin = get_usr_input();
+
+
+    // SIMILARITY ENDS
 
     // If the user hits m then try execute a pillbug's special move
     let return_status = if textin == "m" && is_pillbug {
@@ -157,6 +168,9 @@ pub fn take_turn<T: Coord>(board: &mut Board<T>, first: Team) -> Result<MoveStat
         }
 
     };
+
+
+    // You could make them identical if you define an interpreter for special strings
 
     return_status
 }

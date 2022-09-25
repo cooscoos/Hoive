@@ -150,7 +150,7 @@ pub async fn act<T: Coord>(
     let textin = get_usr_input();
 
     // If the user hits m then try execute a pillbug's special move
-    let return_status = if textin == "m" && is_pillbug {
+    let action = if textin == "m" && is_pillbug {
 
         // Create a sumo special string to signify pillbug sumo
         let (victim_source, victim_dest) = match pillbug_prompts(board, chip_name, active_team) {
@@ -168,26 +168,26 @@ pub async fn act<T: Coord>(
 
         println!("Sending: {}", special_string);
 
-        let action = BoardAction::do_move(base_chip_name, active_team, victim_dest.col, victim_dest.row, special_string);
-        comms::send_action(action, client, base_url).await
+        BoardAction::do_move(base_chip_name, active_team, victim_dest.col, victim_dest.row, special_string)
+        
       
     } else if textin == "m" && !is_pillbug {
         println!("This chip doesn't have special moves!");
-        Ok(MoveStatus::Nothing)
+        return Ok(MoveStatus::Nothing)
     } else {
 
         match coord_prompts(textin) {
             // Otherwise try move the chip if the movement prompts are valid
             Some((row, col)) => {
                 // Request an action and send it to server
-                let action = BoardAction::do_move(base_chip_name, active_team, row, col, special_string);
+                BoardAction::do_move(base_chip_name, active_team, row, col, special_string)
                 // println!("Sending action {:?}", action);
-                comms::send_action(action, client, base_url).await
+                //comms::send_action(action, client, base_url).await
             }
-            None => Ok(MoveStatus::Nothing),
+            None => return Ok(MoveStatus::Nothing),
         }
     };
-
+    let return_status = comms::send_action(action, client, base_url).await;
     return_status
 
     // later countdown timer for turn
