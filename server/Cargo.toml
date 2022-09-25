@@ -1,0 +1,26 @@
+[package]
+name = "server"
+version.workspace = true
+author.workspace = true
+edition.workspace = true
+
+[dependencies]
+
+# Gameplay
+hoive = {workspace = true}
+hex-spiral = {workspace = true}
+rand = {workspace = true}
+
+actix={workspace = true}
+actix-web = {workspace = true}
+actix-rt = {workspace = true}
+actix-files = {workspace = true}
+actix-session = {workspace = true}
+serde = {workspace = true}
+serde_json = {workspace = true}
+diesel = {workspace = true}
+dotenvy = {workspace = true}
+uuid = {workspace = true}
+
+# other stuff
+rustrict = {workspace = true}

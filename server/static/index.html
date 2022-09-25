@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <!-- Basic Page Needs
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta charset="utf-8">
+  <title>Hoive</title>
+  <meta name="description" content="Simple web front-end for Hoive">
+  <meta name="author" content="cooscoos">
+
+  <!-- Mobile Specific Metas
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- FONT
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+
+  <!-- CSS
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="css/skeleton.css">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <!-- Favicon
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="icon" type="image/png" href="images/favicon.png">
+
+</head>
+<body>
+
+  <!-- Primary Page Layout
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <div class="container">
+
+
+      <!-- Title and flash cookie messages -->
+    <div class="row">
+        <h4>Hoive</h4>
+    </div>
+
+    <!-- Register the user's name -->
+    <div class="row">
+      <h6>Pick a player name</h6>
+      <form action="/api/register" method="post">
+        <div class="three columns">
+          <input type="text" 
+            name="username" id="username" value="player1" />
+        </div>
+      </form>
+      <!-- how to handle json response?-->
+    </div>
+
+   
+
+
+    <!-- New and join buttons -->
+    <div class="row">
+        <div class="two columns">
+          <form action="/api/new" method="get">
+            <input class="button-primary" type="submit" value="New game">
+          </form>
+        </div>
+
+        <div class="four columns">
+          <form action="/api/find" method="get">
+            <input class="button-primary" type="submit" name="_method" value="Find game" />
+          </form>
+        </div>  
+    </div>
+
+    <div class="row">
+      <h6>Enter session id to join</h6>
+      <form action="/api/join" method="post">
+        <input type="text" name="game_session_id" value="Find game" />
+      </form>
+    </div>
+
+
+    <div class="row">
+      <div class="two columns">
+        <form action="/api/game-state" method="get">
+          <input class="button-primary" type="submit" value="Get board state">
+        </form>
+      </div>
+    </div>
+
+
+<!-- End Document
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+</body>
+</html>
