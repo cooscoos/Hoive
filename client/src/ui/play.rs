@@ -5,7 +5,8 @@ use std::collections::BTreeSet;
 use std::{error::Error, thread, time::Duration};
 
 use crate::comms;
-use server::models::{BoardAction, GameState, Winner};
+use server::models::{GameState, Winner};
+use hoive::game::actions::BoardAction;
 
 use hoive::{draw, pmoore::get_usr_input};
 use hoive::game::comps::{convert_static_basic, Team, Chip};
@@ -22,7 +23,14 @@ pub async fn take_turn<T: Coord>(
     println!("{}\n", draw::show_board(&board));
     'turn: loop {
         // Ask player to do action, provide them with response message, break loop if move was successful
-        let move_status = act(&mut board.clone(), active_team, &client, &base_url).await?;
+        let temp_move_status = act(&mut board.clone(), active_team, &client, &base_url).await?;
+
+        let move_status = match temp_move_status {
+            MoveStatus::SkipTurn => comms::send_action(BoardAction::skip(), client, base_url).await?,
+            MoveStatus::Forfeit => comms::send_action(BoardAction::forfeit(), client, base_url).await?,
+            _ => temp_move_status,
+        };
+
         println!("{}",move_status.to_string());
         if  move_status == MoveStatus::Success {
             break 'turn;
@@ -99,65 +107,25 @@ pub async fn act<T: Coord>(
     // The user's entry decides what chip to select (or what to do next)
     // Safe to unwrap because of loop above
     let base_chip_name = match chip_selection.unwrap() {
-        "w" => {
-            // Tell server we want to skip turn
-            let move_status = comms::send_action(BoardAction::skip(), client, base_url).await?;
-            return Ok(move_status)
-        }
-        "quit" => {
-            // Tell server we forfeit the game
-            let move_status = comms::send_action(BoardAction::forfeit(), client, base_url).await?;
-            return Ok(move_status);
-        }
-        // Otherwise player entered a valid chip name
+        "w" => return Ok(MoveStatus::SkipTurn), // try and skip turn
+        "quit" => return Ok(MoveStatus::Forfeit), // try and forfeit
         valid_name => valid_name,
     };
 
-    // This version of chip_name might change if the mosquito becomes a pillbug
-    let mut chip_name = base_chip_name;
 
-    // Try and find a chip on the board with this name
-    let on_board = board.get_position_byname(active_team, chip_name);
-
-    // Create a special_string to store info on special moves
-    let mut special_string = String::new();
-
-    // If we're doing a mosquito suck, lead player through prompts
-    let mosquito_suck =
-        chip_name == "m1" && on_board.is_some() && on_board.unwrap().get_layer() == 0;
-
-    if mosquito_suck {
-        let victim_pos;
-        // Change local version of the mosquito's name on the board to catch a pillbug prompt
-        (victim_pos, chip_name) = match hoive::pmoore::mosquito_prompts(board, chip_name, active_team) {
-            Some((new_name,vic_pos)) => (vic_pos, new_name), // mosquito morphs into another piece at T
-            None => return Ok(MoveStatus::Nothing), // aborted suck
-        };
-
-        // Generate a special string to signify mosquito sucking victim at row,col
-        special_string.push_str(&format!("m,{},{}",victim_pos.col, victim_pos.row));
-    }
-
-    // === LATER ===
-    // Is this chip a pillbug (or a mosquito acting like one?) and on the board?
-    let is_pillbug = chip_name.contains('p') && on_board.is_some();
-    if is_pillbug {
-        println!("Hit m to sumo a neighbour, or select co-ordinate to move to. If moving, input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
-    } else {
-        println!("Select co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
+    // Check for mosquito and pillbugs and update chip names as required
+    let (chip_name, mut special_string, textin, is_pillbug)= match hoive::pmoore::mosquito_pillbug_checks(board, base_chip_name,active_team) {
+        Some(values) => values,
+        None => return Ok(MoveStatus::Nothing),
     };
-
-    let textin = get_usr_input();
 
     // If the user hits m then try execute a pillbug's special move
     let action = if textin == "m" && is_pillbug {
-
         // Create a sumo special string to signify pillbug sumo
         let (victim_source, victim_dest) = match pillbug_prompts(board, chip_name, active_team) {
             Some(value) => value,
             None => return Ok(MoveStatus::Nothing)
         };
-
 
         // Generate a special string to signify pillbug tossing victim at row,col
         if !special_string.is_empty(){
@@ -165,8 +133,6 @@ pub async fn act<T: Coord>(
         }
 
         special_string.push_str(&format!("p,{},{}",victim_source.col, victim_source.row));
-
-        println!("Sending: {}", special_string);
 
         BoardAction::do_move(base_chip_name, active_team, victim_dest.col, victim_dest.row, special_string)
         

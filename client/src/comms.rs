@@ -4,8 +4,9 @@ use std::error::Error;
 use reqwest::{Client, StatusCode};
 
 use hoive::game::movestatus::MoveStatus;
-use server::models::{BoardAction, GameState};
+use server::models::{GameState};
 use uuid::Uuid;
+use hoive::game::actions::BoardAction;
 
 /// Check base_url to make sure it's an active Hoive server of same version as client.
 pub async fn check_server(client: &Client, base_url: &str) -> Result<(), Box<dyn Error>> {

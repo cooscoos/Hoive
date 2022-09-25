@@ -8,3 +8,4 @@ pub mod comps;
 pub mod history;
 pub mod movestatus;
 pub mod specials;
+pub mod actions;

@@ -1,4 +1,5 @@
 use super::comps::Team;
+use super::actions::BoardAction;
 use serde::{Deserialize, Serialize};
 /// Enum to return the result of a player action
 /// MoveStatus::Selection | Meaning
@@ -44,6 +45,10 @@ pub enum MoveStatus {
 
     NoJump,
     NoSuck,
+
+    Forfeit,
+    SkipTurn,
+    Action(BoardAction),
 }
 
 
@@ -117,7 +122,7 @@ impl ToString for MoveStatus {
                 }
             }
         }
-        MoveStatus::Nothing => String::new()
+        MoveStatus::Nothing | MoveStatus::Forfeit | MoveStatus::SkipTurn | MoveStatus::Action(_)=> String::new()
     }
 }
 
