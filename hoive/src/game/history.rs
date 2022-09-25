@@ -109,7 +109,7 @@ impl History {
 fn load_moves(filename: String, test_flag: bool) -> std::io::Result<Vec<Option<Event>>> {
     // If we're running a test we want to load files from another directory
     let file = match test_flag {
-        true => File::open(format!("./reference/tests/snapshots/{}.csv", filename))?,
+        true => File::open(format!("./tests/snapshots/{}.csv", filename))?,
         false => File::open(format!("./saved_games/{}.csv", filename))?,
     };
 
