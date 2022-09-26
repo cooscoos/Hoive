@@ -44,63 +44,10 @@ pub fn action_prompts<T: Coord>(
         valid_name => valid_name,
     };
 
-    // Check for mosquito and pillbugs and update chip names as required
-    let (chip_name, mut special, is_pillbug) =
-        match mosquito_pillbug_checks(board, base_chip_name, active_team) {
-            Some(values) => values,
-            None => return Ok(MoveStatus::Nothing),
-        };
-
-        
-    let textin = get_usr_input();
-
-    // If the user hits m then try execute a pillbug's special move, otherwise do a normal action
-    if textin == "m" {
-        // Only pillbugs can do specials
-        if !is_pillbug {
-            return Ok(MoveStatus::NoSpecial);
-        }
-
-        let (victim_source, victim_dest) = match pillbug_prompts(board, chip_name, active_team) {
-            Some(value) => value,
-            None => return Ok(MoveStatus::Nothing),
-        };
-
-        special.push_str(&format!("p,{},{}", victim_source.col, victim_source.row));
-
-        // Generate and return a BoardAction based on the special
-        let action = BoardAction::do_move(
-            base_chip_name,
-            active_team,
-            victim_dest.col,
-            victim_dest.row,
-            special,
-        );
-        Ok(MoveStatus::Action(action))
-    } else {
-        match coord_prompts(textin) {
-            Some((row, col)) => {
-                let action = BoardAction::do_move(base_chip_name, active_team, row, col, special);
-                Ok(MoveStatus::Action(action))
-            }
-            None => Ok(MoveStatus::Nothing),
-        }
-    }
-}
-
-/// Check whether the user has selected a mosquito or a pillbug. If they do, lead them through
-/// relevant prompts for these chips. This function will also work if a mosquito is selected
-/// and then morphed into a pillbug.
-pub fn mosquito_pillbug_checks<T: Coord>(
-    board: &mut Board<T>,
-    base_chip_name: &'static str,
-    active_team: Team,
-) -> Option<(&'static str, String, bool)> {
-
     // Make a mutable copy of the chip name
     let mut chip_name = base_chip_name;
 
-    // Make sure the selected chip is on the board
+    // Check if selected chip is on the board already
     let on_board = board.get_position_byname(active_team, chip_name);
 
     // Create a string to store info on special moves
@@ -115,7 +62,7 @@ pub fn mosquito_pillbug_checks<T: Coord>(
         // Change mosquito's name now so that we can catch a pillbug prompt later
         (victim_pos, chip_name) = match mosquito_prompts(board, chip_name, active_team) {
             Some((new_name, vic_pos)) => (vic_pos, new_name), // mosquito morphs into another chip
-            None => return None, // aborted suck
+            None => return Ok(MoveStatus::Nothing), // aborted suck
         };
 
         // Add to special string to signify mosquito sucking victim at row,col
@@ -130,10 +77,41 @@ pub fn mosquito_pillbug_checks<T: Coord>(
         println!("Select co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
     };
 
-    
+    // Ask the user for input. If they hit m, try execute pillbug special, otherwise normal move
+    let textin = get_usr_input();
+    if textin == "m" {
+        // Only pillbugs can do specials
+        if !is_pillbug {
+            return Ok(MoveStatus::NoSpecial);
+        }
 
-    Some((chip_name, special, is_pillbug))
+        let (victim_source, victim_dest) = match pillbug_prompts(board, chip_name, active_team) {
+            Some(value) => value,
+            None => return Ok(MoveStatus::Nothing),
+        };
+
+        special.push_str(&format!("p,{},{}", victim_source.col, victim_source.row));
+
+        // Generate and return a BoardAction based on the special
+        let sumo_action = BoardAction::do_move(
+            base_chip_name,
+            active_team,
+            victim_dest.col,
+            victim_dest.row,
+            special,
+        );
+        Ok(MoveStatus::Action(sumo_action))
+    } else {
+        match coord_prompts(textin) {
+            Some((row, col)) => {
+                let move_action = BoardAction::do_move(base_chip_name, active_team, row, col, special);
+                Ok(MoveStatus::Action(move_action))
+            }
+            None => Ok(MoveStatus::Nothing),
+        }
+    }
 }
+
 
 /// Ask user on active team to select chip. Returns None if user input invalid.
 fn chip_select<T: Coord>(board: &mut Board<T>, active_team: Team) -> Option<&'static str> {
@@ -215,24 +193,6 @@ fn chip_select<T: Coord>(board: &mut Board<T>, active_team: Team) -> Option<&'st
     }
 }
 
-/// Run the player through prompts to execute a chip movement
-/// Returns the movestatus and the coordinate the player moved to
-fn movement_prompts<T: Coord>(board: &mut Board<T>, textin: String) -> Option<T> {
-    // Ask user to input dheight co-ordinates
-    let coord = match coord_prompts(textin) {
-        None => return None, // abort move
-        Some((row, col)) => (row, col),
-    };
-
-    let moveto = DoubleHeight::from(coord);
-
-    // Convert from doubleheight to the board's co-ordinate system
-    let game_hex = board.coord.mapfrom_doubleheight(moveto);
-
-    // Try execute the move, return the hex
-    Some(game_hex)
-}
-
 /// Ask user to select a coordinate or hit enter to return None so that we can
 /// abort the parent function.
 fn coord_prompts(mut textin: String) -> Option<(i8, i8)> {
@@ -262,15 +222,18 @@ fn coord_prompts(mut textin: String) -> Option<(i8, i8)> {
     }
 }
 
+/// Decode a special string into a series of mosquito/pillbug actions
 pub fn decode_specials<T: Coord>(
     board: &mut Board<T>,
-    special_str: &str,
+    special: &str,
     active_team: Team,
     mut chip_name: &'static str,
-    moveto: DoubleHeight,
+    d_dest: DoubleHeight,
 ) -> MoveStatus {
     let mut move_status = MoveStatus::Success;
-    let items = special_str.split(',').collect::<Vec<&str>>();
+
+    
+    let items = special.split(',').collect::<Vec<&str>>();
 
     for (i, item) in items.clone().into_iter().enumerate() {
         if item == "m" || item == "p" {
@@ -306,7 +269,7 @@ pub fn decode_specials<T: Coord>(
 
                 // get chip_name's poition
                 let position = board.get_position_byname(active_team, chip_name).unwrap();
-                let dest = board.coord.mapfrom_doubleheight(moveto);
+                let dest = board.coord.mapfrom_doubleheight(d_dest);
 
                 // sumo-from position is wrong - it'* being sent completely wrong at the client end
                 // sumo to position is wrong we're getting the rows and cols mixed

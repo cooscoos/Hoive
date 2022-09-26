@@ -13,7 +13,7 @@ Choose one of the following directories and do `cargo run`:
 
 ### Deduplication
 
-Would like hoive::pmoore and ui::play to be able to call the same act/local_act function
+Tidy up decode_specials in pmoore.
 ### Base game (hoive)
 
 - There's a bug where beetle at 0-4 can move over q at 0,0 - beetles can move any number of spaces?! oops.
