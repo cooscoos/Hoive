@@ -35,18 +35,15 @@ pub fn play_game() -> Result<(), Box<dyn Error>> {
         println!("{}", move_status.to_string());
         // Refresh all mosquito names back to m1
         specials::mosquito_desuck(&mut board);
-        match move_status {
-            MoveStatus::Win(_) => {
-                println!("Play again? y/n");
-                let textin = pmoore::get_usr_input();
-                match textin {
-                    _ if textin == "y" => {
-                        let _result = play_game();
-                    }
-                    _ => break,
+        if let MoveStatus::Win(_) = move_status {
+            println!("Play again? y/n");
+            let textin = pmoore::get_usr_input();
+            match textin {
+                _ if textin == "y" => {
+                    let _result = play_game();
                 }
+                _ => break,
             }
-            _ => (),
         }
     }
     Ok(())

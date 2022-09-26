@@ -148,22 +148,16 @@ pub fn mosquito_desuck<T: Coord>(board: &mut Board<T>) {
         .chips
         .iter()
         .filter(|(c, _)| c.name.contains('m'))
-        .map(|(_, p)| *p)
-        .collect::<Vec<Option<T>>>();
+        .filter_map(|(_, p)| *p)
+        .collect::<Vec<T>>();
 
-    for positiony in positions {
-        match positiony {
-            Some(position) => {
-                // Get mosquito
-                let chip = board.get_chip(position).unwrap();
+    for position in positions {
+        // Get mosquito
+        let chip = board.get_chip(position).unwrap();
 
-                // Overwrite the chip's name in the board's HashMap
-                board.chips.remove(&chip);
-                let mosquito = chip.demosquito();
-                board.chips.insert(mosquito, Some(position));
-            }
-
-            None => (), // There weren't any mosquitos on the board to reset
-        }
+        // Overwrite the chip's name in the board's HashMap
+        board.chips.remove(&chip);
+        let mosquito = chip.demosquito();
+        board.chips.insert(mosquito, Some(position));
     }
 }

@@ -13,7 +13,7 @@ Choose one of the following directories and do `cargo run`:
 
 ### Deduplication
 
-Tidy up decode_specials in pmoore.
+Tidy up server api to mimic / use pmoore more where possible
 ### Base game (hoive)
 
 - There's a bug where beetle at 0-4 can move over q at 0,0 - beetles can move any number of spaces?! oops.

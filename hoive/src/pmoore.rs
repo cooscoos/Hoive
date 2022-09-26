@@ -1,14 +1,13 @@
-use std::collections::BTreeSet;
 /// Patrick Moore is the GamesMaster. He:
 /// - provides a human-readable interface between players and the game logic;
 /// - orchestrates normal/special moves in a way that tries to comply with game rules.
-///
-use std::{error::Error, io};
-
+/// Pmoore functions are used by
 use crate::draw;
 use crate::game::comps::{convert_static_basic, Chip, Team};
 use crate::game::{actions::BoardAction, board::Board, movestatus::MoveStatus, specials};
 use crate::maths::coord::{Coord, DoubleHeight};
+use std::collections::BTreeSet;
+use std::{error::Error, io};
 
 /// Say hello to the player
 pub fn welcome() {
@@ -121,7 +120,6 @@ pub fn decode_specials<T: Coord>(
     mut chip_name: &'static str,
     d_dest: DoubleHeight,
 ) -> MoveStatus {
-    let mut move_status = MoveStatus::Success;
 
     // Separate out the special's instructions using commas
     let items = special.split(',').collect::<Vec<&str>>();
@@ -151,13 +149,16 @@ pub fn decode_specials<T: Coord>(
                     // Get the sumo-ing chip's position, parse destination and do the sumo
                     let position = board.get_position_byname(active_team, chip_name).unwrap();
                     let dest = d_dest.mapto(board.coord);
-                    move_status = specials::pillbug_sumo(board, vic_coord, dest, position);
+                    return specials::pillbug_sumo(board, vic_coord, dest, position);
                 }
                 _ => (), // ignore other entries
             }
         }
     }
-    move_status
+
+    // if we get to this point without returning anything then we must be moving a mosquito, so do so
+    board.move_chip(chip_name, active_team, d_dest.mapto(board.coord))
+    
 }
 
 /// Request user input into terminal, return a trimmed string
@@ -279,7 +280,6 @@ fn coord_prompts(mut textin: String) -> Option<(i8, i8)> {
         }
     }
 }
-
 
 /// Leads the player through executing a pillbug's sumo special move.
 fn pillbug_prompts<T: Coord>(
