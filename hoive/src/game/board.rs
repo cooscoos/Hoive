@@ -548,4 +548,14 @@ where
         // Force override the chip's position on the board without rule checks
         self.chips.insert(chip, Some(position));
     }
+
+    /// Try skip turn by checking if both bees have been placed
+    pub fn try_skip_turn(&mut self, active_team: Team) -> MoveStatus {
+        if self.bee_placed(active_team) && self.bee_placed(!active_team) {
+            self.turns += 1;
+            MoveStatus::Success
+        } else {
+            MoveStatus::NoSkip
+        }
+    }
 }

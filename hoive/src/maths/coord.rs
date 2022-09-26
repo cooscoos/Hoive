@@ -67,6 +67,11 @@ impl DoubleHeight {
             l: 0,
         }
     }
+
+    /// Convert to another coord system
+    pub fn mapto<T: Coord>(self, coord: T) -> T {
+        coord.mapfrom_doubleheight(self)
+    }
 }
 
 /// Spiral coordinate system used to save the game board state as a string

@@ -2,10 +2,10 @@ use crate::maths::coord::{Coord, Cube};
 use serde::{Deserialize, Serialize};
 /// Module with the components of a game: the teams and chips
 use std::collections::HashMap;
+use std::fmt::Error;
 use std::hash::Hash;
 use std::ops::Not;
 use std::str::FromStr;
-use std::fmt::Error;
 
 /// Enum for the two teams, Team::Black and Team::White
 #[derive(Hash, Eq, Ord, PartialOrd, PartialEq, Debug, Clone, Copy, Deserialize, Serialize)]
@@ -25,7 +25,6 @@ impl Not for Team {
         }
     }
 }
-
 
 // Converts team to a string "B", "W"
 impl ToString for Team {

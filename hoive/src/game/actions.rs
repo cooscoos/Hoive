@@ -1,5 +1,7 @@
+use crate::maths::coord::{Coord, DoubleHeight};
 use serde::{Deserialize, Serialize};
-use super::comps::Team;
+
+use super::comps::{convert_static_basic, Team};
 
 /// Used to formulate requests for in-game actions from the Hoive server
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
@@ -10,7 +12,6 @@ pub struct BoardAction {
 }
 
 impl BoardAction {
-
     /// Generate command to forfeit a game
     pub fn forfeit() -> Self {
         BoardAction {
@@ -24,13 +25,19 @@ impl BoardAction {
     pub fn skip() -> Self {
         BoardAction {
             name: "".to_string(),
-            rowcol: (0,0),
+            rowcol: (0, 0),
             special: Some("skip".to_string()),
         }
     }
 
     /// Generate command to make a move
-    pub fn do_move(chip_name:&str, active_team: Team, row: i8, col: i8, special_string: String) -> Self{
+    pub fn do_move(
+        chip_name: &str,
+        active_team: Team,
+        row: i8,
+        col: i8,
+        special_string: String,
+    ) -> Self {
         let case_chip_name = match active_team {
             Team::Black => chip_name.to_uppercase(),
             Team::White => chip_name.to_string(),
@@ -48,5 +55,19 @@ impl BoardAction {
         }
     }
 
+    /// Get chip name
+    pub fn get_chip_name(&self) -> &'static str {
+        convert_static_basic(self.name.to_lowercase()).unwrap()
+    }
 
+    /// Get destination as doubleheight
+    pub fn get_dest_dheight(&self) -> DoubleHeight {
+        DoubleHeight::from(self.rowcol)
+    }
+
+    /// Get destination in board coords
+    pub fn get_dest<T: Coord>(&self, coord: T) -> T {
+        let dheight = self.get_dest_dheight();
+        coord.mapfrom_doubleheight(dheight)
+    }
 }

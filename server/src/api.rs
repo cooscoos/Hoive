@@ -470,21 +470,21 @@ async fn skip_turn(
 
     // generate a board in Cube coords based on the existing state
     let board = Board::new(Cube::default());
-    let board = board.decode_spiral(board_state);
+    let mut board = board.decode_spiral(board_state);
 
-    // skip turn, only if both bees have been placed
-    match board.bee_placed(active_team) && board.bee_placed(!active_team) {
-        true => {
+    match board.try_skip_turn(active_team) {
+        MoveStatus::Success => {
             // Do skip, change the active team in the db
             match db::update_active_team(session_id, &active_team.to_string(), conn) {
-                Ok(_) => return Ok(MoveStatus::Success),
+                Ok(_) => Ok(MoveStatus::Success),
                 Err(err) => return Err(error::ErrorInternalServerError(err)),
             }
-        }
-        false => {
-            return Ok(MoveStatus::NoSkip);
-        }
+        },
+        MoveStatus::NoSkip => Ok(MoveStatus::NoSkip),
+        _ => unreachable!(),
     }
+
+
 }
 
 async fn forfeit(
