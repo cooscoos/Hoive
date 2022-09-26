@@ -321,21 +321,13 @@ pub async fn make_action(
 
                 let special_str = form_input.special.as_ref();
 
-                // split the special move out into a vec and run through it one item at a time
-                // until you reach the end of the vec.
-
                 match special_str {
                     Some(special) => {
                         let move_status = hoive::pmoore::decode_specials(&mut board, &special, active_team, chip_name, moveto);
-
                         if move_status == MoveStatus::Success {
-                            // update the board on the server
-                            //println!("{}", draw::show_board(&board));
-                            // Refresh all mosquito names back to m1 (do this on the server)
+                            // Refresh all mosquito names back to m1 and update db
                             specials::mosquito_desuck(&mut board);
-                            // get the spiral string
                             let board_str = board.encode_spiral();
-                            //println!("Spiral string is {}", board_str);
 
                             // Update db
                             let res = db::update_game_state(
@@ -387,22 +379,6 @@ pub async fn make_action(
     }
 }
 
-fn parse_special<T: Coord>(special_str: &str, board: &Board<T>) -> T {
-    let items = special_str.split(',').collect::<Vec<&str>>();
-
-    // items[0] will be "m" or "p"
-    // items[1] and [2] are col,row. Convert these to doubleheight and then board coords
-    let colrow = items
-        .into_iter()
-        .skip(1)
-        .map(|v| v.trim().parse::<i8>().expect("Problem parsing value"))
-        .collect::<Vec<i8>>();
-
-    let d_colrow = DoubleHeight::from((colrow[0], colrow[1]));
-
-    board.coord.mapfrom_doubleheight(d_colrow)
-}
-
 /// Make sure the requested move is for the active player
 /// Will need to do some more thorough checks later such as making sure the playerid matches
 fn cheat_check(form_input: &web::Json<BoardAction>, active_team: &Team) -> bool {
@@ -436,15 +412,9 @@ async fn do_movement<T: Coord>(
     let move_status = board.move_chip(chip_name, active_team, game_hex);
 
     if move_status == MoveStatus::Success {
-        // update the board on the server
-        //println!("{}", draw::show_board(&board));
-        // Refresh all mosquito names back to m1 (do this on the server)
+        // Refresh all mosquito names back to m1 and update board on server
         specials::mosquito_desuck(board);
-        // get the spiral string
         let board_str = board.encode_spiral();
-        //println!("Spiral string is {}", board_str);
-
-        // Update db
         let res =
             db::update_game_state(&session_id, &active_team.to_string(), &board_str, "", conn);
 

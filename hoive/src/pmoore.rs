@@ -62,7 +62,7 @@ pub fn action_prompts<T: Coord>(
         // Change mosquito's name now so that we can catch a pillbug prompt later
         (victim_pos, chip_name) = match mosquito_prompts(board, chip_name, active_team) {
             Some((new_name, vic_pos)) => (vic_pos, new_name), // mosquito morphs into another chip
-            None => return Ok(MoveStatus::Nothing), // aborted suck
+            None => return Ok(MoveStatus::Nothing),           // aborted suck
         };
 
         // Add to special string to signify mosquito sucking victim at row,col
@@ -104,7 +104,8 @@ pub fn action_prompts<T: Coord>(
     } else {
         match coord_prompts(textin) {
             Some((row, col)) => {
-                let move_action = BoardAction::do_move(base_chip_name, active_team, row, col, special);
+                let move_action =
+                    BoardAction::do_move(base_chip_name, active_team, row, col, special);
                 Ok(MoveStatus::Action(move_action))
             }
             None => Ok(MoveStatus::Nothing),
@@ -112,6 +113,63 @@ pub fn action_prompts<T: Coord>(
     }
 }
 
+/// Decode a special string into a series of mosquito and/or pillbug actions
+pub fn decode_specials<T: Coord>(
+    board: &mut Board<T>,
+    special: &str,
+    active_team: Team,
+    mut chip_name: &'static str,
+    d_dest: DoubleHeight,
+) -> MoveStatus {
+    let mut move_status = MoveStatus::Success;
+
+    // Separate out the special's instructions using commas
+    let items = special.split(',').collect::<Vec<&str>>();
+
+    for (i, item) in items.clone().into_iter().enumerate() {
+        // If we come across an m or a p, we need to read in the next 2 items to find col/row of victim
+        if item == "m" || item == "p" {
+            // Parse the victim coordinates into the board's coordinates
+            let d_vic = DoubleHeight::from((
+                items[i + 1].parse::<i8>().unwrap(),
+                items[i + 2].parse::<i8>().unwrap(),
+            ));
+            let vic_coord = d_vic.mapto(board.coord);
+
+            match item {
+                "m" => {
+                    // Get the mosquito's current position and ask it to absorb power from the victim
+                    let position = board.get_position_byname(active_team, "m1").unwrap();
+                    let newname = match specials::mosquito_suck(board, vic_coord, position) {
+                        Some(value) => value,
+                        None => return MoveStatus::NoSuck,
+                    };
+                    // Change the mosquito's name
+                    chip_name = newname;
+                }
+                "p" => {
+                    // Get the sumo-ing chip's position, parse destination and do the sumo
+                    let position = board.get_position_byname(active_team, chip_name).unwrap();
+                    let dest = d_dest.mapto(board.coord);
+                    move_status = specials::pillbug_sumo(board, vic_coord, dest, position);
+                }
+                _ => (), // ignore other entries
+            }
+        }
+    }
+    move_status
+}
+
+/// Request user input into terminal, return a trimmed string
+pub fn get_usr_input() -> String {
+    let mut textin = String::new();
+
+    io::stdin()
+        .read_line(&mut textin)
+        .expect("Failed to read line");
+
+    textin.trim().to_string()
+}
 
 /// Ask user on active team to select chip. Returns None if user input invalid.
 fn chip_select<T: Coord>(board: &mut Board<T>, active_team: Team) -> Option<&'static str> {
@@ -222,70 +280,6 @@ fn coord_prompts(mut textin: String) -> Option<(i8, i8)> {
     }
 }
 
-/// Decode a special string into a series of mosquito/pillbug actions
-pub fn decode_specials<T: Coord>(
-    board: &mut Board<T>,
-    special: &str,
-    active_team: Team,
-    mut chip_name: &'static str,
-    d_dest: DoubleHeight,
-) -> MoveStatus {
-    let mut move_status = MoveStatus::Success;
-
-    
-    let items = special.split(',').collect::<Vec<&str>>();
-
-    for (i, item) in items.clone().into_iter().enumerate() {
-        if item == "m" || item == "p" {
-            let colrowstr = [items[i + 1], items[i + 2]];
-
-            let colrow = colrowstr
-                .into_iter()
-                .map(|v| {
-                    v.trim()
-                        .parse::<i8>()
-                        .expect("Problem parsing value, probably isn't an integer")
-                })
-                .collect::<Vec<i8>>();
-
-            let d_colrow = DoubleHeight::from((colrow[0], colrow[1]));
-
-            let victim_coords = board.coord.mapfrom_doubleheight(d_colrow);
-
-            if item == "m" {
-                // Get the mosquito's current position.
-                let position = board.get_position_byname(active_team, "m1").unwrap();
-                let newname = match specials::mosquito_suck(board, victim_coords, position) {
-                    Some(value) => value,
-                    None => return MoveStatus::NoSuck,
-                };
-
-                chip_name = newname;
-            }
-            if item == "p" {
-                // Convert the input chipname to a static str
-                let chip_name = crate::game::comps::convert_static(chip_name.to_lowercase())
-                    .expect("Couldn't parse chip name");
-
-                // get chip_name's poition
-                let position = board.get_position_byname(active_team, chip_name).unwrap();
-                let dest = board.coord.mapfrom_doubleheight(d_dest);
-
-                // sumo-from position is wrong - it'* being sent completely wrong at the client end
-                // sumo to position is wrong we're getting the rows and cols mixed
-                println!(
-                    "Asked to use pillbug at {:?} to sumo from {:?} to {:?}",
-                    position.to_doubleheight(position),
-                    victim_coords.to_doubleheight(victim_coords),
-                    dest.to_doubleheight(dest)
-                );
-
-                move_status = specials::pillbug_sumo(board, victim_coords, dest, position);
-            }
-        }
-    }
-    move_status
-}
 
 /// Leads the player through executing a pillbug's sumo special move.
 fn pillbug_prompts<T: Coord>(
@@ -315,7 +309,7 @@ fn pillbug_prompts<T: Coord>(
 }
 
 /// Leads the player through executing a mosquito's suck
-pub fn mosquito_prompts<T: Coord>(
+fn mosquito_prompts<T: Coord>(
     board: &mut Board<T>,
     chip_name: &'static str,
     active_team: Team,
@@ -374,17 +368,6 @@ fn neighbour_prompts<T: Coord>(board: &mut Board<T>, position: T, movename: Stri
     // get the co-ordinate of the selected chip and return them
     let source = board.chips.get(&selected).unwrap().unwrap();
     Some(source)
-}
-
-/// Request user input into terminal, return a trimmed string
-pub fn get_usr_input() -> String {
-    let mut textin = String::new();
-
-    io::stdin()
-        .read_line(&mut textin)
-        .expect("Failed to read line");
-
-    textin.trim().to_string()
 }
 
 /// Parse comma separated values input by a user to a doubleheight co-ordinate
