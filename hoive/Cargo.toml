@@ -9,6 +9,7 @@ hex-spiral = {workspace = true}
 serde = {workspace = true}
 rand = {workspace = true}
 
+
 # Benchmarking
 [dev-dependencies]
 criterion = "0.3"
@@ -16,3 +17,6 @@ criterion = "0.3"
 [[bench]]
 name = "benchmark3"
 harness = false
+
+[features]
+debug = []

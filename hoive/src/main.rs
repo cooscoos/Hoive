@@ -1,3 +1,3 @@
 fn main() {
-    hoive::pmoore::play_game();
+    let _result = hoive::local_ui::play_game();
 }

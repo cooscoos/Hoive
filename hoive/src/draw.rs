@@ -3,8 +3,8 @@ use crate::game::board::Board;
 use crate::game::comps::{Chip, Team};
 use crate::maths::coord::Coord;
 use crate::maths::coord::DoubleHeight;
-use std::collections::{BTreeMap, HashMap, HashSet};
 use std::collections::BTreeSet;
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Write as _;
 use std::vec; // import without risk of name clash
 

@@ -317,167 +317,66 @@ pub async fn make_action(
 
                 // Convert the input move into DoubleHeight coordinates
                 let moveto = DoubleHeight::from(form_input.rowcol);
-                let mut chip_name = form_input.name.as_str();
+                let chip_name = hoive::game::comps::convert_static(form_input.name.to_lowercase()).unwrap();
 
                 let special_str = form_input.special.as_ref();
 
-                // split the special move out into a vec and run through it one item at a time
-                // until you reach the end of the vec.
+                match special_str {
+                    Some(special) => {
+                        let move_status = hoive::pmoore::decode_specials(&mut board, &special, active_team, chip_name, moveto);
+                        if move_status == MoveStatus::Success {
+                            // Refresh all mosquito names back to m1 and update db
+                            specials::mosquito_desuck(&mut board);
+                            let board_str = board.encode_spiral();
 
-                if special_str.is_some() {
-                    let items = special_str.unwrap().split(',').collect::<Vec<&str>>();
+                            // Update db
+                            let res = db::update_game_state(
+                                &session_id,
+                                &active_team.to_string(),
+                                &board_str,
+                                "",
+                                &mut conn,
+                            );
 
-                    for (i, item) in items.clone().into_iter().enumerate() {
-                        if item == "m" || item == "p" {
-                            let colrowstr = [items[i + 1], items[i + 2]];
-
-                            // the next two items will define the mosquito / pillbug's victim
-                            // let colrow = items.clone()
-                            // .into_iter()
-                            // .skip(i+1)
-                            // .map(|v| v.trim().parse::<i8>().expect("Problem parsing value, probably isn't an integer"))
-                            // .collect::<Vec<i8>>();
-
-                            let colrow = colrowstr
-                                .into_iter()
-                                .map(|v| {
-                                    v.trim()
-                                        .parse::<i8>()
-                                        .expect("Problem parsing value, probably isn't an integer")
-                                })
-                                .collect::<Vec<i8>>();
-
-                            let d_colrow = DoubleHeight::from((colrow[0], colrow[1]));
-
-                            let victim_coords = board.coord.mapfrom_doubleheight(d_colrow);
-
-                            if item == "m" {
-                                // Get the mosquito's current position.
-                                let position =
-                                    board.get_position_byname(active_team, "m1").unwrap();
-                                let newname = match specials::mosquito_suck(
-                                    &mut board,
-                                    victim_coords,
-                                    position,
-                                ) {
-                                    Some(value) => value,
-                                    None => return Ok(web::Json(MoveStatus::NoSuck)),
-                                };
-
-                                chip_name = newname;
-                            }
-                            if item == "p" {
-                                // Convert the input chipname to a static str
-                                let chip_name = convert_static(chip_name.to_lowercase())
-                                    .expect("Couldn't parse chip name");
-
-                                // get chip_name's poition
-                                let position =
-                                    board.get_position_byname(active_team, chip_name).unwrap();
-                                let dest = board.coord.mapfrom_doubleheight(moveto);
-
-                                // sumo-from position is wrong - it'* being sent completely wrong at the client end
-                                // sumo to position is wrong we're getting the rows and cols mixed
-                                println!(
-                                    "Asked to use pillbug at {:?} to sumo from {:?} to {:?}",
-                                    position.to_doubleheight(position),
-                                    victim_coords.to_doubleheight(victim_coords),
-                                    dest.to_doubleheight(dest)
-                                );
-
-                                let move_status = specials::pillbug_sumo(
-                                    &mut board,
-                                    victim_coords,
-                                    dest,
-                                    position,
-                                );
-
-                                if move_status == MoveStatus::Success {
-                                    // update the board on the server
-                                    //println!("{}", draw::show_board(&board));
-                                    // Refresh all mosquito names back to m1 (do this on the server)
-                                    specials::mosquito_desuck(&mut board);
-                                    // get the spiral string
-                                    let board_str = board.encode_spiral();
-                                    //println!("Spiral string is {}", board_str);
-
-                                    // Update db
-                                    let res = db::update_game_state(
-                                        &session_id,
-                                        &active_team.to_string(),
-                                        &board_str,
-                                        "",
-                                        &mut conn,
-                                    );
-
-                                    match res {
-                                        Ok(_) => return Ok(web::Json(move_status)),
-                                        Err(err) => {
-                                            return Err(error::ErrorInternalServerError(format!(
-                                                "Problem updating gamestate because {err}"
-                                            )))
-                                        }
-                                    }
-                                } else {
-                                    return Ok(web::Json(move_status));
+                            match res {
+                                Ok(_) => return Ok(web::Json(move_status)),
+                                Err(err) => {
+                                    return Err(error::ErrorInternalServerError(format!(
+                                        "Problem updating gamestate because {err}"
+                                    )))
                                 }
                             }
+                        } else {
+                            return Ok(web::Json(move_status));
                         }
+                    }
+                    None => {
+                        match do_movement(
+                            &mut board,
+                            chip_name,
+                            moveto,
+                            active_team,
+                            &session_id,
+                            &mut conn,
+                        )
+                        .await
+                        {
+                            Ok(move_status) => Ok(web::Json(move_status)),
+                            Err(err) => Err(error::ErrorInternalServerError(format!(
+                                "Problem updating gamestate because {err}"
+                            ))),
+                        }
+
                     }
                 }
 
-                // // Mosquitos
-                // if special_str.is_some() && special_str.unwrap().starts_with("m") {
 
-                //     // Find the victim's coordinates
-                //     let suck_from = parse_special(special_str.unwrap(), &board);
 
-                //     // Get the mosquito's current position.
-                //     let position = board.get_position_byname(active_team, "m1").unwrap();
-                //     let newname = match specials::mosquito_suck(&mut board, suck_from, position) {
-                //         Some(value) => value,
-                //         None => return Ok(web::Json(MoveStatus::NoSuck)),
-                //     };
-
-                //     chip_name = newname;
-                // }
-
-                match do_movement(
-                    &mut board,
-                    chip_name,
-                    moveto,
-                    active_team,
-                    &session_id,
-                    &mut conn,
-                )
-                .await
-                {
-                    Ok(move_status) => Ok(web::Json(move_status)),
-                    Err(err) => Err(error::ErrorInternalServerError(format!(
-                        "Problem updating gamestate because {err}"
-                    ))),
-                }
             }
         }
     } else {
         return Err(error::ErrorInternalServerError("Can't find game session"));
     }
-}
-
-fn parse_special<T: Coord>(special_str: &str, board: &Board<T>) -> T {
-    let items = special_str.split(',').collect::<Vec<&str>>();
-
-    // items[0] will be "m" or "p"
-    // items[1] and [2] are col,row. Convert these to doubleheight and then board coords
-    let colrow = items
-        .into_iter()
-        .skip(1)
-        .map(|v| v.trim().parse::<i8>().expect("Problem parsing value"))
-        .collect::<Vec<i8>>();
-
-    let d_colrow = DoubleHeight::from((colrow[0], colrow[1]));
-
-    board.coord.mapfrom_doubleheight(d_colrow)
 }
 
 /// Make sure the requested move is for the active player
@@ -513,15 +412,9 @@ async fn do_movement<T: Coord>(
     let move_status = board.move_chip(chip_name, active_team, game_hex);
 
     if move_status == MoveStatus::Success {
-        // update the board on the server
-        //println!("{}", draw::show_board(&board));
-        // Refresh all mosquito names back to m1 (do this on the server)
+        // Refresh all mosquito names back to m1 and update board on server
         specials::mosquito_desuck(board);
-        // get the spiral string
         let board_str = board.encode_spiral();
-        //println!("Spiral string is {}", board_str);
-
-        // Update db
         let res =
             db::update_game_state(&session_id, &active_team.to_string(), &board_str, "", conn);
 
@@ -547,21 +440,21 @@ async fn skip_turn(
 
     // generate a board in Cube coords based on the existing state
     let board = Board::new(Cube::default());
-    let board = board.decode_spiral(board_state);
+    let mut board = board.decode_spiral(board_state);
 
-    // skip turn, only if both bees have been placed
-    match board.bee_placed(active_team) && board.bee_placed(!active_team) {
-        true => {
+    match board.try_skip_turn(active_team) {
+        MoveStatus::Success => {
             // Do skip, change the active team in the db
             match db::update_active_team(session_id, &active_team.to_string(), conn) {
-                Ok(_) => return Ok(MoveStatus::Success),
+                Ok(_) => Ok(MoveStatus::Success),
                 Err(err) => return Err(error::ErrorInternalServerError(err)),
             }
-        }
-        false => {
-            return Ok(MoveStatus::NoSkip);
-        }
+        },
+        MoveStatus::NoSkip => Ok(MoveStatus::NoSkip),
+        _ => unreachable!(),
     }
+
+
 }
 
 async fn forfeit(
