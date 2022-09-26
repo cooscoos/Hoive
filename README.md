@@ -24,6 +24,7 @@ Tidy up server api to mimic / use pmoore more where possible
 ### Client
 
 - everything broadly works. but need a good old tidy up and write some tests
+- consider moving local_ui from hoive into client and having a local-play option on setup
 - try remove traits like deserialize and see if you can get away with it
 - oberve fn: A better UI would get usr input to feel responsive ... but also poll for update while waiting. Might need some other fn polling in the background with tx,rx to achieve that
 - observe fn also ques user garbage typing into next move - this is not good
