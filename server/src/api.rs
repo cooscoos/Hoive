@@ -2,16 +2,18 @@
 /// end (passed as Httprequests) into commands to set up and use the board and database. It also converts and passes responses
 /// back (usually as jsons).
 ///
-use actix_session::Session;
-use actix_web::{error, web, Error, HttpRequest, HttpResponse};
 
-use actix_web::Responder;
-use hoive::game::actions::BoardAction;
-use rustrict::CensorStr;
 use std::result::Result;
 use std::str::FromStr;
 
+use rustrict::CensorStr;
 use rand::Rng;
+use uuid::Uuid;
+use serde::Deserialize;
+
+use actix_session::Session;
+use actix_web::{error, web, Error, HttpRequest, HttpResponse};
+use actix_web::Responder;
 
 pub use crate::db;
 use crate::models::GameState;
@@ -19,22 +21,14 @@ pub use crate::models::{self, User};
 pub use crate::schema;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use diesel::SqliteConnection;
-pub use hoive::game;
-use hoive::game::comps::convert_static;
-use hoive::game::comps::Team;
-use hoive::game::movestatus::MoveStatus;
-use hoive::maths::coord::DoubleHeight;
-use hoive::maths::coord::{Coord, Cube};
-use uuid::Uuid;
 
 const SESSION_ID_KEY: &str = "session_id";
 const USER_ID_KEY: &str = "user_id";
 const USER_COLOR_KEY: &str = "user_color";
 
-use serde::Deserialize;
+use hoive::game::{comps::Team, movestatus::MoveStatus, actions::BoardAction, board::Board, specials};
+use hoive::maths::coord::{Coord, Cube};
 
-use self::game::board::Board;
-use self::game::specials;
 
 /// Info grabbed about session from form
 #[derive(Deserialize)]
@@ -58,20 +52,21 @@ fn get_db_connection(
     }
 }
 
+/// Default index page that shows the Hoive server version
 pub async fn index() -> HttpResponse {
     HttpResponse::Ok().body(format!("Hoive-server v{}", crate::VERSION))
 }
 
-/// Register a new user with given name/team (input within path)
+/// Register a new user with requested name (input by a web form)
 pub async fn register_user(
     form_input: web::Form<User>,
     session: Session,
     req: HttpRequest,
 ) -> Result<impl Responder, Error> {
-    // First and second parts of path will be username and team
+
     let user_name = form_input.user_name.to_owned();
 
-    // Check the username isn't profane
+    // Check the username isn't profanity
     if user_name.is_inappropriate() {
         return Ok(web::Json("invalid".to_string()));
     }
@@ -154,7 +149,6 @@ pub async fn find(session: Session, req: HttpRequest) -> Result<impl Responder, 
 
 /// Join a session with given session_id
 pub async fn join(
-    //session_id: web::Path<Uuid>,
     form_input: web::Form<SessionInfo>,
     session: Session,
     req: HttpRequest,
@@ -360,7 +354,6 @@ async fn do_special(
     // Generate a board based on the gamestate and find the chip name and active team
     let mut board = game_state.to_cube_board();
     let active_team = current_player(&game_state)?;
-
     assert!(cheat_check(&action, &active_team));
 
     // Try and decode and execute the special
