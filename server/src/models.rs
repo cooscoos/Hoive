@@ -1,8 +1,10 @@
 use super::schema::game_state;
 use super::schema::user;
+use hoive::game::board::Board;
+use hoive::maths::coord::{Coord, Cube};
+use hoive::{game::comps::Team, maths::coord::DoubleHeight};
 use serde::{Deserialize, Serialize};
 use std::error::Error;
-use hoive::{game::comps::Team, maths::coord::DoubleHeight};
 
 #[derive(Serialize, Deserialize, Default, Queryable, Insertable, Debug, Clone)]
 //#[table_name = "user"]
@@ -23,7 +25,6 @@ pub struct GameState {
     pub last_user_id: Option<String>,
 }
 
-
 impl GameState {
     /// Which team's turn is it right now?
     pub fn whose_turn(&self) -> Result<Team, Box<dyn Error>> {
@@ -35,6 +36,20 @@ impl GameState {
             _ => panic!("Team is undefined"),
         }
     }
+
+    /// Generate a board from a gamestate's spiral coordinates on the db
+    pub fn to_cube_board(&self) -> Board<Cube> {
+        let board = Board::new(Cube::default());
+
+        // Get the board from the gamestate
+        let board_state = match &self.board {
+            Some(value) => value,
+            None => return board,
+        };
+
+        // generate and return a board based on this gamestate
+        board.decode_spiral(board_state.to_owned())
+    }
 }
 
 #[derive(Deserialize, Serialize, Insertable)]
@@ -45,9 +60,6 @@ pub struct NewGameState {
     pub board: Option<String>,
     pub user_1: Option<String>,
 }
-
-
-
 
 /// Used to carry information about who the winner was and why
 #[derive(Default, Debug)]
@@ -61,15 +73,8 @@ impl Winner {
     /// based on a returned winner value from server db's game_state
     /// and return true if there was a winner.
     pub fn happened(&mut self, winstring: &Option<String>) -> bool {
-        println!("{:?}", self);
-        println!("winstring: {:?}", winstring);
-
         match winstring {
             Some(value) => {
-                if value.is_empty() {
-                    return false;   // no winner
-                }
-
                 // Check if a forfeit happened
                 if value.ends_with('F') {
                     self.forfeit = true;
@@ -85,7 +90,7 @@ impl Winner {
 
                 true // someone won
             }
-            None => panic!("Server returned winstring = None. This should be impossible."),
+            _ => false, // no winner yet
         }
     }
 }

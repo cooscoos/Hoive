@@ -16,6 +16,8 @@ pub use crate::models;
 use crate::models::{GameState, NewGameState, User};
 pub use crate::schema;
 
+use hoive::game::comps::Team;
+
 #[derive(Debug)]
 pub struct ConnectionOptions {
     pub enable_wal: bool,
@@ -156,23 +158,20 @@ pub fn get_board(session_id: &Uuid, conn: &mut SqliteConnection) -> Result<Strin
     Ok(fetched_board.to_string())
 }
 
-/// Update the game state of a given session_id with new info on last user, board state, whether there's a winner or game over
+/// Update the game state of a given session_id with new info on the last user and new board state
 pub fn update_game_state(
     session_id: &Uuid,
-    l_user_id: &str,
+    l_user: Team,
     board_str: &str,
-    is_winner: &str,
     conn: &mut SqliteConnection,
 ) -> QueryResult<usize> {
     use schema::game_state::dsl::*;
 
+    let l_user_id = l_user.to_string();
+
     diesel::update(game_state)
         .filter(id.eq(session_id.to_string()))
-        .set((
-            last_user_id.eq(l_user_id.to_string()),
-            board.eq(board_str),
-            winner.eq(is_winner),
-        ))
+        .set((last_user_id.eq(l_user_id.to_string()), board.eq(board_str)))
         .execute(conn)
 }
 

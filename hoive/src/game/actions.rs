@@ -7,7 +7,7 @@ use super::comps::{convert_static_basic, Team};
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct BoardAction {
     pub name: String,            // chip name
-    pub rowcol: (i8, i8),        // destination row, col
+    pub rowcol: DoubleHeight,        // destination row, col
     pub special: Option<String>, // Contains source (row,col) if doing mosquito/pillbug special
 }
 
@@ -16,7 +16,7 @@ impl BoardAction {
     pub fn forfeit() -> Self {
         BoardAction {
             name: "".to_string(),
-            rowcol: (0, 0),
+            rowcol: DoubleHeight::default(),
             special: Some("forfeit".to_string()),
         }
     }
@@ -25,7 +25,7 @@ impl BoardAction {
     pub fn skip() -> Self {
         BoardAction {
             name: "".to_string(),
-            rowcol: (0, 0),
+            rowcol: DoubleHeight::default(),
             special: Some("skip".to_string()),
         }
     }
@@ -34,8 +34,7 @@ impl BoardAction {
     pub fn do_move(
         chip_name: &str,
         active_team: Team,
-        row: i8,
-        col: i8,
+        rowcol: DoubleHeight,
         special_string: String,
     ) -> Self {
         let case_chip_name = match active_team {
@@ -50,24 +49,24 @@ impl BoardAction {
 
         BoardAction {
             name: case_chip_name,
-            rowcol: (row, col),
-            special: special,
+            rowcol,
+            special,
         }
     }
 
-    /// Get chip name
+    /// Get chip name as a &'static str without team capitalisation
     pub fn get_chip_name(&self) -> &'static str {
         convert_static_basic(self.name.to_lowercase()).unwrap()
     }
 
-    /// Get destination as doubleheight
-    pub fn get_dest_dheight(&self) -> DoubleHeight {
-        DoubleHeight::from(self.rowcol)
+    /// Get the special string
+    pub fn get_special(&self) -> String {
+        self.special.as_ref().unwrap().to_owned()
     }
 
     /// Get destination in board coords
     pub fn get_dest<T: Coord>(&self, coord: T) -> T {
-        let dheight = self.get_dest_dheight();
+        let dheight = self.rowcol;
         coord.mapfrom_doubleheight(dheight)
     }
 }

@@ -95,8 +95,7 @@ pub fn action_prompts<T: Coord>(
         let sumo_action = BoardAction::do_move(
             base_chip_name,
             active_team,
-            victim_dest.col,
-            victim_dest.row,
+            DoubleHeight::from((victim_dest.col,victim_dest.row)),
             special,
         );
         Ok(MoveStatus::Action(sumo_action))
@@ -104,7 +103,7 @@ pub fn action_prompts<T: Coord>(
         match coord_prompts(textin) {
             Some((row, col)) => {
                 let move_action =
-                    BoardAction::do_move(base_chip_name, active_team, row, col, special);
+                    BoardAction::do_move(base_chip_name, active_team, DoubleHeight::from((row, col)), special);
                 Ok(MoveStatus::Action(move_action))
             }
             None => Ok(MoveStatus::Nothing),

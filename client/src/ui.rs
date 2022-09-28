@@ -1,5 +1,4 @@
 /// Terminal UI for playing games of Hoive on a server
-
 pub mod play;
 pub mod setup;
 
@@ -47,7 +46,9 @@ pub async fn play_games() -> Result<(), Box<dyn Error>> {
                 true => {
                     game_state = play::take_turn(&mut board, my_team, &client, &base_url).await?
                 }
-                false => game_state = play::observe(&mut board, my_team, &client, &base_url).await?,
+                false => {
+                    game_state = play::observe(&mut board, my_team, &client, &base_url).await?
+                }
             }
             // Update our local copy of the active team and board
             active_team = game_state.whose_turn()?;
@@ -59,4 +60,3 @@ pub async fn play_games() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
-

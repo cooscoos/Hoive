@@ -72,7 +72,7 @@ fn try_execute_action<T: Coord>(
 ) -> MoveStatus {
     // Unwrap the action struct to get chip name, destination and special string
     let chip_name = action.get_chip_name();
-    let d_dest = action.get_dest_dheight();
+    let d_dest = action.rowcol;
     let special_str = action.special;
 
     // Try execute a special if one is requested, otherwise normal move
