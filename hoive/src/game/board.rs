@@ -9,6 +9,7 @@ use crate::game::{animals, history::History, movestatus::MoveStatus}; // Animal 
 use crate::maths::coord::Coord; // Hexagonal coordinate system
 use crate::maths::coord::Spiral;
 
+
 /// The Board struct keeps track of game's progress, history and execution of rules
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Board<T: Coord> {
@@ -558,4 +559,6 @@ where
             MoveStatus::NoSkip
         }
     }
+
+
 }

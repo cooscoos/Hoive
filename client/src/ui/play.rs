@@ -1,15 +1,14 @@
 /// Take actions to play live games of Hoive on the server
-
 use reqwest::Client;
 use std::{error::Error, thread, time::Duration};
 
 use crate::comms;
 use server::models::{GameState, Winner};
 
-use hoive::{draw, pmoore::get_usr_input};
-use hoive::game::{actions::BoardAction, comps::Team, board::Board, movestatus::MoveStatus};
+use hoive::game::{actions::BoardAction, board::Board, comps::Team, movestatus::MoveStatus};
 use hoive::maths::coord::Coord;
 use hoive::pmoore;
+use hoive::{draw, pmoore::get_usr_input};
 
 /// Ask player to take a turn
 pub async fn take_turn<T: Coord>(
@@ -24,14 +23,18 @@ pub async fn take_turn<T: Coord>(
         let temp_move_status = pmoore::action_prompts(&mut board.clone(), active_team)?;
 
         let move_status = match temp_move_status {
-            MoveStatus::SkipTurn => comms::send_action(BoardAction::skip(), client, base_url).await?,
-            MoveStatus::Forfeit => comms::send_action(BoardAction::forfeit(), client, base_url).await?,
+            MoveStatus::SkipTurn => {
+                comms::send_action(BoardAction::skip(), client, base_url).await?
+            }
+            MoveStatus::Forfeit => {
+                comms::send_action(BoardAction::forfeit(), client, base_url).await?
+            }
             MoveStatus::Action(action) => comms::send_action(action, &client, &base_url).await?,
             _ => temp_move_status,
         };
 
-        println!("{}",move_status.to_string());
-        if  move_status == MoveStatus::Success {
+        println!("{}", move_status.to_string());
+        if move_status == MoveStatus::Success {
             break 'turn;
         }
     }
@@ -47,7 +50,6 @@ pub async fn observe<T: Coord>(
     client: &Client,
     base_url: &String,
 ) -> Result<GameState, Box<dyn Error>> {
-
     println!("{}\n", draw::show_board(&board));
 
     // Update the board based on info on the server
@@ -62,7 +64,6 @@ pub async fn observe<T: Coord>(
         game_state = comms::get_gamestate(&client, &base_url).await?;
     }
     Ok(game_state)
-
 }
 
 /// Tell the player who won, ask them if they want to play again

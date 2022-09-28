@@ -3,10 +3,10 @@ use std::error::Error;
 
 use reqwest::{Client, StatusCode};
 
-use hoive::game::movestatus::MoveStatus;
-use server::models::{GameState};
-use uuid::Uuid;
 use hoive::game::actions::BoardAction;
+use hoive::game::movestatus::MoveStatus;
+use server::models::GameState;
+use uuid::Uuid;
 
 /// Check base_url to make sure it's an active Hoive server of same version as client.
 pub async fn check_server(client: &Client, base_url: &str) -> Result<(), Box<dyn Error>> {
@@ -149,10 +149,7 @@ pub async fn get_gamestate(
 }
 
 /// Ask the db to pick a random player to go first
-pub async fn get_coin_toss(
-    client: &Client,
-    base_url: &String,
-) -> Result<String, Box<dyn Error>> {
+pub async fn get_coin_toss(client: &Client, base_url: &String) -> Result<String, Box<dyn Error>> {
     let url = format!("{base_url}{}", "coin-toss");
     let response_string = client.get(&url).send().await?.text().await?;
     Ok(response_string)

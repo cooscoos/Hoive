@@ -6,25 +6,25 @@ use actix_session::Session;
 use actix_web::{error, web, Error, HttpRequest, HttpResponse};
 
 use actix_web::Responder;
+use hoive::game::actions::BoardAction;
 use rustrict::CensorStr;
 use std::result::Result;
 use std::str::FromStr;
 
 use rand::Rng;
 
-
 pub use crate::db;
+use crate::models::GameState;
+pub use crate::models::{self, User};
+pub use crate::schema;
+use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
+use diesel::SqliteConnection;
 pub use hoive::game;
 use hoive::game::comps::convert_static;
 use hoive::game::comps::Team;
 use hoive::game::movestatus::MoveStatus;
 use hoive::maths::coord::DoubleHeight;
 use hoive::maths::coord::{Coord, Cube};
-use crate::models::GameState;
-pub use crate::models::{self, User};
-pub use crate::schema;
-use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
-use diesel::SqliteConnection;
 use uuid::Uuid;
 
 const SESSION_ID_KEY: &str = "session_id";
@@ -40,13 +40,6 @@ use self::game::specials;
 #[derive(Deserialize)]
 pub struct SessionInfo {
     id: Uuid,
-}
-
-#[derive(Deserialize, Debug, Clone)]
-pub struct BoardAction {
-    pub name: String,            // chip name
-    pub rowcol: (i8, i8),        // destination row,col
-    pub special: Option<String>, // stores special move info (e.g. p,sourcerow,sourcecol)
 }
 
 /// Get a connection to the db
@@ -96,12 +89,6 @@ pub async fn register_user(
             session.insert(USER_COLOR_KEY, user_color.clone())?;
 
             println!("{}", user_id);
-
-            // let user = models::User {
-            //     id: user_id.to_string(),
-            //     user_name: user_name.to_owned(),
-            //     user_color: user_color.to_owned(),
-            // };
             Ok(web::Json(user_id.to_string()))
         }
         Err(error) => Err(error::ErrorBadGateway(format!(
@@ -197,8 +184,10 @@ pub async fn join(
                     false => "W",
                 };
 
+                let teamy = Team::from_str(second).unwrap();
+
                 // Update the db and return a string
-                match db::update_game_state(&game_id, second, "", "", &mut conn) {
+                match db::update_game_state(&game_id, teamy, "", &mut conn) {
                     Ok(_) => Ok(HttpResponse::Ok().body(second)),
                     Err(err) => Err(error::ErrorInternalServerError(format!(
                         "Can't update game state of {session_id} because {err}"
@@ -268,25 +257,21 @@ fn current_player(game_state: &GameState) -> Result<Team, Error> {
 
 /// Allow player to take some sort of action
 pub async fn make_action(
-    form_input: web::Json<BoardAction>,
+    action: web::Json<BoardAction>,
     session: Session,
     req: HttpRequest,
 ) -> Result<impl Responder, Error> {
     println!("REQ: {:?}", req);
-
     let mut conn = get_db_connection(req)?;
-
-    // For debug
-    println!("Recieved {:?} as form_input.special", form_input.special);
 
     if let Some(session_id) = session.get::<Uuid>(SESSION_ID_KEY)? {
         // Retrieve the game_state and current player
         let game_state = retrieve_game_state(&session, &mut conn).await?;
         let active_team = current_player(&game_state)?;
 
-        // Find out if we have a special action
-        match &form_input.special {
-            Some(value) if value == "forfeit" => {
+        // Find out if we have a special player action
+        match action.special.as_ref() {
+            Some(special) if special == "forfeit" => {
                 // Forfeit means active player is giving up
                 match forfeit(active_team, &session_id, &mut conn).await {
                     Ok(_) => Ok(web::Json(MoveStatus::Success)),
@@ -295,7 +280,7 @@ pub async fn make_action(
                     ))),
                 }
             }
-            Some(value) if value == "skip" => {
+            Some(special) if special == "skip" => {
                 // Try and skip the current player's turn
                 match skip_turn(game_state, active_team, &session_id, &mut conn).await {
                     Ok(move_status) => Ok(web::Json(move_status)),
@@ -304,78 +289,107 @@ pub async fn make_action(
                     ))),
                 }
             }
-            _ => {
-                // None, or startswith m or p
-                assert!(cheat_check(&form_input, &active_team));
-
-                // Get the board
-                let board_state = game_state.board.unwrap(); // this might die if we have an empty board
-
-                // generate a board in Cube coords based on the existing state
-                let board = Board::new(Cube::default());
-                let mut board = board.decode_spiral(board_state);
-
-                // Convert the input move into DoubleHeight coordinates
-                let moveto = DoubleHeight::from(form_input.rowcol);
-                let chip_name = hoive::game::comps::convert_static(form_input.name.to_lowercase()).unwrap();
-
-                let special_str = form_input.special.as_ref();
-
-                match special_str {
-                    Some(special) => {
-                        let move_status = hoive::pmoore::decode_specials(&mut board, &special, active_team, chip_name, moveto);
-                        if move_status == MoveStatus::Success {
-                            // Refresh all mosquito names back to m1 and update db
-                            specials::mosquito_desuck(&mut board);
-                            let board_str = board.encode_spiral();
-
-                            // Update db
-                            let res = db::update_game_state(
-                                &session_id,
-                                &active_team.to_string(),
-                                &board_str,
-                                "",
-                                &mut conn,
-                            );
-
-                            match res {
-                                Ok(_) => return Ok(web::Json(move_status)),
-                                Err(err) => {
-                                    return Err(error::ErrorInternalServerError(format!(
-                                        "Problem updating gamestate because {err}"
-                                    )))
-                                }
-                            }
-                        } else {
-                            return Ok(web::Json(move_status));
-                        }
-                    }
-                    None => {
-                        match do_movement(
-                            &mut board,
-                            chip_name,
-                            moveto,
-                            active_team,
-                            &session_id,
-                            &mut conn,
-                        )
-                        .await
-                        {
-                            Ok(move_status) => Ok(web::Json(move_status)),
-                            Err(err) => Err(error::ErrorInternalServerError(format!(
-                                "Problem updating gamestate because {err}"
-                            ))),
-                        }
-
-                    }
+            Some(_) => {
+                // Any other special string is a pillbug / mosquito action
+                match do_special(game_state, action, &session_id, &mut conn).await {
+                    Ok(move_status) => Ok(web::Json(move_status)),
+                    Err(err) => Err(error::ErrorInternalServerError(format!(
+                        "Problem updating gamestate because {err}"
+                    ))),
                 }
-
-
-
+            }
+            None => {
+                // Otherwise it's a normal move
+                match do_movement(game_state, action, &session_id, &mut conn).await {
+                    Ok(move_status) => Ok(web::Json(move_status)),
+                    Err(err) => Err(error::ErrorInternalServerError(format!(
+                        "Problem updating gamestate because {err}"
+                    ))),
+                }
             }
         }
     } else {
         return Err(error::ErrorInternalServerError("Can't find game session"));
+    }
+}
+
+/// Try and execute movement
+async fn do_movement(
+    game_state: GameState,
+    action: web::Json<BoardAction>,
+    session_id: &Uuid,
+    conn: &mut SqliteConnection,
+) -> Result<MoveStatus, Error> {
+    // Generate a board based on the gamestate and find the chip name and active team
+    let mut board = game_state.to_cube_board();
+    let active_team = current_player(&game_state)?;
+    let chip_name = action.get_chip_name();
+    assert!(cheat_check(&action, &active_team));
+
+    // Convert from doubleheight to the board's co-ordinate system
+    let position = board.coord.mapfrom_doubleheight(action.rowcol);
+
+    // Try and do the move, see what happens. If it's successful the board struct will update itself
+    let move_status = board.move_chip(chip_name, active_team, position);
+
+    match move_status {
+        MoveStatus::Success => {
+            // Refresh all mosquito names back to m1 and update board on server
+            specials::mosquito_desuck(&mut board);
+            let board_str = board.encode_spiral();
+            let res = db::update_game_state(&session_id, active_team, &board_str, conn);
+
+            match res {
+                Ok(_) => Ok(move_status),
+                Err(err) => Err(error::ErrorInternalServerError(format!(
+                    "Problem updating gamestate because {err}"
+                ))),
+            }
+        }
+        _ => Ok(move_status),
+    }
+}
+
+/// Try and execute a chip special
+async fn do_special(
+    game_state: GameState,
+    action: web::Json<BoardAction>,
+    session_id: &Uuid,
+    conn: &mut SqliteConnection,
+) -> Result<MoveStatus, Error> {
+    // Generate a board based on the gamestate and find the chip name and active team
+    let mut board = game_state.to_cube_board();
+    let active_team = current_player(&game_state)?;
+
+    assert!(cheat_check(&action, &active_team));
+
+    // Try and decode and execute the special
+    let move_status = hoive::pmoore::decode_specials(
+        &mut board,
+        &action.get_special(),
+        active_team,
+        action.get_chip_name(),
+        action.rowcol,
+    );
+
+    match move_status {
+        MoveStatus::Success => {
+            // Refresh all mosquito names back to m1 and update db
+            specials::mosquito_desuck(&mut board);
+            let board_str = board.encode_spiral();
+
+            let res = db::update_game_state(&session_id, active_team, &board_str, conn);
+
+            match res {
+                Ok(_) => return Ok(move_status),
+                Err(err) => {
+                    return Err(error::ErrorInternalServerError(format!(
+                        "Problem updating gamestate because {err}"
+                    )))
+                }
+            }
+        }
+        _ => return Ok(move_status),
     }
 }
 
@@ -391,42 +405,6 @@ fn cheat_check(form_input: &web::Json<BoardAction>, active_team: &Team) -> bool 
     };
 
     team_chips == *active_team
-}
-
-/// Try and execute movement
-async fn do_movement<T: Coord>(
-    board: &mut Board<T>,
-    chip_name: &str,
-    moveto: DoubleHeight,
-    active_team: Team,
-    session_id: &Uuid,
-    conn: &mut SqliteConnection,
-) -> Result<MoveStatus, Error> {
-    // Convert from doubleheight to the board's co-ordinate system
-    let game_hex = board.coord.mapfrom_doubleheight(moveto);
-
-    // Convert the input chipname to a static str
-    let chip_name = convert_static(chip_name.to_lowercase()).expect("Couldn't parse chip name");
-
-    // Try and do the move, see what happens. If it's successful the board struct will update itself
-    let move_status = board.move_chip(chip_name, active_team, game_hex);
-
-    if move_status == MoveStatus::Success {
-        // Refresh all mosquito names back to m1 and update board on server
-        specials::mosquito_desuck(board);
-        let board_str = board.encode_spiral();
-        let res =
-            db::update_game_state(&session_id, &active_team.to_string(), &board_str, "", conn);
-
-        match res {
-            Ok(_) => Ok(move_status),
-            Err(err) => Err(error::ErrorInternalServerError(format!(
-                "Problem updating gamestate because {err}"
-            ))),
-        }
-    } else {
-        Ok(move_status)
-    }
 }
 
 async fn skip_turn(
@@ -449,12 +427,10 @@ async fn skip_turn(
                 Ok(_) => Ok(MoveStatus::Success),
                 Err(err) => return Err(error::ErrorInternalServerError(err)),
             }
-        },
+        }
         MoveStatus::NoSkip => Ok(MoveStatus::NoSkip),
         _ => unreachable!(),
     }
-
-
 }
 
 async fn forfeit(

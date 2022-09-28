@@ -1,13 +1,13 @@
+use reqwest::Client;
 /// Set up connections to a Hoive db and generate/join games
 use std::{error::Error, thread, time::Duration};
-use reqwest::Client;
 use uuid::Uuid;
 
 use crate::comms;
 use hoive::draw;
 use hoive::game::comps::Team;
-use server::models::GameState;
 use hoive::pmoore::get_usr_input;
+use server::models::GameState;
 
 /// Return the address of a live Hoive server based on user inputs
 pub async fn join_server() -> Result<(Client, String), Box<dyn Error>> {
