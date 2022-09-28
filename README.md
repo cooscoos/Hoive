@@ -12,6 +12,7 @@ Choose one of the following directories and do `cargo run`:
 ## To do
 
 ### Deduplication
+
 Tidy up server api to mimic / use pmoore more where possible
 
 ### Base game (hoive)
@@ -37,7 +38,7 @@ Consider:
 
 ### Server
 
-- everything broadly works --have a good old tidy up
+- user_id, l_user_id in updates is quirky. user_color isn't used. Why is it working?
 - server will need to have some sort of history for tracking pillbugs, use gamestate in db
 
 <!-- 
