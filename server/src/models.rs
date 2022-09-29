@@ -12,7 +12,6 @@ use std::error::Error;
 pub struct User {
     pub id: String,
     pub user_name: String,
-    pub user_color: String,
 }
 
 #[derive(Serialize, Deserialize, Queryable, Debug, Clone)]

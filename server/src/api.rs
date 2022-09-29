@@ -4,7 +4,7 @@
 ///
 
 use std::result::Result;
-use std::str::FromStr;
+
 
 use rustrict::CensorStr;
 use rand::Rng;
@@ -19,13 +19,13 @@ pub use crate::db;
 use crate::models::GameState;
 pub use crate::models::{self, User};
 pub use crate::schema;
-use crate::schema::game_state::user_2;
+
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use diesel::SqliteConnection;
 
 const SESSION_ID_KEY: &str = "session_id";
 const USER_ID_KEY: &str = "user_id";
-const USER_COLOR_KEY: &str = "user_color";
+
 
 use hoive::game::{comps::Team, movestatus::MoveStatus, actions::BoardAction, board::Board, specials};
 use hoive::maths::coord::{Coord, Cube};
@@ -75,15 +75,13 @@ pub async fn register_user(
     let user_color = "red".to_string();
     println!("REQ: {:?}", req);
     println!("User Name: {:?}", user_name);
-    println!("User Color: {:?}", user_color);
+
 
     let mut conn = get_db_connection(req)?;
 
     match db::create_user(&user_name, &user_color, &mut conn) {
         Ok(user_id) => {
             session.insert(USER_ID_KEY, user_id.to_string())?;
-            session.insert(USER_COLOR_KEY, user_color.clone())?;
-
             println!("{}", user_id);
             Ok(web::Json(user_id.to_string()))
         }

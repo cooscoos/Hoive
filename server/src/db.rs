@@ -16,7 +16,6 @@ pub use crate::models;
 use crate::models::{GameState, NewGameState, User};
 pub use crate::schema;
 
-use hoive::game::comps::Team;
 
 #[derive(Debug)]
 pub struct ConnectionOptions {
@@ -82,7 +81,6 @@ pub fn create_user(name: &str, team: &str, conn: &mut SqliteConnection) -> Resul
     let new_user = User {
         id: uuid.to_string(),
         user_name: name.to_owned(),
-        user_color: team.to_owned(),
     };
 
     match diesel::insert_into(user).values(&new_user).execute(conn) {

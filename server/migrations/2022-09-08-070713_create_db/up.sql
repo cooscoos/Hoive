@@ -10,9 +10,8 @@ CREATE TABLE game_state (
 
 CREATE TABLE user (
     id TEXT PRIMARY KEY NOT NULL ,
-    user_name TEXT NOT NULL ,
-    user_color TEXT(1) NOT NULL
+    user_name TEXT NOT NULL
 );
 
-INSERT INTO user VALUES ('1', 'user1', 'B');
-INSERT INTO user VALUES ('2', 'user2', 'W');
+INSERT INTO user VALUES ('1', 'user1');
+INSERT INTO user VALUES ('2', 'user2');
