@@ -178,16 +178,18 @@ pub async fn join(
                     ))),
                 };
 
-                // Toss a coin to see who goes first. Team black = user_2. 
+                // Toss a coin to see who goes first. Team black = user_1. 
                 let mut rand = rand::thread_rng();
-                let (second, l_user) = match rand.gen() {
-                    true => ("B", game_state.user_2.unwrap()),
-                    false => ("W", game_state.user_1.unwrap()),
+                let l_user = match rand.gen() {
+                    true => game_state.user_1.unwrap(),
+                    false => game_state.user_2.unwrap(),
                 };
+
+                
 
                 // Update the db and return a string
                 match db::update_game_state(&game_id, l_user, "", &mut conn) {
-                    Ok(_) => Ok(HttpResponse::Ok().body(second)),
+                    Ok(_) => Ok(HttpResponse::Ok().body("")),
                     Err(err) => Err(error::ErrorInternalServerError(format!(
                         "Can't update game state of {session_id} because {err}"
                     ))),
@@ -248,7 +250,6 @@ fn current_player(game_state: &GameState) -> Result<Team, Error> {
         Some(value) if value == game_state.user_2.as_ref().unwrap() => Ok(Team::White),
         _ => panic!("Tried to use a team query function before teams initialised"),
     }
-
 }
 
 /// Allow player to take some sort of action

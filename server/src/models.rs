@@ -30,7 +30,10 @@ impl GameState {
         // Find which user went last and return the opposite team
 
         match &self.last_user_id {
-            Some(value) if value == self.user_2.as_ref().unwrap() => Ok(Team::White),
+            Some(value) if value == self.user_2.as_ref().unwrap() => {
+                println!("user_2 was the last user, which means it's user_1, team white turn");
+                return Ok(Team::White)}
+                ,
             Some(value) if value == self.user_1.as_ref().unwrap() => Ok(Team::Black),
             _ => panic!("Team is undefined"),
         }

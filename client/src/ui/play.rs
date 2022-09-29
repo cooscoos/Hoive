@@ -57,7 +57,6 @@ pub async fn observe<T: Coord>(
 
     println!("Waiting for other player to take turn...");
 
-
     let my_user_id = match my_team {
         Team::Black => game_state.user_2,
         Team::White => game_state.user_1,
