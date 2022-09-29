@@ -28,11 +28,11 @@ pub struct GameState {
 impl GameState {
     /// Which team's turn is it right now?
     pub fn whose_turn(&self) -> Result<Team, Box<dyn Error>> {
-        // Find which team went last and return the opposite team
-        let last_turn = self.last_user_id.as_ref();
-        match self.last_user_id {
-            _ if last_turn == Some(&"B".to_string()) => Ok(Team::White),
-            _ if last_turn == Some(&"W".to_string()) => Ok(Team::Black),
+        // Find which user went last and return the opposite team
+
+        match &self.last_user_id {
+            Some(value) if value == self.user_2.as_ref().unwrap() => Ok(Team::White),
+            Some(value) if value == self.user_1.as_ref().unwrap() => Ok(Team::Black),
             _ => panic!("Team is undefined"),
         }
     }

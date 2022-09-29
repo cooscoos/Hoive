@@ -71,9 +71,12 @@ pub fn create_conn_pool() -> Pool<ConnectionManager<SqliteConnection>> {
 
 /// Creates a new user on the db with a given name and team
 pub fn create_user(name: &str, team: &str, conn: &mut SqliteConnection) -> Result<Uuid, String> {
-    use super::schema::user::dsl::*;
-    //let conn = &mut establish_connection();
 
+    // We have the "use" statement  in each function rather than at the top of the module to avoid ambiguity.
+    // In some functions we want to use schema::user::dsl::* and in others we want schema::game_state::dsl::*.
+    use super::schema::user::dsl::*;
+
+    // Generate and assign new uuid for the user
     let uuid = Uuid::new_v4();
 
     let new_user = User {
@@ -88,12 +91,9 @@ pub fn create_user(name: &str, team: &str, conn: &mut SqliteConnection) -> Resul
     }
 }
 
-/// Creates a new game session (a new board) on the db, with a given player1
+/// Creates a new game session on the db, with a given user as user_1
 pub fn create_session(user: &Uuid, conn: &mut SqliteConnection) -> Result<Uuid, String> {
-    // We have the use statement here rather than at the top of the module because in some functions we'll
-    // want to use schema::user::dsl::* in functions that deal with the user part of the db, and we don't want ambiguity.
     use schema::game_state::dsl::*;
-    //let conn = &mut establish_connection();
 
     let session_id = Uuid::new_v4();
 
@@ -112,11 +112,11 @@ pub fn create_session(user: &Uuid, conn: &mut SqliteConnection) -> Result<Uuid, 
     }
 }
 
-/// Finds an existing game session that a second user can join
+/// Finds an existing game session with no user_2 that a second user can join
 pub fn find_live_session(conn: &mut SqliteConnection) -> Option<models::GameState> {
     use schema::game_state::dsl::*;
 
-    // Search the db for active games where there's no player 2
+    // Search the db for active games where there's no user_2
     let results = game_state
         .filter(user_2.is_null())
         .load::<GameState>(conn)
@@ -127,14 +127,13 @@ pub fn find_live_session(conn: &mut SqliteConnection) -> Option<models::GameStat
     results.first().cloned()
 }
 
-/// Lets a user_2 join a live session
+/// Lets a user_2 join a live session of given session_id
 pub fn join_live_session(
     session_id: &Uuid,
     user2_id: &Uuid,
     conn: &mut SqliteConnection,
 ) -> QueryResult<usize> {
     use schema::game_state::dsl::*;
-    //let conn = &mut establish_connection();
 
     diesel::update(game_state)
         .set(user_2.eq(user2_id.to_string()))
@@ -142,10 +141,9 @@ pub fn join_live_session(
         .execute(conn)
 }
 
-/// Gets the board from a given game session in the db
+/// Get the board from a given game session
 pub fn get_board(session_id: &Uuid, conn: &mut SqliteConnection) -> Result<String, String> {
     use schema::game_state::dsl::*;
-    //let conn = &mut establish_connection();
 
     let results = game_state
         .filter(id.eq(session_id.to_string()))
@@ -158,10 +156,12 @@ pub fn get_board(session_id: &Uuid, conn: &mut SqliteConnection) -> Result<Strin
     Ok(fetched_board.to_string())
 }
 
+
+
 /// Update the game state of a given session_id with new info on the last user and new board state
 pub fn update_game_state(
     session_id: &Uuid,
-    l_user: Team,
+    l_user: String,
     board_str: &str,
     conn: &mut SqliteConnection,
 ) -> QueryResult<usize> {
@@ -232,6 +232,8 @@ pub fn get_game_state(
         .expect("Error loading game state");
     Ok(res[0].clone())
 }
+
+
 
 /// Clear the db (wipe all gamestates and users)
 pub fn clean_db(conn: &mut SqliteConnection) {
