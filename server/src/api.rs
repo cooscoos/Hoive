@@ -4,7 +4,7 @@
 ///
 
 use std::result::Result;
-use std::str::FromStr;
+
 
 use rustrict::CensorStr;
 use rand::Rng;
@@ -19,12 +19,13 @@ pub use crate::db;
 use crate::models::GameState;
 pub use crate::models::{self, User};
 pub use crate::schema;
+
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use diesel::SqliteConnection;
 
 const SESSION_ID_KEY: &str = "session_id";
 const USER_ID_KEY: &str = "user_id";
-const USER_COLOR_KEY: &str = "user_color";
+
 
 use hoive::game::{comps::Team, movestatus::MoveStatus, actions::BoardAction, board::Board, specials};
 use hoive::maths::coord::{Coord, Cube};
@@ -74,15 +75,13 @@ pub async fn register_user(
     let user_color = "red".to_string();
     println!("REQ: {:?}", req);
     println!("User Name: {:?}", user_name);
-    println!("User Color: {:?}", user_color);
+
 
     let mut conn = get_db_connection(req)?;
 
     match db::create_user(&user_name, &user_color, &mut conn) {
         Ok(user_id) => {
             session.insert(USER_ID_KEY, user_id.to_string())?;
-            session.insert(USER_COLOR_KEY, user_color.clone())?;
-
             println!("{}", user_id);
             Ok(web::Json(user_id.to_string()))
         }
@@ -171,18 +170,26 @@ pub async fn join(
             Ok(1) => {
                 println!("User joined successfully");
 
-                // Toss a coin to see who goes first
-                let mut rand = rand::thread_rng();
-                let second = match rand.gen() {
-                    true => "B",
-                    false => "W",
+                // Get the game state so we can retrieve user ids
+                let game_state = match db::get_game_state(&session_id, &mut conn) {
+                    Ok(value) => value,
+                    Err(err) => return Err(error::ErrorNotFound(format!(
+                        "Could not load gamestate from {session_id} because {err}"
+                    ))),
                 };
 
-                let teamy = Team::from_str(second).unwrap();
+                // Toss a coin to see who goes first. Team black = user_1. 
+                let mut rand = rand::thread_rng();
+                let l_user = match rand.gen() {
+                    true => game_state.user_1.unwrap(),
+                    false => game_state.user_2.unwrap(),
+                };
+
+                
 
                 // Update the db and return a string
-                match db::update_game_state(&game_id, teamy, "", &mut conn) {
-                    Ok(_) => Ok(HttpResponse::Ok().body(second)),
+                match db::update_game_state(&game_id, l_user, "", &mut conn) {
+                    Ok(_) => Ok(HttpResponse::Ok().body("")),
                     Err(err) => Err(error::ErrorInternalServerError(format!(
                         "Can't update game state of {session_id} because {err}"
                     ))),
@@ -238,14 +245,10 @@ async fn retrieve_game_state(
 /// Returns who the db thinks is the current player
 fn current_player(game_state: &GameState) -> Result<Team, Error> {
     // This will return the previous player
-    let string_version = match &game_state.last_user_id {
-        Some(value) => value,
-        None => panic!("Tried to use a team query function before teams initialised"),
-    };
-
-    match Team::from_str(string_version.as_str()) {
-        Ok(value) => Ok(!value), // return not previous player for current player
-        Err(err) => Err(error::ErrorInternalServerError(err)),
+    match &game_state.last_user_id {
+        Some(value) if value == game_state.user_1.as_ref().unwrap() => Ok(Team::Black),
+        Some(value) if value == game_state.user_2.as_ref().unwrap() => Ok(Team::White),
+        _ => panic!("Tried to use a team query function before teams initialised"),
     }
 }
 
@@ -331,7 +334,14 @@ async fn do_movement(
             // Refresh all mosquito names back to m1 and update board on server
             specials::mosquito_desuck(&mut board);
             let board_str = board.encode_spiral();
-            let res = db::update_game_state(&session_id, active_team, &board_str, conn);
+
+
+            let l_user = match active_team {
+                Team::Black => game_state.user_2.unwrap(),
+                Team::White => game_state.user_1.unwrap(),
+            };
+
+            let res = db::update_game_state(&session_id, l_user, &board_str, conn);
 
             match res {
                 Ok(_) => Ok(move_status),
@@ -371,7 +381,12 @@ async fn do_special(
             specials::mosquito_desuck(&mut board);
             let board_str = board.encode_spiral();
 
-            let res = db::update_game_state(&session_id, active_team, &board_str, conn);
+            let l_user = match active_team {
+                Team::Black => game_state.user_2.unwrap(),
+                Team::White => game_state.user_1.unwrap(),
+            };
+
+            let res = db::update_game_state(&session_id, l_user, &board_str, conn);
 
             match res {
                 Ok(_) => return Ok(move_status),

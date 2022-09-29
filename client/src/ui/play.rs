@@ -57,12 +57,19 @@ pub async fn observe<T: Coord>(
 
     println!("Waiting for other player to take turn...");
 
+    let my_user_id = match my_team {
+        Team::Black => game_state.user_2,
+        Team::White => game_state.user_1,
+    };
+
+
     // If the last person who took turn is you, then we're still waiting for other player
-    while game_state.last_user_id.as_ref().unwrap() == &my_team.to_string() {
+    while game_state.last_user_id.as_ref().unwrap() == my_user_id.as_ref().unwrap() {
         // Wait a few seconds, refresh gamestate
         thread::sleep(Duration::from_secs(5));
         game_state = comms::get_gamestate(&client, &base_url).await?;
     }
+    game_state = comms::get_gamestate(&client, &base_url).await?;
     Ok(game_state)
 }
 

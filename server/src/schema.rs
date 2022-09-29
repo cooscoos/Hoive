@@ -13,8 +13,10 @@ table! {
     user (id) {
         id -> Text,
         user_name -> Text,
-        user_color -> Text,
     }
 }
 
-allow_tables_to_appear_in_same_query!(game_state, user,);
+allow_tables_to_appear_in_same_query!(
+    game_state,
+    user,
+);
