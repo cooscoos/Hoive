@@ -2,18 +2,14 @@
 The boardgame [Hive](https://en.wikipedia.org/wiki/Hive_(game)), written in Rust.
 
 Choose one of the following directories and do `cargo run`:
+- **client**: play locally (couch co-op) or on a Hoive game web server, or;
+- **server**: host a Hoive game web server.
 
-- *hoive*: run and play the game locally (couch co-op);
-- *server*: host a web server to allow people to play online via a client, or;
-- *client*: play on an active web server
+The Hoive directory contains the game logic.
 
 ![snapshot of the app](/misc/gameplay.png "snapshot of the app")
 
 ## To do
-
-### Deduplication
-
-Continue tidying up -> server done, now do client
 
 ### Base game (hoive)
 
@@ -25,8 +21,7 @@ Continue tidying up -> server done, now do client
 ### Client
 
 - everything broadly works. but need a good old tidy up and write some tests
-- consider moving local_ui from hoive into client and having a local-play option on setup
-- try remove traits like deserialize and see if you can get away with it
+- local play needs to show board after successful move
 - oberve fn: A better UI would get usr input to feel responsive ... but also poll for update while waiting. Might need some other fn polling in the background with tx,rx to achieve that
 - observe fn also ques user garbage typing into next move - this is not good
 - Solution to quitting whenever might be tx,rx (something for later)
@@ -39,6 +34,7 @@ Consider:
 ### Server
 
 - server will need to have some sort of history for tracking pillbugs, use gamestate in db
+- then write some tests
 
 <!-- 
 #### Refs
