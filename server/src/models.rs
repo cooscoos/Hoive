@@ -1,20 +1,21 @@
-use super::schema::game_state;
-use super::schema::user;
-use hoive::game::board::Board;
-use hoive::maths::coord::{Coord, Cube};
-use hoive::{game::comps::Team, maths::coord::DoubleHeight};
+/// Structs that are used by the database, server and client.
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 
+use super::schema::game_state;
+use super::schema::user;
+
+use hoive::game::{board::Board, comps::Team};
+use hoive::maths::coord::{Coord, Cube};
+
 #[derive(Serialize, Deserialize, Default, Queryable, Insertable, Debug, Clone)]
-//#[table_name = "user"]
 #[diesel(table_name = user)]
 pub struct User {
     pub id: String,
     pub user_name: String,
 }
 
-#[derive(Serialize, Deserialize, Queryable, Debug, Clone)]
+#[derive(Serialize, Deserialize, Default, Queryable, Debug, Clone)]
 pub struct GameState {
     pub id: String,
     pub board: Option<String>,
@@ -25,17 +26,28 @@ pub struct GameState {
 }
 
 impl GameState {
-    /// Which team's turn is it right now?
-    pub fn whose_turn(&self) -> Result<Team, Box<dyn Error>> {
+    /// Returns the team of the active player
+    pub fn which_team(&self) -> Result<Team, Box<dyn Error>> {
         // Find which user went last and return the opposite team
-
+        // If user_1 went last, it must be user_2 (white team) turn.
         match &self.last_user_id {
-            Some(value) if value == self.user_2.as_ref().unwrap() => {
-                println!("user_2 was the last user, which means it's user_1, team white turn");
-                return Ok(Team::White)}
-                ,
-            Some(value) if value == self.user_1.as_ref().unwrap() => Ok(Team::Black),
-            _ => panic!("Team is undefined"),
+            Some(value) if value == self.user_1.as_ref().unwrap() => Ok(Team::White),
+            Some(value) if value == self.user_2.as_ref().unwrap() => Ok(Team::Black),
+            _ => panic!(
+                "Team is undefined because last_user_id is {:?}",
+                self.last_user_id
+            ),
+        }
+    }
+
+    /// Returns the user id of the active player
+    pub fn which_user(&self) -> Result<String, Box<dyn Error>> {
+        // Find the active team
+        let active_team = self.which_team()?;
+
+        match active_team {
+            Team::Black => Ok(self.user_1.to_owned().unwrap()),
+            Team::White => Ok(self.user_2.to_owned().unwrap()),
         }
     }
 
@@ -55,7 +67,6 @@ impl GameState {
 }
 
 #[derive(Deserialize, Serialize, Insertable)]
-//#[table_name = "game_state"]
 #[diesel(table_name = game_state)]
 pub struct NewGameState {
     pub id: String,

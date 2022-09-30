@@ -69,62 +69,59 @@ impl ToString for MoveStatus {
     /// Convert movestatus enum to a descriptive string
     fn to_string(&self) -> String {
         match self {
-            MoveStatus::Success => {
-                format!("Action successful.")
-            }
+            MoveStatus::Success => "Action successful.".to_string(),
             MoveStatus::BadNeighbour => {
-                format!("\n\x1b[31;1m<< Can't place a new chip next to other team >>\x1b[0m\n")
+                "\n\x1b[31;1m<< Can't place a new chip next to other team >>\x1b[0m\n".to_string()
             }
             MoveStatus::HiveSplit => {
-                format!("\n\x1b[31;1m<< No: this move would split the hive in two >>\x1b[0m\n")
+                "\n\x1b[31;1m<< No: this move would split the hive in two >>\x1b[0m\n".to_string()
             }
             MoveStatus::Occupied => {
-                format!("\n\x1b[31;1m<< Can't move this chip to an occupied position >>\x1b[0m\n")
+                "\n\x1b[31;1m<< Can't move this chip to an occupied position >>\x1b[0m\n"
+                    .to_string()
             }
             MoveStatus::Unconnected => {
-                format!(
-                    "\n\x1b[31;1m<< Can't move your chip to an unconnected position  >>\x1b[0m\n"
-                )
+                "\n\x1b[31;1m<< Can't move your chip to an unconnected position  >>\x1b[0m\n"
+                    .to_string()
             }
             MoveStatus::SmallGap => {
-                format!("\n\x1b[31;1m<< Gap too small for this piece to move into  >>\x1b[0m\n")
+                "\n\x1b[31;1m<< Gap too small for this piece to move into  >>\x1b[0m\n".to_string()
             }
             MoveStatus::NoSkip => {
-                format!("\n\x1b[31;1m<< Can't skip turn until both bees are placed  >>\x1b[0m\n")
+                "\n\x1b[31;1m<< Can't skip turn until both bees are placed  >>\x1b[0m\n".to_string()
             }
             MoveStatus::NoSpecial => {
-                format!("\n\x1b[31;1m<< This chip doesn't have special moves >>\x1b[0m\n")
+                "\n\x1b[31;1m<< This chip doesn't have special moves >>\x1b[0m\n".to_string()
             }
             MoveStatus::BadDistance(value) => {
                 format!("\n\x1b[31;1m<<  No: this peice must move {value} space(s)  >>\x1b[0m\n")
             }
             MoveStatus::NoBee => {
-                format!("\n\x1b[31;1m<< Can't move existing chips until you've placed your bee  >>\x1b[0m\n")
+                "\n\x1b[31;1m<< Can't move existing chips until you've placed your bee  >>\x1b[0m\n"
+                    .to_string()
             }
             MoveStatus::BeeNeed => {
-                format!(
-                    "\n\x1b[31;1m<< It's your third turn, you must place your bee now  >>\x1b[0m\n"
-                )
+                "\n\x1b[31;1m<< It's your third turn, you must place your bee now  >>\x1b[0m\n"
+                    .to_string()
             }
             MoveStatus::RecentMove(chip) => {
                 format!("\n\x1b[31;1m<< Can't do that this turn because chip {} moved last turn  >>\x1b[0m\n", chip)
             }
             MoveStatus::NotNeighbour => {
-                format!("\n\x1b[31;1m<< That is not a neighbouring hex >>\x1b[0m\n")
+                "\n\x1b[31;1m<< That is not a neighbouring hex >>\x1b[0m\n".to_string()
             }
             MoveStatus::BeetleBlock => {
-                format!(
                 "\n\x1b[31;1m<< A beetle on top of you prevents you from taking action >>\x1b[0m\n"
-            )
+                    .to_string()
             }
             MoveStatus::BeetleGate => {
-                format!("\n\x1b[31;1m<< A beetle gate prevents this move >>\x1b[0m\n")
+                "\n\x1b[31;1m<< A beetle gate prevents this move >>\x1b[0m\n".to_string()
             }
             MoveStatus::NoJump => {
-                format!("\n\x1b[31;1m<< Grasshopper can't make this jump >>\x1b[0m\n")
+                "\n\x1b[31;1m<< Grasshopper can't make this jump >>\x1b[0m\n".to_string()
             }
             MoveStatus::NoSuck => {
-                format!("\n\x1b[31;1m<< Mosquito can't suck another mosquito >>\x1b[0m\n")
+                "\n\x1b[31;1m<< Mosquito can't suck another mosquito >>\x1b[0m\n".to_string()
             }
             MoveStatus::Win(teamopt) => {
                 match teamopt {
@@ -134,7 +131,7 @@ impl ToString for MoveStatus {
                         format!("\n << {team_str} team wins. Well done!  >> \n")
                     }
                     None => {
-                        format!("\n << Draw. Both teams have suffered defeat! >> \n")
+                        "\n << Draw. Both teams have suffered defeat! >> \n".to_string()
                     }
                 }
             }

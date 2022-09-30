@@ -95,15 +95,19 @@ pub fn action_prompts<T: Coord>(
         let sumo_action = BoardAction::do_move(
             base_chip_name,
             active_team,
-            DoubleHeight::from((victim_dest.col,victim_dest.row)),
+            DoubleHeight::from((victim_dest.col, victim_dest.row)),
             special,
         );
         Ok(MoveStatus::Action(sumo_action))
     } else {
         match coord_prompts(textin) {
             Some((row, col)) => {
-                let move_action =
-                    BoardAction::do_move(base_chip_name, active_team, DoubleHeight::from((row, col)), special);
+                let move_action = BoardAction::do_move(
+                    base_chip_name,
+                    active_team,
+                    DoubleHeight::from((row, col)),
+                    special,
+                );
                 Ok(MoveStatus::Action(move_action))
             }
             None => Ok(MoveStatus::Nothing),
@@ -119,7 +123,6 @@ pub fn decode_specials<T: Coord>(
     mut chip_name: &'static str,
     d_dest: DoubleHeight,
 ) -> MoveStatus {
-
     // Separate out the special's instructions using commas
     let items = special.split(',').collect::<Vec<&str>>();
 
@@ -157,7 +160,6 @@ pub fn decode_specials<T: Coord>(
 
     // if we get to this point without returning anything then we must be moving a mosquito, so do so
     board.move_chip(chip_name, active_team, d_dest.mapto(board.coord))
-    
 }
 
 /// Request user input into terminal, return a trimmed string

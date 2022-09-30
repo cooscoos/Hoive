@@ -7,7 +7,7 @@ use super::comps::{convert_static_basic, Team};
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct BoardAction {
     pub name: String,            // chip name
-    pub rowcol: DoubleHeight,        // destination row, col
+    pub rowcol: DoubleHeight,    // destination row, col
     pub special: Option<String>, // Contains source (row,col) if doing mosquito/pillbug special
 }
 

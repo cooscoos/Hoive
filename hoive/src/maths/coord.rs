@@ -1,6 +1,6 @@
 use crate::maths::funcs;
 use hex_spiral::{ring, ring_offset};
-use serde::{Serialize,Deserialize};
+use serde::{Deserialize, Serialize};
 /// Module defining hexagonal co-ordinate systems for the board to use.
 use std::collections::HashSet;
 use std::fmt::Debug;
@@ -47,7 +47,9 @@ pub trait Coord:
 /// Doubleheight coordinate system used by the ascii renderer
 /// It doesn't need to implement the Coord trait because it is
 /// never used by the game logic.
-#[derive(Debug, Default, Serialize, Deserialize, Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
+#[derive(
+    Debug, Default, Serialize, Deserialize, Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord,
+)]
 pub struct DoubleHeight {
     pub col: i8,
     pub row: i8,

@@ -1,21 +1,20 @@
+/// Executes actions on the server's sqlite database (db) using diesel
+use std::result::Result;
+use std::env;
+use std::time::Duration;
+
 use diesel::connection::SimpleConnection;
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
-
 use diesel::result::QueryResult;
 use diesel::SqliteConnection;
 
-use std::result::Result;
-
 use dotenvy::dotenv;
-use std::env;
-use std::time::Duration;
 use uuid::Uuid;
 
 pub use crate::models;
 use crate::models::{GameState, NewGameState, User};
 pub use crate::schema;
-
 
 #[derive(Debug)]
 pub struct ConnectionOptions {
@@ -69,8 +68,7 @@ pub fn create_conn_pool() -> Pool<ConnectionManager<SqliteConnection>> {
 // }
 
 /// Creates a new user on the db with a given name and team
-pub fn create_user(name: &str, team: &str, conn: &mut SqliteConnection) -> Result<Uuid, String> {
-
+pub fn create_user(name: &str, conn: &mut SqliteConnection) -> Result<Uuid, String> {
     // We have the "use" statement  in each function rather than at the top of the module to avoid ambiguity.
     // In some functions we want to use schema::user::dsl::* and in others we want schema::game_state::dsl::*.
     use super::schema::user::dsl::*;
@@ -154,18 +152,14 @@ pub fn get_board(session_id: &Uuid, conn: &mut SqliteConnection) -> Result<Strin
     Ok(fetched_board.to_string())
 }
 
-
-
 /// Update the game state of a given session_id with new info on the last user and new board state
 pub fn update_game_state(
     session_id: &Uuid,
-    l_user: String,
+    l_user_id: &str,
     board_str: &str,
     conn: &mut SqliteConnection,
 ) -> QueryResult<usize> {
     use schema::game_state::dsl::*;
-
-    let l_user_id = l_user.to_string();
 
     diesel::update(game_state)
         .filter(id.eq(session_id.to_string()))
@@ -198,7 +192,7 @@ pub fn update_active_team(
 
     diesel::update(game_state)
         .filter(id.eq(session_id.to_string()))
-        .set((last_user_id.eq(l_user_id.to_string())))
+        .set(last_user_id.eq(l_user_id.to_string()))
         .execute(conn)
 }
 
@@ -230,8 +224,6 @@ pub fn get_game_state(
         .expect("Error loading game state");
     Ok(res[0].clone())
 }
-
-
 
 /// Clear the db (wipe all gamestates and users)
 pub fn clean_db(conn: &mut SqliteConnection) {

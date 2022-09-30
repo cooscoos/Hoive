@@ -2,7 +2,7 @@
 use reqwest::Client;
 use std::{error::Error, thread, time::Duration};
 
-use crate::comms;
+use super::comms;
 use server::models::{GameState, Winner};
 
 use hoive::game::{actions::BoardAction, board::Board, comps::Team, movestatus::MoveStatus};
@@ -58,10 +58,9 @@ pub async fn observe<T: Coord>(
     println!("Waiting for other player to take turn...");
 
     let my_user_id = match my_team {
-        Team::Black => game_state.user_2,
-        Team::White => game_state.user_1,
+        Team::White => game_state.user_2,
+        Team::Black => game_state.user_1,
     };
-
 
     // If the last person who took turn is you, then we're still waiting for other player
     while game_state.last_user_id.as_ref().unwrap() == my_user_id.as_ref().unwrap() {

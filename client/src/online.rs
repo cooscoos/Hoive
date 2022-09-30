@@ -1,19 +1,15 @@
-/// Terminal UI for playing games of Hoive on a server
+pub mod comms;
+/// Play games of Hoive online
 pub mod play;
 pub mod setup;
 
-use std::error::Error;
-
-use crate::comms;
 use hoive::game::board::Board;
 use hoive::maths::coord::{Coord, Cube};
 use server::models::Winner;
+use std::error::Error;
 
-/// Set up connection to Hoive server, set user id, and play some games
-pub async fn play_games() -> Result<(), Box<dyn Error>> {
-    // Welcome user with sweet ascii graphics
-    hoive::pmoore::welcome();
-
+/// Play games of Hoive online on a server
+pub async fn play_online() -> Result<(), Box<dyn Error>> {
     // Run user through prompts to join a Hoive server
     let (client, base_url) = setup::join_server().await?;
 
@@ -51,7 +47,7 @@ pub async fn play_games() -> Result<(), Box<dyn Error>> {
                 }
             }
             // Update our local copy of the active team and board
-            active_team = game_state.whose_turn()?;
+            active_team = game_state.which_team()?;
             board = board.decode_spiral(game_state.board.unwrap());
         }
 
