@@ -1,11 +1,14 @@
-use crate::comms;
+pub mod comms;
+/// Play games of Hoive online
+pub mod play;
+pub mod setup;
+
 use hoive::game::board::Board;
 use hoive::maths::coord::{Coord, Cube};
 use server::models::Winner;
 use std::error::Error;
 
-use super::{play, setup};
-
+/// Play games of Hoive online on a server
 pub async fn play_online() -> Result<(), Box<dyn Error>> {
     // Run user through prompts to join a Hoive server
     let (client, base_url) = setup::join_server().await?;

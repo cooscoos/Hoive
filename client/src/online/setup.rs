@@ -3,7 +3,7 @@ use reqwest::Client;
 use std::{error::Error, thread, time::Duration};
 use uuid::Uuid;
 
-use crate::comms;
+use super::comms;
 use hoive::draw;
 use hoive::game::comps::Team;
 use hoive::pmoore::get_usr_input;

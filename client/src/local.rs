@@ -1,21 +1,21 @@
-
+/// Play games of Hoive locally (couch co-op)
 use rand::Rng;
+use std::error::Error;
 
 use hoive::game::{
     actions::BoardAction, board::Board, comps::Team, movestatus::MoveStatus, specials,
 };
 use hoive::maths::coord::Coord;
 use hoive::{draw, pmoore};
-use std::error::Error;
 
-/// A terminal UI for playing local games of Hoive (couch co-op)
+/// Set up connection to Hoive server, set user id, and play some games
 pub fn play_offline() -> Result<(), Box<dyn Error>> {
     // Initialise game board in cube co-ordinates
     let coord = hoive::maths::coord::Cube::default();
     let mut board = Board::new(coord);
 
     // Say hello, tell players who goes first
-    let first = intro();
+    let first = pick_team();
 
     // Loop game until someone wins
     loop {
@@ -50,10 +50,8 @@ pub fn play_offline() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-/// Introduction: say hello and select random team to go first
-fn intro() -> Team {
-    pmoore::welcome();
-
+/// Select random team to go first
+fn pick_team() -> Team {
     // Select a random team to go first
     let mut rand = rand::thread_rng();
     let first = match rand.gen() {

@@ -2,7 +2,7 @@
 use reqwest::Client;
 use std::{error::Error, thread, time::Duration};
 
-use crate::comms;
+use super::comms;
 use server::models::{GameState, Winner};
 
 use hoive::game::{actions::BoardAction, board::Board, comps::Team, movestatus::MoveStatus};
