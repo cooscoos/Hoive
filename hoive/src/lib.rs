@@ -1,5 +1,5 @@
+/// Module for hoive game rules and basic UI features
 pub mod draw;
 pub mod game;
-pub mod local_ui;
 pub mod maths;
 pub mod pmoore;
