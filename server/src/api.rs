@@ -1,7 +1,6 @@
 /// This module converts HttpRequests into commands that execute gameplay and database updates.
 use std::result::Result;
 
-use hoive::game;
 // Profanity filter for usernames, and random number / uuid generation
 use rand::Rng;
 use rustrict::CensorStr;
@@ -27,7 +26,7 @@ const USER_ID_KEY: &str = "user_id";
 use hoive::game::{
     actions::BoardAction, board::Board, comps::Team, movestatus::MoveStatus, specials,
 };
-use hoive::maths::coord::{Coord, Cube};
+use hoive::maths::coord::Coord;
 
 /// Defines web form to parse a game session's uuid
 #[derive(Deserialize)]
@@ -179,7 +178,7 @@ pub async fn join(
                 };
 
                 // Update the db and return ok
-                match db::update_game_state(&session_id, l_user, "", &mut conn) {
+                match db::update_game_state(&session_id, &l_user, "", &mut conn) {
                     Ok(_) => Ok(HttpResponse::Ok().body("")),
                     Err(err) => Err(error::ErrorInternalServerError(format!(
                         "Can't update game state of {session_id} because {err}"
@@ -243,19 +242,18 @@ pub async fn make_action(
     let mut conn = get_db_connection(req)?;
 
     if let Some(session_id) = session.get::<Uuid>(SESSION_ID_KEY)? {
-        // Retrieve the game_state and current player
+        // Retrieve the game_state
         let game_state = get_game_state(&session, &mut conn).await?;
-        let active_team = game_state.whose_turn()?;
 
         // Find out if we have a special player action.
         let move_status = match action.special.as_ref() {
             Some(special) if special == "forfeit" => {
                 // Forfeit means active player is giving up
-                forfeit(active_team, &session_id, &mut conn).await?
+                forfeit(game_state, &session_id, &mut conn).await?
             }
             Some(special) if special == "skip" => {
                 // Try and skip the current player's turn
-                skip_turn(game_state, active_team, &session_id, &mut conn).await?
+                skip_turn(game_state, &session_id, &mut conn).await?
             }
             Some(_) => {
                 // Any other special string is a pillbug / mosquito action
@@ -281,7 +279,7 @@ async fn do_movement(
 ) -> Result<MoveStatus, Error> {
     // Generate a board based on the gamestate and find the chip name and active team
     let mut board = game_state.to_cube_board();
-    let active_team = game_state.whose_turn()?;
+    let active_team = game_state.which_team()?;
     let chip_name = action.get_chip_name();
     assert!(cheat_check(&action, &active_team));
 
@@ -292,7 +290,7 @@ async fn do_movement(
     let move_status = board.move_chip(chip_name, active_team, position);
 
     match move_status {
-        MoveStatus::Success => execute_on_db(&mut board, game_state, active_team, session_id, conn),
+        MoveStatus::Success => execute_on_db(&mut board, game_state, session_id, conn),
         _ => Ok(move_status),
     }
 }
@@ -306,7 +304,7 @@ async fn do_special(
 ) -> Result<MoveStatus, Error> {
     // Generate a board based on the gamestate and find the chip name and active team
     let mut board = game_state.to_cube_board();
-    let active_team = game_state.whose_turn()?;
+    let active_team = game_state.which_team()?;
     assert!(cheat_check(&action, &active_team));
 
     // Try and decode and execute the special
@@ -320,17 +318,15 @@ async fn do_special(
 
     // Execute it on the db if it was successful
     match move_status {
-        MoveStatus::Success => execute_on_db(&mut board, game_state, active_team, session_id, conn),
+        MoveStatus::Success => execute_on_db(&mut board, game_state, session_id, conn),
         _ => Ok(move_status),
     }
 }
-
 
 /// Execute a successful action on the db
 fn execute_on_db<T: Coord>(
     board: &mut Board<T>,
     game_state: GameState,
-    active_team: Team,
     session_id: &Uuid,
     conn: &mut SqliteConnection,
 ) -> Result<MoveStatus, Error> {
@@ -339,9 +335,9 @@ fn execute_on_db<T: Coord>(
     let board_str = board.encode_spiral();
 
     // Get the uuid of the current user and set them as the last_user in the db
-    let l_user = game_state.get_user_fromteam(active_team)?;
+    let l_user = game_state.which_user()?;
 
-    let res = db::update_game_state(&session_id, l_user, &board_str, conn);
+    let res = db::update_game_state(session_id, &l_user, &board_str, conn);
 
     match res {
         Ok(_) => Ok(MoveStatus::Success),
@@ -352,7 +348,6 @@ fn execute_on_db<T: Coord>(
 }
 
 /// Make sure the requested move is for the active player
-/// Will need to do some more thorough checks later such as making sure the playerid matches
 fn cheat_check(form_input: &web::Json<BoardAction>, active_team: &Team) -> bool {
     let chip_name = form_input.name.as_str();
 
@@ -367,15 +362,13 @@ fn cheat_check(form_input: &web::Json<BoardAction>, active_team: &Team) -> bool 
 
 async fn skip_turn(
     game_state: GameState,
-    active_team: Team,
     session_id: &Uuid,
     conn: &mut SqliteConnection,
 ) -> Result<MoveStatus, Error> {
-    // Get the board
+    // Get the board and current user
     let mut board = game_state.to_cube_board();
-
-    // Get current user
-    let l_user = game_state.get_user_fromteam(active_team)?;
+    let l_user = game_state.which_user()?;
+    let active_team = game_state.which_team()?;
 
     // Try skip the turn
     match board.try_skip_turn(active_team) {
@@ -383,7 +376,7 @@ async fn skip_turn(
             // Do skip, change the active team in the db
             match db::update_active_team(session_id, &l_user, conn) {
                 Ok(_) => Ok(MoveStatus::Success),
-                Err(err) => return Err(error::ErrorInternalServerError(err)),
+                Err(err) => Err(error::ErrorInternalServerError(err)),
             }
         }
         MoveStatus::NoSkip => Ok(MoveStatus::NoSkip),
@@ -392,32 +385,31 @@ async fn skip_turn(
 }
 
 async fn forfeit(
-    active_team: Team,
+    game_state: GameState,
     session_id: &Uuid,
     conn: &mut SqliteConnection,
 ) -> Result<MoveStatus, Error> {
     // The winner is the team who didn't forfeit
-    let winner = !active_team;
+    let winner = !game_state.which_team()?;
 
     // Append F to to designate the reason for winning as a forfeit
     let win_string = format!("{}F", winner.to_string());
 
     // Update the last user id to the person who forfeit (the active team)
-    let l_user_id = active_team.to_string();
+    let l_user_id = game_state.which_user()?;
 
     // Update db
-    let res = db::update_winner(&session_id, &l_user_id, &win_string, conn);
+    let res = db::update_winner(session_id, &l_user_id, &win_string, conn);
 
     match res {
-        Ok(_) => return Ok(MoveStatus::Success),
-        Err(err) => {
-            return Err(error::ErrorInternalServerError(format!(
-                "Problem updating winner in gamestate because {err}"
-            )))
-        }
-    };
+        Ok(_) => Ok(MoveStatus::Success),
+        Err(err) => Err(error::ErrorInternalServerError(format!(
+            "Problem updating winner in gamestate because {err}"
+        ))),
+    }
 }
 
+/// For debugging only. Delete the db on the server
 pub async fn delete_all(req: HttpRequest) -> Result<HttpResponse, Error> {
     let mut conn = get_db_connection(req).unwrap();
 

@@ -117,7 +117,7 @@ pub async fn join_game(
     }
 
     // Find out who the db has selected to go first and tell the player
-    let first_team = game_state.whose_turn()?;
+    let first_team = game_state.which_team()?;
     println!("Team {} goes first", draw::team_string(first_team));
 
     Ok((game_state, my_team, first_team))

@@ -7,8 +7,6 @@ use std::hash::Hash;
 use std::ops::Not;
 use std::str::FromStr;
 
-
-
 /// Enum for the two teams, Team::Black and Team::White
 #[derive(Hash, Eq, Ord, PartialOrd, PartialEq, Debug, Clone, Copy, Deserialize, Serialize)]
 pub enum Team {
@@ -49,8 +47,6 @@ impl FromStr for Team {
         }
     }
 }
-
-
 
 /// Struct for the chips in a game
 /// Each chip has a team and also a unique name that defines its animal and number.

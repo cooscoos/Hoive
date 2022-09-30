@@ -26,9 +26,10 @@ pub struct GameState {
 }
 
 impl GameState {
-    /// Which team's turn is it right now?
-    pub fn whose_turn(&self) -> Result<Team, Box<dyn Error>> {
+    /// Returns the team of the active player
+    pub fn which_team(&self) -> Result<Team, Box<dyn Error>> {
         // Find which user went last and return the opposite team
+        // If user_1 went last, it must be user_2 (white team) turn.
         match &self.last_user_id {
             Some(value) if value == self.user_1.as_ref().unwrap() => Ok(Team::White),
             Some(value) if value == self.user_2.as_ref().unwrap() => Ok(Team::Black),
@@ -39,14 +40,17 @@ impl GameState {
         }
     }
 
-    /// Get the user uuid for a given team. It's assumed that user_1 is team black.
-    pub fn get_user_fromteam(&self, team: Team) -> Result<String, Box<dyn Error>> {
-        match team {
+    /// Returns the user id of the active player
+    pub fn which_user(&self) -> Result<String, Box<dyn Error>> {
+        // Find the active team
+        let active_team = self.which_team()?;
+
+        match active_team {
             Team::Black => Ok(self.user_1.to_owned().unwrap()),
             Team::White => Ok(self.user_2.to_owned().unwrap()),
-            _ => panic!("Team is undefined"),
         }
     }
+
     /// Generate a board from a gamestate's spiral coordinates on the db
     pub fn to_cube_board(&self) -> Board<Cube> {
         let board = Board::new(Cube::default());

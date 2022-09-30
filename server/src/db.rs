@@ -1,15 +1,15 @@
+/// Executes actions on the server's sqlite database (db) using diesel
+use std::result::Result;
+use std::env;
+use std::time::Duration;
+
 use diesel::connection::SimpleConnection;
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
-
 use diesel::result::QueryResult;
 use diesel::SqliteConnection;
 
-use std::result::Result;
-
 use dotenvy::dotenv;
-use std::env;
-use std::time::Duration;
 use uuid::Uuid;
 
 pub use crate::models;
@@ -155,13 +155,11 @@ pub fn get_board(session_id: &Uuid, conn: &mut SqliteConnection) -> Result<Strin
 /// Update the game state of a given session_id with new info on the last user and new board state
 pub fn update_game_state(
     session_id: &Uuid,
-    l_user: String,
+    l_user_id: &str,
     board_str: &str,
     conn: &mut SqliteConnection,
 ) -> QueryResult<usize> {
     use schema::game_state::dsl::*;
-
-    let l_user_id = l_user.to_string();
 
     diesel::update(game_state)
         .filter(id.eq(session_id.to_string()))
@@ -194,7 +192,7 @@ pub fn update_active_team(
 
     diesel::update(game_state)
         .filter(id.eq(session_id.to_string()))
-        .set((last_user_id.eq(l_user_id.to_string())))
+        .set(last_user_id.eq(l_user_id.to_string()))
         .execute(conn)
 }
 

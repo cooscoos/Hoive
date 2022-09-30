@@ -51,7 +51,7 @@ pub async fn play_games() -> Result<(), Box<dyn Error>> {
                 }
             }
             // Update our local copy of the active team and board
-            active_team = game_state.whose_turn()?;
+            active_team = game_state.which_team()?;
             board = board.decode_spiral(game_state.board.unwrap());
         }
 

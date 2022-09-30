@@ -3,7 +3,6 @@ extern crate diesel;
 extern crate dotenvy;
 
 use actix_web::{cookie::Key, web, App, HttpServer};
-
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 
 pub mod api;
@@ -12,7 +11,6 @@ pub mod models;
 pub mod schema;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
-//pub const VERSION: &str = "0.1.0";
 
 fn get_secret_key() -> Key {
     Key::generate()
@@ -20,8 +18,7 @@ fn get_secret_key() -> Key {
 
 #[actix_web::main]
 pub async fn start_server() -> std::io::Result<()> {
-    //Todo: understand this https://docs.rs/actix-session/latest/actix_session/
-    // The secret key would usually be read from a configuration file/environment variables.
+
     let secret_key = get_secret_key();
 
     HttpServer::new(move || {
@@ -43,10 +40,10 @@ pub async fn start_server() -> std::io::Result<()> {
                         web::resource("/game-state").route(web::get().to(api::game_state_json)),
                     )
                     .service(web::resource("/wipe").route(web::get().to(api::delete_all)))
-                    // .service(web::resource("/coin-toss").route(web::get().to(api::coin_toss)))
                     .service(web::resource("/do-action").route(web::post().to(api::make_action))),
             )
-        //.service(fs::Files::new("/", "./static").index_file("index.html"))
+            // To mount a nice html webiste at index, do this and remove the default index fn above
+            //.service(fs::Files::new("/", "./static").index_file("index.html"))
     })
     .bind("127.0.0.1:8080")?
     .run()
