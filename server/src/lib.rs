@@ -39,7 +39,9 @@ pub async fn start_server() -> std::io::Result<()> {
                     .service(web::resource("/new").route(web::get().to(api::new_game)))
                     .service(web::resource("/find").route(web::get().to(api::find)))
                     .service(web::resource("/join").route(web::post().to(api::join)))
-                    .service(web::resource("/game-state").route(web::get().to(api::game_state)))
+                    .service(
+                        web::resource("/game-state").route(web::get().to(api::game_state_json)),
+                    )
                     .service(web::resource("/wipe").route(web::get().to(api::delete_all)))
                     // .service(web::resource("/coin-toss").route(web::get().to(api::coin_toss)))
                     .service(web::resource("/do-action").route(web::post().to(api::make_action))),

@@ -13,7 +13,7 @@ Choose one of the following directories and do `cargo run`:
 
 ### Deduplication
 
-Continue tidying up
+Continue tidying up -> api cheatcheck onwards
 
 ### Base game (hoive)
 

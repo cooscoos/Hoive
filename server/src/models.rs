@@ -1,20 +1,21 @@
-use super::schema::game_state;
-use super::schema::user;
-use hoive::game::board::Board;
-use hoive::maths::coord::{Coord, Cube};
-use hoive::{game::comps::Team, maths::coord::DoubleHeight};
+/// Structs that are used by the database, server and client.
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 
+use super::schema::game_state;
+use super::schema::user;
+
+use hoive::game::{board::Board, comps::Team};
+use hoive::maths::coord::{Coord, Cube};
+
 #[derive(Serialize, Deserialize, Default, Queryable, Insertable, Debug, Clone)]
-//#[table_name = "user"]
 #[diesel(table_name = user)]
 pub struct User {
     pub id: String,
     pub user_name: String,
 }
 
-#[derive(Serialize, Deserialize, Queryable, Debug, Clone)]
+#[derive(Serialize, Deserialize, Default, Queryable, Debug, Clone)]
 pub struct GameState {
     pub id: String,
     pub board: Option<String>,
@@ -28,17 +29,24 @@ impl GameState {
     /// Which team's turn is it right now?
     pub fn whose_turn(&self) -> Result<Team, Box<dyn Error>> {
         // Find which user went last and return the opposite team
-
         match &self.last_user_id {
-            Some(value) if value == self.user_2.as_ref().unwrap() => {
-                println!("user_2 was the last user, which means it's user_1, team white turn");
-                return Ok(Team::White)}
-                ,
-            Some(value) if value == self.user_1.as_ref().unwrap() => Ok(Team::Black),
-            _ => panic!("Team is undefined"),
+            Some(value) if value == self.user_1.as_ref().unwrap() => Ok(Team::White),
+            Some(value) if value == self.user_2.as_ref().unwrap() => Ok(Team::Black),
+            _ => panic!(
+                "Team is undefined because last_user_id is {:?}",
+                self.last_user_id
+            ),
         }
     }
 
+    /// Get the user uuid for a given team. It's assumed that user_1 is team black.
+    pub fn get_user_fromteam(&self, team: Team) -> Result<String, Box<dyn Error>> {
+        match team {
+            Team::Black => Ok(self.user_1.to_owned().unwrap()),
+            Team::White => Ok(self.user_2.to_owned().unwrap()),
+            _ => panic!("Team is undefined"),
+        }
+    }
     /// Generate a board from a gamestate's spiral coordinates on the db
     pub fn to_cube_board(&self) -> Board<Cube> {
         let board = Board::new(Cube::default());
@@ -55,7 +63,6 @@ impl GameState {
 }
 
 #[derive(Deserialize, Serialize, Insertable)]
-//#[table_name = "game_state"]
 #[diesel(table_name = game_state)]
 pub struct NewGameState {
     pub id: String,

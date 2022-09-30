@@ -16,7 +16,6 @@ pub use crate::models;
 use crate::models::{GameState, NewGameState, User};
 pub use crate::schema;
 
-
 #[derive(Debug)]
 pub struct ConnectionOptions {
     pub enable_wal: bool,
@@ -69,8 +68,7 @@ pub fn create_conn_pool() -> Pool<ConnectionManager<SqliteConnection>> {
 // }
 
 /// Creates a new user on the db with a given name and team
-pub fn create_user(name: &str, team: &str, conn: &mut SqliteConnection) -> Result<Uuid, String> {
-
+pub fn create_user(name: &str, conn: &mut SqliteConnection) -> Result<Uuid, String> {
     // We have the "use" statement  in each function rather than at the top of the module to avoid ambiguity.
     // In some functions we want to use schema::user::dsl::* and in others we want schema::game_state::dsl::*.
     use super::schema::user::dsl::*;
@@ -154,8 +152,6 @@ pub fn get_board(session_id: &Uuid, conn: &mut SqliteConnection) -> Result<Strin
     Ok(fetched_board.to_string())
 }
 
-
-
 /// Update the game state of a given session_id with new info on the last user and new board state
 pub fn update_game_state(
     session_id: &Uuid,
@@ -230,8 +226,6 @@ pub fn get_game_state(
         .expect("Error loading game state");
     Ok(res[0].clone())
 }
-
-
 
 /// Clear the db (wipe all gamestates and users)
 pub fn clean_db(conn: &mut SqliteConnection) {
