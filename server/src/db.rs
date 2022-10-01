@@ -152,18 +152,19 @@ pub fn get_board(session_id: &Uuid, conn: &mut SqliteConnection) -> Result<Strin
     Ok(fetched_board.to_string())
 }
 
-/// Update the game state of a given session_id with new info on the last user and new board state
+/// Update the game state of a given session_id with new info on the last user and new board state and history
 pub fn update_game_state(
     session_id: &Uuid,
     l_user_id: &str,
     board_str: &str,
+    history_str: &str,
     conn: &mut SqliteConnection,
 ) -> QueryResult<usize> {
     use schema::game_state::dsl::*;
 
     diesel::update(game_state)
         .filter(id.eq(session_id.to_string()))
-        .set((last_user_id.eq(l_user_id.to_string()), board.eq(board_str)))
+        .set((last_user_id.eq(l_user_id.to_string()), board.eq(board_str), history.eq(history_str)))
         .execute(conn)
 }
 
@@ -179,20 +180,6 @@ pub fn update_winner(
     diesel::update(game_state)
         .filter(id.eq(session_id.to_string()))
         .set((last_user_id.eq(l_user_id.to_string()), winner.eq(is_winner)))
-        .execute(conn)
-}
-
-/// Update the active team only
-pub fn update_active_team(
-    session_id: &Uuid,
-    l_user_id: &str,
-    conn: &mut SqliteConnection,
-) -> QueryResult<usize> {
-    use schema::game_state::dsl::*;
-
-    diesel::update(game_state)
-        .filter(id.eq(session_id.to_string()))
-        .set(last_user_id.eq(l_user_id.to_string()))
         .execute(conn)
 }
 

@@ -6,6 +6,7 @@ table! {
         user_2 -> Nullable<Text>,
         winner -> Nullable<Text>,
         last_user_id -> Nullable<Text>,
+        history -> Nullable<Text>,
     }
 }
 

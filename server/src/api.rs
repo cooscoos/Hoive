@@ -1,6 +1,7 @@
 /// This module converts HttpRequests into commands that execute gameplay and database updates.
 use std::result::Result;
 
+
 // Profanity filter for usernames, and random number / uuid generation
 use rand::Rng;
 use rustrict::CensorStr;
@@ -24,9 +25,10 @@ const USER_ID_KEY: &str = "user_id";
 
 // Game modules
 use hoive::game::{
-    actions::BoardAction, board::Board, comps::Team, movestatus::MoveStatus, specials,
+    actions::BoardAction, board::Board, comps::Team, movestatus::MoveStatus, specials, history::Event
 };
 use hoive::maths::coord::Coord;
+
 
 /// Defines web form to parse a game session's uuid
 #[derive(Deserialize)]
@@ -178,7 +180,7 @@ pub async fn join(
                 };
 
                 // Update the db and return ok
-                match db::update_game_state(&session_id, &l_user, "", &mut conn) {
+                match db::update_game_state(&session_id, &l_user, "", "",&mut conn) {
                     Ok(_) => Ok(HttpResponse::Ok().body("")),
                     Err(err) => Err(error::ErrorInternalServerError(format!(
                         "Can't update game state of {session_id} because {err}"
@@ -279,6 +281,7 @@ async fn do_movement(
 ) -> Result<MoveStatus, Error> {
     // Generate a board based on the gamestate and find the chip name and active team
     let mut board = game_state.to_cube_board();
+
     let active_team = game_state.which_team()?;
     let chip_name = action.get_chip_name();
     assert!(cheat_check(&action, &active_team));
@@ -289,8 +292,11 @@ async fn do_movement(
     // Try and do the move, see what happens. If it's successful the board struct will update itself
     let move_status = board.move_chip(chip_name, active_team, position);
 
+    // Create an event to track history of moves
+    let event = Event::new_by_action(&action.into_inner());
+
     match move_status {
-        MoveStatus::Success => execute_on_db(&mut board, game_state, session_id, conn),
+        MoveStatus::Success => execute_on_db(&mut board, game_state, event, session_id, conn),
         _ => Ok(move_status),
     }
 }
@@ -304,6 +310,7 @@ async fn do_special(
 ) -> Result<MoveStatus, Error> {
     // Generate a board based on the gamestate and find the chip name and active team
     let mut board = game_state.to_cube_board();
+
     let active_team = game_state.which_team()?;
     assert!(cheat_check(&action, &active_team));
 
@@ -316,9 +323,12 @@ async fn do_special(
         action.rowcol,
     );
 
+    // Create an event to track history of moves
+    let event = Event::new_by_action(&action.into_inner());
+
     // Execute it on the db if it was successful
     match move_status {
-        MoveStatus::Success => execute_on_db(&mut board, game_state, session_id, conn),
+        MoveStatus::Success => execute_on_db(&mut board, game_state, event, session_id, conn),
         _ => Ok(move_status),
     }
 }
@@ -327,6 +337,7 @@ async fn do_special(
 fn execute_on_db<T: Coord>(
     board: &mut Board<T>,
     game_state: GameState,
+    event: Event,
     session_id: &Uuid,
     conn: &mut SqliteConnection,
 ) -> Result<MoveStatus, Error> {
@@ -337,7 +348,10 @@ fn execute_on_db<T: Coord>(
     // Get the uuid of the current user and set them as the last_user in the db
     let l_user = game_state.which_user()?;
 
-    let res = db::update_game_state(session_id, &l_user, &board_str, conn);
+    // Parse the event into a string and append it to the board's history
+    let history = game_state.add_event(event);
+    
+    let res = db::update_game_state(session_id, &l_user, &board_str, &history, conn);
 
     match res {
         Ok(_) => Ok(MoveStatus::Success),
@@ -349,14 +363,7 @@ fn execute_on_db<T: Coord>(
 
 /// Make sure the requested move is for the active player
 fn cheat_check(form_input: &web::Json<BoardAction>, active_team: &Team) -> bool {
-    let chip_name = form_input.name.as_str();
-
-    // Black chips get passed as uppercase, white as lowercase
-    let team_chips = match chip_name.chars().next().unwrap().is_uppercase() {
-        true => Team::Black,
-        false => Team::White,
-    };
-
+    let team_chips = form_input.which_team();
     team_chips == *active_team
 }
 
@@ -367,14 +374,21 @@ async fn skip_turn(
 ) -> Result<MoveStatus, Error> {
     // Get the board and current user
     let mut board = game_state.to_cube_board();
+     
     let l_user = game_state.which_user()?;
     let active_team = game_state.which_team()?;
+
+    // Parse the event into a string and append it to the board's history
+    let history = game_state.add_event(Event::skip_turn(active_team));
 
     // Try skip the turn
     match board.try_skip_turn(active_team) {
         MoveStatus::Success => {
+            // encode the board as a string (to capture the skip turn)
+            let board_str = board.encode_spiral();
+
             // Do skip, change the active team in the db
-            match db::update_active_team(session_id, &l_user, conn) {
+            match db::update_game_state(session_id, &l_user, &board_str, &history, conn) {
                 Ok(_) => Ok(MoveStatus::Success),
                 Err(err) => Err(error::ErrorInternalServerError(err)),
             }

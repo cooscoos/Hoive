@@ -11,6 +11,10 @@ The Hoive directory contains the game logic.
 
 ## To do
 
+### Events history
+
+- Tidy up the tests version of history by replacing csv \n with / and then using the new to_string and from_str functions
+
 ### Base game (hoive)
 
 - There's a bug where beetle at 0-4 can move over q at 0,0 - beetles can move any number of spaces?! oops.
@@ -33,8 +37,7 @@ Consider:
 
 ### Server
 
-- server will need to have some sort of history for tracking pillbugs, use gamestate in db
-- then write some tests
+- write some tests
 
 <!-- 
 #### Refs

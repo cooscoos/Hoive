@@ -69,4 +69,11 @@ impl BoardAction {
         let dheight = self.rowcol;
         coord.mapfrom_doubleheight(dheight)
     }
+
+    /// Get the team of the chips which are doing the action
+    pub fn which_team(&self) -> Team {
+        // Black chips get passed as uppercase, white as lowercase
+        crate::game::comps::get_team_from_chip(&self.name)
+
+    }
 }
