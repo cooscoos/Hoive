@@ -60,6 +60,7 @@ pub struct Chip {
     pub team: Team,
 }
 
+
 impl Chip {
     /// Create one new chip with given name and team.
     pub fn new(name: &'static str, team: Team) -> Self {
@@ -178,4 +179,12 @@ pub fn convert_static_basic(chip_string: String) -> Option<&'static str> {
         .into_iter()
         .map(|(c, _)| c.name)
         .find(|n| *n.to_string() == chip_string)
+}
+
+/// Get the team of a chip based on whether the first letter is caps or not
+pub fn get_team_from_chip(chip_string: &str) -> Team {
+    match chip_string.chars().next().unwrap().is_uppercase() {
+        true => Team::Black,
+        false => Team::White,
+    }
 }

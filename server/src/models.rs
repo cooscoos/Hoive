@@ -1,11 +1,14 @@
+use hoive::game::history::History;
+
 /// Structs that are used by the database, server and client.
 use serde::{Deserialize, Serialize};
 use std::error::Error;
+use std::str::FromStr;
 
 use super::schema::game_state;
 use super::schema::user;
 
-use hoive::game::{board::Board, comps::Team};
+use hoive::game::{board::Board, comps::Team, history::Event};
 use hoive::maths::coord::{Coord, Cube};
 
 #[derive(Serialize, Deserialize, Default, Queryable, Insertable, Debug, Clone)]
@@ -23,6 +26,7 @@ pub struct GameState {
     pub user_2: Option<String>,
     pub winner: Option<String>,
     pub last_user_id: Option<String>,
+    pub history: Option<String>,
 }
 
 impl GameState {
@@ -53,7 +57,7 @@ impl GameState {
 
     /// Generate a board from a gamestate's spiral coordinates on the db
     pub fn to_cube_board(&self) -> Board<Cube> {
-        let board = Board::new(Cube::default());
+        let mut board = Board::new(Cube::default());
 
         // Get the board from the gamestate
         let board_state = match &self.board {
@@ -61,9 +65,39 @@ impl GameState {
             None => return board,
         };
 
-        // generate and return a board based on this gamestate
-        board.decode_spiral(board_state.to_owned())
+        // Generate a board based on this gamestate's board state
+        board = board.decode_spiral(board_state.to_owned());
+
+        // Add the history in
+        board.history = match &self.history {
+            Some(value) if value == "" => History::default(), // No string, history empty
+            Some(value) => History::from_str(value).expect("Problem parsing history"), // parse history from str
+            None => History::default(), // No value, history empty
+        };
+
+        board
+
     }
+
+
+    /// Add an event to a gamestate's history and return the history
+    pub fn add_event(self, event: Event) -> String {
+
+        // Get the existing history of the gamestate
+        let mut history = match self.history {
+            Some(value) => value,
+            None => String::new(),
+        };
+
+        // Convert the event into a string
+        let new_event = event.to_string();
+
+        // append it and overwrite the gamestate's history
+        history.push_str(&format!("{}/",new_event));
+
+        history
+    }
+
 }
 
 #[derive(Deserialize, Serialize, Insertable)]

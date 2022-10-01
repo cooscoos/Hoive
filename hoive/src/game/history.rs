@@ -2,19 +2,68 @@
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
+use std::str::FromStr;
+use std::fmt::Error;
 
+use super::actions::BoardAction;
 use super::board::Board;
-use super::comps::{convert_static, Chip, Team};
+use super::comps::{convert_static, Chip, Team, get_team_from_chip, convert_static_basic};
 use crate::maths::coord::{Coord, DoubleHeight};
 
 use super::specials;
 
 /// Every event in a game of hive is a chip_name on a given team attempting a movement
 #[derive(Debug, Eq, PartialEq, Clone)]
-struct Event {
+pub struct Event {
     chip_name: &'static str,
     team: Team,
     location: DoubleHeight,
+}
+
+/// Converts events to comma separated strings
+impl ToString for Event {
+    fn to_string(&self) -> String {
+
+        // Convert chip and the location to strings
+        let chip_string = match self.team {
+            Team::Black => self.chip_name.to_uppercase(),
+            Team::White => self.chip_name.to_owned(),
+        };
+
+        let loc_string = self.location.to_string();
+
+        // Smush them together
+        format!("{}.{}",chip_string,loc_string) 
+    }
+}
+
+/// Converts comma separated strings to events
+impl FromStr for Event {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+
+        // separate the input by full-stop. This separates the chip from the col,row
+        let items = s.split('.').collect::<Vec<&str>>();
+
+        // Get the team from whether chip is lower/upper case
+        let chip_string = items[0].to_owned();
+        let team = get_team_from_chip(&chip_string);
+
+        // Convert the chip_string to lower case static
+        let chip_name = convert_static_basic(chip_string.to_lowercase()).expect("Problem parsing chip string");
+
+
+        // Find the location
+        let colrow_str = items[1];
+        let location = DoubleHeight::from_str(colrow_str).expect("Error parsing col/row into DoubleHeight");
+
+        Ok(Event {
+            chip_name,
+            team,
+            location,
+        })
+
+    }
 }
 
 impl Event {
@@ -40,22 +89,50 @@ impl Event {
             location,
         }
     }
+
+
+    /// Create a new event based on a board action passed to server
+    pub fn new_by_action(action: &BoardAction) -> Self  {
+        Event{
+            chip_name: action.get_chip_name(),
+            team: action.which_team(),
+            location: action.rowcol,
+        }
+    }
+    
+
 }
 
 /// History keeps track of Events (previous player actions) using a BTree.
 ///
 /// The key = turn number, and value = the event.
 /// BTreeMap is used so that turn events are ordered.
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Default, Eq, PartialEq, Clone)]
 pub struct History {
-    events: BTreeMap<u32, Event>,
+    events: BTreeMap<usize, Event>,
 }
 
-impl Default for History {
-    fn default() -> Self {
-        Self::new()
+impl FromStr for History {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+     
+        // Take the input and separate it by /
+        let mut event_strs = s.split('/').collect::<Vec<&str>>();
+
+        // The final one will be empty because of trailing / so delete it
+        event_strs.pop();
+
+        // Parse each event_str into a <usize, event> BTreeMap
+        let events = event_strs.into_iter().enumerate().map(|(i,s)| (i, Event::from_str(s).expect("Problem parsing event str"))).collect::<BTreeMap<usize,Event>>();
+
+        Ok(History{
+            events
+        })
+
     }
 }
+
+
 
 impl History {
     /// Create a new empty history struct.
@@ -66,7 +143,7 @@ impl History {
     }
 
     /// Add a record of what location a chip moved on a given turn (history doesn't record the reason for a chip moved).
-    pub fn add_event(&mut self, turn: u32, chip: Chip, location: DoubleHeight) {
+    pub fn add_event(&mut self, turn: usize, chip: Chip, location: DoubleHeight) {
         self.events.insert(turn, Event::new_by_chip(chip, location));
     }
 
@@ -88,7 +165,7 @@ impl History {
 
     /// Returns which chips moved last turn and the turn before (used by pillbug)
     /// The return list order is: [last turn, the turn before]
-    pub fn last_two_turns(&self, this_turn: u32) -> [Option<Chip>; 2] {
+    pub fn last_two_turns(&self, this_turn: usize) -> [Option<Chip>; 2] {
         [
             self.which_chip(this_turn - 1),
             self.which_chip(this_turn - 2),
@@ -97,7 +174,7 @@ impl History {
 
     /// Return which chip moved on a given turn
     /// Returns None if no chip moved that turn
-    fn which_chip(&self, turn: u32) -> Option<Chip> {
+    fn which_chip(&self, turn: usize) -> Option<Chip> {
         self.events
             .get(&turn)
             .map(|e| Chip::new(e.chip_name, e.team))
