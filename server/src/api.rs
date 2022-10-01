@@ -310,6 +310,7 @@ async fn do_special(
 ) -> Result<MoveStatus, Error> {
     // Generate a board based on the gamestate and find the chip name and active team
     let mut board = game_state.to_cube_board();
+
     let active_team = game_state.which_team()?;
     assert!(cheat_check(&action, &active_team));
 
@@ -373,14 +374,21 @@ async fn skip_turn(
 ) -> Result<MoveStatus, Error> {
     // Get the board and current user
     let mut board = game_state.to_cube_board();
+     
     let l_user = game_state.which_user()?;
     let active_team = game_state.which_team()?;
+
+    // Parse the event into a string and append it to the board's history
+    let history = game_state.add_event(Event::skip_turn(active_team));
 
     // Try skip the turn
     match board.try_skip_turn(active_team) {
         MoveStatus::Success => {
+            // encode the board as a string (to capture the skip turn)
+            let board_str = board.encode_spiral();
+
             // Do skip, change the active team in the db
-            match db::update_active_team(session_id, &l_user, conn) {
+            match db::update_game_state(session_id, &l_user, &board_str, &history, conn) {
                 Ok(_) => Ok(MoveStatus::Success),
                 Err(err) => Err(error::ErrorInternalServerError(err)),
             }

@@ -24,6 +24,15 @@ pub struct Event {
 impl ToString for Event {
     fn to_string(&self) -> String {
 
+        // If it's a skip turn event return w.0,0
+        if self.chip_name == "w" {
+            match self.team {
+                Team::White => return "w.0,0".to_string(),
+                Team::Black => return "W.0,0".to_string(),
+
+            }
+        }
+
         // Convert chip and the location to strings
         let chip_string = match self.team {
             Team::Black => self.chip_name.to_uppercase(),
@@ -49,6 +58,11 @@ impl FromStr for Event {
         let chip_string = items[0].to_owned();
         let team = get_team_from_chip(&chip_string);
 
+        // If the event was a skip turn, return this
+        if chip_string.to_lowercase() == "w" {
+            return Ok(Event::skip_turn(team));
+        }
+
         // Convert the chip_string to lower case static
         let chip_name = convert_static_basic(chip_string.to_lowercase()).expect("Problem parsing chip string");
 
@@ -67,6 +81,7 @@ impl FromStr for Event {
 }
 
 impl Event {
+
     /// Create a new event based on input string
     fn new_by_string(chip_string: String, team: Team, row: i8, col: i8) -> Self {
         let location = DoubleHeight::from((row, col));
@@ -98,6 +113,11 @@ impl Event {
             team: action.which_team(),
             location: action.rowcol,
         }
+    }
+
+    /// Define a skip turn event
+    pub fn skip_turn(team: Team) -> Self {
+        Event { chip_name: "w", team, location: DoubleHeight::default() }
     }
     
 

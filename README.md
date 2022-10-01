@@ -13,7 +13,6 @@ The Hoive directory contains the game logic.
 
 ### Events history
 
-- Events is quietly failing to notice skipped turns on the server, because we have no way of generating or parsing empty turns in history yet
 - Tidy up the tests version of history by replacing csv \n with / and then using the new to_string and from_str functions
 
 ### Base game (hoive)
@@ -38,8 +37,7 @@ Consider:
 
 ### Server
 
-- server will need to have some sort of history for tracking pillbugs, use gamestate in db
-- then write some tests
+- write some tests
 
 <!-- 
 #### Refs
