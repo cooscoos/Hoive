@@ -1,10 +1,11 @@
-use hoive::game::{board::Board, history};
+use hoive::game::{board::Board};
 use hoive::maths::coord::{Coord, Cube};
 
 mod common;
 use common::games::game_snapshot_7;
 use hoive::game::{movestatus::MoveStatus, specials};
 use hoive::maths::coord::DoubleHeight;
+
 
 #[test]
 fn history_load() {
@@ -14,7 +15,7 @@ fn history_load() {
     // load in game from file
     let mut board1 = Board::new(Cube::default());
     let filename = "snapshot_7".to_string();
-    history::emulate(&mut board1, filename, true);
+    common::emulate::emulate(&mut board1, filename, true);
 
     // now load in the game from the fn
     let board2 = game_snapshot_7();
@@ -31,7 +32,7 @@ fn history_wrong_load() {
     // load in game from file
     let mut board1 = Board::new(Cube::default());
     let filename = "badsnapshot_7".to_string();
-    history::emulate(&mut board1, filename, true);
+    common::emulate::emulate(&mut board1, filename, true);
 
     // now load in the game from the fn
     let board2 = game_snapshot_7();
@@ -47,7 +48,7 @@ fn history_skipturn() {
     // load in game from file
     let mut board = Board::new(Cube::default());
     let filename = "snapshot_13".to_string();
-    history::emulate(&mut board, filename, true);
+    common::emulate::emulate(&mut board, filename, true);
 
     // wp1 at 1,1 to try sumo wa1 at 0,2 to destination 2,0
     let position = board.coord.mapfrom_doubleheight(DoubleHeight::from((1, 1)));

@@ -1,7 +1,6 @@
 // Tests for the ladybird
 use hoive::game::board::Board;
 use hoive::game::comps::Team;
-use hoive::game::history;
 use hoive::game::movestatus::MoveStatus;
 use hoive::maths::coord::DoubleHeight;
 use hoive::maths::coord::{Coord, Cube};
@@ -56,7 +55,7 @@ fn ladybird_illegal() {
 fn ladybird_over_beetle() {
     // Ladybird attempts to move over beetle (should be okay)
     let mut board = Board::new(Cube::default());
-    history::emulate(&mut board, "snapshot_15".to_string(), true);
+    common::emulate::emulate(&mut board, "snapshot_15".to_string(), true);
 
     // Place white ladybird at 2,0
     let place = board.coord.mapfrom_doubleheight(DoubleHeight::from((2, 0)));

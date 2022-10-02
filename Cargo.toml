@@ -3,7 +3,7 @@ members =["hoive", "client", "server"]
 
 [workspace.package]
 version = "0.1.0"
-author = "cooscoos"
+authors = ["cooscoos"]
 edition = "2021"
 
 [workspace.dependencies]
