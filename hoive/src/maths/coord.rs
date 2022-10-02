@@ -3,7 +3,7 @@ use hex_spiral::{ring, ring_offset};
 use serde::{Deserialize, Serialize};
 /// Module defining hexagonal co-ordinate systems for the board to use.
 use std::collections::HashSet;
-use std::fmt::{Error,Debug};
+use std::fmt::{Debug, Error};
 use std::hash::Hash;
 use std::ops::{Add, Sub};
 use std::str::FromStr;
@@ -57,26 +57,28 @@ pub struct DoubleHeight {
     pub l: i8, // the layer
 }
 
-impl ToString for DoubleHeight{
+impl ToString for DoubleHeight {
     /// Convert doubleheight to string. This ignores layer number as it's never used for recording moves
     fn to_string(&self) -> String {
-        format!("{},{}",self.col,self.row)
+        format!("{},{}", self.col, self.row)
     }
 }
 
-impl FromStr for DoubleHeight{
+impl FromStr for DoubleHeight {
     /// Convert comma-separated str e.g. "0,0" to Doubleheight ignoring layer as it's never used for recording moves
     type Err = Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-
         // separate the input by comma
         let items = s.split(',').collect::<Vec<&str>>();
 
-        let col = items[0].parse::<i8>().expect("Error parsing input col into i8");
-        let row = items[1].parse::<i8>().expect("Error parsing input row into i8");
-      
-        Ok(DoubleHeight::from((col,row)))
+        let col = items[0]
+            .parse::<i8>()
+            .expect("Error parsing input col into i8");
+        let row = items[1]
+            .parse::<i8>()
+            .expect("Error parsing input row into i8");
 
+        Ok(DoubleHeight::from((col, row)))
     }
 }
 

@@ -13,7 +13,7 @@ use crate::maths::coord::Spiral;
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Board<T: Coord> {
     pub chips: HashMap<Chip, Option<T>>, // player chips (both teams)
-    pub turns: usize,                      // number of turns that have elapsed
+    pub turns: usize,                    // number of turns that have elapsed
     pub coord: T,                        // coordinate sytem for the board e.g. Cube, HECS
     pub history: History,                // record of all previous moves
     pub size: i8,                        // the size of the board in dheight
@@ -27,7 +27,7 @@ where
     pub fn new(coord: T) -> Self {
         // Chips for each team initialised in players' hands (position == None)
         let chips = comps::starting_chips();
-        let history = History::new(); // Blank history
+        let history = History::default(); // Blank history
 
         Board {
             chips,

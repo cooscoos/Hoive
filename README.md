@@ -11,10 +11,6 @@ The Hoive directory contains the game logic.
 
 ## To do
 
-### Events history
-
-- Tidy up the tests version of history by replacing csv \n with / and then using the new to_string and from_str functions
-
 ### Base game (hoive)
 
 - There's a bug where beetle at 0-4 can move over q at 0,0 - beetles can move any number of spaces?! oops.
@@ -24,7 +20,7 @@ The Hoive directory contains the game logic.
 
 ### Client
 
-- everything broadly works. but need a good old tidy up and write some tests
+- write some tests
 - local play needs to show board after successful move
 - oberve fn: A better UI would get usr input to feel responsive ... but also poll for update while waiting. Might need some other fn polling in the background with tx,rx to achieve that
 - observe fn also ques user garbage typing into next move - this is not good

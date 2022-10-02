@@ -1,14 +1,15 @@
 use hoive::game::{board::Board, movestatus::MoveStatus};
-use hoive::game::{comps::Chip, comps::Team, history, specials};
+use hoive::game::{comps::Chip, comps::Team, specials};
 use hoive::maths::coord::DoubleHeight;
 use hoive::maths::coord::{Coord, Cube};
+mod common;
 
 fn pillbug_tests_setup(filename: String) -> Board<Cube> {
     // Some set up used by most tests for pillbug
 
     // Create and emulate a board from a named reference/tests/snapshots file
     let mut board = Board::new(Cube::default());
-    history::emulate(&mut board, filename, true);
+    common::emulate::emulate(&mut board, filename, true);
     board
 }
 
