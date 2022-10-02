@@ -60,7 +60,6 @@ pub struct Chip {
     pub team: Team,
 }
 
-
 impl Chip {
     /// Create one new chip with given name and team.
     pub fn new(name: &'static str, team: Team) -> Self {

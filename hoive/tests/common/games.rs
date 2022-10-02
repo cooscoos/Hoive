@@ -9,7 +9,7 @@ use hoive::maths::{coord::Coord, coord::Cube};
 pub fn test_board<T: Coord>(coord: T) -> Board<T> {
     // During testing we often want lots of pieces that move freely, so give each team 8 ants and one bee
     let chips = test_chips();
-    let history = History::new();
+    let history = History::default();
 
     Board {
         chips,

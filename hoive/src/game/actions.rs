@@ -74,6 +74,5 @@ impl BoardAction {
     pub fn which_team(&self) -> Team {
         // Black chips get passed as uppercase, white as lowercase
         crate::game::comps::get_team_from_chip(&self.name)
-
     }
 }

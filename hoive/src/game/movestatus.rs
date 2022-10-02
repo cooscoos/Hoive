@@ -130,9 +130,7 @@ impl ToString for MoveStatus {
                         let team_str = team.to_string();
                         format!("\n << {team_str} team wins. Well done!  >> \n")
                     }
-                    None => {
-                        "\n << Draw. Both teams have suffered defeat! >> \n".to_string()
-                    }
+                    None => "\n << Draw. Both teams have suffered defeat! >> \n".to_string(),
                 }
             }
             MoveStatus::Nothing
