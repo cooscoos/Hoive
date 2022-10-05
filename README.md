@@ -33,7 +33,7 @@ Consider:
 
 ### Server
 
-- write some tests
+- write some tests for api - need to figure out how to create session in tests
 
 <!-- 
 #### Refs

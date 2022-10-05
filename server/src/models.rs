@@ -18,7 +18,7 @@ pub struct User {
     pub user_name: String,
 }
 
-#[derive(Serialize, Deserialize, Default, Queryable, Debug, Clone)]
+#[derive(Serialize, Deserialize, Default, Queryable, Debug, Clone, PartialEq)]
 pub struct GameState {
     pub id: String,
     pub board: Option<String>,
@@ -76,13 +76,10 @@ impl GameState {
         };
 
         board
-
     }
-
 
     /// Add an event to a gamestate's history and return the history
     pub fn add_event(self, event: Event) -> String {
-
         // Get the existing history of the gamestate
         let mut history = match self.history {
             Some(value) => value,
@@ -93,11 +90,10 @@ impl GameState {
         let new_event = event.to_string();
 
         // append it and overwrite the gamestate's history
-        history.push_str(&format!("{}/",new_event));
+        history.push_str(&format!("{}/", new_event));
 
         history
     }
-
 }
 
 #[derive(Deserialize, Serialize, Insertable)]

@@ -1,7 +1,6 @@
 /// This module converts HttpRequests into commands that execute gameplay and database updates.
 use std::result::Result;
 
-
 // Profanity filter for usernames, and random number / uuid generation
 use rand::Rng;
 use rustrict::CensorStr;
@@ -25,10 +24,10 @@ const USER_ID_KEY: &str = "user_id";
 
 // Game modules
 use hoive::game::{
-    actions::BoardAction, board::Board, comps::Team, movestatus::MoveStatus, specials, history::Event
+    actions::BoardAction, board::Board, comps::Team, history::Event, movestatus::MoveStatus,
+    specials,
 };
 use hoive::maths::coord::Coord;
-
 
 /// Defines web form to parse a game session's uuid
 #[derive(Deserialize)]
@@ -180,7 +179,7 @@ pub async fn join(
                 };
 
                 // Update the db and return ok
-                match db::update_game_state(&session_id, &l_user, "", "",&mut conn) {
+                match db::update_game_state(&session_id, &l_user, "", "", &mut conn) {
                     Ok(_) => Ok(HttpResponse::Ok().body("")),
                     Err(err) => Err(error::ErrorInternalServerError(format!(
                         "Can't update game state of {session_id} because {err}"
@@ -350,7 +349,7 @@ fn execute_on_db<T: Coord>(
 
     // Parse the event into a string and append it to the board's history
     let history = game_state.add_event(event);
-    
+
     let res = db::update_game_state(session_id, &l_user, &board_str, &history, conn);
 
     match res {
@@ -374,7 +373,7 @@ async fn skip_turn(
 ) -> Result<MoveStatus, Error> {
     // Get the board and current user
     let mut board = game_state.to_cube_board();
-     
+
     let l_user = game_state.which_user()?;
     let active_team = game_state.which_team()?;
 

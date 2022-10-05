@@ -2,8 +2,8 @@
 extern crate diesel;
 extern crate dotenvy;
 
-use actix_web::{cookie::Key, web, App, HttpServer};
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
+use actix_web::{cookie::Key, web, App, HttpServer};
 
 pub mod api;
 pub mod db;
@@ -18,7 +18,6 @@ fn get_secret_key() -> Key {
 
 #[actix_web::main]
 pub async fn start_server() -> std::io::Result<()> {
-
     let secret_key = get_secret_key();
 
     HttpServer::new(move || {
@@ -42,8 +41,8 @@ pub async fn start_server() -> std::io::Result<()> {
                     .service(web::resource("/wipe").route(web::get().to(api::delete_all)))
                     .service(web::resource("/do-action").route(web::post().to(api::make_action))),
             )
-            // To mount a nice html webiste at index, do this and remove the default index fn above
-            //.service(fs::Files::new("/", "./static").index_file("index.html"))
+        // To mount a nice html webiste at index, do this and remove the default index fn above
+        //.service(fs::Files::new("/", "./static").index_file("index.html"))
     })
     .bind("127.0.0.1:8080")?
     .run()

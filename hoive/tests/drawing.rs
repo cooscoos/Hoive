@@ -2,7 +2,7 @@
 
 use hoive::draw;
 use hoive::maths::coord::Coord;
-use hoive::maths::coord::{Cube};
+use hoive::maths::coord::Cube;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 

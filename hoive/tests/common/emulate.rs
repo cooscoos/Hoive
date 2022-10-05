@@ -2,9 +2,9 @@
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 
-use hoive::game::comps::{Team};
-use hoive::game::{board::Board, specials, history::Event};
-use hoive::maths::coord::{Coord};
+use hoive::game::comps::Team;
+use hoive::game::{board::Board, history::Event, specials};
+use hoive::maths::coord::Coord;
 
 /// Emulate the moves contained within a history csv of given filename
 /// If test_flag == true, then csvs are loaded from ./tests/snapshots directory
@@ -39,7 +39,6 @@ pub fn emulate<T: Coord>(board: &mut Board<T>, filename: String, test_flag: bool
 /// Convert a history csv of given filename into a set of moves that can be emulated.
 /// If test_flag == true, then csvs are loaded from ./tests/snapshots directory.
 fn load_moves(filename: String, test_flag: bool) -> std::io::Result<Vec<Option<Event>>> {
-
     let file = match test_flag {
         true => File::open(format!("./tests/snapshots/{}.csv", filename))?,
         false => File::open(format!("./saved_games/{}.csv", filename))?,
