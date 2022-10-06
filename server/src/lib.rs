@@ -10,7 +10,7 @@ pub mod db;
 pub mod models;
 pub mod schema;
 
-const VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn get_secret_key() -> Key {
     Key::generate()

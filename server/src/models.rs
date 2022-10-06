@@ -18,7 +18,7 @@ pub struct User {
     pub user_name: String,
 }
 
-#[derive(Serialize, Deserialize, Default, Queryable, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Default, Queryable, Debug, Clone, PartialEq, Eq)]
 pub struct GameState {
     pub id: String,
     pub board: Option<String>,

@@ -24,3 +24,6 @@ uuid = {workspace = true}
 
 # other stuff
 rustrict = {workspace = true}
+
+# for testing
+bytes = "1.2.1"

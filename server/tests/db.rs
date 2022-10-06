@@ -1,46 +1,16 @@
 // Series of tests for manipulating the db
-
-use actix_web::Error;
-use actix_web::error::ErrorBadGateway;
-
-use uuid::Uuid;
-
-use diesel::SqliteConnection;
-use diesel::r2d2::PooledConnection;
-use diesel::r2d2::ConnectionManager;
-
 use server::db::*;
 use server::models::GameState;
 
-/// Update the gamestate of a live session with some garbage for tests. If clean == true then it wipes db first
-fn test_server_garbage(clean: bool) -> Result<(Uuid, Uuid, PooledConnection<ConnectionManager<SqliteConnection>>), Error> {
-
-    let mut con = create_conn_pool().get().unwrap();
-
-    // Wipe the db clean
-    if clean {
-        clean_db(&mut con);
-    }
-
-    // Invent a user and create a session
-    let user_id = Uuid::new_v4();
-    let session_id = create_session(&user_id, &mut con).unwrap();
-
-    // Update the gamestate with some garbage values
-    match update_game_state(&session_id, &user_id.to_string(), "board_test", "history_test", &mut con) {
-        Ok(_) => Ok((session_id, user_id, con)),
-        Err(err) => Err(ErrorBadGateway(err)),
-    }
-}
-
+mod common;
+use common::testfns::test_server_garbage;
 
 #[test]
 fn server_get_board() {
-
     // Test getting a board
 
     // Update the game_state with some garbage test values
-    let (session_id,_, mut con) = match test_server_garbage(true) {
+    let (session_id, _, mut con) = match test_server_garbage(true) {
         Ok(vals) => vals,
         Err(err) => panic!("Problem {err}"),
     };
@@ -52,7 +22,6 @@ fn server_get_board() {
 
 #[test]
 fn server_get_gamestate() {
-
     // Test getting gamestate
 
     // Update the game_state with some garbage test values
@@ -65,14 +34,14 @@ fn server_get_gamestate() {
     let gamestate = get_game_state(&session_id, &mut con).unwrap();
 
     // The retrieved value should be identical to this
-    let expected = GameState{
+    let expected = GameState {
         id: session_id.to_string(),
         board: Some("board_test".to_string()),
         user_1: Some(user_id.to_string()),
         user_2: None,
         winner: None,
         last_user_id: Some(user_id.to_string()),
-        history:Some("history_test".to_string()),
+        history: Some("history_test".to_string()),
     };
 
     assert_eq!(gamestate, expected);
@@ -80,7 +49,6 @@ fn server_get_gamestate() {
 
 #[test]
 fn server_get_username() {
-
     // Test getting a username
 
     let mut con = create_conn_pool().get().unwrap();
@@ -98,7 +66,6 @@ fn server_get_username() {
 
 #[test]
 fn server_find_session() {
-
     // Test finding a live session
 
     // Create a sole new session on db
@@ -115,7 +82,6 @@ fn server_find_session() {
 
 #[test]
 fn server_find_multi_session() {
-
     // Test finding one of many live sessions
 
     // Create a two new sessions on db
@@ -135,7 +101,6 @@ fn server_find_multi_session() {
 
 #[test]
 fn server_update_winner() {
-
     // Test updating the winner of a game
 
     // Create a a new sessions on db
