@@ -26,7 +26,7 @@ async fn api_get_index() {
     // Create test app
     let app =
         actix_web::test::init_service(App::new().app_data(db::create_conn_pool()).service(
-            web::scope("/api").service(web::resource("/").route(web::get().to(api::index))),
+            web::scope("/api").service(web::resource("/").route(web::get().to(api::index)))
         ))
         .await;
 
@@ -42,14 +42,14 @@ async fn api_get_index() {
 }
 
 #[actix_web::test]
-async fn api_create_user() {
+async fn api_reguster_user() {
     // Try register a user at /api/register
 
     // Create test app
     let app = actix_web::test::init_service(
         App::new().app_data(db::create_conn_pool()).service(
             web::scope("/api")
-                .service(web::resource("/register").route(web::post().to(api::register_user))),
+                .service(web::resource("/register").route(web::post().to(api::register_user)))
         ),
     )
     .await;
@@ -69,7 +69,7 @@ async fn api_create_user() {
         .to_request();
 
     let response = test::call_service(&app, req).await;
-    let result:String = test::read_body_json(response).await;
+    let result: String = test::read_body_json(response).await;
 
     // We won't know what Uuid is assigned, but we can make sure the response is a valid uuid
     match Uuid::parse_str(&result) {
@@ -77,3 +77,93 @@ async fn api_create_user() {
          Err(err) => panic!("{err}"),
     }
 }
+
+#[actix_web::test]
+async fn api_reject_user_profanity() {
+    // Try register a user with a naughty name at /api/register
+
+    // Create test app
+    let app = actix_web::test::init_service(
+        App::new().app_data(db::create_conn_pool()).service(
+            web::scope("/api")
+                .service(web::resource("/register").route(web::post().to(api::register_user)))
+        ),
+    )
+    .await;
+
+    let pool = create_conn_pool();
+
+    let naughty_user = User {
+        id: String::new(),
+        user_name: "piss".to_string(),
+    };
+
+    // Generate request to register new user
+    let req = test::TestRequest::post()
+        .uri("/api/register")
+        .set_form(naughty_user)
+        .app_data(pool.clone())
+        .to_request();
+
+    let response = test::call_service(&app, req).await;
+    let result: String = test::read_body_json(response).await;
+
+    assert_eq!("invalid", result);
+}
+
+
+
+#[actix_web::test]
+async fn api_get_username() {
+    // Try get a username for an existing user
+
+    // Create test app
+    let app = actix_web::test::init_service(
+        App::new().app_data(db::create_conn_pool()).service(
+            web::scope("/api")
+                .service(web::resource("/register").route(web::post().to(api::register_user)))
+                .service(web::resource("/user-name").route(web::post().to(api::get_username)))
+        ),
+    )
+    .await;
+
+    let pool = create_conn_pool();
+
+    let user1 = User {
+        id: String::new(),
+        user_name: "piggy".to_string(),
+    };
+
+    // Generate request to register new user
+    let req = test::TestRequest::post()
+        .uri("/api/register")
+        .set_form(user1)
+        .app_data(pool.clone())
+        .to_request();
+
+    let response = test::call_service(&app, req).await;
+    let user_id: String = test::read_body_json(response).await;
+
+
+    // now request the username of the user we've just created
+    let user_query = User {
+        id: user_id,
+        user_name: "".to_string(),
+    };
+
+    // Generate request to fetch username of the id we just created
+    let req = test::TestRequest::post()
+        .uri("/api/user-name")
+        .set_form(user_query)
+        .app_data(pool.clone())
+        .to_request();
+
+    let response = test::call_service(&app, req).await;
+    let byte_result = test::read_body(response).await;
+    let result = bytes_to_str(&byte_result).unwrap();
+
+
+    assert_eq!(result, "piggy")
+
+}
+
