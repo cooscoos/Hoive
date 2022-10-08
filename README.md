@@ -13,7 +13,6 @@ The Hoive directory contains the game logic.
 
 ### Base game (hoive)
 
-- There's a bug where beetle at 0-4 can move over q at 0,0 - beetles can move any number of spaces?! oops. Two failing tests written that need to return MoveStatus::BadDistance(1).
 - beetle rendering on stringboard is weird
 - play test
 - does pillbug sumoing need a bee check for either party?
