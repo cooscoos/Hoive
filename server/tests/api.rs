@@ -170,97 +170,97 @@ async fn api_get_username() {
 
 
 
+// To finish writing these you'll need to figure out how to manage sessions with cookies in tests.
 
+// #[actix_web::test]
+// async fn api_create_game() {
+//     // Create a new game session, join it with one player
 
-#[actix_web::test]
-async fn api_create_game() {
-    // Create a new game session, join it with one player
+//     // Create test app
+//     let app = actix_web::test::init_service(
+//         App::new().app_data(db::create_conn_pool()).service(
+//             web::scope("/api")
+//             .service(web::resource("/new").route(web::get().to(api::new_game)))
+//             .service(web::resource("/join").route(web::post().to(api::join)))
+//         ),
+//     )
+//     .await;
 
-    // Create test app
-    let app = actix_web::test::init_service(
-        App::new().app_data(db::create_conn_pool()).service(
-            web::scope("/api")
-            .service(web::resource("/new").route(web::get().to(api::new_game)))
-            .service(web::resource("/join").route(web::post().to(api::join)))
-        ),
-    )
-    .await;
+//     let pool = create_conn_pool();
 
-    let pool = create_conn_pool();
-
-    // We need a session that we can tie a user id to.
+//     // We need a session that we can tie a user id to.
     
-    // Generate request
-    let req = test::TestRequest::get().uri("/api/new").app_data(pool.clone()).to_request();
+//     // Generate request
+//     let req = test::TestRequest::get().uri("/api/new").app_data(pool.clone()).to_request();
 
-    // Send request to app and convert response body to str
-    let response = test::call_service(&app, req).await;
-    let byte_result = test::read_body(response).await;
-    let result = bytes_to_str(&byte_result).unwrap();
+//     // Send request to app and convert response body to str
+//     let response = test::call_service(&app, req).await;
+//     let byte_result = test::read_body(response).await;
+//     let result = bytes_to_str(&byte_result).unwrap();
 
   
-    assert_eq!(format!("Hoive-server v{}", VERSION), result);
+//     assert_eq!(format!("Hoive-server v{}", VERSION), result);
 
-}
+// }
 
-#[actix_web::test]
-async fn api_findjoin_game() {
-    // Find, then join a new game session
+// #[actix_web::test]
+// async fn api_findjoin_game() {
+//     // Find, then join a new game session
 
-    // Create test app
-    let app = actix_web::test::init_service(
-        App::new().app_data(db::create_conn_pool()).service(
-            web::scope("/api")
-            .service(web::resource("/new").route(web::get().to(api::new_game)))
-            .service(web::resource("/find").route(web::get().to(api::find)))
-            .service(web::resource("/join").route(web::post().to(api::join)))
-        ),
-    )
-    .await;
+//     // Create test app
+//     let app = actix_web::test::init_service(
+//         App::new().app_data(db::create_conn_pool()).service(
+//             web::scope("/api")
+//             .service(web::resource("/new").route(web::get().to(api::new_game)))
+//             .service(web::resource("/find").route(web::get().to(api::find)))
+//             .service(web::resource("/join").route(web::post().to(api::join)))
+//         ),
+//     )
+//     .await;
 
-    let pool = create_conn_pool();
+//     let pool = create_conn_pool();
 
-}
+// }
 
 
-#[actix_web::test]
-async fn api_get_game_state() {
-    // Get the game state of an existing session
+// #[actix_web::test]
+// async fn api_get_game_state() {
+//     // Get the game state of an existing session
 
-    // Create test app
-    let app = actix_web::test::init_service(
-        App::new().app_data(db::create_conn_pool()).service(
-            web::scope("/api")
-                .service(web::resource("/new").route(web::get().to(api::new_game)))
-                .service(
-                    web::resource("/game-state").route(web::get().to(api::game_state_json)),
-                )
-        ),
-    )
-    .await;
+//     // Create test app
+//     let app = actix_web::test::init_service(
+//         App::new().app_data(db::create_conn_pool()).service(
+//             web::scope("/api")
+//                 .service(web::resource("/new").route(web::get().to(api::new_game)))
+//                 .service(
+//                     web::resource("/game-state").route(web::get().to(api::game_state_json)),
+//                 )
+//         ),
+//     )
+//     .await;
 
-    let pool = create_conn_pool();
+//     let pool = create_conn_pool();
 
-}
+// }
 
-#[actix_web::test]
-async fn api_do_move() {
-    // Do a simple move, get the gamestate and ensure it's been updated
+// #[actix_web::test]
+// async fn api_do_move() {
+//     // Do a simple move, get the gamestate and ensure it's been updated
 
-    // Create test app
-    let app = actix_web::test::init_service(
-        App::new().app_data(db::create_conn_pool()).service(
-            web::scope("/api")
-                .service(web::resource("/new").route(web::get().to(api::new_game)))
-                .service(
-                    web::resource("/game-state").route(web::get().to(api::game_state_json)),
-                )
-                .service(web::resource("/do-action").route(web::post().to(api::make_action))),
-        ),
-    )
-    .await;
+//     // Create test app
+//     let app = actix_web::test::init_service(
+//         App::new().app_data(db::create_conn_pool()).service(
+//             web::scope("/api")
+//                 .service(web::resource("/new").route(web::get().to(api::new_game)))
+//                 .service(
+//                     web::resource("/game-state").route(web::get().to(api::game_state_json)),
+//                 )
+//                 .service(web::resource("/do-action").route(web::post().to(api::make_action))),
+//         ),
+//     )
+//     .await;
 
-    let pool = create_conn_pool();
+//     let pool = create_conn_pool();
 
-}
+// }
 
