@@ -11,17 +11,13 @@ The Hoive directory contains the game logic.
 
 ## To do
 
-### Base game (hoive)
-
-- beetle rendering on stringboard is weird
+- install on virtual machine and list dependencies in readme
 - play test
-- does pillbug sumoing need a bee check for either party?
 
 ### Client
 
 - Figure out how to turn features on in submodules: https://doc.rust-lang.org/cargo/reference/features.html
 - write some tests
-- local play needs to show board after successful move
 - oberve fn: A better UI would get usr input to feel responsive ... but also poll for update while waiting. Might need some other fn polling in the background with tx,rx to achieve that
 - observe fn also ques user garbage typing into next move - this is not good
 - Solution to quitting whenever might be tx,rx (something for later)
@@ -36,6 +32,12 @@ Consider:
 - Complete writing tests for server/tests/api.rs --- need to figure out how to create sessions in tests.
 
 <!-- 
+Things I wrote that no longer seem to apply:
+
+- beetle rendering on stringboard is weird
+- does pillbug sumoing need a bee check for either party? - I don't think this can ever happen given the other constraints
+
+
 #### Refs
 
  [good ref](https://fdeantoni.medium.com/rust-actix-diesel-sqlite-d67a1c3ef0e) [good ref 2](https://github.com/vascokk/fullstack-rust/tree/main/server/src) [half done, now finish]
