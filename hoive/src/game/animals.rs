@@ -30,17 +30,18 @@ pub fn ant_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus
 }
 
 /// Check whether bee can move from source to dest.
-/// This involves an ant check, plus ensuring that the chip is only moving one hex.
+/// This involves a small gap check, plus ensuring that the chip is only moving one hex.
 ///
-/// This function is also used by pillbugs.
+/// This function is also used by pillbugs and beetles.
 pub fn bee_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
-    // Do a beetle check first for small gaps
-    match beetle_check(board, source, dest) {
+    // Do a basic check first for small gaps
+    match basic_gap_check(board, source, dest) {
         MoveStatus::SmallGap => MoveStatus::SmallGap,
         MoveStatus::Success => {
             // Check if the distance is within the bee's travel range (its immediate neighbours)
+            // Using dest.to_bottom ignores the layer information of dest and allows beetles to use this function
             let neighbours = board.coord.neighbours_layer0(*source);
-            match neighbours.contains(dest) {
+            match neighbours.contains(&dest.to_bottom()) {
                 true => MoveStatus::Success,
                 false => MoveStatus::BadDistance(1),
             }
@@ -92,11 +93,12 @@ pub fn ladybird_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveS
     }
 }
 
-/// Check whether beetle can move from source to dest.
+
+/// Check whether chip can move from source to dest.
 /// If there is a small gap between source and dest then this will return
 /// MoveStatus::SmallGap. This check will work on any chip that only moves one
-/// space (bees, pillbugs), and will be more efficient than an ant_check.
-pub fn beetle_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
+/// space (bees, pillbugs, beetles), and will be more efficient than an ant_check.
+pub fn basic_gap_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
     let placed_hexes = board.get_placed_positions();
 
     // Get the positions of chips neighbouring source, but only on the beetle's current later (this could be tidied up with a new trait method to get neighbours on current layer)

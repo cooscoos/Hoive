@@ -292,7 +292,7 @@ where
             's' => animals::spider_check(self, source, dest), // spiders
             'q' | 'p' => animals::bee_check(self, source, dest), // bees and pillbugs
             'l' => animals::ladybird_check(self, source, dest), // ladybirds
-            'b' => animals::beetle_check(self, source, dest), // beetles
+            'b' => animals::bee_check(self, source, dest), // beetles
             'g' => animals::ghopper_check(self, source, dest), // grasshoppers
             _ => panic!("No other animals should exist"), // there are no other valid chip names, mosquitos don't have their own movesets
         }

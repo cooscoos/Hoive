@@ -15,3 +15,4 @@ snapshot_16: a line of chips. try move bg1 from 0,4 to 0,-4 (ok) or to a neighbo
 snapshot_17: get bm1 at 0,-4 to become bb1 at 0,-2 and then move on top of the beetle... then in another test, get it to move down to 1,-1 
 snapshot_18: get wm1 at 0,4 to become wa1 at 0,2 and then move to -1,-1
 snapshot_19: get wm1 at -1,-3 to try become bm1 at -1,-1, should fail
+snapshot_20: simple set up with two queens and one white beetle at 0,-2

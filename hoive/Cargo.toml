@@ -15,3 +15,7 @@ serde = {workspace = true}
 #[[bench]]
 #name = "benchmark3"
 #harness = false
+
+# For some extra features used for debugging
+[features]
+debug = []
