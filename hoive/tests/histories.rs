@@ -1,11 +1,10 @@
-use hoive::game::{board::Board};
+use hoive::game::board::Board;
 use hoive::maths::coord::{Coord, Cube};
 
 mod common;
 use common::games::game_snapshot_7;
 use hoive::game::{movestatus::MoveStatus, specials};
 use hoive::maths::coord::DoubleHeight;
-
 
 #[test]
 fn history_load() {

@@ -2,13 +2,13 @@
 use std::collections::BTreeMap;
 use std::fmt::Error;
 use std::fs::File;
-use std::io::{prelude::*};
+use std::io::prelude::*;
 use std::str::FromStr;
 
 use super::actions::BoardAction;
 use super::comps::{convert_static, convert_static_basic, get_team_from_chip, Chip, Team};
 
-use crate::maths::coord::{DoubleHeight};
+use crate::maths::coord::DoubleHeight;
 
 /// Every event in a game of Hoive is a chip_name on a given team attempting a movement
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -144,7 +144,6 @@ impl FromStr for History {
 }
 
 impl History {
-
     /// Add a record of what location a chip moved on a given turn (history doesn't record the reason for a chip move).
     pub fn add_event(&mut self, turn: usize, chip: Chip, location: DoubleHeight) {
         self.events.insert(turn, Event::new_by_chip(chip, location));

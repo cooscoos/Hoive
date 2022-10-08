@@ -1,6 +1,6 @@
+use std::env;
 /// Executes actions on the server's sqlite database (db) using diesel
 use std::result::Result;
-use std::env;
 use std::time::Duration;
 
 use diesel::connection::SimpleConnection;
@@ -164,7 +164,11 @@ pub fn update_game_state(
 
     diesel::update(game_state)
         .filter(id.eq(session_id.to_string()))
-        .set((last_user_id.eq(l_user_id.to_string()), board.eq(board_str), history.eq(history_str)))
+        .set((
+            last_user_id.eq(l_user_id.to_string()),
+            board.eq(board_str),
+            history.eq(history_str),
+        ))
         .execute(conn)
 }
 

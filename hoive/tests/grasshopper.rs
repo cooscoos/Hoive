@@ -1,5 +1,5 @@
+use hoive::game::comps::Team;
 use hoive::game::{board::Board, movestatus::MoveStatus};
-use hoive::game::{comps::Team};
 use hoive::maths::coord::DoubleHeight;
 use hoive::maths::coord::{Coord, Cube};
 mod common;

@@ -1670,6 +1670,7 @@ dependencies = [
  "actix-rt",
  "actix-session",
  "actix-web",
+ "bytes",
  "diesel",
  "dotenvy",
  "hex-spiral",
