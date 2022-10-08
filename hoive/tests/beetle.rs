@@ -4,9 +4,9 @@ use hoive::maths::coord::{Coord, Cube, DoubleHeight};
 mod common;
 
 fn beetle_test_setup(filename: String) -> Board<Cube> {
-    // Some set up used by most tests for pillbug
+    // Some set up used by most tests for beetle
 
-    // Create and emulate a board from a named reference/tests/snapshots file
+    // Create and emulate a board from a named snapshots file
     let mut board = Board::new(Cube::default());
     common::emulate::emulate(&mut board, filename, true);
     board
@@ -114,5 +114,38 @@ fn beetle_gate() {
     assert_eq!(
         MoveStatus::SmallGap,
         board.move_chip("b2", Team::Black, bad_move)
+    );
+}
+
+
+#[test]
+fn beetle_too_far_same_layer() {
+    // Try move wb1 from 0,-2 to 0,4 (too far)
+    let mut board = beetle_test_setup("snapshot_20".to_string());
+
+    let too_far = board
+        .coord
+        .mapfrom_doubleheight(DoubleHeight::from((0, 4)));
+
+
+    assert_eq!(
+        MoveStatus::BadDistance(1),
+        board.move_chip("b1", Team::White, too_far)
+    );
+}
+
+#[test]
+fn beetle_too_far_up_layer() {
+    // Try move wb1 from 0,-2 to 0,2 (too far and up one layer)
+    let mut board = beetle_test_setup("snapshot_20".to_string());
+
+    let too_far = board
+        .coord
+        .mapfrom_doubleheight(DoubleHeight::from((0, 2)));
+
+
+    assert_eq!(
+        MoveStatus::BadDistance(1),
+        board.move_chip("b1", Team::White, too_far)
     );
 }

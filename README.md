@@ -13,13 +13,14 @@ The Hoive directory contains the game logic.
 
 ### Base game (hoive)
 
-- There's a bug where beetle at 0-4 can move over q at 0,0 - beetles can move any number of spaces?! oops.
+- There's a bug where beetle at 0-4 can move over q at 0,0 - beetles can move any number of spaces?! oops. Two failing tests written that need to return MoveStatus::BadDistance(1).
 - beetle rendering on stringboard is weird
 - play test
 - does pillbug sumoing need a bee check for either party?
 
 ### Client
 
+- Figure out how to turn features on in submodules: https://doc.rust-lang.org/cargo/reference/features.html
 - write some tests
 - local play needs to show board after successful move
 - oberve fn: A better UI would get usr input to feel responsive ... but also poll for update while waiting. Might need some other fn polling in the background with tx,rx to achieve that
