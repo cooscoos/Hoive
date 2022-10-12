@@ -9,7 +9,7 @@ const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 /// How long before lack of client response causes a timeout
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 
-/// websocket connection is long running connection, it easier
+/// websocket connection is long running connection, it's easier
 /// to handle with an actor
 pub struct MyWebSocket {
     /// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT),
