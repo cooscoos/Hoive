@@ -35,6 +35,14 @@ pub struct SessionInfo {
     id: Uuid,
 }
 
+use actix_web_actors::ws;
+use crate::myactor::MyWebSocket;
+
+/// WebSocket handshake and start `MyWebSocket` actor.
+pub async fn echo_ws(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, Error> {
+    ws::start(MyWebSocket::new(), &req, stream)
+}
+
 /// Get a connection to the db
 fn get_db_connection(
     req: HttpRequest,

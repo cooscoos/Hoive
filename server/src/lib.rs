@@ -17,6 +17,8 @@ fn get_secret_key() -> Key {
     Key::generate()
 }
 
+
+
 #[actix_web::main]
 pub async fn start_server() -> std::io::Result<()> {
     let secret_key = get_secret_key();
@@ -30,7 +32,7 @@ pub async fn start_server() -> std::io::Result<()> {
             ))
             .service(
                 web::scope("/api")
-                    .service(web::resource("/").route(web::get().to(api::index)))
+                    //.service(web::resource("/").route(web::get().to(api::index)))
                     .service(web::resource("/register").route(web::post().to(api::register_user)))
                     .service(web::resource("/user-name").route(web::post().to(api::get_username)))
                     .service(web::resource("/new").route(web::get().to(api::new_game)))
@@ -41,7 +43,7 @@ pub async fn start_server() -> std::io::Result<()> {
                     )
                     .service(web::resource("/wipe").route(web::get().to(api::delete_all)))
                     .service(web::resource("/do-action").route(web::post().to(api::make_action)))
-                    //.service(myactor::index), // temporary
+                    .service(web::resource("/ws").route(web::get()).to(api::echo_ws)), // temporary
             )
         // To mount a nice html webiste at index, do this and remove the default index fn above
         //.service(fs::Files::new("/", "./static").index_file("index.html"))

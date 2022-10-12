@@ -1,60 +1,78 @@
-// use actix::prelude::*;
+use std::time::{Duration, Instant};
 
-// /// Define a message
-// #[derive(Message)]
-// #[rtype(result = "Result<bool, std::io::Error>")]
-// struct Ping;
-
-// // Define an actor
-// struct MyActor;
-
-// // Provide actor implementation for our actor
-// impl Actor for MyActor {
-//     type Context = Context<Self>;
-
-//     fn started(&mut self, ctx: &mut Context<Self>) {
-//         println!("Actor is alive.");
-//     }
-
-//     fn stopped(&mut self, ctx: &mut Context<Self>) {
-//         println!("Actor is dead.");
-//     }
-// }
-
-// /// Define a handler for Ping message
-// impl Handler<Ping> for MyActor {
-//     type Result = Result<bool, std::io::Error>;
-
-//     fn handle(&mut self, msg: Ping, ctx: &mut Context<Self>) -> Self::Result {
-//         println!("Ping received");
-//         Ok(true)
-//     }
-// }
-
-use actix::{Actor, StreamHandler};
-use actix_web::{get, web, App, Error, HttpRequest, HttpResponse, HttpServer};
+use actix::prelude::*;
 use actix_web_actors::ws;
 
-/// Define Websocket actor
-struct MyWs;
+/// How often heartbeat pings are sent
+const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 
-impl Actor for MyWs {
-    type Context = ws::WebsocketContext<Self>;
+/// How long before lack of client response causes a timeout
+const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
+
+/// websocket connection is long running connection, it easier
+/// to handle with an actor
+pub struct MyWebSocket {
+    /// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT),
+    /// otherwise we drop connection.
+    hb: Instant,
 }
 
-/// Handler for ws::Message message
-impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
-    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
-        match msg {
-            Ok(ws::Message::Ping(msg)) => ctx.pong(&msg),
-            Ok(ws::Message::Text(text)) => ctx.text(text),
-            Ok(ws::Message::Binary(bin)) => ctx.binary(bin),
-            _ => (),
-        }
+impl MyWebSocket {
+    pub fn new() -> Self {
+        Self { hb: Instant::now() }
+    }
+
+    /// helper method that sends ping to client every 5 seconds (HEARTBEAT_INTERVAL).
+    ///
+    /// also this method checks heartbeats from client
+    fn hb(&self, ctx: &mut <Self as Actor>::Context) {
+        ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
+            // check client heartbeats
+            if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
+                // heartbeat timed out
+                println!("Websocket Client heartbeat failed, disconnecting!");
+
+                // stop actor
+                ctx.stop();
+
+                // don't try to send a ping
+                return;
+            }
+
+            ctx.ping(b"");
+        });
     }
 }
 
-#[get("/ws")]
-async fn index(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, Error> {
-    ws::start(MyWs, &req, stream)
+impl Actor for MyWebSocket {
+    type Context = ws::WebsocketContext<Self>;
+
+    /// Method is called on actor start. We start the heartbeat process here.
+    fn started(&mut self, ctx: &mut Self::Context) {
+        self.hb(ctx);
+    }
+}
+
+/// Handler for `ws::Message`
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWebSocket {
+    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
+        // process websocket messages
+        println!("WS: {msg:?}");
+        match msg {
+            Ok(ws::Message::Ping(msg)) => {
+                self.hb = Instant::now();
+                ctx.pong(&msg);
+            }
+            Ok(ws::Message::Pong(_)) => {
+                self.hb = Instant::now();
+            }
+            Ok(ws::Message::Text(text)) => ctx.text(text),
+            Ok(ws::Message::Binary(bin)) => ctx.binary(bin),
+            Ok(ws::Message::Close(reason)) => {
+                ctx.close(reason);
+                ctx.stop();
+            }
+            _ => ctx.stop(),
+        }
+    }
 }
