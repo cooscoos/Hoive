@@ -10,9 +10,12 @@ use actix_session::Session;
 use actix_web::Responder;
 use actix_web::{error, web, Error, HttpRequest, HttpResponse};
 use serde::Deserialize;
+use actix_web_actors::ws;
+
 
 pub use crate::db;
 use crate::models::GameState;
+use crate::myactor::MyWebSocket;
 pub use crate::models::{self, User};
 pub use crate::schema;
 
@@ -35,8 +38,7 @@ pub struct SessionInfo {
     id: Uuid,
 }
 
-use actix_web_actors::ws;
-use crate::myactor::MyWebSocket;
+
 
 /// WebSocket handshake and start `MyWebSocket` actor.
 pub async fn echo_ws(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, Error> {

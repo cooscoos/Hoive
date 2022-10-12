@@ -16,15 +16,13 @@ The Hoive directory contains the game logic.
 
 ### Client
 
-- Figure out how to turn features on in submodules: https://doc.rust-lang.org/cargo/reference/features.html
+- (websockets)[https://github.com/actix/examples/tree/99d0afde28d14a0b641ac52de821d79fa244d50a/websockets/echo] are the solution to having a more responsive UI (and a chat feature) -- have websocket to notify when turn complete (then check db), same for ctrl+c or quitting. Need to rewrite client in (awc)[https://docs.rs/awc/latest/awc/] rather than reqwest because reqwest doesn't have websocket features.
+- Figure out how to turn (features on in submodules)[https://doc.rust-lang.org/cargo/reference/features.html] 
 - write some tests
-- oberve fn: A better UI would get usr input to feel responsive ... but also poll for update while waiting. Might need some other fn polling in the background with tx,rx to achieve that
-- observe fn also ques user garbage typing into next move - this is not good
-- Solution to quitting whenever might be tx,rx (something for later)
 - "Check whether there are any games available on the server, if there are you have to join the empty one": can change later to play with friends based on uid, private flag in db
 
 Consider:
-- Bevy with (egui)[https://github.com/emilk/egui]
+- Bevy with (egui)[https://github.com/emilk/egui] or Fyrox.
 
 
 ### Server
