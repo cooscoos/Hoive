@@ -431,3 +431,4 @@ pub async fn delete_all(req: HttpRequest) -> Result<HttpResponse, Error> {
 
     Ok(HttpResponse::Ok().body("Cleared"))
 }
+

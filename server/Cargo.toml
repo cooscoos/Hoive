@@ -13,6 +13,7 @@ rand = {workspace = true}
 
 actix={workspace = true}
 actix-web = {workspace = true}
+actix-web-actors = {workspace = true}
 actix-rt = {workspace = true}
 actix-files = {workspace = true}
 actix-session = {workspace = true}

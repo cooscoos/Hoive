@@ -9,6 +9,7 @@ pub mod api;
 pub mod db;
 pub mod models;
 pub mod schema;
+pub mod myactor;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -39,7 +40,8 @@ pub async fn start_server() -> std::io::Result<()> {
                         web::resource("/game-state").route(web::get().to(api::game_state_json)),
                     )
                     .service(web::resource("/wipe").route(web::get().to(api::delete_all)))
-                    .service(web::resource("/do-action").route(web::post().to(api::make_action))),
+                    .service(web::resource("/do-action").route(web::post().to(api::make_action)))
+                    //.service(myactor::index), // temporary
             )
         // To mount a nice html webiste at index, do this and remove the default index fn above
         //.service(fs::Files::new("/", "./static").index_file("index.html"))
