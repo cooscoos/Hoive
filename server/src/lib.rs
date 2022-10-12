@@ -3,7 +3,7 @@ extern crate diesel;
 extern crate dotenvy;
 
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
-use actix_web::{cookie::Key, web, App, HttpServer};
+use actix_web::{middleware, cookie::Key, web, App, HttpServer};
 
 pub mod api;
 pub mod db;
@@ -17,10 +17,12 @@ fn get_secret_key() -> Key {
     Key::generate()
 }
 
-
-
 #[actix_web::main]
 pub async fn start_server() -> std::io::Result<()> {
+
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+    log::info!("starting HTTP server at http://localhost:8080");
+
     let secret_key = get_secret_key();
 
     HttpServer::new(move || {
@@ -30,9 +32,10 @@ pub async fn start_server() -> std::io::Result<()> {
                 CookieSessionStore::default(),
                 secret_key.clone(),
             ))
+            
             .service(
                 web::scope("/api")
-                    //.service(web::resource("/").route(web::get().to(api::index)))
+                    .service(web::resource("/").route(web::get().to(api::index)))
                     .service(web::resource("/register").route(web::post().to(api::register_user)))
                     .service(web::resource("/user-name").route(web::post().to(api::get_username)))
                     .service(web::resource("/new").route(web::get().to(api::new_game)))
@@ -41,10 +44,11 @@ pub async fn start_server() -> std::io::Result<()> {
                     .service(
                         web::resource("/game-state").route(web::get().to(api::game_state_json)),
                     )
+                    .service(web::resource("/ws").route(web::get().to(api::echo_ws)))
                     .service(web::resource("/wipe").route(web::get().to(api::delete_all)))
                     .service(web::resource("/do-action").route(web::post().to(api::make_action)))
-                    .service(web::resource("/ws").route(web::get()).to(api::echo_ws)), // temporary
             )
+            .wrap(middleware::Logger::default())
         // To mount a nice html webiste at index, do this and remove the default index fn above
         //.service(fs::Files::new("/", "./static").index_file("index.html"))
     })

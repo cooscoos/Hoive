@@ -28,3 +28,8 @@ rustrict = {workspace = true}
 
 # for testing
 bytes = "1.2.1"
+
+
+# for envent logging
+env_logger = "0.9"
+log = "0.4"

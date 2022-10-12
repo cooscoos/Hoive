@@ -2,7 +2,6 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub mod local;
 pub mod online;
-pub mod echo;
 
 use std::error::Error;
 
@@ -11,16 +10,11 @@ pub async fn play_games() -> Result<(), Box<dyn Error>> {
     // Welcome user with sweet ascii graphics
     hoive::pmoore::welcome();
 
-    println!("Choose to play:\n1) Online (default),\n2) Local\n3) Echo (debug)");
+    println!("Choose to play:\n1) Online (default),\n2) Local");
     let textin = hoive::pmoore::get_usr_input();
 
     match textin.contains('2') {
         true => local::play_offline(),
-        false => {
-            match textin.contains('3') {
-                false => online::play_online().await,
-                true => echo::play().await,
-            }
-        },
+        false => online::play_online().await,
     }
 }

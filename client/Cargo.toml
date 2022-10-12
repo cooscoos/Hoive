@@ -19,3 +19,11 @@ rand = {workspace = true}
 
 hex-spiral = {workspace = true}
 
+# for web sockets. Would probably replace reqwest functionality too
+awc = "3"
+actix-web = {workspace = true}
+actix-web-actors = {workspace = true}
+env_logger = "0.9"
+futures-util = { version = "0.3.17", default-features = false, features = ["std", "sink"] }
+log = "0.4"
+tokio-stream = "0.1.8"
