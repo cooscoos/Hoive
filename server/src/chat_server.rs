@@ -67,11 +67,12 @@ pub struct ChatServer {
     sessions: HashMap<usize, Recipient<Message>>,
     rooms: HashMap<String, HashSet<usize>>,
     rng: ThreadRng,
-    visitor_count: Arc<AtomicUsize>,
+    //visitor_count: Arc<AtomicUsize>,
 }
 
 impl ChatServer {
-    pub fn new(visitor_count: Arc<AtomicUsize>) -> ChatServer {
+    //pub fn new(visitor_count: Arc<AtomicUsize>) -> ChatServer {
+    pub fn new() -> ChatServer {
         // default room
         let mut rooms = HashMap::new();
         rooms.insert("main".to_owned(), HashSet::new());
@@ -80,7 +81,7 @@ impl ChatServer {
             sessions: HashMap::new(),
             rooms,
             rng: rand::thread_rng(),
-            visitor_count,
+            //visitor_count,
         }
     }
 }
@@ -130,8 +131,8 @@ impl Handler<Connect> for ChatServer {
             .or_insert_with(HashSet::new)
             .insert(id);
 
-        let count = self.visitor_count.fetch_add(1, Ordering::SeqCst);
-        self.send_message(&format!("Total visitors {count}"), 0);
+        //let count = self.visitor_count.fetch_add(1, Ordering::SeqCst);
+        //self.send_message(&format!("Total visitors {count}"), 0);
 
         // send id back
         id

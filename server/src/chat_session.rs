@@ -13,7 +13,7 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[derive(Debug)]
 pub struct WsChatSession {
-    /// unique session id
+    /// unique chat session id
     pub id: usize,
 
     /// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT),
@@ -129,6 +129,19 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                 if m.starts_with('/') {
                     let v: Vec<&str> = m.splitn(2, ' ').collect();
                     match v[0] {
+                        "/join" => {
+                            if v.len() == 2 {
+                                self.room = v[1].to_owned();
+                                self.addr.do_send(chat_server::Join {
+                                    id: self.id,
+                                    name: self.room.clone(),
+                                });
+
+                                ctx.text("joined");
+                            } else {
+                                ctx.text("!!! room name is required");
+                            }
+                        }
                         "/name" => {
                             if v.len() == 2 {
                                 self.name = Some(v[1].to_owned());
