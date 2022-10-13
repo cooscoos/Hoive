@@ -38,7 +38,7 @@ pub struct SessionInfo {
 }
 
 use actix::Addr;
-use crate::{serverz, session};
+use crate::{chat_server, chat_session};
 use std::{
     sync::{
         atomic::{AtomicUsize, Ordering},
@@ -51,10 +51,10 @@ use std::{
 pub async fn chat_route(
     req: HttpRequest,
     stream: web::Payload,
-    srv: web::Data<Addr<serverz::ChatServer>>,
+    srv: web::Data<Addr<chat_server::ChatServer>>,
 ) -> Result<HttpResponse, Error> {
     ws::start(
-        session::WsChatSession {
+        chat_session::WsChatSession {
             id: 0,
             hb: Instant::now(),
             room: "main".to_owned(),

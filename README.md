@@ -16,6 +16,7 @@ The Hoive directory contains the game logic.
 
 ### Client
 
+- chat server is basically working but now need to strip out a lot of unneeded functionality
 - (websockets)[https://github.com/actix/examples/tree/99d0afde28d14a0b641ac52de821d79fa244d50a/websockets/echo] are the solution to having a more responsive UI (and a chat feature) -- have websocket to notify when turn complete (then check db), same for ctrl+c or quitting. Need to rewrite client in (awc)[https://docs.rs/awc/latest/awc/] rather than reqwest because reqwest doesn't have websocket features.
 - Figure out how to turn (features on in submodules)[https://doc.rust-lang.org/cargo/reference/features.html] 
 - write some tests

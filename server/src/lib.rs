@@ -9,8 +9,8 @@ pub mod api;
 pub mod db;
 pub mod models;
 pub mod schema;
-pub mod session;
-pub mod serverz;
+pub mod chat_session;
+pub mod chat_server;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -38,7 +38,7 @@ pub async fn start_server() -> std::io::Result<()> {
     // keep a count of the number of visitors
     let app_state = Arc::new(AtomicUsize::new(0));
         // start chat server actor
-        let servery = serverz::ChatServer::new(app_state.clone()).start();
+        let servery = chat_server::ChatServer::new(app_state.clone()).start();
 
     let secret_key = get_secret_key();
 
