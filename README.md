@@ -16,7 +16,7 @@ The Hoive directory contains the game logic.
 
 ### Client
 
-- (websockets)[https://github.com/actix/examples/tree/99d0afde28d14a0b641ac52de821d79fa244d50a/websockets/echo] are the solution to having a more responsive UI (and a chat feature) -- have websocket to notify when turn complete (then check db), same for ctrl+c or quitting. Need to rewrite client in (awc)[https://docs.rs/awc/latest/awc/] rather than reqwest because reqwest doesn't have websocket features.
+- replacing tokio with actix-web breaks client... needed for chat though see (here)[https://stackoverflow.com/questions/66416174/using-actix-from-a-tokio-app-mixing-actix-webmain-and-tokiomain]
 - Figure out how to turn (features on in submodules)[https://doc.rust-lang.org/cargo/reference/features.html] 
 - write some tests
 - "Check whether there are any games available on the server, if there are you have to join the empty one": can change later to play with friends based on uid, private flag in db
@@ -27,6 +27,8 @@ Consider:
 
 ### Server
 
+- chat server is basically working with chat but now need to strip out a lot of unneeded functionality
+- (websockets)[https://github.com/actix/examples/tree/99d0afde28d14a0b641ac52de821d79fa244d50a/websockets/echo] are the solution to having a more responsive UI (and a chat feature) -- have websocket to notify when turn complete (then check db), same for ctrl+c or quitting. Need to rewrite client in (awc)[https://docs.rs/awc/latest/awc/] rather than reqwest because reqwest doesn't have websocket features.
 - Complete writing tests for server/tests/api.rs --- need to figure out how to create sessions in tests.
 
 <!-- 

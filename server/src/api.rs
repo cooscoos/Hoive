@@ -15,7 +15,6 @@ use actix_web_actors::ws;
 
 pub use crate::db;
 use crate::models::GameState;
-use crate::myactor::MyWebSocket;
 pub use crate::models::{self, User};
 pub use crate::schema;
 
@@ -38,11 +37,33 @@ pub struct SessionInfo {
     id: Uuid,
 }
 
+use actix::Addr;
+use crate::{chat_server, chat_session};
+use std::{
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
+    time::Instant,
+};
 
-
-/// WebSocket handshake and start `MyWebSocket` actor.
-pub async fn echo_ws(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, Error> {
-    ws::start(MyWebSocket::new(), &req, stream)
+/// Entry point for our websocket route
+pub async fn chat_route(
+    req: HttpRequest,
+    stream: web::Payload,
+    srv: web::Data<Addr<chat_server::ChatServer>>,
+) -> Result<HttpResponse, Error> {
+    ws::start(
+        chat_session::WsChatSession {
+            id: 0,
+            hb: Instant::now(),
+            room: "main".to_owned(),
+            name: None,
+            addr: srv.get_ref().clone(),
+        },
+        &req,
+        stream,
+    )
 }
 
 /// Get a connection to the db
