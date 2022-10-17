@@ -114,7 +114,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
             Ok(msg) => msg,
         };
 
-        log::debug!("WEBSOCKET MESSAGE: {msg:?}");
+        log::info!("WEBSOCKET MESSAGE: {msg:?}");
         match msg {
             ws::Message::Ping(msg) => {
                 self.hb = Instant::now();
@@ -148,6 +148,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                             } else {
                                 ctx.text("!!! name is required");
                             }
+                        }
+                        "/getid" => {
+                            println!("Id is: {}",self.id);
                         }
                         _ => ctx.text(format!("!!! unknown command: {m:?}")),
                     }

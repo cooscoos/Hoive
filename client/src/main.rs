@@ -1,5 +1,5 @@
-#[tokio::main]
-//#[actix_web::main]
+//#[tokio::main]
+#[actix_web::main]
 async fn main() {
     match client::play_games().await {
         Ok(_) => (),

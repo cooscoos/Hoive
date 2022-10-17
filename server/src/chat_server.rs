@@ -21,6 +21,7 @@ pub struct Message(pub String);
 /// Message for chat server communications
 
 /// New chat session is created
+/// Can get rid of debug and clone later
 #[derive(Message)]
 #[rtype(usize)]
 pub struct Connect {
@@ -116,6 +117,7 @@ impl Handler<Connect> for ChatServer {
     type Result = usize;
 
     fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
+
         println!("Someone joined");
 
         // notify all users in same room
@@ -134,6 +136,7 @@ impl Handler<Connect> for ChatServer {
         //let count = self.visitor_count.fetch_add(1, Ordering::SeqCst);
         //self.send_message(&format!("Total visitors {count}"), 0);
 
+        println!("Client id {} has been assigned address: {:?}", id, self.sessions.get(&id));
         // send id back
         id
     }
@@ -158,6 +161,8 @@ impl Handler<Disconnect> for ChatServer {
             }
         }
 
+        println!("Client id {} has disconnected", msg.id);
+
         self.send_message("Someone disconnected", 0);
         
     }
@@ -168,6 +173,7 @@ impl Handler<ClientMessage> for ChatServer {
     type Result = ();
 
     fn handle(&mut self, msg: ClientMessage, _: &mut Context<Self>) {
+        // Don't send to self.
         self.send_message(msg.msg.as_str(), msg.id);
     }
 }
@@ -180,6 +186,7 @@ impl Handler<Join> for ChatServer {
     type Result = ();
 
     fn handle(&mut self, msg: Join, _: &mut Context<Self>) {
+
         let Join { id, name } = msg;
         let mut rooms = Vec::new();
 

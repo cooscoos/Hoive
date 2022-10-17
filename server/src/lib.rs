@@ -36,15 +36,15 @@ pub async fn start_server() -> std::io::Result<()> {
 
     // set up applications state
     // keep a count of the number of visitors
-    //let app_state = Arc::new(AtomicUsize::new(0));
+    let app_state = Arc::new(AtomicUsize::new(0));
     // start chat server actor
-    //let servery = chat_server::ChatServer::new().start();
+    let servery = chat_server::ChatServer::new().start();
 
     let secret_key = get_secret_key();
 
     HttpServer::new(move || {
         App::new()
-        //.app_data(web::Data::new(servery.clone()))
+            .app_data(web::Data::new(servery.clone()))
             .app_data(db::create_conn_pool())
             .wrap(SessionMiddleware::new(
                 CookieSessionStore::default(),
@@ -61,7 +61,7 @@ pub async fn start_server() -> std::io::Result<()> {
                     .service(
                         web::resource("/game-state").route(web::get().to(api::game_state_json)),
                     )
-                    //.service(web::resource("/ws").route(web::get().to(api::chat_route)))
+                    .service(web::resource("/ws").route(web::get().to(api::chat_route)))
                     .service(web::resource("/wipe").route(web::get().to(api::delete_all)))
                     .service(web::resource("/do-action").route(web::post().to(api::make_action)))
             )
