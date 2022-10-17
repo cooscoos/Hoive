@@ -11,6 +11,7 @@ use diesel::SqliteConnection;
 
 use dotenvy::dotenv;
 use uuid::Uuid;
+use rand::Rng;
 
 pub use crate::models;
 use crate::models::{GameState, NewGameState, User};
@@ -90,15 +91,17 @@ pub fn create_user(name: &str, conn: &mut SqliteConnection, uuid: usize) -> Resu
 }
 
 /// Creates a new game session on the db, with a given user as user_1
-pub fn create_session(user: &Uuid, conn: &mut SqliteConnection) -> Result<Uuid, String> {
+pub fn create_session(user_id: &usize, conn: &mut SqliteConnection) -> Result<usize, String> {
     use schema::game_state::dsl::*;
 
-    let session_id = Uuid::new_v4();
+    
+    //let session_id = Uuid::new_v4();
+    let session_id = rand::thread_rng().gen::<usize>();
 
     let new_game = NewGameState {
         id: session_id.to_string(),
         board: None,
-        user_1: Some(user.to_string()),
+        user_1: Some(user_id.to_string()),
     };
 
     match diesel::insert_into(game_state)

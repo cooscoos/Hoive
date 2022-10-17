@@ -7,7 +7,6 @@ use std::sync::{atomic::AtomicUsize, Arc};
 use actix::Actor;
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{cookie::Key, middleware, web, App, HttpServer};
-use diesel::r2d2::PooledConnection;
 
 pub mod api;
 pub mod chat_server;
@@ -22,9 +21,7 @@ fn get_secret_key() -> Key {
     Key::generate()
 }
 
-struct Connecty {
-    conn: PooledConnection<C>
-}
+
 
 #[actix_web::main]
 pub async fn start_server() -> std::io::Result<()> {
@@ -33,7 +30,7 @@ pub async fn start_server() -> std::io::Result<()> {
 
     // set up applications state
     // keep a count of the number of visitors
-    let app_state = Arc::new(AtomicUsize::new(0));
+    //let app_state = Arc::new(AtomicUsize::new(0));
     // start chat server actor
     let servery = chat_server::ChatServer::new().start();
 
@@ -52,7 +49,7 @@ pub async fn start_server() -> std::io::Result<()> {
                     .service(web::resource("/").route(web::get().to(api::index)))
                     //.service(web::resource("/register").route(web::post().to(api::register_user)))
                     .service(web::resource("/user-name").route(web::post().to(api::get_username)))
-                    .service(web::resource("/new").route(web::get().to(api::new_game)))
+                    //.service(web::resource("/new").route(web::get().to(api::new_game)))
                     .service(web::resource("/find").route(web::get().to(api::find)))
                     .service(web::resource("/join").route(web::post().to(api::join)))
                     .service(

@@ -150,28 +150,23 @@ pub async fn get_username(
 }
 
 /// Create a new game
-pub async fn new_game(session: Session, req: HttpRequest) -> Result<impl Responder, Error> {
-    println!("NEW GAME REQ: {:?}", req);
+pub fn new_game(user_id: &usize) -> Result<String, Error> {
 
-    let mut conn = get_db_connection(req)?;
+    // Inefficient way, for now, to make progress
+    let mut conn = db::establish_connection();
 
-    if let Some(user_id) = session.get::<Uuid>(USER_ID_KEY)? {
         match db::create_session(&user_id, &mut conn) {
             Ok(session_id) => {
-                session.insert(SESSION_ID_KEY, session_id.to_string())?;
+
                 println!("\x1b[32;1mCreated session id {}\x1b[0m\n", session_id);
-                Ok(web::Json(session_id))
+                Ok(session_id.to_string())
             }
             Err(error) => Err(error::ErrorBadGateway(format!(
                 "Cant register new session: {error}"
             ))),
         }
-    } else {
-        Err(error::ErrorBadGateway(
-            "Cant find the current user ID in this session",
-        ))
     }
-}
+
 
 /// Find a live session without a player 2
 pub async fn find(session: Session, req: HttpRequest) -> Result<impl Responder, Error> {

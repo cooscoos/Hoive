@@ -3,9 +3,6 @@ use std::time::{Duration, Instant};
 use actix::prelude::*;
 use actix_web_actors::ws;
 
-use diesel::r2d2::ConnectionManager;
-use diesel::r2d2::PooledConnection;
-use diesel::SqliteConnection;
 
 use crate::chat_server;
 use crate::api;
@@ -168,15 +165,17 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         "/register" => {
                             // Register your username on the db.
                             let uname = self.name.as_ref().unwrap();
-                            let moo = api::register_user(uname.to_string(),self.id);
-
-
+                            let _result = api::register_user(uname.to_string(),self.id);
                             ctx.text("okay");
 
                             
                         }
                         "/create" => {
-                            // Create a new game on the db, register self as user_1, and join its chat room
+                            // Create a new game on the db, register self as user_1
+                            let _result = api::new_game(&self.id);
+                            ctx.text("okay");
+
+                            // and now join its chat room
                             
                         }
                         _ => ctx.text(format!("!!! unknown command: {m:?}")),
