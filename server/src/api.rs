@@ -9,10 +9,10 @@ use uuid::Uuid;
 use actix_session::Session;
 use actix_web::Responder;
 use actix_web::{error, web, Error, HttpRequest, HttpResponse};
-use serde::Deserialize;
 use actix_web_actors::ws;
+use serde::Deserialize;
 
-
+use crate::chat_session::WsChatSession;
 pub use crate::db;
 use crate::models::GameState;
 pub use crate::models::{self, User};
@@ -37,8 +37,8 @@ pub struct SessionInfo {
     id: Uuid,
 }
 
-use actix::Addr;
 use crate::{chat_server, chat_session};
+use actix::Addr;
 use std::{
     sync::{
         atomic::{AtomicUsize, Ordering},
@@ -53,20 +53,35 @@ pub async fn chat_route(
     stream: web::Payload,
     srv: web::Data<Addr<chat_server::ChatServer>>,
 ) -> Result<HttpResponse, Error> {
-    ws::start(
-        chat_session::WsChatSession {
-            id: 0,
-            hb: Instant::now(),
-            room: "main".to_owned(),
-            name: None,
-            addr: srv.get_ref().clone(),
-        },
-        &req,
-        stream,
-    )
+
+    if let Some(pool) = req.app_data::<Pool<ConnectionManager<SqliteConnection>>>() {
+        match pool.get() {
+            Ok(conn) => {
+                // start the websocket
+                ws::start(
+                    chat_session::WsChatSession {
+                        id: 0,
+                        hb: Instant::now(),
+                        game_room: "main".to_owned(),
+                        name: None,
+                        addr: srv.get_ref().clone(),
+                    },
+                    &req,
+                    stream,
+                )
+            }
+            Err(error) => Err(error::ErrorBadGateway(error)), // convert error into actix-web error
+        }
+    } else {
+        Err(error::ErrorBadGateway(
+            "[api][get_db_connection] Can't get db connection",
+        ))
+    }
 }
 
-/// Get a connection to the db
+
+
+/// Get a connection to the db 
 fn get_db_connection(
     req: HttpRequest,
 ) -> Result<PooledConnection<ConnectionManager<SqliteConnection>>, Error> {
@@ -88,30 +103,27 @@ pub async fn index() -> HttpResponse {
 }
 
 /// Register a new user with requested name (input via web form)
-pub async fn register_user(
-    form_input: web::Form<User>,
-    session: Session,
-    req: HttpRequest,
-) -> Result<impl Responder, Error> {
-    let user_name = form_input.user_name.to_owned();
+pub fn register_user(
+    user_name: String,
+    session_id: usize,
+) -> Result<String, Error> {
 
     // Refuse to register if username is profanity
     if user_name.is_inappropriate() {
-        return Ok(web::Json("invalid".to_string()));
+        return Ok("invalid".to_string());
     }
 
-    println!("REQ: {:?}", req);
-
-    let mut conn = get_db_connection(req)?;
-
-    match db::create_user(&user_name, &mut conn) {
+    // Inefficient way, for now, to make progress
+    let mut conn = db::establish_connection();
+ 
+    match db::create_user(&user_name, &mut conn, session_id) {
         Ok(user_id) => {
-            session.insert(USER_ID_KEY, user_id.to_string())?;
+            //session.insert(USER_ID_KEY, user_id.to_string())?;
             println!(
                 "\x1b[32;1mUsername {} registered under {}\x1b[0m\n",
                 user_name, user_id
             );
-            Ok(web::Json(user_id.to_string()))
+            Ok(user_id.to_string())
         }
         Err(error) => Err(error::ErrorBadGateway(format!(
             "Cant register new user: {error}"
@@ -462,4 +474,3 @@ pub async fn delete_all(req: HttpRequest) -> Result<HttpResponse, Error> {
 
     Ok(HttpResponse::Ok().body("Cleared"))
 }
-

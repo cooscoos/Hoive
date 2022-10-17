@@ -3,7 +3,12 @@ use std::time::{Duration, Instant};
 use actix::prelude::*;
 use actix_web_actors::ws;
 
+use diesel::r2d2::ConnectionManager;
+use diesel::r2d2::PooledConnection;
+use diesel::SqliteConnection;
+
 use crate::chat_server;
+use crate::api;
 
 /// How often heartbeat pings are sent
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -11,23 +16,24 @@ const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 /// How long before lack of client response causes a timeout
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct WsChatSession {
-    /// unique chat session id
+    /// unique client session id (User id in db)
     pub id: usize,
 
     /// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT),
     /// otherwise we drop connection.
     pub hb: Instant,
 
-    /// joined room
-    pub room: String,
+    /// joined game (game_state id in the db)
+    pub game_room: String,
 
     /// peer name
     pub name: Option<String>,
 
     /// Chat server
     pub addr: Addr<chat_server::ChatServer>,
+
 }
 
 impl WsChatSession {
@@ -54,6 +60,9 @@ impl WsChatSession {
             ctx.ping(b"");
         });
     }
+
+
+
 }
 
 impl Actor for WsChatSession {
@@ -131,10 +140,10 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                     match v[0] {
                         "/join" => {
                             if v.len() == 2 {
-                                self.room = v[1].to_owned();
+                                self.game_room = v[1].to_owned();
                                 self.addr.do_send(chat_server::Join {
                                     id: self.id,
-                                    name: self.room.clone(),
+                                    name: self.game_room.clone(),
                                 });
 
                                 ctx.text("joined");
@@ -150,7 +159,25 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                             }
                         }
                         "/getid" => {
-                            println!("Id is: {}",self.id);
+                            let return_string = format!(
+                                "Id is: {}, and username is {:?}. You're in game_session: {}",
+                                self.id, self.name, self.game_room
+                            );
+                            ctx.text(return_string)
+                        }
+                        "/register" => {
+                            // Register your username on the db.
+                            let uname = self.name.as_ref().unwrap();
+                            let moo = api::register_user(uname.to_string(),self.id);
+
+
+                            ctx.text("okay");
+
+                            
+                        }
+                        "/create" => {
+                            // Create a new game on the db, register self as user_1, and join its chat room
+                            
                         }
                         _ => ctx.text(format!("!!! unknown command: {m:?}")),
                     }
@@ -164,7 +191,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                     self.addr.do_send(chat_server::ClientMessage {
                         id: self.id,
                         msg,
-                        room: self.room.clone(),
+                        room: self.game_room.clone(),
                     })
                 }
             }

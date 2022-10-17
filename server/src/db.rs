@@ -43,7 +43,7 @@ impl diesel::r2d2::CustomizeConnection<SqliteConnection, diesel::r2d2::Error>
     }
 }
 
-/// Creates a connection pool
+/// Creates a connection pool using r2d2
 pub fn create_conn_pool() -> Pool<ConnectionManager<SqliteConnection>> {
     dotenv().ok();
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
@@ -58,23 +58,25 @@ pub fn create_conn_pool() -> Pool<ConnectionManager<SqliteConnection>> {
         .unwrap()
 }
 
-/// Establish connection to db
-// fn establish_connection() -> SqliteConnection {
-//     dotenv().ok();
+/// Establish connection to db - not required if we can get the generic connection pool above working
+/// 
+pub fn establish_connection() -> SqliteConnection {
+    dotenv().ok();
 
-//     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-//     SqliteConnection::establish(&database_url)
-//         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
-// }
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    SqliteConnection::establish(&database_url)
+        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+}
 
 /// Creates a new user on the db with a given name and team
-pub fn create_user(name: &str, conn: &mut SqliteConnection) -> Result<Uuid, String> {
+pub fn create_user(name: &str, conn: &mut SqliteConnection, uuid: usize) -> Result<usize, String> {
     // We have the "use" statement  in each function rather than at the top of the module to avoid ambiguity.
     // In some functions we want to use schema::user::dsl::* and in others we want schema::game_state::dsl::*.
     use super::schema::user::dsl::*;
 
     // Generate and assign new uuid for the user
-    let uuid = Uuid::new_v4();
+    // later need to make uuid a usize on the db and assign directly from wschatsession id
+    //let uuid = Uuid::new_v4();
 
     let new_user = User {
         id: uuid.to_string(),
