@@ -130,8 +130,8 @@ pub fn find_live_session(conn: &mut SqliteConnection) -> Option<models::GameStat
 
 /// Lets a user_2 join a live session of given session_id
 pub fn join_live_session(
-    session_id: &Uuid,
-    user2_id: &Uuid,
+    session_id: &str,
+    user2_id: &usize,
     conn: &mut SqliteConnection,
 ) -> QueryResult<usize> {
     use schema::game_state::dsl::*;
@@ -159,7 +159,7 @@ pub fn get_board(session_id: &Uuid, conn: &mut SqliteConnection) -> Result<Strin
 
 /// Update the game state of a given session_id with new info on the last user and new board state and history
 pub fn update_game_state(
-    session_id: &Uuid,
+    session_id: &str,
     l_user_id: &str,
     board_str: &str,
     history_str: &str,
@@ -179,7 +179,7 @@ pub fn update_game_state(
 
 /// Update the winner only
 pub fn update_winner(
-    session_id: &Uuid,
+    session_id: &str,
     l_user_id: &str,
     is_winner: &str,
     conn: &mut SqliteConnection,
@@ -193,7 +193,7 @@ pub fn update_winner(
 }
 
 /// Get the username of a user of given id
-pub fn get_user_name(user_id: &Uuid, conn: &mut SqliteConnection) -> QueryResult<String> {
+pub fn get_user_name(user_id: &usize, conn: &mut SqliteConnection) -> QueryResult<String> {
     use schema::user::dsl::*;
 
     let result = user
@@ -208,7 +208,7 @@ pub fn get_user_name(user_id: &Uuid, conn: &mut SqliteConnection) -> QueryResult
 
 /// Get the general game state of the selected session_id
 pub fn get_game_state(
-    session_id: &Uuid,
+    session_id: &str,
     conn: &mut SqliteConnection,
 ) -> QueryResult<models::GameState> {
     use super::schema::game_state::dsl::*;

@@ -1,7 +1,9 @@
 use std::time::{Duration, Instant};
+use std::usize;
 
 use actix::prelude::*;
 use actix_web_actors::ws;
+use hoive::game;
 
 
 use crate::chat_server;
@@ -137,15 +139,40 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                     match v[0] {
                         "/join" => {
                             if v.len() == 2 {
-                                self.game_room = v[1].to_owned();
-                                self.addr.do_send(chat_server::Join {
-                                    id: self.id,
-                                    name: self.game_room.clone(),
-                                });
+                                let session_id = v[1].to_owned();
+                                // Check the db to see if there's a session with this id
+                                // no function to do this yet, create one later
 
-                                ctx.text("joined");
+                                // If there's a match, then join the session, and join the chat for that room
                             } else {
-                                ctx.text("!!! room name is required");
+                                // Join an empty game if there is one available
+
+                                match api::find() {
+                                    Ok(Some(game_state)) => {
+                                        // Join the game
+
+                                        let session_id = game_state.id.to_owned();
+                                        match api::join(&session_id, &self.id) {
+                                            Ok(()) => {
+
+                                            // and now join its chat room
+                                            self.game_room = game_state.id.to_owned();
+
+                                            self.addr.do_send(chat_server::Join {
+                                                id: self.id,
+                                                name: self.game_room.clone(),
+                                            });
+
+                                            ctx.text(format!("joined game room {}",session_id));
+
+                                            },
+                                            Err(err) => panic!("Err {}",err)
+                                        };
+
+                                    }
+                                    Ok(None) => ctx.text("No empty games available. Try create one!"),
+                                    Err(err) => panic!("Error {}",err),
+                                }
                             }
                         }
                         "/name" => {
@@ -154,6 +181,12 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                             } else {
                                 ctx.text("!!! name is required");
                             }
+                        }
+                        "/wipe" => {
+                            match api::delete_all() {
+                                Ok(_) => ctx.text("Database wiped"),
+                                Err(err) => panic!("Error {}",err),
+                            };
                         }
                         "/getid" => {
                             let return_string = format!(
@@ -167,16 +200,57 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                             let uname = self.name.as_ref().unwrap();
                             let _result = api::register_user(uname.to_string(),self.id);
                             ctx.text("okay");
-
-                            
                         }
                         "/create" => {
                             // Create a new game on the db, register self as user_1
-                            let _result = api::new_game(&self.id);
-                            ctx.text("okay");
+                            let session_id = match api::new_game(&self.id){
+                                Ok(value) => value,
+                                Err(err) => panic!("Error: {}",err),
+                            };
+                            
 
                             // and now join its chat room
+                            self.game_room = session_id.to_owned();
+
+                            self.addr.do_send(chat_server::Join {
+                                id: self.id,
+                                name: self.game_room.clone(),
+                            });
+
+                            ctx.text(format!("joined game room {}",session_id));
                             
+                        }
+                        "/gamestate" => {
+                            // Get and return the game state (as long as we're in a game)
+                            if self.game_room != "main" {
+                                let gamestate = match api::get_game_state(&self.game_room) {
+                                    Ok(value) => value,
+                                    Err(err) => panic!("Error {err}"),
+                                };
+
+                                match serde_json::to_string(&gamestate) {
+                                    Ok(value) => ctx.text(value),
+                                    Err(err) => panic!("Error {}",err),
+                                };
+                                
+
+                            } else {
+                                ctx.text("You're not in a game. There is no game state");
+                            }
+                        }
+                        "/do" => {
+                            // Do an action (as long as we're in a game)
+                            if self.game_room != "main" {
+                                if v.len() == 2 {
+                                    let action_string = v[1].to_owned();
+                                
+                                } else {
+                                    ctx.text("No action requested");
+                                }
+
+                            } else {
+                                ctx.text("You're not in a game. There is no game state");
+                            }
                         }
                         _ => ctx.text(format!("!!! unknown command: {m:?}")),
                     }

@@ -133,13 +133,15 @@ pub fn register_user(
 
 /// Get user name based on an input user id
 pub async fn get_username(
-    form_input: web::Form<User>,
+    user_id: usize,
     req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
     println!("REQ: {:?}", req);
 
-    let user_id = Uuid::parse_str(&form_input.id).unwrap();
-    let mut conn = get_db_connection(req)?;
+
+    // Inefficient way, for now, to make progress
+    let mut conn = db::establish_connection();
+
 
     match db::get_user_name(&user_id, &mut conn) {
         Ok(username) => Ok(HttpResponse::Ok().body(username)),
@@ -169,30 +171,26 @@ pub fn new_game(user_id: &usize) -> Result<String, Error> {
 
 
 /// Find a live session without a player 2
-pub async fn find(session: Session, req: HttpRequest) -> Result<impl Responder, Error> {
-    println!("REQ: {:?}", req);
-    let mut conn = get_db_connection(req)?;
+pub fn find() -> Result<Option<GameState>, Error> {
+    // Inefficient way, for now, to make progress
+    let mut conn = db::establish_connection();
     match db::find_live_session(&mut conn) {
-        Some(game_state) => {
-            session.insert(SESSION_ID_KEY, game_state.id.to_owned())?;
-            Ok(web::Json(game_state.id))
-        }
-        None => Ok(web::Json("None".to_string())),
+        Some(game_state) => Ok(Some(game_state)),
+        None => Ok(None),
     }
 }
 
 /// Join a session with given session_id
-pub async fn join(
-    form_input: web::Form<SessionInfo>,
-    session: Session,
-    req: HttpRequest,
-) -> Result<HttpResponse, Error> {
-    println!("REQ: {:?}", req);
-    let mut conn = get_db_connection(req)?;
-    let session_id = form_input.id.to_owned();
+pub fn join(
+    session_id: &str,
+    user_2_id: &usize,
+) -> Result<(), Error> {
 
-    if let Some(user_2_id) = session.get::<Uuid>(USER_ID_KEY)? {
-        match db::join_live_session(&session_id, &user_2_id, &mut conn) {
+    // Inefficient way, for now, to make progress
+    let mut conn = db::establish_connection();
+
+
+        match db::join_live_session(session_id, &user_2_id, &mut conn) {
             Ok(0) => Err(error::ErrorNotFound(format!(
                 "No waiting sessions with id {session_id}"
             ))),
@@ -200,7 +198,7 @@ pub async fn join(
                 println!("\x1b[32;1mUser joined successfully\x1b[0m\n");
 
                 // Get the game state so we can retrieve user ids
-                let game_state = match db::get_game_state(&session_id, &mut conn) {
+                let game_state = match db::get_game_state(session_id, &mut conn) {
                     Ok(value) => value,
                     Err(err) => {
                         return Err(error::ErrorNotFound(format!(
@@ -217,8 +215,8 @@ pub async fn join(
                 };
 
                 // Update the db and return ok
-                match db::update_game_state(&session_id, &l_user, "", "", &mut conn) {
-                    Ok(_) => Ok(HttpResponse::Ok().body("")),
+                match db::update_game_state(session_id, &l_user, "", "", &mut conn) {
+                    Ok(_) => Ok(()),
                     Err(err) => Err(error::ErrorInternalServerError(format!(
                         "Can't update game state of {session_id} because {err}"
                     ))),
@@ -230,90 +228,67 @@ pub async fn join(
                 error
             ))),
         }
-    } else {
-        println!("Cant find the current user ID in this session");
-        Err(error::ErrorBadGateway(
-            "Cant find the current user ID in this session",
-        ))
-    }
+
 }
 
-/// Retrieve gamestate of session and return as json
-pub async fn game_state_json(session: Session, req: HttpRequest) -> Result<impl Responder, Error> {
-    println!("REQ: {:?}", req);
-    let mut conn = get_db_connection(req)?;
 
-    // Get the game_state and wrap it in json
-    match get_game_state(&session, &mut conn).await {
-        Ok(game_state) => Ok(web::Json(game_state)),
-        Err(err) => Err(error::ErrorInternalServerError(err)),
-    }
-}
 
 /// Retrieve the game state of a session
-async fn get_game_state(
-    session: &Session,
-    conn: &mut SqliteConnection,
+pub fn get_game_state(
+    session_id: &str,
 ) -> Result<GameState, Error> {
-    if let Some(session_id) = session.get::<Uuid>(SESSION_ID_KEY)? {
-        println!("API: board, session_id: {:?}", session_id);
-        session.insert(SESSION_ID_KEY, session_id)?;
-
-        let res = db::get_game_state(&session_id, conn);
+        // Inefficient way, for now, to make progress
+        let mut conn = db::establish_connection();
+        let res = db::get_game_state(&session_id, &mut conn);
         match res {
             Ok(game_state) => Ok(game_state),
             _ => Err(error::ErrorInternalServerError(format!(
                 "Can't find game with session id {session_id}"
             ))),
         }
-    } else {
-        Err(error::ErrorInternalServerError("Can't find game session"))
-    }
+
 }
 
 /// Allow player to take some sort of action
 pub async fn make_action(
     action: web::Json<BoardAction>,
-    session: Session,
-    req: HttpRequest,
+    session_id: &str,
 ) -> Result<impl Responder, Error> {
-    println!("REQ: {:?}", req);
-    let mut conn = get_db_connection(req)?;
+    // Inefficient way, for now, to make progress
+    let mut conn = db::establish_connection();
 
-    if let Some(session_id) = session.get::<Uuid>(SESSION_ID_KEY)? {
+
         // Retrieve the game_state
-        let game_state = get_game_state(&session, &mut conn).await?;
+        let game_state = get_game_state(session_id)?;
 
         // Find out if we have a special player action.
         let move_status = match action.special.as_ref() {
             Some(special) if special == "forfeit" => {
                 // Forfeit means active player is giving up
-                forfeit(game_state, &session_id, &mut conn).await?
+                forfeit(game_state, session_id, &mut conn).await?
             }
             Some(special) if special == "skip" => {
                 // Try and skip the current player's turn
-                skip_turn(game_state, &session_id, &mut conn).await?
+                skip_turn(game_state, session_id, &mut conn).await?
             }
             Some(_) => {
                 // Any other special string is a pillbug / mosquito action
-                do_special(game_state, action, &session_id, &mut conn).await?
+                do_special(game_state, action, session_id, &mut conn).await?
             }
             None => {
                 // Otherwise it's a normal move
-                do_movement(game_state, action, &session_id, &mut conn).await?
+                do_movement(game_state, action, session_id, &mut conn).await?
             }
         };
         Ok(web::Json(move_status))
-    } else {
-        Err(error::ErrorInternalServerError("Can't find game session"))
-    }
+
 }
 
 /// Try and execute movement
 async fn do_movement(
     game_state: GameState,
     action: web::Json<BoardAction>,
-    session_id: &Uuid,
+    session_id: &str,
     conn: &mut SqliteConnection,
 ) -> Result<MoveStatus, Error> {
     // Generate a board based on the gamestate and find the chip name and active team
@@ -342,7 +317,7 @@ async fn do_movement(
 async fn do_special(
     game_state: GameState,
     action: web::Json<BoardAction>,
-    session_id: &Uuid,
+    session_id: &str,
     conn: &mut SqliteConnection,
 ) -> Result<MoveStatus, Error> {
     // Generate a board based on the gamestate and find the chip name and active team
@@ -375,7 +350,7 @@ fn execute_on_db<T: Coord>(
     board: &mut Board<T>,
     game_state: GameState,
     event: Event,
-    session_id: &Uuid,
+    session_id: &str,
     conn: &mut SqliteConnection,
 ) -> Result<MoveStatus, Error> {
     // Refresh all mosquito names back to m1 and update board on server
@@ -406,7 +381,7 @@ fn cheat_check(form_input: &web::Json<BoardAction>, active_team: &Team) -> bool 
 
 async fn skip_turn(
     game_state: GameState,
-    session_id: &Uuid,
+    session_id: &str,
     conn: &mut SqliteConnection,
 ) -> Result<MoveStatus, Error> {
     // Get the board and current user
@@ -437,7 +412,7 @@ async fn skip_turn(
 
 async fn forfeit(
     game_state: GameState,
-    session_id: &Uuid,
+    session_id: &str,
     conn: &mut SqliteConnection,
 ) -> Result<MoveStatus, Error> {
     // The winner is the team who didn't forfeit
@@ -461,8 +436,10 @@ async fn forfeit(
 }
 
 /// For debugging only. Delete the db on the server
-pub async fn delete_all(req: HttpRequest) -> Result<HttpResponse, Error> {
-    let mut conn = get_db_connection(req).unwrap();
+pub fn delete_all() -> Result<HttpResponse, Error> {
+        // Inefficient way, for now, to make progress
+        let mut conn = db::establish_connection();
+
 
     db::clean_db(&mut conn);
     println!("Database cleared");

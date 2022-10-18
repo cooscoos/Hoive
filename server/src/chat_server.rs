@@ -89,8 +89,8 @@ impl ChatServer {
 
 impl ChatServer {
     /// Send message to all users in the room
-    fn send_message(&self, message: &str, skip_id: usize) {
-        let room = "main";
+    fn send_message(&self, message: &str, room: &str, skip_id: usize) {
+        //let room = "main";
         if let Some(sessions) = self.rooms.get(room) {
             for id in sessions {
                 if *id != skip_id {
@@ -121,7 +121,7 @@ impl Handler<Connect> for ChatServer {
         println!("Someone joined");
 
         // notify all users in same room
-        self.send_message( "Someone joined", 0);
+        self.send_message( "Someone joined", "main", 0);
 
         // register session with random id
         let id = self.rng.gen::<usize>();
@@ -163,7 +163,9 @@ impl Handler<Disconnect> for ChatServer {
 
         println!("Client id {} has disconnected", msg.id);
 
-        self.send_message("Someone disconnected", 0);
+        for room in rooms {
+        self.send_message("Someone disconnected", &room, 0);
+        }
         
     }
 }
@@ -174,7 +176,7 @@ impl Handler<ClientMessage> for ChatServer {
 
     fn handle(&mut self, msg: ClientMessage, _: &mut Context<Self>) {
         // Don't send to self.
-        self.send_message(msg.msg.as_str(), msg.id);
+        self.send_message(msg.msg.as_str(), &msg.room,msg.id);
     }
 }
 
@@ -197,8 +199,9 @@ impl Handler<Join> for ChatServer {
             }
         }
         // send message to other users
-
-        self.send_message( "Someone disconnected", 0);
+        for room in rooms {
+        self.send_message( "Someone disconnected", &room, 0);
+        }
         
 
         self.rooms
@@ -206,6 +209,8 @@ impl Handler<Join> for ChatServer {
             .or_insert_with(HashSet::new)
             .insert(id);
 
-        self.send_message( "Someone connected", id);
+            
+        self.send_message( "Someone connected", &name, id);
+
     }
 }
