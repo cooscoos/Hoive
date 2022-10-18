@@ -1,3 +1,4 @@
+use actix_web::body::MessageBody;
 use reqwest::Client;
 /// Set up connections to a Hoive db and generate/join games
 use std::{error::Error, thread, time::Duration};
@@ -47,6 +48,8 @@ pub async fn setup() -> Result<(Client, String), Box<dyn Error>> {
 
     Ok((client, base_url))
 }
+
+
 
 /// Ask the user to register a user name on the database
 pub async fn register_user(client: &Client, base_url: &String) -> Result<String, Box<dyn Error>> {

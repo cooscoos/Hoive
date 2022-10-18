@@ -5,7 +5,7 @@ use actix::prelude::*;
 use actix_web_actors::ws;
 use hoive::game;
 
-
+use rustrict::CensorStr;
 use crate::chat_server;
 use crate::api;
 
@@ -122,6 +122,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
             Ok(msg) => msg,
         };
 
+
+
         log::info!("WEBSOCKET MESSAGE: {msg:?}");
         match msg {
             ws::Message::Ping(msg) => {
@@ -146,7 +148,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                 // If there's a match, then join the session, and join the chat for that room
                             } else {
                                 // Join an empty game if there is one available
-
                                 match api::find() {
                                     Ok(Some(game_state)) => {
                                         // Join the game
@@ -177,7 +178,20 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         }
                         "/name" => {
                             if v.len() == 2 {
-                                self.name = Some(v[1].to_owned());
+                                let user_name = v[1];
+                                // Profanity filter
+                                if user_name.is_inappropriate() {
+                                    ctx.text("Invalid username");
+                                } else{
+
+                                // Register username on the game db.
+                                let _result = api::register_user(user_name,self.id);
+
+                                // Assign username in the chat
+                                self.name = Some(user_name.to_owned());
+
+                                ctx.text(format!("Successfully changed name to: {}", user_name));
+                                }
                             } else {
                                 ctx.text("!!! name is required");
                             }
@@ -190,16 +204,10 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         }
                         "/getid" => {
                             let return_string = format!(
-                                "Id is: {}, and username is {:?}. You're in game_session: {}",
+                                "Your user id is: {}, and username is {:?}. You're in game_session: {}",
                                 self.id, self.name, self.game_room
                             );
                             ctx.text(return_string)
-                        }
-                        "/register" => {
-                            // Register your username on the db.
-                            let uname = self.name.as_ref().unwrap();
-                            let _result = api::register_user(uname.to_string(),self.id);
-                            ctx.text("okay");
                         }
                         "/create" => {
                             // Create a new game on the db, register self as user_1
@@ -255,6 +263,11 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         _ => ctx.text(format!("!!! unknown command: {m:?}")),
                     }
                 } else {
+
+                    if self.name.is_none() {
+                        ctx.text("Define a username using /name before chatting");
+                    } else {
+
                     let msg = if let Some(ref name) = self.name {
                         format!("{name}: {m}")
                     } else {
@@ -266,7 +279,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         msg,
                         room: self.game_room.clone(),
                     })
-                }
+                }}
             }
             ws::Message::Binary(_) => println!("Unexpected binary"),
             ws::Message::Close(reason) => {

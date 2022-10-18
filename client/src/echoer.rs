@@ -1,16 +1,26 @@
 
 use std::{io, thread};
 use std::error::Error;
+use actix_web::body::MessageBody;
 use actix_web::web::Bytes;
 use awc::ws;
 use futures_util::{SinkExt as _, StreamExt as _};
 use tokio::{select, sync::mpsc};
 use tokio_stream::wrappers::UnboundedReceiverStream;
+use hoive::pmoore::get_usr_input;
 
 pub async fn echo_service() -> Result<(), Box<dyn Error>>{
+
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
-    log::info!("starting echo WebSocket client");
+
+    // Define the server to connect to
+    let url = match websock_setup().await {
+        Ok(value) => format!("ws://{}ws",value),
+        Err(err) => panic!("Err: {}", err),
+    };
+
+    //log::info!("starting echo WebSocket client");
 
     let (cmd_tx, cmd_rx) = mpsc::unbounded_channel();
     let mut cmd_rx = UnboundedReceiverStream::new(cmd_rx);
@@ -28,7 +38,7 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>>{
     });
 
     let (res, mut ws) = match awc::Client::new()
-        .ws("ws://127.0.0.1:8080/api/ws")
+        .ws(url)
         .connect()
         .await
         {
@@ -40,23 +50,22 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>>{
         };
     
 
-    log::debug!("response: {res:?}");
-    log::info!("connected; server will echo messages sent");
+    //log::debug!("response: {res:?}");
+    log::info!("Connected! Welcome. Type /name to set your name.");
 
     loop {
         select! {
             Some(msg) = ws.next() => {
                 match msg {
                     Ok(ws::Frame::Text(txt)) => {
-                        // log echoed messages from server
-                        log::info!("Server: {txt:?}")
+                        // Display messages from server
+                        println!("{txt:?}");
                     }
 
                     Ok(ws::Frame::Ping(_)) => {
                         // respond to ping probes
                         ws.send(ws::Message::Pong(Bytes::new())).await.unwrap();
                     }
-
                     _ => {}
                 }
             }
@@ -65,7 +74,6 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>>{
                 if cmd.is_empty() {
                     continue;
                 }
-
                 ws.send(ws::Message::Text(cmd.into())).await.unwrap();
             }
 
@@ -75,4 +83,44 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>>{
 
     input_thread.join().unwrap();
     Ok(())
+}
+
+/// Run user through prompts to attempt to join a Hoive server
+async fn websock_setup() -> Result< String, Box<dyn Error>> {
+    println!("Select a server address (leave blank for default localhost):");
+    let textin = get_usr_input();
+    let address = match textin {
+        _ if textin.is_empty() => "localhost".to_string(), // default
+        _ => textin,
+    };
+
+    println!("Select a port (leave blank for default 8080):");
+    let textin = get_usr_input();
+
+    let port = match textin {
+        _ if textin.is_empty() => "8080".to_string(), // default
+        _ => textin,
+    };
+
+    // Create a base url that points to the Hoive server
+    let base_url = format!("{address}:{port}/api/");
+
+    // Create a client and check the server is up and running
+    let client = awc::Client::default();
+
+    // Test the base url connects to a valid Hoive server of same version.
+    // The Hoive client version (converted to bytes)
+    let client_version = format!("Hoive-server v{}", crate::VERSION).try_into_bytes().unwrap();
+
+    // Try and get a response from the server
+    let mut res = client.get(format!("http://{}",base_url)).send().await?;
+
+    // The server version
+    let server_version = res.body().await?;
+
+    match client_version == server_version {
+        true => Ok(base_url),
+        false => Err("server and client versions don't match.".into()),
+    }
+
 }

@@ -3,16 +3,16 @@ use std::result::Result;
 
 // Profanity filter for usernames, and random number / uuid generation
 use rand::Rng;
-use rustrict::CensorStr;
+
 use uuid::Uuid;
 
-use actix_session::Session;
+
 use actix_web::Responder;
 use actix_web::{error, web, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
 use serde::Deserialize;
 
-use crate::chat_session::WsChatSession;
+
 pub use crate::db;
 use crate::models::GameState;
 pub use crate::models::{self, User};
@@ -21,8 +21,6 @@ pub use crate::schema;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use diesel::SqliteConnection;
 
-const SESSION_ID_KEY: &str = "session_id";
-const USER_ID_KEY: &str = "user_id";
 
 // Game modules
 use hoive::game::{
@@ -48,15 +46,23 @@ use std::{
 };
 
 /// Entry point for our websocket route
+/// Define the username, check it for profanity, register it on the db, and in the chat.
+/// Auto join the main lobby
 pub async fn chat_route(
+    //form_input: web::Form<User>,
     req: HttpRequest,
     stream: web::Payload,
     srv: web::Data<Addr<chat_server::ChatServer>>,
 ) -> Result<HttpResponse, Error> {
 
-    if let Some(pool) = req.app_data::<Pool<ConnectionManager<SqliteConnection>>>() {
-        match pool.get() {
-            Ok(conn) => {
+
+
+    // if let Some(pool) = req.app_data::<Pool<ConnectionManager<SqliteConnection>>>() {
+    //     match pool.get() {
+    //         Ok(conn) => {
+
+
+                
                 // start the websocket
                 ws::start(
                     chat_session::WsChatSession {
@@ -69,14 +75,14 @@ pub async fn chat_route(
                     &req,
                     stream,
                 )
-            }
-            Err(error) => Err(error::ErrorBadGateway(error)), // convert error into actix-web error
-        }
-    } else {
-        Err(error::ErrorBadGateway(
-            "[api][get_db_connection] Can't get db connection",
-        ))
-    }
+    //         }
+    //         Err(error) => Err(error::ErrorBadGateway(error)), // convert error into actix-web error
+    //     }
+    // } else {
+    //     Err(error::ErrorBadGateway(
+    //         "[api][get_db_connection] Can't get db connection",
+    //     ))
+    // }
 }
 
 
@@ -104,19 +110,14 @@ pub async fn index() -> HttpResponse {
 
 /// Register a new user with requested name (input via web form)
 pub fn register_user(
-    user_name: String,
+    user_name: &str,
     session_id: usize,
 ) -> Result<String, Error> {
-
-    // Refuse to register if username is profanity
-    if user_name.is_inappropriate() {
-        return Ok("invalid".to_string());
-    }
 
     // Inefficient way, for now, to make progress
     let mut conn = db::establish_connection();
  
-    match db::create_user(&user_name, &mut conn, session_id) {
+    match db::create_user(user_name, &mut conn, session_id) {
         Ok(user_id) => {
             //session.insert(USER_ID_KEY, user_id.to_string())?;
             println!(
