@@ -188,6 +188,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                 }
                             }
                         }
+                        "/leave" => {
+                            // only required in-game. need to update db, and then join the main lobby
+                        }
                         "/name" => {
                             if self.name == None {
                             if v.len() == 2  {
