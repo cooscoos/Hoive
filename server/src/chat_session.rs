@@ -319,7 +319,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         ctx.text("Define a username using /name before chatting");
                     } else {
                         let msg = if let Some(ref name) = self.name {
-                            format!("{name}: {m}")
+                            format!("\x1b[36;2m{name}:\x1b[0m {m}")
                         } else {
                             m.to_owned()
                         };

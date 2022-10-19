@@ -197,7 +197,7 @@ impl Handler<NewName> for ChatServer {
         self.visitor_list.insert(msg.id, msg.name.to_owned());
 
         // Notify all users that the new person joined
-        self.send_message(&format!("{} joined.", msg.name), "main", 0);
+        self.send_message(&format!("\x1b[33;2m{} joined.\x1b[0m", msg.name), "main", 0);
     }
 }
 
