@@ -134,6 +134,11 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                 self.hb = Instant::now();
             }
             ws::Message::Text(text) => {
+                // Detect hitting enter
+                if text == "\n" {
+                    println!("Newline");
+                }
+
                 let m = text.trim();
                 // we check for /sss type of messages
                 if m.starts_with('/') {
@@ -208,6 +213,10 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                 self.id, self.name, self.game_room
                             );
                             ctx.text(return_string)
+                        }
+                        "/who" => {
+                            // Display who is in this room
+                            
                         }
                         "/create" => {
                             // Create a new game on the db, register self as user_1

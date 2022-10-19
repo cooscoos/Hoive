@@ -68,12 +68,13 @@ pub struct ChatServer {
     sessions: HashMap<usize, Recipient<Message>>,
     rooms: HashMap<String, HashSet<usize>>,
     rng: ThreadRng,
-    //visitor_count: Arc<AtomicUsize>,
+    visitor_count: Arc<AtomicUsize>,
+    visitor_list: Vec<String>,
 }
 
 impl ChatServer {
-    //pub fn new(visitor_count: Arc<AtomicUsize>) -> ChatServer {
-    pub fn new() -> ChatServer {
+    pub fn new(visitor_count: Arc<AtomicUsize>) -> ChatServer {
+    //pub fn new() -> ChatServer {
         // default room
         let mut rooms = HashMap::new();
         rooms.insert("main".to_owned(), HashSet::new());
@@ -82,7 +83,8 @@ impl ChatServer {
             sessions: HashMap::new(),
             rooms,
             rng: rand::thread_rng(),
-            //visitor_count,
+            visitor_count,
+            visitor_list: vec![],
         }
     }
 }
@@ -133,8 +135,9 @@ impl Handler<Connect> for ChatServer {
             .or_insert_with(HashSet::new)
             .insert(id);
 
-        //let count = self.visitor_count.fetch_add(1, Ordering::SeqCst);
-        //self.send_message(&format!("Total visitors {count}"), 0);
+        let count = self.visitor_count.fetch_add(1, Ordering::SeqCst);
+        
+        self.send_message(&format!("There are now {count} other people in the main lobby"), "main",0);
 
         println!("Client id {} has been assigned address: {:?}", id, self.sessions.get(&id));
         // send id back
@@ -151,6 +154,7 @@ impl Handler<Disconnect> for ChatServer {
 
         let mut rooms: Vec<String> = Vec::new();
 
+    
         // remove address
         if self.sessions.remove(&msg.id).is_some() {
             // remove session from all rooms
@@ -160,8 +164,13 @@ impl Handler<Disconnect> for ChatServer {
                 }
             }
         }
+        
+        
 
-        println!("Client id {} has disconnected", msg.id);
+        
+        println!("Client id {} has disconnected. Their name was {:?}", msg.id, username);
+
+        
 
         for room in rooms {
         self.send_message("Someone disconnected", &room, 0);

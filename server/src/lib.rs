@@ -30,9 +30,9 @@ pub async fn start_server() -> std::io::Result<()> {
 
     // set up applications state
     // keep a count of the number of visitors
-    //let app_state = Arc::new(AtomicUsize::new(0));
+    let app_state = Arc::new(AtomicUsize::new(0));
     // start chat server actor
-    let servery = chat_server::ChatServer::new().start();
+    let servery = chat_server::ChatServer::new(app_state).start();
 
     let secret_key = get_secret_key();
 
