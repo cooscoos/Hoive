@@ -107,6 +107,7 @@ impl Handler<chat_server::Message> for WsChatSession {
     }
 }
 
+
 /// WebSocket message handler
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
@@ -214,6 +215,17 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         }
                         "/who" => {
                             // Display who is in this room
+                            self.addr.send(chat_server::Who{}).into_actor(self)
+                            .then(|res, _, ctx| {
+                                match res {
+                                    Ok(res) => ctx.text(res),
+                                    // something is wrong with chat server
+                                    _ => ctx.stop(),
+                                }
+                                fut::ready(())
+                            })
+                            .wait(ctx);
+  
                         }
                         "/create" => {
                             // Create a new game on the db, register self as user_1

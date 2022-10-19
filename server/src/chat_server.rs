@@ -35,6 +35,11 @@ pub struct Disconnect {
     pub id: usize,
 }
 
+/// User requests list of who is online
+#[derive(Message, Debug)]
+#[rtype(String)]
+pub struct Who;
+
 /// Send message to specific room
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -140,13 +145,17 @@ impl Handler<Connect> for ChatServer {
             0,
         );
 
-        println!(
-            "Client id {} has been assigned address: {:?}",
-            id,
-            self.sessions.get(&id)
-        );
         // send id back
         id
+    }
+}
+
+/// Handler for getting number of people in the chat room
+impl Handler<Who> for ChatServer {
+    type Result = String;
+
+    fn handle(&mut self, mut msg: Who, _: &mut Context<Self>) -> Self::Result {
+        format!("{:?} players online: ", &self.visitor_count)
     }
 }
 
