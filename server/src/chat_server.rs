@@ -69,7 +69,7 @@ pub struct ChatServer {
     rooms: HashMap<String, HashSet<usize>>,
     rng: ThreadRng,
     visitor_count: Arc<AtomicUsize>,
-    visitor_list: Vec<String>,
+    //visitor_list: Vec<String>,
 }
 
 impl ChatServer {
@@ -84,7 +84,7 @@ impl ChatServer {
             rooms,
             rng: rand::thread_rng(),
             visitor_count,
-            visitor_list: vec![],
+            //visitor_list: vec![],
         }
     }
 }
@@ -168,7 +168,7 @@ impl Handler<Disconnect> for ChatServer {
         
 
         
-        println!("Client id {} has disconnected. Their name was {:?}", msg.id, username);
+        //println!("Client id {} has disconnected. Their name was {:?}", msg.id, username);
 
         
 
