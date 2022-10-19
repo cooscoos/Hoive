@@ -46,7 +46,7 @@ impl WsChatSession {
                 println!("Websocket Client heartbeat failed, disconnecting!");
 
                 // notify chat server
-                act.addr.do_send(chat_server::Disconnect { id: act.id });
+                act.addr.do_send(chat_server::Disconnect { id: act.id, name: act.name.clone() });
 
                 // stop actor
                 ctx.stop();
@@ -69,6 +69,11 @@ impl Actor for WsChatSession {
         // we'll start heartbeat process on session start.
         self.hb(ctx);
 
+        
+        // Default name is just your randomly generated id
+        let namey = self.id.to_string();
+
+
         // register self in chat server. `AsyncContext::wait` register
         // future within context, but context waits until this future resolves
         // before processing any other events.
@@ -78,6 +83,7 @@ impl Actor for WsChatSession {
         self.addr
             .send(chat_server::Connect {
                 addr: addr.recipient(),
+                name: Some(namey),
             })
             .into_actor(self)
             .then(|res, act, ctx| {
@@ -93,7 +99,7 @@ impl Actor for WsChatSession {
 
     fn stopping(&mut self, _: &mut Self::Context) -> Running {
         // notify chat server
-        self.addr.do_send(chat_server::Disconnect { id: self.id });
+        self.addr.do_send(chat_server::Disconnect { id: self.id , name: self.name.clone()});
         Running::Stop
     }
 }
@@ -190,6 +196,20 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
 
                                     // Assign username in the chat
                                     self.name = Some(user_name.to_owned());
+
+                                    // Update the chat's visitor list
+                                                                // Display who is in this room
+                            self.addr.send(chat_server::NewName{name: user_name.to_owned(), id: self.id}).into_actor(self)
+                            .then(|res, _, ctx| {
+                                match res {
+                                    Ok(res) => {},
+                                    // something is wrong with chat server
+                                    _ => ctx.stop(),
+                                }
+                                fut::ready(())
+                            })
+                            .wait(ctx);
+                                    
 
                                     ctx.text(format!(
                                         "Successfully changed name to: {}",

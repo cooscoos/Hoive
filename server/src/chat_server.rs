@@ -26,6 +26,7 @@ pub struct Message(pub String);
 #[rtype(usize)]
 pub struct Connect {
     pub addr: Recipient<Message>,
+    pub name: Option<String>,
 }
 
 /// Session is disconnected
@@ -33,12 +34,21 @@ pub struct Connect {
 #[rtype(result = "()")]
 pub struct Disconnect {
     pub id: usize,
+    pub name: Option<String>,
 }
 
 /// User requests list of who is online
 #[derive(Message, Debug)]
 #[rtype(String)]
 pub struct Who;
+
+/// User wants to update their name
+#[derive(Message, Debug)]
+#[rtype(result = "()")]
+pub struct NewName{
+    pub name: String,
+    pub id: usize,
+}
 
 /// Send message to specific room
 #[derive(Message)]
@@ -72,7 +82,7 @@ pub struct ChatServer {
     rooms: HashMap<String, HashSet<usize>>,
     rng: ThreadRng,
     visitor_count: Arc<AtomicUsize>,
-    //visitor_list: Vec<String>,
+    visitor_list: HashMap<usize, String>,
 }
 
 impl ChatServer {
@@ -87,7 +97,7 @@ impl ChatServer {
             rooms,
             rng: rand::thread_rng(),
             visitor_count,
-            //visitor_list: vec![],
+            visitor_list: HashMap::new(),
         }
     }
 }
@@ -139,6 +149,9 @@ impl Handler<Connect> for ChatServer {
 
         let count = self.visitor_count.fetch_add(1, Ordering::SeqCst);
 
+        // append name to visitor list
+        //self.visitor_list.insert(msg.name);
+
         self.send_message(
             &format!("There are now {count} other people in the main lobby"),
             "main",
@@ -155,7 +168,28 @@ impl Handler<Who> for ChatServer {
     type Result = String;
 
     fn handle(&mut self, mut msg: Who, _: &mut Context<Self>) -> Self::Result {
-        format!("{:?} players online: ", &self.visitor_count)
+
+        // Incredibly hacky because don't understand how to handle arc yet.
+        let unnamed = format!("{:?}",&self.visitor_count);
+        let numby = unnamed.parse::<usize>().unwrap();
+
+        // formatted list of visitors
+        let fmt_visitors = self.visitor_list.iter().map(|(k,v)| format!("{v}\n")).collect::<String>();
+        
+        format!("There are {} players and {} ghosts online. Player list:\n{}", self.visitor_list.len(), numby - self.visitor_list.len(), fmt_visitors)
+    }
+}
+
+/// Handler for changing your name
+impl Handler<NewName> for ChatServer {
+    type Result = ();
+
+    fn handle(&mut self, mut msg: NewName, _: &mut Context<Self>) -> Self::Result {
+        //self.visitor_list.
+
+        println!("Changing {} to {}", msg.id, msg.name);
+        //self.visitor_list.remove(&msg.id);
+        self.visitor_list.insert(msg.id, msg.name);
     }
 }
 
@@ -178,11 +212,19 @@ impl Handler<Disconnect> for ChatServer {
             }
         }
 
+        self.visitor_count.fetch_sub(1, Ordering::SeqCst);
         //println!("Client id {} has disconnected. Their name was {:?}", msg.id, username);
-
-        for room in rooms {
-            self.send_message("Someone disconnected", &room, 0);
-        }
+        // Remove self from list of names
+        // Don't tell anyone when ghosts disconnect;
+        if msg.name.is_some() {
+            let namey = msg.name.unwrap();
+            let messagey = format!("{} disconnected", namey);
+            for room in rooms {
+                self.send_message(&messagey, &room, 0);
+            }
+    }
+    // remove them from the visitor list
+    self.visitor_list.remove(&msg.id);
     }
 }
 
