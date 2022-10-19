@@ -49,8 +49,6 @@ pub async fn setup() -> Result<(Client, String), Box<dyn Error>> {
     Ok((client, base_url))
 }
 
-
-
 /// Ask the user to register a user name on the database
 pub async fn register_user(client: &Client, base_url: &String) -> Result<String, Box<dyn Error>> {
     // Try to register the name on the server and get user uuid

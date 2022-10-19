@@ -5,9 +5,9 @@ use actix::prelude::*;
 use actix_web_actors::ws;
 use hoive::game;
 
-use rustrict::CensorStr;
-use crate::chat_server;
 use crate::api;
+use crate::chat_server;
+use rustrict::CensorStr;
 
 /// How often heartbeat pings are sent
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -32,7 +32,6 @@ pub struct WsChatSession {
 
     /// Chat server
     pub addr: Addr<chat_server::ChatServer>,
-
 }
 
 impl WsChatSession {
@@ -59,9 +58,6 @@ impl WsChatSession {
             ctx.ping(b"");
         });
     }
-
-
-
 }
 
 impl Actor for WsChatSession {
@@ -122,8 +118,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
             Ok(msg) => msg,
         };
 
-
-
         log::info!("WEBSOCKET MESSAGE: {msg:?}");
         match msg {
             ws::Message::Ping(msg) => {
@@ -160,24 +154,26 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                         let session_id = game_state.id.to_owned();
                                         match api::join(&session_id, &self.id) {
                                             Ok(()) => {
+                                                // and now join its chat room
+                                                self.game_room = game_state.id.to_owned();
 
-                                            // and now join its chat room
-                                            self.game_room = game_state.id.to_owned();
+                                                self.addr.do_send(chat_server::Join {
+                                                    id: self.id,
+                                                    name: self.game_room.clone(),
+                                                });
 
-                                            self.addr.do_send(chat_server::Join {
-                                                id: self.id,
-                                                name: self.game_room.clone(),
-                                            });
-
-                                            ctx.text(format!("joined game room {}",session_id));
-
-                                            },
-                                            Err(err) => panic!("Err {}",err)
+                                                ctx.text(format!(
+                                                    "joined game room {}",
+                                                    session_id
+                                                ));
+                                            }
+                                            Err(err) => panic!("Err {}", err),
                                         };
-
                                     }
-                                    Ok(None) => ctx.text("No empty games available. Try create one!"),
-                                    Err(err) => panic!("Error {}",err),
+                                    Ok(None) => {
+                                        ctx.text("No empty games available. Try create one!")
+                                    }
+                                    Err(err) => panic!("Error {}", err),
                                 }
                             }
                         }
@@ -187,15 +183,17 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                 // Profanity filter
                                 if user_name.is_inappropriate() {
                                     ctx.text("Invalid username");
-                                } else{
+                                } else {
+                                    // Register username on the game db.
+                                    let _result = api::register_user(user_name, self.id);
 
-                                // Register username on the game db.
-                                let _result = api::register_user(user_name,self.id);
+                                    // Assign username in the chat
+                                    self.name = Some(user_name.to_owned());
 
-                                // Assign username in the chat
-                                self.name = Some(user_name.to_owned());
-
-                                ctx.text(format!("Successfully changed name to: {}", user_name));
+                                    ctx.text(format!(
+                                        "Successfully changed name to: {}",
+                                        user_name
+                                    ));
                                 }
                             } else {
                                 ctx.text("!!! name is required");
@@ -204,7 +202,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         "/wipe" => {
                             match api::delete_all() {
                                 Ok(_) => ctx.text("Database wiped"),
-                                Err(err) => panic!("Error {}",err),
+                                Err(err) => panic!("Error {}", err),
                             };
                         }
                         "/getid" => {
@@ -216,15 +214,13 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         }
                         "/who" => {
                             // Display who is in this room
-                            
                         }
                         "/create" => {
                             // Create a new game on the db, register self as user_1
-                            let session_id = match api::new_game(&self.id){
+                            let session_id = match api::new_game(&self.id) {
                                 Ok(value) => value,
-                                Err(err) => panic!("Error: {}",err),
+                                Err(err) => panic!("Error: {}", err),
                             };
-                            
 
                             // and now join its chat room
                             self.game_room = session_id.to_owned();
@@ -234,8 +230,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                 name: self.game_room.clone(),
                             });
 
-                            ctx.text(format!("joined game room {}",session_id));
-                            
+                            ctx.text(format!("joined game room {}", session_id));
                         }
                         "/gamestate" => {
                             // Get and return the game state (as long as we're in a game)
@@ -247,10 +242,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
 
                                 match serde_json::to_string(&gamestate) {
                                     Ok(value) => ctx.text(value),
-                                    Err(err) => panic!("Error {}",err),
+                                    Err(err) => panic!("Error {}", err),
                                 };
-                                
-
                             } else {
                                 ctx.text("You're not in a game. There is no game state");
                             }
@@ -260,11 +253,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                             if self.game_room != "main" {
                                 if v.len() == 2 {
                                     let action_string = v[1].to_owned();
-                                
                                 } else {
                                     ctx.text("No action requested");
                                 }
-
                             } else {
                                 ctx.text("You're not in a game. There is no game state");
                             }
@@ -272,23 +263,22 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         _ => ctx.text(format!("!!! unknown command: {m:?}")),
                     }
                 } else {
-
                     if self.name.is_none() {
                         ctx.text("Define a username using /name before chatting");
                     } else {
-
-                    let msg = if let Some(ref name) = self.name {
-                        format!("{name}: {m}")
-                    } else {
-                        m.to_owned()
-                    };
-                    // send message to chat server
-                    self.addr.do_send(chat_server::ClientMessage {
-                        id: self.id,
-                        msg,
-                        room: self.game_room.clone(),
-                    })
-                }}
+                        let msg = if let Some(ref name) = self.name {
+                            format!("{name}: {m}")
+                        } else {
+                            m.to_owned()
+                        };
+                        // send message to chat server
+                        self.addr.do_send(chat_server::ClientMessage {
+                            id: self.id,
+                            msg,
+                            room: self.game_room.clone(),
+                        })
+                    }
+                }
             }
             ws::Message::Binary(_) => println!("Unexpected binary"),
             ws::Message::Close(reason) => {

@@ -1,8 +1,8 @@
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+pub mod echoer;
 pub mod local;
 pub mod online;
-pub mod echoer;
 
 use std::error::Error;
 

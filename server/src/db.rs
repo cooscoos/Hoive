@@ -10,8 +10,8 @@ use diesel::result::QueryResult;
 use diesel::SqliteConnection;
 
 use dotenvy::dotenv;
-use uuid::Uuid;
 use rand::Rng;
+use uuid::Uuid;
 
 pub use crate::models;
 use crate::models::{GameState, NewGameState, User};
@@ -60,7 +60,7 @@ pub fn create_conn_pool() -> Pool<ConnectionManager<SqliteConnection>> {
 }
 
 /// Establish connection to db - not required if we can get the generic connection pool above working
-/// 
+///
 pub fn establish_connection() -> SqliteConnection {
     dotenv().ok();
 
@@ -94,7 +94,6 @@ pub fn create_user(name: &str, conn: &mut SqliteConnection, uuid: usize) -> Resu
 pub fn create_session(user_id: &usize, conn: &mut SqliteConnection) -> Result<usize, String> {
     use schema::game_state::dsl::*;
 
-    
     //let session_id = Uuid::new_v4();
     let session_id = rand::thread_rng().gen::<usize>();
 

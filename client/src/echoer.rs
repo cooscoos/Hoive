@@ -1,22 +1,19 @@
-
-use std::{io, thread};
-use std::error::Error;
 use actix_web::body::MessageBody;
 use actix_web::web::Bytes;
 use awc::ws;
 use futures_util::{SinkExt as _, StreamExt as _};
+use hoive::pmoore::get_usr_input;
+use std::error::Error;
+use std::{io, thread};
 use tokio::{select, sync::mpsc};
 use tokio_stream::wrappers::UnboundedReceiverStream;
-use hoive::pmoore::get_usr_input;
 
-pub async fn echo_service() -> Result<(), Box<dyn Error>>{
-
+pub async fn echo_service() -> Result<(), Box<dyn Error>> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-
 
     // Define the server to connect to
     let url = match websock_setup().await {
-        Ok(value) => format!("ws://{}ws",value),
+        Ok(value) => format!("ws://{}ws", value),
         Err(err) => panic!("Err: {}", err),
     };
 
@@ -37,18 +34,13 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>>{
         cmd_tx.send(cmd).unwrap();
     });
 
-    let (res, mut ws) = match awc::Client::new()
-        .ws(url)
-        .connect()
-        .await
-        {
-            Ok(values) => values,
-            Err(err) => {
-                log::error!("error: {}", err);
-                panic!("problem")
-            },
-        };
-    
+    let (res, mut ws) = match awc::Client::new().ws(url).connect().await {
+        Ok(values) => values,
+        Err(err) => {
+            log::error!("error: {}", err);
+            panic!("problem")
+        }
+    };
 
     //log::debug!("response: {res:?}");
     log::info!("Connected! Welcome. Type /name to set your name.");
@@ -86,7 +78,7 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>>{
 }
 
 /// Run user through prompts to attempt to join a Hoive server
-async fn websock_setup() -> Result< String, Box<dyn Error>> {
+async fn websock_setup() -> Result<String, Box<dyn Error>> {
     println!("Select a server address (leave blank for default localhost):");
     let textin = get_usr_input();
     let address = match textin {
@@ -110,10 +102,12 @@ async fn websock_setup() -> Result< String, Box<dyn Error>> {
 
     // Test the base url connects to a valid Hoive server of same version.
     // The Hoive client version (converted to bytes)
-    let client_version = format!("Hoive-server v{}", crate::VERSION).try_into_bytes().unwrap();
+    let client_version = format!("Hoive-server v{}", crate::VERSION)
+        .try_into_bytes()
+        .unwrap();
 
     // Try and get a response from the server
-    let mut res = client.get(format!("http://{}",base_url)).send().await?;
+    let mut res = client.get(format!("http://{}", base_url)).send().await?;
 
     // The server version
     let server_version = res.body().await?;
@@ -122,5 +116,4 @@ async fn websock_setup() -> Result< String, Box<dyn Error>> {
         true => Ok(base_url),
         false => Err("server and client versions don't match.".into()),
     }
-
 }

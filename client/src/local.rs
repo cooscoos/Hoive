@@ -36,7 +36,7 @@ pub fn play_offline() -> Result<(), Box<dyn Error>> {
         println!("{}", move_status.to_string());
         // Refresh all mosquito names back to m1
         specials::mosquito_desuck(&mut board);
-        println!("{}",draw::show_board(&board));
+        println!("{}", draw::show_board(&board));
         if let MoveStatus::Win(_) = move_status {
             println!("Play again? y/n");
             let textin = pmoore::get_usr_input();
