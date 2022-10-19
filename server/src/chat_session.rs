@@ -170,6 +170,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                                 self.addr.do_send(chat_server::Join {
                                                     id: self.id,
                                                     name: self.game_room.clone(),
+                                                    username: self.name.as_ref().unwrap().to_owned(),
                                                 });
 
                                                 ctx.text(format!(
@@ -188,7 +189,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                             }
                         }
                         "/name" => {
-                            if v.len() == 2 {
+                            if self.name == None {
+                            if v.len() == 2  {
                                 let user_name = v[1];
 
                                 // Check the username isn't taken already
@@ -236,8 +238,13 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                     }
                                 }
                             } else {
-                                ctx.text("!!! name is required");
+                                ctx.text("You need to input a name!");
                             }
+                        }
+                        else {
+                            ctx.text("You already have a name!");
+
+                        }
                         }
                         "/wipe" => {
                             match api::delete_all() {
@@ -280,6 +287,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                             self.addr.do_send(chat_server::Join {
                                 id: self.id,
                                 name: self.game_room.clone(),
+                                username: self.name.as_ref().unwrap().to_owned(),
                             });
 
                             ctx.text(format!("joined game room {}", session_id));

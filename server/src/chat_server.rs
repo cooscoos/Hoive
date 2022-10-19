@@ -70,6 +70,9 @@ pub struct Join {
     /// Client ID
     pub id: usize,
 
+    /// Username
+    pub username: String,
+
     /// Room name
     pub name: String,
 }
@@ -236,7 +239,9 @@ impl Handler<Disconnect> for ChatServer {
 
 
         // deregister them from the db
-        deregister_user(&msg.id);
+        let _result = deregister_user(&msg.id);
+
+        // to do -> handle and pass the errors
 
     }
 }
@@ -257,7 +262,10 @@ impl Handler<Join> for ChatServer {
     type Result = ();
 
     fn handle(&mut self, msg: Join, _: &mut Context<Self>) {
-        let Join { id, name } = msg;
+
+  
+
+        let Join { id, name , username} = msg;
         let mut rooms = Vec::new();
 
         // remove session from all rooms
@@ -266,9 +274,10 @@ impl Handler<Join> for ChatServer {
                 rooms.push(n.to_owned());
             }
         }
+
         // send message to other users
         for room in rooms {
-            self.send_message("Someone disconnected", &room, 0);
+            self.send_message(&format!("{} left this room.", &username), &room, 0);
         }
 
         self.rooms
@@ -276,6 +285,6 @@ impl Handler<Join> for ChatServer {
             .or_insert_with(HashSet::new)
             .insert(id);
 
-        self.send_message("Someone connected", &name, id);
+        self.send_message(&format!("{} joined this room.", &username), &name, id);
     }
 }
