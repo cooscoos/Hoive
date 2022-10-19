@@ -45,7 +45,7 @@ pub async fn start_server() -> std::io::Result<()> {
             .service(
                 web::scope("/api")
                     .service(web::resource("/").route(web::get().to(api::index)))
-                    .service(web::resource("/ws").route(web::get().to(api::chat_route)))       
+                    .service(web::resource("/ws").route(web::get().to(api::chat_route))),
             )
             .wrap(middleware::Logger::default())
         // To mount a nice html webiste at index, do this and remove the default index fn above

@@ -6,6 +6,9 @@ pub mod online;
 
 use std::error::Error;
 
+use bytes::Bytes;
+use std::str;
+
 /// Play games of Hoive online or locally
 pub async fn play_games() -> Result<(), Box<dyn Error>> {
     // Welcome user with sweet ascii graphics
@@ -19,4 +22,9 @@ pub async fn play_games() -> Result<(), Box<dyn Error>> {
         _ if textin.contains('3') => echoer::echo_service().await,
         _ => online::play_online().await,
     }
+}
+
+// Convert bytes to str
+pub fn bytes_to_str(b: &Bytes) -> Result<&str, str::Utf8Error> {
+    str::from_utf8(b)
 }

@@ -69,15 +69,25 @@ pub fn establish_connection() -> SqliteConnection {
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
+/// Checks for user on the db with a given name. Return true if the name is available.
+pub fn username_available(namey: &str, conn: &mut SqliteConnection) -> Result<bool, String> {
+    use super::schema::user::dsl::*;
+
+    let result = user
+        .select(user_name)
+        .filter(user_name.like(namey.to_string())) // using like = case insenstive search
+        .limit(1)
+        .load::<String>(conn)
+        .expect("Error getting username");
+
+    Ok(result.is_empty())
+}
+
 /// Creates a new user on the db with a given name and team
 pub fn create_user(name: &str, conn: &mut SqliteConnection, uuid: usize) -> Result<usize, String> {
     // We have the "use" statement  in each function rather than at the top of the module to avoid ambiguity.
     // In some functions we want to use schema::user::dsl::* and in others we want schema::game_state::dsl::*.
     use super::schema::user::dsl::*;
-
-    // Generate and assign new uuid for the user
-    // later need to make uuid a usize on the db and assign directly from wschatsession id
-    //let uuid = Uuid::new_v4();
 
     let new_user = User {
         id: uuid.to_string(),
@@ -218,6 +228,13 @@ pub fn get_game_state(
         .load::<GameState>(conn)
         .expect("Error loading game state");
     Ok(res[0].clone())
+}
+
+/// Remove a user from the db
+pub fn remove_user(user_id: &str, conn: &mut SqliteConnection) -> QueryResult<()>{
+    use super::schema::user::dsl::*;
+    diesel::delete(user.filter(id.eq(user_id.to_string()))).execute(conn).unwrap();
+    Ok(())
 }
 
 /// Clear the db (wipe all gamestates and users)

@@ -103,6 +103,17 @@ pub fn register_user(user_name: &str, session_id: usize) -> Result<String, Error
     // Inefficient way, for now, to make progress
     let mut conn = db::establish_connection();
 
+    // Check if the db contains a user with this name already
+    match db::username_available(user_name, &mut conn) {
+        Ok(true) => {}
+        Ok(false) => return Ok("-1".to_string()),
+        Err(error) => {
+            return Err(error::ErrorBadGateway(format!(
+                "Cant access db to check for usernames: {error}"
+            )))
+        }
+    }
+
     match db::create_user(user_name, &mut conn, session_id) {
         Ok(user_id) => {
             //session.insert(USER_ID_KEY, user_id.to_string())?;
@@ -116,6 +127,20 @@ pub fn register_user(user_name: &str, session_id: usize) -> Result<String, Error
             "Cant register new user: {error}"
         ))),
     }
+}
+
+pub fn deregister_user(user_id: &usize) -> Result<(),Error> {
+    // Inefficient way, for now, to make progress
+    let mut conn = db::establish_connection();
+
+    match db::remove_user(&user_id.to_string(), &mut conn) {
+        Ok(_) => Ok(()),
+        Err(error) => Err(error::ErrorBadGateway(format!(
+            "Cant deregister user: {error}"
+        ))),
+
+    }
+
 }
 
 /// Get user name based on an input user id

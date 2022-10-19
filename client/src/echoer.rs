@@ -51,7 +51,8 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                 match msg {
                     Ok(ws::Frame::Text(txt)) => {
                         // Display messages from server
-                        println!("{txt:?}");
+                        let msg = crate::bytes_to_str(&txt).unwrap();
+                        println!("{msg}");
                     }
 
                     Ok(ws::Frame::Ping(_)) => {

@@ -12,6 +12,7 @@ use std::{
 
 use actix::prelude::*;
 use rand::{self, rngs::ThreadRng, Rng};
+use crate::api::deregister_user;
 
 /// Chat server sends this messages to session
 #[derive(Message)]
@@ -45,7 +46,7 @@ pub struct Who;
 /// User wants to update their name
 #[derive(Message, Debug)]
 #[rtype(result = "()")]
-pub struct NewName{
+pub struct NewName {
     pub name: String,
     pub id: usize,
 }
@@ -135,7 +136,7 @@ impl Handler<Connect> for ChatServer {
         println!("Someone joined");
 
         // notify all users in same room
-        self.send_message("Someone joined", "main", 0);
+        //self.send_message("Someone joined", "main", 0);
 
         // register session with random id
         let id = self.rng.gen::<usize>();
@@ -152,11 +153,11 @@ impl Handler<Connect> for ChatServer {
         // append name to visitor list
         //self.visitor_list.insert(msg.name);
 
-        self.send_message(
-            &format!("There are now {count} other people in the main lobby"),
-            "main",
-            0,
-        );
+        // self.send_message(
+        //     &format!("There are {count} other people in the main lobby"),
+        //     "main",
+        //     0,
+        // );
 
         // send id back
         id
@@ -168,15 +169,23 @@ impl Handler<Who> for ChatServer {
     type Result = String;
 
     fn handle(&mut self, mut msg: Who, _: &mut Context<Self>) -> Self::Result {
-
         // Incredibly hacky because don't understand how to handle arc yet.
-        let unnamed = format!("{:?}",&self.visitor_count);
+        let unnamed = format!("{:?}", &self.visitor_count);
         let numby = unnamed.parse::<usize>().unwrap();
 
         // formatted list of visitors
-        let fmt_visitors = self.visitor_list.iter().map(|(k,v)| format!("{v}\n")).collect::<String>();
-        
-        format!("There are {} players and {} ghosts online. Player list:\n{}", self.visitor_list.len(), numby - self.visitor_list.len(), fmt_visitors)
+        let fmt_visitors = self
+            .visitor_list
+            .iter()
+            .map(|(k, v)| format!("{v}\n"))
+            .collect::<String>();
+
+        format!(
+            "There are {} players and {} ghosts online. Player list:\n{}",
+            self.visitor_list.len(),
+            numby - self.visitor_list.len(),
+            fmt_visitors
+        )
     }
 }
 
@@ -185,11 +194,10 @@ impl Handler<NewName> for ChatServer {
     type Result = ();
 
     fn handle(&mut self, mut msg: NewName, _: &mut Context<Self>) -> Self::Result {
-        //self.visitor_list.
+        self.visitor_list.insert(msg.id, msg.name.to_owned());
 
-        println!("Changing {} to {}", msg.id, msg.name);
-        //self.visitor_list.remove(&msg.id);
-        self.visitor_list.insert(msg.id, msg.name);
+        // Notify all users that the new person joined
+        self.send_message(&format!("{} joined.", msg.name), "main", 0);
     }
 }
 
@@ -222,9 +230,14 @@ impl Handler<Disconnect> for ChatServer {
             for room in rooms {
                 self.send_message(&messagey, &room, 0);
             }
-    }
-    // remove them from the visitor list
-    self.visitor_list.remove(&msg.id);
+        }
+        // remove them from the visitor list
+        self.visitor_list.remove(&msg.id);
+
+
+        // deregister them from the db
+        deregister_user(&msg.id);
+
     }
 }
 

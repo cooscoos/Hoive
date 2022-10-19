@@ -27,7 +27,7 @@ uuid = {workspace = true}
 rustrict = {workspace = true}
 
 # for testing
-bytes = "1.2.1"
+bytes = {workspace = true}
 
 
 # for envent logging

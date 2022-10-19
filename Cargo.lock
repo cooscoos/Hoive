@@ -535,6 +535,7 @@ dependencies = [
  "actix-web",
  "actix-web-actors",
  "awc",
+ "bytes",
  "env_logger",
  "futures-util",
  "hex-spiral",

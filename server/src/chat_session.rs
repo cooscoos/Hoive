@@ -46,7 +46,10 @@ impl WsChatSession {
                 println!("Websocket Client heartbeat failed, disconnecting!");
 
                 // notify chat server
-                act.addr.do_send(chat_server::Disconnect { id: act.id, name: act.name.clone() });
+                act.addr.do_send(chat_server::Disconnect {
+                    id: act.id,
+                    name: act.name.clone(),
+                });
 
                 // stop actor
                 ctx.stop();
@@ -69,10 +72,8 @@ impl Actor for WsChatSession {
         // we'll start heartbeat process on session start.
         self.hb(ctx);
 
-        
         // Default name is just your randomly generated id
         let namey = self.id.to_string();
-
 
         // register self in chat server. `AsyncContext::wait` register
         // future within context, but context waits until this future resolves
@@ -99,7 +100,10 @@ impl Actor for WsChatSession {
 
     fn stopping(&mut self, _: &mut Self::Context) -> Running {
         // notify chat server
-        self.addr.do_send(chat_server::Disconnect { id: self.id , name: self.name.clone()});
+        self.addr.do_send(chat_server::Disconnect {
+            id: self.id,
+            name: self.name.clone(),
+        });
         Running::Stop
     }
 }
@@ -112,7 +116,6 @@ impl Handler<chat_server::Message> for WsChatSession {
         ctx.text(msg.0);
     }
 }
-
 
 /// WebSocket message handler
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
@@ -138,7 +141,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                 // Detect hitting enter
                 if text == "\n" {
                     println!("Newline");
-                }
+                } else {
 
                 let m = text.trim();
                 // we check for /sss type of messages
@@ -187,34 +190,50 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         "/name" => {
                             if v.len() == 2 {
                                 let user_name = v[1];
+
+                                // Check the username isn't taken already
+
                                 // Profanity filter
                                 if user_name.is_inappropriate() {
                                     ctx.text("Invalid username");
                                 } else {
                                     // Register username on the game db.
-                                    let _result = api::register_user(user_name, self.id);
+                                    let result = match api::register_user(user_name, self.id) {
+                                        Ok(value) => value,
+                                        Err(err) => panic!("Err {}", err),
+                                    };
 
-                                    // Assign username in the chat
-                                    self.name = Some(user_name.to_owned());
+                                    if result != "-1" {
+                                        // Assign username in the chat
+                                        self.name = Some(user_name.to_owned());
 
-                                    // Update the chat's visitor list
-                                                                // Display who is in this room
-                            self.addr.send(chat_server::NewName{name: user_name.to_owned(), id: self.id}).into_actor(self)
-                            .then(|res, _, ctx| {
-                                match res {
-                                    Ok(res) => {},
-                                    // something is wrong with chat server
-                                    _ => ctx.stop(),
-                                }
-                                fut::ready(())
-                            })
-                            .wait(ctx);
-                                    
+                                        // Update the chat's visitor list
+                                        // Display who is in this room
+                                        self.addr
+                                            .send(chat_server::NewName {
+                                                name: user_name.to_owned(),
+                                                id: self.id,
+                                            })
+                                            .into_actor(self)
+                                            .then(|res, _, ctx| {
+                                                match res {
+                                                    Ok(res) => {}
+                                                    // something is wrong with chat server
+                                                    _ => ctx.stop(),
+                                                }
+                                                fut::ready(())
+                                            })
+                                            .wait(ctx);
 
-                                    ctx.text(format!(
-                                        "Successfully changed name to: {}",
-                                        user_name
-                                    ));
+                                        ctx.text(format!(
+                                            "Successfully changed name to: {}",
+                                            user_name
+                                        ));
+                                    } else {
+                                        ctx.text(
+                                            "User with that name already exists. Pick another.",
+                                        )
+                                    }
                                 }
                             } else {
                                 ctx.text("!!! name is required");
@@ -235,17 +254,18 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         }
                         "/who" => {
                             // Display who is in this room
-                            self.addr.send(chat_server::Who{}).into_actor(self)
-                            .then(|res, _, ctx| {
-                                match res {
-                                    Ok(res) => ctx.text(res),
-                                    // something is wrong with chat server
-                                    _ => ctx.stop(),
-                                }
-                                fut::ready(())
-                            })
-                            .wait(ctx);
-  
+                            self.addr
+                                .send(chat_server::Who {})
+                                .into_actor(self)
+                                .then(|res, _, ctx| {
+                                    match res {
+                                        Ok(res) => ctx.text(res),
+                                        // something is wrong with chat server
+                                        _ => ctx.stop(),
+                                    }
+                                    fut::ready(())
+                                })
+                                .wait(ctx);
                         }
                         "/create" => {
                             // Create a new game on the db, register self as user_1
@@ -312,6 +332,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                     }
                 }
             }
+        }
             ws::Message::Binary(_) => println!("Unexpected binary"),
             ws::Message::Close(reason) => {
                 ctx.close(reason);
