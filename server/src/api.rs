@@ -62,6 +62,7 @@ pub async fn chat_route(
             hb: Instant::now(),
             game_room: "main".to_owned(),
             name: None,
+            active: false,
             addr: srv.get_ref().clone(),
         },
         &req,

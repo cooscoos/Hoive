@@ -11,10 +11,11 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 
 
 use hoive::game::board::Board;
-use hoive::game::comps::Team;
+use hoive::game::{comps::Team, movestatus::MoveStatus};
 use hoive::maths::coord::{Coord, Cube};
 use server::models::{Winner, GameState};
 use hoive::draw;
+use hoive::pmoore;
 
 pub async fn echo_service() -> Result<(), Box<dyn Error>> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
@@ -61,6 +62,7 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
     let mut my_id = String::new(); // player id
     let mut my_turn = false;
     let mut my_team = Team::White;
+
 
     loop {
         select! {
@@ -140,37 +142,46 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                 if cmd.is_empty() {
                     continue;
                 }
-                if cmd == "\n" {
-                    if !in_game {
+                
+                if !in_game{
+                    if cmd == "\n" {
                         // Default to sending /who
                         ws.send(ws::Message::Text("/who".into())).await.unwrap();
                     } else {
-
-                        // Dont't send anything
-                        let turn_string = match my_turn {
-                            true => format!("It's your turn!"),
-                            false => format!("Waiting for other player to take turn..."),
-                        };
-
-                        // show the board
-                        println!(
-                            "{}\n\n-------------------- PLAYER HAND --------------------\n\n{}\n\n-----------------------------------------------------\n{turn_string}\n",
-                            draw::show_board(&board),
-                            draw::list_chips(&board, my_team)
-                        );
-
+                        ws.send(ws::Message::Text(cmd.into())).await.unwrap();
                     }
                 } else {
-                    ws.send(ws::Message::Text(cmd.into())).await.unwrap();
+                    // Otherwise we're in game so keyboard should behave appropriately
+
+                    let thing = cmd.trim();
+                    match thing {
+                        _ if thing.is_empty() => {
+                            // Dont't send anything
+                            let turn_string = match my_turn {
+                                true => format!("It's your turn!"),
+                                false => format!("Waiting for other player to take turn..."),
+                            };
+
+                            // show the board
+                            println!(
+                                "{}\n\n-------------------- PLAYER HAND --------------------\n\n{}\n\n-----------------------------------------------------\n{turn_string}\n",
+                                draw::show_board(&board),
+                                draw::list_chips(&board, my_team)
+                            );
+                        }
+                        _ => ws.send(ws::Message::Text(cmd.into())).await.unwrap(), // send it to the server
+                    }
+
                 }
             }
 
             else => break
         }
-    }
+        }
 
     input_thread.join().unwrap();
     Ok(())
+    
 }
 
 /// Run user through prompts to attempt to join a Hoive server

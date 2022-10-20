@@ -5,7 +5,7 @@ use std::usize;
 use actix::prelude::*;
 use actix_web_actors::ws;
 use actix_web_actors::ws::WebsocketContext;
-use hoive::game;
+use hoive::pmoore;
 
 use crate::api;
 use crate::chat_server;
@@ -31,6 +31,9 @@ pub struct WsChatSession {
 
     /// peer name
     pub name: Option<String>,
+
+    /// Whether the player is actively taking a turn
+    pub active: bool,
 
     /// Chat server
     pub addr: Addr<chat_server::ChatServer>,
@@ -212,15 +215,13 @@ fn main_lobby_parser(
                             ctx.text(format!("You joined game room {}", session_id));
 
                             let game_state = api::get_game_state(&session_id)?;
-                            
 
                             // send a new game command to everyone in the game room
                             // and define the team colours
-                            chatsess.addr.do_send(chat_server::NewGame{
+                            chatsess.addr.do_send(chat_server::NewGame {
                                 session_id,
                                 game_state,
                             });
-
                         }
                         None => ctx.text("No empty games available. Try /create one!"),
                     }
@@ -300,10 +301,8 @@ fn main_lobby_parser(
             _ => ctx.text(format!("!!! unknown command: {m:?}")),
         }
     } else {
+        let msg = format!("\x1b[36;2m{}:\x1b[0m {m}", &chatsess.name.as_ref().unwrap());
 
-        let msg = 
-            format!("\x1b[36;2m{}:\x1b[0m {m}", &chatsess.name.as_ref().unwrap());
-   
         // send message to chat server
         chatsess.addr.do_send(chat_server::ClientMessage {
             id: chatsess.id,
@@ -389,16 +388,19 @@ fn in_game_parser(
                     })
                     .wait(ctx);
             }
-            "/gamestate" => {
-                // Get and return the game state as json to all players
-                let gamestate = api::get_game_state(&chatsess.game_room)?;
+            // "/gamestate" => {
+            //     // Get and return the game state as json to all players
+            //     let gamestate = api::get_game_state(&chatsess.game_room)?;
 
-                let gamestate_txt = serde_json::to_string(&gamestate)?;
-                ctx.text(format!("//cmd gamestate {}", gamestate_txt));
-            }
+            //     let gamestate_txt = serde_json::to_string(&gamestate)?;
+            //     ctx.text(format!("//cmd gamestate {}", gamestate_txt));
+            // }
             "/t" | "/tell" => {
                 let words = v[1];
-                let msg = format!("\x1b[36;2m{}:\x1b[0m {words}", &chatsess.name.as_ref().unwrap());
+                let msg = format!(
+                    "\x1b[36;2m{}:\x1b[0m {words}",
+                    &chatsess.name.as_ref().unwrap()
+                );
                 // send message to chat server
                 chatsess.addr.do_send(chat_server::ClientMessage {
                     id: chatsess.id,
@@ -406,26 +408,53 @@ fn in_game_parser(
                     room: chatsess.game_room.clone(),
                 })
             }
-            "/do" => {
-                if v.len() == 2 {
-                // Do an action
-                // Get the gamestate and make sure it's this player's turn
-                let gamestate = api::get_game_state(&chatsess.game_room)?;
-
-                if chatsess.id.to_string() != gamestate.last_user_id.unwrap() {
-                    // Go ahead
-                    let action_string = v[1].to_owned();
-                }
-                } else {
-                    ctx.text("Error: Invalid do action requested");
-                }
+            "/help" => {
+                ctx.text(pmoore::help_me());
             }
+            "/xylophone" => {
+                ctx.text(pmoore::xylophone());
+            }
+            "/quit" => {}
+            "/build" => {
+                if v.len() == 2 {
+                    // If this is our first rodeo then we're going to check if the player is the active player
+                    // Get the gamestate and make sure it's this player's turn
+                    let gamestate = api::get_game_state(&chatsess.game_room)?;
+                    if chatsess.id.to_string() != gamestate.last_user_id.unwrap() {
+                        // set the player's active state in the chat struct to true. This reduces how often we have to query the db.
+                        // It'll get set back to false later.
+                        chatsess.active = true;
+                    }
+                }
+
+                if chatsess.active {
+                    // Go ahead
+                    match v.len() - 2 {
+                        0 => {
+                            // Stage 0. We're expecting a chip name, try find a valid chip on the board and pass back a response
+                            // for the user and for the client program. E.g. if it's a pillbug, provide guidance on what to do next.
+                        },
+                        1 => {
+
+                            // Stage 1. We're
+
+                        },
+                        2 => {
+
+                        },
+                        _ => ctx.text("Error: Invalid build command sent"),
+                    }
+                }
+                // Build an action by passing text back and forth. Each build command gets checked and
+                // and then appended to the string if it's valid
+                // Erase cmd and then exectue cmd.
+            }
+
             _ => ctx.text(format!("!!! unknown command: {m:?}")),
         }
     } else {
         // Default is off in game
         ctx.text("Normal chat is off during games. Use /tell or /t to talk to the other player");
-        
     }
 
     Ok(())
