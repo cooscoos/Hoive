@@ -231,9 +231,11 @@ pub fn get_game_state(
 }
 
 /// Remove a user from the db
-pub fn remove_user(user_id: &str, conn: &mut SqliteConnection) -> QueryResult<()>{
+pub fn remove_user(user_id: &str, conn: &mut SqliteConnection) -> QueryResult<()> {
     use super::schema::user::dsl::*;
-    diesel::delete(user.filter(id.eq(user_id.to_string()))).execute(conn).unwrap();
+    diesel::delete(user.filter(id.eq(user_id.to_string())))
+        .execute(conn)
+        .unwrap();
     Ok(())
 }
 

@@ -99,14 +99,14 @@ pub async fn index() -> HttpResponse {
 }
 
 /// Register a new user with requested name (input via web form)
-pub fn register_user(user_name: &str, session_id: usize) -> Result<String, Error> {
+pub fn register_user(user_name: &str, session_id: usize) -> Result<bool, Error> {
     // Inefficient way, for now, to make progress
     let mut conn = db::establish_connection();
 
     // Check if the db contains a user with this name already
     match db::username_available(user_name, &mut conn) {
         Ok(true) => {}
-        Ok(false) => return Ok("-1".to_string()),
+        Ok(false) => return Ok(false),
         Err(error) => {
             return Err(error::ErrorBadGateway(format!(
                 "Cant access db to check for usernames: {error}"
@@ -121,7 +121,7 @@ pub fn register_user(user_name: &str, session_id: usize) -> Result<String, Error
                 "\x1b[32;1mUsername {} registered under {}\x1b[0m\n",
                 user_name, user_id
             );
-            Ok(user_id.to_string())
+            Ok(true)
         }
         Err(error) => Err(error::ErrorBadGateway(format!(
             "Cant register new user: {error}"
@@ -129,7 +129,7 @@ pub fn register_user(user_name: &str, session_id: usize) -> Result<String, Error
     }
 }
 
-pub fn deregister_user(user_id: &usize) -> Result<(),Error> {
+pub fn deregister_user(user_id: &usize) -> Result<(), Error> {
     // Inefficient way, for now, to make progress
     let mut conn = db::establish_connection();
 
@@ -138,9 +138,7 @@ pub fn deregister_user(user_id: &usize) -> Result<(),Error> {
         Err(error) => Err(error::ErrorBadGateway(format!(
             "Cant deregister user: {error}"
         ))),
-
     }
-
 }
 
 /// Get user name based on an input user id

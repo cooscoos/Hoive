@@ -1,8 +1,10 @@
+use std::error::Error;
 use std::time::{Duration, Instant};
 use std::usize;
 
 use actix::prelude::*;
 use actix_web_actors::ws;
+use actix_web_actors::ws::WebsocketContext;
 use hoive::game;
 
 use crate::api;
@@ -138,212 +140,18 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                 self.hb = Instant::now();
             }
             ws::Message::Text(text) => {
-                // Detect hitting enter
-                if text == "\n" {
-                    println!("Newline");
-                } else {
 
-                let m = text.trim();
-                // we check for /sss type of messages
-                if m.starts_with('/') {
-                    let v: Vec<&str> = m.splitn(2, ' ').collect();
-                    match v[0] {
-                        "/join" => {
-                            if v.len() == 2 {
-                                let session_id = v[1].to_owned();
-                                // Check the db to see if there's a session with this id
-                                // no function to do this yet, create one later
+                let result = match self.game_room == "main" {
+                    true => main_lobby_parser(self, text.to_string(), ctx),
+                    false => in_game_parser(self, text.to_string(), ctx),
+                };
 
-                                // If there's a match, then join the session, and join the chat for that room
-                            } else {
-                                // Join an empty game if there is one available
-                                match api::find() {
-                                    Ok(Some(game_state)) => {
-                                        // Join the game
-
-                                        let session_id = game_state.id.to_owned();
-                                        match api::join(&session_id, &self.id) {
-                                            Ok(()) => {
-                                                // and now join its chat room
-                                                self.game_room = game_state.id.to_owned();
-
-                                                self.addr.do_send(chat_server::Join {
-                                                    id: self.id,
-                                                    name: self.game_room.clone(),
-                                                    username: self.name.as_ref().unwrap().to_owned(),
-                                                });
-
-                                                ctx.text(format!(
-                                                    "joined game room {}",
-                                                    session_id
-                                                ));
-                                            }
-                                            Err(err) => panic!("Err {}", err),
-                                        };
-                                    }
-                                    Ok(None) => {
-                                        ctx.text("No empty games available. Try create one!")
-                                    }
-                                    Err(err) => panic!("Error {}", err),
-                                }
-                            }
-                        }
-                        "/leave" => {
-                            // only required in-game. need to update db, and then join the main lobby
-                        }
-                        "/name" => {
-                            if self.name == None {
-                            if v.len() == 2  {
-                                let user_name = v[1];
-
-                                // Check the username isn't taken already
-
-                                // Profanity filter
-                                if user_name.is_inappropriate() {
-                                    ctx.text("Invalid username");
-                                } else {
-                                    // Register username on the game db.
-                                    let result = match api::register_user(user_name, self.id) {
-                                        Ok(value) => value,
-                                        Err(err) => panic!("Err {}", err),
-                                    };
-
-                                    if result != "-1" {
-                                        // Assign username in the chat
-                                        self.name = Some(user_name.to_owned());
-
-                                        // Update the chat's visitor list
-                                        // Display who is in this room
-                                        self.addr
-                                            .send(chat_server::NewName {
-                                                name: user_name.to_owned(),
-                                                id: self.id,
-                                            })
-                                            .into_actor(self)
-                                            .then(|res, _, ctx| {
-                                                match res {
-                                                    Ok(res) => {}
-                                                    // something is wrong with chat server
-                                                    _ => ctx.stop(),
-                                                }
-                                                fut::ready(())
-                                            })
-                                            .wait(ctx);
-
-                                        ctx.text(format!(
-                                            "Successfully changed name to: {}",
-                                            user_name
-                                        ));
-                                    } else {
-                                        ctx.text(
-                                            "User with that name already exists. Pick another.",
-                                        )
-                                    }
-                                }
-                            } else {
-                                ctx.text("You need to input a name!");
-                            }
-                        }
-                        else {
-                            ctx.text("You already have a name!");
-
-                        }
-                        }
-                        "/wipe" => {
-                            match api::delete_all() {
-                                Ok(_) => ctx.text("Database wiped"),
-                                Err(err) => panic!("Error {}", err),
-                            };
-                        }
-                        "/getid" => {
-                            let return_string = format!(
-                                "Your user id is: {}, and username is {:?}. You're in game_session: {}",
-                                self.id, self.name, self.game_room
-                            );
-                            ctx.text(return_string)
-                        }
-                        "/who" => {
-                            // Display who is in this room
-                            self.addr
-                                .send(chat_server::Who {})
-                                .into_actor(self)
-                                .then(|res, _, ctx| {
-                                    match res {
-                                        Ok(res) => ctx.text(res),
-                                        // something is wrong with chat server
-                                        _ => ctx.stop(),
-                                    }
-                                    fut::ready(())
-                                })
-                                .wait(ctx);
-                        }
-                        "/create" => {
-                            // Create a new game on the db, register self as user_1
-                            let session_id = match api::new_game(&self.id) {
-                                Ok(value) => value,
-                                Err(err) => panic!("Error: {}", err),
-                            };
-
-                            // and now join its chat room
-                            self.game_room = session_id.to_owned();
-
-                            self.addr.do_send(chat_server::Join {
-                                id: self.id,
-                                name: self.game_room.clone(),
-                                username: self.name.as_ref().unwrap().to_owned(),
-                            });
-
-                            ctx.text(format!("joined game room {}", session_id));
-                        }
-                        "/gamestate" => {
-                            // Get and return the game state (as long as we're in a game)
-                            if self.game_room != "main" {
-                                let gamestate = match api::get_game_state(&self.game_room) {
-                                    Ok(value) => value,
-                                    Err(err) => panic!("Error {err}"),
-                                };
-
-                                match serde_json::to_string(&gamestate) {
-                                    Ok(value) => ctx.text(value),
-                                    Err(err) => panic!("Error {}", err),
-                                };
-                            } else {
-                                ctx.text("You're not in a game. There is no game state");
-                            }
-                        }
-                        "/do" => {
-                            // Do an action (as long as we're in a game)
-                            if self.game_room != "main" {
-                                if v.len() == 2 {
-                                    let action_string = v[1].to_owned();
-                                } else {
-                                    ctx.text("No action requested");
-                                }
-                            } else {
-                                ctx.text("You're not in a game. There is no game state");
-                            }
-                        }
-                        _ => ctx.text(format!("!!! unknown command: {m:?}")),
-                    }
-                } else {
-                    if self.name.is_none() {
-                        ctx.text("Define a username using /name before chatting");
-                    } else {
-                        let msg = if let Some(ref name) = self.name {
-                            format!("\x1b[36;2m{name}:\x1b[0m {m}")
-                        } else {
-                            m.to_owned()
-                        };
-                        // send message to chat server
-                        self.addr.do_send(chat_server::ClientMessage {
-                            id: self.id,
-                            msg,
-                            room: self.game_room.clone(),
-                        })
-                    }
+                match result {
+                    Ok(()) => {},
+                    Err(err) => ctx.text(format!("Error: {err}")),
                 }
+
             }
-        }
             ws::Message::Binary(_) => println!("Unexpected binary"),
             ws::Message::Close(reason) => {
                 ctx.close(reason);
@@ -355,4 +163,321 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
             ws::Message::Nop => (),
         }
     }
+}
+
+
+/// Parses user inputs when they're typed in the main lobby
+fn main_lobby_parser(
+    chatsess: &mut WsChatSession,
+    text: String,
+    ctx: &mut WebsocketContext<WsChatSession>,
+) -> Result<(), Box<dyn Error>> {
+    // Don't do anything if user hits enter. Can possibly catch these at the client end?
+    if text == "\n" {
+        return Ok(());
+    }
+
+    let m = text.trim();
+    // we check for /sss type of messages
+    if m.starts_with('/') {
+        let v: Vec<&str> = m.splitn(2, ' ').collect();
+
+        if chatsess.name.is_none() && v[0] != "/name" {
+            ctx.text("Define a username using /name before chatting");
+            return Ok(());
+        }
+
+        match v[0] {
+            "/join" => {
+                if v.len() == 2 {
+                    // Check the db to see if there's a session with this id
+                    //let session_id = v[1].to_owned();
+                    // no function to do this yet, create one later
+                    ctx.text("Joining specific games is unimplemented. Just type /join");
+                } else {
+                    // Join an empty game if there is one available
+                    match api::find()? {
+                        Some(game_state) => {
+                            // Join the game
+                            let session_id = game_state.id.to_owned();
+
+                            // Join on the db
+                            api::join(&session_id, &chatsess.id)?;
+
+                            // Join in the chat
+                            chatsess.game_room = session_id.to_owned();
+                            chatsess.addr.do_send(chat_server::Join {
+                                id: chatsess.id,
+                                name: chatsess.game_room.clone(),
+                                username: chatsess.name.as_ref().unwrap().to_owned(),
+                            });
+
+                            ctx.text(format!("You joined game room {}", session_id));
+                        }
+                        None => ctx.text("No empty games available. Try /create one!"),
+                    }
+                }
+            }
+            "/name" => {
+                if let Some(name) = &chatsess.name {
+                    ctx.text(format!("You already have the name {name}!"));
+                } else if v.len() != 2 {
+                    ctx.text("You need to input a name!");
+                } else if v[1].is_inappropriate() {
+                    // Username profanity filter
+                    ctx.text("Invalid username.");
+                } else {
+                    // Try register the username on the game db.
+                    let user_name = v[1];
+                    match api::register_user(user_name, chatsess.id)? {
+                        false => ctx.text("Username already exists. Pick another."),
+                        true => {
+                            // Assign username in the chat session
+                            chatsess.name = Some(user_name.to_owned());
+
+                            // Update the chat session's visitor list
+                            chatsess.addr.do_send(chat_server::NewName {
+                                name: user_name.to_owned(),
+                                id: chatsess.id,
+                            });
+
+                            ctx.text(format!("Welcome {}. Begin typing to chat.", user_name));
+                        }
+                    }
+                }
+            }
+            "/wipe" => {
+                // For debug
+                match api::delete_all() {
+                    Ok(_) => ctx.text("Database wiped"),
+                    Err(err) => panic!("Error {}", err),
+                };
+            }
+            "/id" => {
+                // Display info to user on themselves
+                ctx.text(format!(
+                    "Your user id is: {}, and username is {:?}. You're in game_session: {}",
+                    chatsess.id, chatsess.name, chatsess.game_room
+                ));
+            }
+            "/who" => {
+                // Display who is online
+                chatsess
+                    .addr
+                    .send(chat_server::Who {})
+                    .into_actor(chatsess)
+                    .then(|res, _, ctx| {
+                        match res {
+                            Ok(res) => ctx.text(res),
+                            _ => ctx.stop(),
+                        }
+                        fut::ready(())
+                    })
+                    .wait(ctx);
+            }
+            "/create" => {
+                // Create a new game on the db, register creator as user_1
+                let session_id = api::new_game(&chatsess.id)?;
+
+                // Join the game session's chat room
+                chatsess.game_room = session_id.to_owned();
+                chatsess.addr.do_send(chat_server::Join {
+                    id: chatsess.id,
+                    name: chatsess.game_room.clone(),
+                    username: chatsess.name.as_ref().unwrap().to_owned(),
+                });
+                ctx.text(format!("You joined game room {}", session_id));
+            }
+            _ => ctx.text(format!("!!! unknown command: {m:?}")),
+        }
+    } else {
+        let msg = if let Some(ref name) = chatsess.name {
+            format!("\x1b[36;2m{name}:\x1b[0m {m}")
+        } else {
+            m.to_owned()
+        };
+        // send message to chat server
+        chatsess.addr.do_send(chat_server::ClientMessage {
+            id: chatsess.id,
+            msg,
+            room: chatsess.game_room.clone(),
+        })
+    }
+
+    Ok(())
+}
+
+
+
+/// Parses user inputs when they're typed in game
+fn in_game_parser(
+    chatsess: &mut WsChatSession,
+    text: String,
+    ctx: &mut WebsocketContext<WsChatSession>,
+) -> Result<(), Box<dyn Error>> {
+    // Enter shows board
+    if text == "\n" {
+        return Ok(());
+    }
+
+    let m = text.trim();
+    // we check for /sss type of messages
+    if m.starts_with('/') {
+        let v: Vec<&str> = m.splitn(2, ' ').collect();
+
+        if chatsess.name.is_none() && v[0] != "/name" {
+            ctx.text("Define a username using /name before chatting");
+            return Ok(());
+        }
+
+        match v[0] {
+            "/join" => {
+                if v.len() == 2 {
+                    let session_id = v[1].to_owned();
+                    // Check the db to see if there's a session with this id
+                    // no function to do this yet, create one later
+
+                    // If there's a match, then join the session, and join the chat for that room
+                    return Ok(());
+                } else {
+                    // Join an empty game if there is one available
+                    match api::find()? {
+                        Some(game_state) => {
+                            // Join the game
+                            let session_id = game_state.id.to_owned();
+
+                            // Join on the db
+                            api::join(&session_id, &chatsess.id)?;
+
+                            // Join in the chat
+                            chatsess.game_room = session_id.to_owned();
+                            chatsess.addr.do_send(chat_server::Join {
+                                id: chatsess.id,
+                                name: chatsess.game_room.clone(),
+                                username: chatsess.name.as_ref().unwrap().to_owned(),
+                            });
+
+                            ctx.text(format!("You joined game room {}", session_id));
+                        }
+                        None => ctx.text("No empty games available. Try /create one!"),
+                    }
+                }
+            }
+            // "/leave" => {
+            // }
+            "/name" => {
+                if let Some(name) = &chatsess.name {
+                    ctx.text(format!("You already have the name {name}!"));
+                } else if v.len() != 2 {
+                    ctx.text("You need to input a name!");
+                } else if v[1].is_inappropriate() {
+                    // Username profanity filter
+                    ctx.text("Invalid username.");
+                } else {
+                    // Try register the username on the game db.
+                    let user_name = v[1];
+                    match api::register_user(user_name, chatsess.id)? {
+                        false => ctx.text("Username already exists. Pick another."),
+                        true => {
+                            // Assign username in the chat session
+                            chatsess.name = Some(user_name.to_owned());
+
+                            // Update the chat session's visitor list
+                            chatsess.addr.do_send(chat_server::NewName {
+                                name: user_name.to_owned(),
+                                id: chatsess.id,
+                            });
+
+                            ctx.text(format!("Welcome {}. Begin typing to chat.", user_name));
+                        }
+                    }
+                }
+            }
+            "/wipe" => {
+                // For debug
+                match api::delete_all() {
+                    Ok(_) => ctx.text("Database wiped"),
+                    Err(err) => panic!("Error {}", err),
+                };
+            }
+            "/id" => {
+                // Display info to user on themselves
+                ctx.text(format!(
+                    "Your user id is: {}, and username is {:?}. You're in game_session: {}",
+                    chatsess.id, chatsess.name, chatsess.game_room
+                ));
+            }
+            "/who" => {
+                // Display who is online
+                chatsess
+                    .addr
+                    .send(chat_server::Who {})
+                    .into_actor(chatsess)
+                    .then(|res, _, ctx| {
+                        match res {
+                            Ok(res) => ctx.text(res),
+                            _ => ctx.stop(),
+                        }
+                        fut::ready(())
+                    })
+                    .wait(ctx);
+            }
+            "/create" => {
+                // Create a new game on the db, register creator as user_1
+                let session_id = api::new_game(&chatsess.id)?;
+
+                // Join the game session's chat room
+                chatsess.game_room = session_id.to_owned();
+                chatsess.addr.do_send(chat_server::Join {
+                    id: chatsess.id,
+                    name: chatsess.game_room.clone(),
+                    username: chatsess.name.as_ref().unwrap().to_owned(),
+                });
+                ctx.text(format!("You joined game room {}", session_id));
+            }
+            // "/gamestate" => {
+            //     // Get and return the game state (as long as we're in a game)
+            //     if chatsess.game_room != "main" {
+            //         let gamestate = match api::get_game_state(&chatsess.game_room) {
+            //             Ok(value) => value,
+            //             Err(err) => panic!("Error {err}"),
+            //         };
+
+            //         match serde_json::to_string(&gamestate) {
+            //             Ok(value) => ctx.text(value),
+            //             Err(err) => panic!("Error {}", err),
+            //         };
+            //     } else {
+            //         ctx.text("You're not in a game. There is no game state");
+            //     }
+            // }
+            // "/do" => {
+            //     // Do an action (as long as we're in a game)
+            //     if chatsess.game_room != "main" {
+            //         if v.len() == 2 {
+            //             let action_string = v[1].to_owned();
+            //         } else {
+            //             ctx.text("No action requested");
+            //         }
+            //     } else {
+            //         ctx.text("You're not in a game. There is no game state");
+            //     }
+            // }
+            _ => ctx.text(format!("!!! unknown command: {m:?}")),
+        }
+    } else {
+        let msg = if let Some(ref name) = chatsess.name {
+            format!("\x1b[36;2m{name}:\x1b[0m {m}")
+        } else {
+            m.to_owned()
+        };
+        // send message to chat server
+        chatsess.addr.do_send(chat_server::ClientMessage {
+            id: chatsess.id,
+            msg,
+            room: chatsess.game_room.clone(),
+        })
+    }
+
+    Ok(())
 }

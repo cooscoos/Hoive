@@ -10,9 +10,9 @@ use std::{
     },
 };
 
+use crate::api::deregister_user;
 use actix::prelude::*;
 use rand::{self, rngs::ThreadRng, Rng};
-use crate::api::deregister_user;
 
 /// Chat server sends this messages to session
 #[derive(Message)]
@@ -237,12 +237,10 @@ impl Handler<Disconnect> for ChatServer {
         // remove them from the visitor list
         self.visitor_list.remove(&msg.id);
 
-
         // deregister them from the db
         let _result = deregister_user(&msg.id);
 
         // to do -> handle and pass the errors
-
     }
 }
 
@@ -262,10 +260,7 @@ impl Handler<Join> for ChatServer {
     type Result = ();
 
     fn handle(&mut self, msg: Join, _: &mut Context<Self>) {
-
-  
-
-        let Join { id, name , username} = msg;
+        let Join { id, name, username } = msg;
         let mut rooms = Vec::new();
 
         // remove session from all rooms
