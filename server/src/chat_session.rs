@@ -435,14 +435,18 @@ fn in_game_parser(
                             // for the user and for the client program. E.g. if it's a pillbug, provide guidance on what to do next.
                         },
                         1 => {
+                            // Stage 1. We're..
 
-                            // Stage 1. We're
+                            // if we're done, we now send back an execute command to the client. It'll then ping it back to us so we can recieve it.
 
                         },
                         2 => {
 
                         },
-                        _ => ctx.text("Error: Invalid build command sent"),
+                        _ => {
+                            //ctx.text("Error: Invalid build command sent");
+                            //send back an empty build command to start again
+                        },
                     }
                 }
                 // Build an action by passing text back and forth. Each build command gets checked and
