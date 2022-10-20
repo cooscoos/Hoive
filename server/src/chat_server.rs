@@ -10,7 +10,7 @@ use std::{
     },
 };
 
-use crate::api::deregister_user;
+use crate::{api::deregister_user, models::GameState};
 use actix::prelude::*;
 use rand::{self, rngs::ThreadRng, Rng};
 
@@ -49,6 +49,14 @@ pub struct Who;
 pub struct NewName {
     pub name: String,
     pub id: usize,
+}
+
+/// Start a new game
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct NewGame {
+    pub session_id: String, // the id of the room and game session
+    pub game_state: GameState,    // the initial game_state, including id of the player who goes first
 }
 
 /// Send message to specific room
@@ -109,7 +117,6 @@ impl ChatServer {
 impl ChatServer {
     /// Send message to all users in the room
     fn send_message(&self, message: &str, room: &str, skip_id: usize) {
-        //let room = "main";
         if let Some(sessions) = self.rooms.get(room) {
             for id in sessions {
                 if *id != skip_id {
@@ -190,6 +197,23 @@ impl Handler<Who> for ChatServer {
             fmt_visitors
         )
     }
+}
+
+impl Handler<NewGame> for ChatServer{
+    type Result = ();
+
+    fn handle(&mut self, mut msg: NewGame, _: &mut Context<Self>) -> Self::Result {
+
+
+        // Convert gamestate into text
+        let gamestate_txt = serde_json::to_string(&msg.game_state).unwrap();
+
+        // Notify all users to start a new game and send the gamestate
+        self.send_message(&format!("//cmd newgame {}", gamestate_txt), &msg.session_id, 0);
+
+
+    }
+
 }
 
 /// Handler for changing your name

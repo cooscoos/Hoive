@@ -4,9 +4,17 @@ use awc::ws;
 use futures_util::{SinkExt as _, StreamExt as _};
 use hoive::pmoore::get_usr_input;
 use std::error::Error;
+use std::str::FromStr;
 use std::{io, thread};
 use tokio::{select, sync::mpsc};
 use tokio_stream::wrappers::UnboundedReceiverStream;
+
+
+use hoive::game::board::Board;
+use hoive::game::comps::Team;
+use hoive::maths::coord::{Coord, Cube};
+use server::models::{Winner, GameState};
+use hoive::draw;
 
 pub async fn echo_service() -> Result<(), Box<dyn Error>> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
@@ -45,6 +53,15 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
     //log::debug!("response: {res:?}");
     log::info!("Connected! Welcome. Type /name to set your name.");
 
+    // Initialise a new board, and new struct to store info locally on who won and why
+    let mut board = Board::new(Cube::default());
+    let mut winner = Winner::default();
+    let mut game_state = GameState::default();
+    let mut in_game = false;
+    let mut my_id = String::new(); // player id
+    let mut my_turn = false;
+    let mut my_team = Team::White;
+
     loop {
         select! {
             Some(msg) = ws.next() => {
@@ -52,9 +69,65 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                     Ok(ws::Frame::Text(txt)) => {
                         // Display messages from server
                         let msg = crate::bytes_to_str(&txt).unwrap();
-                        println!("{msg}");
-                    }
 
+                        //println!("{}",msg);
+                        if msg.starts_with("//cmd") {
+                            // If the msg with //cmd then we need to do things.
+                            let v: Vec<&str> = msg.split(' ').collect();
+                            let cmd = v[1];
+
+                            match cmd {
+                                "newgame" => {
+                                    // grab the gamestate and decode it into a local copy of the board
+                                    let gamestate_txt = v[2];
+                                    game_state = serde_json::from_str(&gamestate_txt)?;
+                                    board = board.decode_spiral(game_state.board.unwrap());
+
+                                    // Find out who goves first
+                                    my_turn = my_id != game_state.last_user_id.unwrap();
+
+                                    my_team = match my_turn{
+                                        true => {println!("You take your turn first!");Team::Black},
+                                        false => {println!("Other player goes first.");Team::White}, 
+                                    };
+                                    // reset the local copy of the board, winner .. may no longer be needed
+                                    winner = Winner::default();
+
+                                    in_game = true;
+
+                                    println!("New board");
+                                },
+                                "gamestate" => {
+                                    // Gamestate updates are recieved upon some change, so also
+                                    // double as notifying the player that it is their turn.
+
+                                    // Parse the recieved txt into a Gamestate struct
+                                    let gamestate_txt = v[2];
+                                    game_state = serde_json::from_str(&gamestate_txt)?;
+                                    println!("Gamestate is: {:?}", game_state);
+
+                                    // Decode the game_state into a board
+                                    board = board.decode_spiral(game_state.board.unwrap());
+
+                                    // Figure out if it's your turn
+                                    my_turn = my_id != game_state.last_user_id.unwrap();
+                                    println!("Your turn = {}",my_turn);
+
+
+                                }
+                                "yourid" => {
+                                    // Update player id
+                                    my_id = v[2].to_owned();
+                                }
+                                "winner" => {}, // and so on
+                                _ => {},
+                            }
+
+                        } else {
+                            // It'll just be some chat from other players, so print it
+                            println!("{msg}");
+                        }
+                    }
                     Ok(ws::Frame::Ping(_)) => {
                         // respond to ping probes
                         ws.send(ws::Message::Pong(Bytes::new())).await.unwrap();
@@ -67,7 +140,29 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                 if cmd.is_empty() {
                     continue;
                 }
-                ws.send(ws::Message::Text(cmd.into())).await.unwrap();
+                if cmd == "\n" {
+                    if !in_game {
+                        // Default to sending /who
+                        ws.send(ws::Message::Text("/who".into())).await.unwrap();
+                    } else {
+
+                        // Dont't send anything
+                        let turn_string = match my_turn {
+                            true => format!("It's your turn!"),
+                            false => format!("Waiting for other player to take turn..."),
+                        };
+
+                        // show the board
+                        println!(
+                            "{}\n\n-------------------- PLAYER HAND --------------------\n\n{}\n\n-----------------------------------------------------\n{turn_string}\n",
+                            draw::show_board(&board),
+                            draw::list_chips(&board, my_team)
+                        );
+
+                    }
+                } else {
+                    ws.send(ws::Message::Text(cmd.into())).await.unwrap();
+                }
             }
 
             else => break
