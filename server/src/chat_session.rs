@@ -328,9 +328,9 @@ fn in_game_parser(
     ctx: &mut WebsocketContext<WsChatSession>,
 ) -> Result<(), Box<dyn Error>> {
     // Don't do anything if user hits enter. This should be caught and prevented at the client end anyway.
-    if text == "\n" {
-        return Ok(());
-    }
+    // if text == "\n" {
+    //     return Ok(());
+    // }
 
     let m = text.trim();
     // we check for /sss type of messages
@@ -395,13 +395,6 @@ fn in_game_parser(
                     })
                     .wait(ctx);
             }
-            // "/gamestate" => {
-            //     // Get and return the game state as json to all players
-            //     let gamestate = api::get_game_state(&chatsess.game_room)?;
-
-            //     let gamestate_txt = serde_json::to_string(&gamestate)?;
-            //     ctx.text(format!("//cmd gamestate {}", gamestate_txt));
-            // }
             "/t" | "/tell" => {
                 let words = v[1];
                 let msg = format!(
@@ -423,7 +416,6 @@ fn in_game_parser(
             }
             "/quit" => {}
             "/play" => {
-
                 // This should auto happen later.
                 // If this is our first rodeo then we're going to check if the player is the active player
                 // Get the gamestate and make sure it's this player's turn
@@ -434,14 +426,14 @@ fn in_game_parser(
                     // set the player's active state in the chat struct to true. This reduces how often we have to query the db.
                     // It'll get set back to false later.
                     chatsess.active = true;
+                    // tell the client to get into a select state
+                    //ctx.text("//cmd select");
                 } else {
                     ctx.text("It's not your turn");
                 }
             }
-            "/select" => {
-                if !chatsess.active {
-                    ctx.text("It's not your turn");
-                } else {
+            "/select" if chatsess.active => {
+
                     // Go ahead
                     let textin = v[1].to_owned();
                     ctx.text(format!("You're selecting {textin}"));
@@ -519,13 +511,10 @@ fn in_game_parser(
                             ctx.text("//cmd moveto");
                         }
                     }
-                }
+                
             }
-            "/moveto" => {
+            "/moveto" if chatsess.active => {
 
-                if !chatsess.active {
-                    ctx.text("It's not your turn");
-                } else {
                 // We're expect comma separated values to doubleheight or the letter m to enter special state
 
                 let textin = v[1].to_owned();
@@ -544,8 +533,10 @@ fn in_game_parser(
                             match (x + y) % 2 {
                                 // The sum of doubleheight coords should always be an even no.
                                 0 => {
-                                
+                                    // Get into an execute state
+                                    ctx.text("//cmd execute");
                                     Some(DoubleHeight::from((x, y)))
+         
                                 },
                                 _ => {
                                     ctx.text("Invalid co-ordinates, try again. Enter to abort.");
@@ -560,16 +551,18 @@ fn in_game_parser(
                         }
                     };
 
-                    ctx.text(format!("Board action is {:?}", &chatsess.cmdlist));
+                    if chatsess.cmdlist.rowcol.is_some(){
+                        ctx.text(format!("Moving {} to {:?}. Hit y to execute, or n to abort.", &chatsess.cmdlist.name, &chatsess.cmdlist.rowcol));
+                    }
 
-                }
+                
             }
         }
-            "/execute" => {
+            "/execute" if chatsess.active => {
+                
+                if v[1] == "y" {
                 // Execute the move
-                if !chatsess.active {
-                    ctx.text("It's not your turn");
-                } else {
+
                     let board_action = &chatsess.cmdlist;
 
                     let result = api::make_action(board_action,&chatsess.game_room)?;
@@ -596,12 +589,22 @@ fn in_game_parser(
                     }
 
                     ctx.text(result.to_string());
-
-
+                } else {
+                    // Abort the move go back into select phase
+                    ctx.text("aborting move. Select a chip.");
+                    chatsess.cmdlist = BoardAction::default();
+                    ctx.text("//cmd select");
                 }
 
+
+                
+
             }
-            _ => ctx.text(format!("!!! unknown command: {m:?}")),
+            "/mosquito" if chatsess.active => {
+                // Do a mosquito suck
+
+            }
+            _ => ctx.text(format!("Invalid command.")),
         }
     } else {
         // Default is off in game

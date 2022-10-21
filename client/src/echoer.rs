@@ -62,6 +62,7 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
     let mut my_id = String::new(); // player id
     let mut my_turn = false;
     let mut my_team = Team::White;
+    let mut precursor = String::new();
 
 
     loop {
@@ -89,7 +90,12 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                                     my_turn = my_id != game_state.last_user_id.unwrap();
 
                                     my_team = match my_turn{
-                                        true => {println!("You take your turn first!");Team::Black},
+                                        true => {
+                                            println!("You take your turn first!");
+                                            ws.send(ws::Message::Text("/play".into())).await.unwrap(); // tell server you're ready to play
+                                            precursor = "/select".to_string(); // get into a select state
+                                            Team::Black
+                                        },
                                         false => {println!("Other player goes first.");Team::White}, 
                                     };
                                     // reset the local copy of the board, winner .. may no longer be needed
@@ -115,11 +121,26 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                                     my_turn = my_id != game_state.last_user_id.unwrap();
                                     println!("Your turn = {}",my_turn);
 
+                                    if my_turn {
+                                        ws.send(ws::Message::Text("/play".into())).await.unwrap(); // tell server you're ready to play
+                                        precursor = "/select".to_string(); // get into a select state
+                                    } else {
+                                        precursor = String::new(); // wipe your precursor
+                                    }
+
 
                                 }
                                 "yourid" => {
                                     // Update player id
                                     my_id = v[2].to_owned();
+                                }
+                                "moveto" => {
+                                    // Get into a moveto state
+                                    precursor = "/moveto".to_string();
+                                }
+                                "execute" => {
+                                    // Get into a moveto state
+                                    precursor = "/execute".to_string();
                                 }
                                 "winner" => {}, // and so on
                                 _ => {},
@@ -169,7 +190,11 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                                 draw::list_chips(&board, my_team)
                             );
                         }
-                        _ => ws.send(ws::Message::Text(cmd.into())).await.unwrap(), // send it to the server
+                        _ => {
+                            let sendme = format!("{} {}", precursor, cmd);
+                            println!("sending {sendme}");
+                            ws.send(ws::Message::Text(sendme.into())).await.unwrap()
+                        }, // send it to the server
                     }
 
                 }
