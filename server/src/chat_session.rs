@@ -491,7 +491,7 @@ fn in_game_parser(
                     match chip_name {
                         Some(value) if value == "p1" => {
                             chatsess.cmdlist.name = value.to_string();
-                            ctx.text("Hit m to sumo a neighbour, or select co-ordinate to move to. If moving, input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
+                            ctx.text("Hit m to sumo a neighbour, or select co-ordinate to move to. If moving, input column then row, separated by comma, e.g.: 0, 0. Hit x to abort the move.");
                         
                             ctx.text("//cmd moveto");
                         }
@@ -507,7 +507,7 @@ fn in_game_parser(
                         }
                         Some(value) => {
                             chatsess.cmdlist.name = value.to_string();
-                            ctx.text("Select co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
+                            ctx.text("Select co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit x to abort the move.");
                             ctx.text("//cmd moveto");
                         }
                     }
@@ -533,26 +533,26 @@ fn in_game_parser(
                             match (x + y) % 2 {
                                 // The sum of doubleheight coords should always be an even no.
                                 0 => {
-                                    // Get into an execute state
-                                    ctx.text("//cmd execute");
+                                    // Tell the client to tell us to execute
+                                    
                                     Some(DoubleHeight::from((x, y)))
          
                                 },
                                 _ => {
-                                    ctx.text("Invalid co-ordinates, try again. Enter to abort.");
+                                    ctx.text("Invalid co-ordinates, try again or hit x to abort.");
                                     // don't update the client state
                                     None
                                 }
                             }
                         }
                         _ => {
-                            ctx.text("Try again: enter two numbers separated by a comma. Enter to abort.");
+                            ctx.text("Try again: enter two numbers separated by a comma or hit x to abort.");
                             None
                         }
                     };
 
                     if chatsess.cmdlist.rowcol.is_some(){
-                        ctx.text(format!("Moving {} to {:?}. Hit y to execute, or n to abort.", &chatsess.cmdlist.name, &chatsess.cmdlist.rowcol));
+                        ctx.text("//cmd execute");
                     }
 
                 
@@ -560,8 +560,6 @@ fn in_game_parser(
         }
             "/execute" if chatsess.active => {
                 
-                if v[1] == "y" {
-                // Execute the move
 
                     let board_action = &chatsess.cmdlist;
 
@@ -585,20 +583,24 @@ fn in_game_parser(
 
 
                         }
-                        _ => {},
+                        _ => {
+                            // Get the client back into the select phase
+                            ctx.text("//cmd select");
+                        },
                     }
 
                     ctx.text(result.to_string());
-                } else {
-                    // Abort the move go back into select phase
-                    ctx.text("aborting move. Select a chip.");
-                    chatsess.cmdlist = BoardAction::default();
-                    ctx.text("//cmd select");
-                }
+               
 
 
                 
 
+            }
+            "/abort" if chatsess.active => {
+                // Abort the move go back into select phase
+                ctx.text("Aborting move. Select a chip.");
+                chatsess.cmdlist = BoardAction::default();
+                ctx.text("//cmd select");
             }
             "/mosquito" if chatsess.active => {
                 // Do a mosquito suck

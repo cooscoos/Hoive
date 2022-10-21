@@ -112,14 +112,13 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                                     // Parse the recieved txt into a Gamestate struct
                                     let gamestate_txt = v[2];
                                     game_state = serde_json::from_str(&gamestate_txt)?;
-                                    println!("Gamestate is: {:?}", game_state);
 
                                     // Decode the game_state into a board
                                     board = board.decode_spiral(game_state.board.unwrap());
 
                                     // Figure out if it's your turn
                                     my_turn = my_id != game_state.last_user_id.unwrap();
-                                    println!("Your turn = {}",my_turn);
+                                    
 
                                     if my_turn {
                                         ws.send(ws::Message::Text("/play".into())).await.unwrap(); // tell server you're ready to play
@@ -127,6 +126,19 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                                     } else {
                                         precursor = String::new(); // wipe your precursor
                                     }
+
+                                    // Show the board
+                                    let turn_string = match my_turn {
+                                        true => format!("It's your turn!"),
+                                        false => format!("Waiting for other player to take turn..."),
+                                    };
+        
+                                    // show the board
+                                    println!(
+                                        "{}\n\n-------------------- PLAYER HAND --------------------\n\n{}\n\n-----------------------------------------------------\n{turn_string}\n",
+                                        draw::show_board(&board),
+                                        draw::list_chips(&board, my_team)
+                                    );
 
 
                                 }
@@ -139,8 +151,9 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                                     precursor = "/moveto".to_string();
                                 }
                                 "execute" => {
-                                    // Get into a moveto state
-                                    precursor = "/execute".to_string();
+                                    // Server says it's ready, so send an execute cmd to the server to do the move
+                                    // This isn't really needed, could just execute within the server's code
+                                    ws.send(ws::Message::Text("/execute".into())).await.unwrap();
                                 }
                                 "winner" => {}, // and so on
                                 _ => {},
@@ -172,6 +185,7 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                         ws.send(ws::Message::Text(cmd.into())).await.unwrap();
                     }
                 } else {
+
                     // Otherwise we're in game so keyboard should behave appropriately
 
                     let thing = cmd.trim();
@@ -190,9 +204,21 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                                 draw::list_chips(&board, my_team)
                             );
                         }
+                        _ if thing == "x" => {
+                            // x is the universal letter to abort a move
+                            ws.send(ws::Message::Text("/abort".into())).await.unwrap();
+                            precursor = "/select".to_string();
+                            
+                            
+                        }
+                        _ if thing.starts_with("/t") || thing.starts_with("/tell") => {
+                            // t and tell should always work
+                            ws.send(ws::Message::Text(cmd.into())).await.unwrap();
+
+                        }  
                         _ => {
                             let sendme = format!("{} {}", precursor, cmd);
-                            println!("sending {sendme}");
+                            //println!("sending {sendme}");
                             ws.send(ws::Message::Text(sendme.into())).await.unwrap()
                         }, // send it to the server
                     }
