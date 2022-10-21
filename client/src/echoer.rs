@@ -52,7 +52,7 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
     };
 
     //log::debug!("response: {res:?}");
-    log::info!("Connected! Welcome. Type /name to set your name.");
+    log::info!("Connected! Welcome. Enter your name.");
 
     // Initialise a new board, and new struct to store info locally on who won and why
     let mut board = Board::new(Cube::default());
@@ -62,7 +62,7 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
     let mut my_id = String::new(); // player id
     let mut my_turn = false;
     let mut my_team = Team::White;
-    let mut precursor = String::new();
+    let mut precursor = "/name ".to_string();
 
 
     loop {
@@ -80,6 +80,10 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                             let cmd = v[1];
 
                             match cmd {
+                                "default" => {
+                                    // reset precursor
+                                    precursor = String::new();
+                                }
                                 "newgame" => {
                                     // grab the gamestate and decode it into a local copy of the board
                                     let gamestate_txt = v[2];
@@ -93,7 +97,7 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                                         true => {
                                             println!("You take your turn first!");
                                             ws.send(ws::Message::Text("/play".into())).await.unwrap(); // tell server you're ready to play
-                                            precursor = "/select".to_string(); // get into a select state
+                                            precursor = "/select ".to_string(); // get into a select state
                                             Team::Black
                                         },
                                         false => {println!("Other player goes first.");Team::White}, 
@@ -122,7 +126,7 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
 
                                     if my_turn {
                                         ws.send(ws::Message::Text("/play".into())).await.unwrap(); // tell server you're ready to play
-                                        precursor = "/select".to_string(); // get into a select state
+                                        precursor = "/select ".to_string(); // get into a select state
                                     } else {
                                         precursor = String::new(); // wipe your precursor
                                     }
@@ -148,7 +152,7 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                                 }
                                 "moveto" => {
                                     // Get into a moveto state
-                                    precursor = "/moveto".to_string();
+                                    precursor = "/moveto ".to_string();
                                 }
                                 "execute" => {
                                     // Server says it's ready, so send an execute cmd to the server to do the move
@@ -182,7 +186,10 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                         // Default to sending /who
                         ws.send(ws::Message::Text("/who".into())).await.unwrap();
                     } else {
-                        ws.send(ws::Message::Text(cmd.into())).await.unwrap();
+
+                            let sendme = format!("{}{}", precursor, cmd);
+                           ws.send(ws::Message::Text(sendme.into())).await.unwrap();
+                        
                     }
                 } else {
 
@@ -217,7 +224,7 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
 
                         }  
                         _ => {
-                            let sendme = format!("{} {}", precursor, cmd);
+                            let sendme = format!("{}{}", precursor, cmd);
                             //println!("sending {sendme}");
                             ws.send(ws::Message::Text(sendme.into())).await.unwrap()
                         }, // send it to the server

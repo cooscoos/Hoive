@@ -190,7 +190,7 @@ fn main_lobby_parser(
         let v: Vec<&str> = m.splitn(2, ' ').collect();
 
         if chatsess.name.is_none() && v[0] != "/name" {
-            ctx.text("Define a username using /name before chatting");
+            ctx.text("Define a username before chatting. Type your username below:");
             return Ok(());
         }
 
@@ -259,6 +259,8 @@ fn main_lobby_parser(
 
                             ctx.text(format!("//cmd yourid {}", chatsess.id));
                             ctx.text(format!("Welcome {}. Begin typing to chat.", user_name));
+                            // reset the client's precursor
+                            ctx.text("//cmd default");
                         }
                     }
                 }
