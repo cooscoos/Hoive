@@ -59,6 +59,14 @@ pub struct NewGame {
     pub game_state: GameState, // the initial game_state, including id of the player who goes first
 }
 
+/// Update gamestate
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct UpdateGame {
+    pub session_id: String,    // the id of the room and game session
+    pub game_state: GameState, // the new game_state
+}
+
 /// Send message to specific room
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -209,6 +217,22 @@ impl Handler<NewGame> for ChatServer {
         // Notify all users to start a new game and send the gamestate
         self.send_message(
             &format!("//cmd newgame {}", gamestate_txt),
+            &msg.session_id,
+            0,
+        );
+    }
+}
+
+impl Handler<UpdateGame> for ChatServer {
+    type Result = ();
+
+    fn handle(&mut self, mut msg: UpdateGame, _: &mut Context<Self>) -> Self::Result {
+        // Convert gamestate into text
+        let gamestate_txt = serde_json::to_string(&msg.game_state).unwrap();
+
+        // Notify all users to update their gamestate
+        self.send_message(
+            &format!("//cmd gamestate {}", gamestate_txt),
             &msg.session_id,
             0,
         );

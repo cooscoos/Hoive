@@ -372,7 +372,7 @@ fn neighbour_prompts<T: Coord>(board: &mut Board<T>, position: T, movename: Stri
 }
 
 /// Parse comma separated values input by a user to a doubleheight co-ordinate
-fn coord_from_string(str: String) -> Vec<Option<i8>> {
+pub fn coord_from_string(str: String) -> Vec<Option<i8>> {
     str.trim()
         .split(',')
         .map(|c| match c.parse::<i8>() {

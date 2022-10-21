@@ -7,16 +7,24 @@ use super::comps::{convert_static_basic, Team};
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct BoardAction {
     pub name: String,            // chip name
-    pub rowcol: DoubleHeight,    // destination row, col
+    pub rowcol: Option<DoubleHeight>,    // destination row, col
     pub special: Option<String>, // Contains source (row,col) if doing mosquito/pillbug special
 }
 
 impl BoardAction {
+
+    pub fn default() -> Self {
+        BoardAction {
+            name: String::new(),
+            rowcol: None,
+            special: None,
+        }
+    }
     /// Generate command to forfeit a game
     pub fn forfeit() -> Self {
         BoardAction {
             name: "".to_string(),
-            rowcol: DoubleHeight::default(),
+            rowcol: None,
             special: Some("forfeit".to_string()),
         }
     }
@@ -25,7 +33,7 @@ impl BoardAction {
     pub fn skip() -> Self {
         BoardAction {
             name: "".to_string(),
-            rowcol: DoubleHeight::default(),
+            rowcol: None,
             special: Some("skip".to_string()),
         }
     }
@@ -49,7 +57,7 @@ impl BoardAction {
 
         BoardAction {
             name: case_chip_name,
-            rowcol,
+            rowcol: Some(rowcol),
             special,
         }
     }
@@ -67,7 +75,7 @@ impl BoardAction {
     /// Get destination in board coords
     pub fn get_dest<T: Coord>(&self, coord: T) -> T {
         let dheight = self.rowcol;
-        coord.mapfrom_doubleheight(dheight)
+        coord.mapfrom_doubleheight(dheight.unwrap())
     }
 
     /// Get the team of the chips which are doing the action

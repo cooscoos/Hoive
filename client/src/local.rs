@@ -77,7 +77,7 @@ fn try_execute_action<T: Coord>(
 
     // Try execute a special if one is requested, otherwise normal move
     match special_str {
-        Some(special) => pmoore::decode_specials(board, &special, active_team, chip_name, d_dest),
-        None => board.move_chip(chip_name, active_team, d_dest.mapto(board.coord)),
+        Some(special) => pmoore::decode_specials(board, &special, active_team, chip_name, d_dest.unwrap()),
+        None => board.move_chip(chip_name, active_team, d_dest.unwrap().mapto(board.coord)),
     }
 }

@@ -63,6 +63,7 @@ pub async fn chat_route(
             game_room: "main".to_owned(),
             name: None,
             active: false,
+            cmdlist: BoardAction::default(),
             addr: srv.get_ref().clone(),
         },
         &req,
@@ -242,10 +243,10 @@ pub fn get_game_state(session_id: &str) -> Result<GameState, Error> {
 }
 
 /// Allow player to take some sort of action
-pub async fn make_action(
-    action: web::Json<BoardAction>,
+pub fn make_action(
+    action: &BoardAction,
     session_id: &str,
-) -> Result<impl Responder, Error> {
+) -> Result<MoveStatus, Error> {
     // Inefficient way, for now, to make progress
     let mut conn = db::establish_connection();
 
@@ -253,31 +254,31 @@ pub async fn make_action(
     let game_state = get_game_state(session_id)?;
 
     // Find out if we have a special player action.
-    let move_status = match action.special.as_ref() {
+    match action.special.as_ref() {
         Some(special) if special == "forfeit" => {
             // Forfeit means active player is giving up
-            forfeit(game_state, session_id, &mut conn).await?
+            forfeit(game_state, session_id, &mut conn)
         }
         Some(special) if special == "skip" => {
             // Try and skip the current player's turn
-            skip_turn(game_state, session_id, &mut conn).await?
+            skip_turn(game_state, session_id, &mut conn)
         }
         Some(_) => {
             // Any other special string is a pillbug / mosquito action
-            do_special(game_state, action, session_id, &mut conn).await?
+            do_special(game_state, action, session_id, &mut conn)
         }
         None => {
             // Otherwise it's a normal move
-            do_movement(game_state, action, session_id, &mut conn).await?
+            do_movement(game_state, action, session_id, &mut conn)
         }
-    };
-    Ok(web::Json(move_status))
+    }
+
 }
 
 /// Try and execute movement
-async fn do_movement(
+fn do_movement(
     game_state: GameState,
-    action: web::Json<BoardAction>,
+    action: &BoardAction,
     session_id: &str,
     conn: &mut SqliteConnection,
 ) -> Result<MoveStatus, Error> {
@@ -286,16 +287,16 @@ async fn do_movement(
 
     let active_team = game_state.which_team()?;
     let chip_name = action.get_chip_name();
-    assert!(cheat_check(&action, &active_team));
+    //assert!(cheat_check(&action, &active_team));
 
     // Convert from doubleheight to the board's co-ordinate system
-    let position = board.coord.mapfrom_doubleheight(action.rowcol);
+    let position = board.coord.mapfrom_doubleheight(action.rowcol.unwrap());
 
     // Try and do the move, see what happens. If it's successful the board struct will update itself
     let move_status = board.move_chip(chip_name, active_team, position);
 
     // Create an event to track history of moves
-    let event = Event::new_by_action(&action.into_inner());
+    let event = Event::new_by_action(&action);
 
     match move_status {
         MoveStatus::Success => execute_on_db(&mut board, game_state, event, session_id, conn),
@@ -304,9 +305,9 @@ async fn do_movement(
 }
 
 /// Try and execute a chip special
-async fn do_special(
+fn do_special(
     game_state: GameState,
-    action: web::Json<BoardAction>,
+    action: &BoardAction,
     session_id: &str,
     conn: &mut SqliteConnection,
 ) -> Result<MoveStatus, Error> {
@@ -314,7 +315,7 @@ async fn do_special(
     let mut board = game_state.to_cube_board();
 
     let active_team = game_state.which_team()?;
-    assert!(cheat_check(&action, &active_team));
+    //assert!(cheat_check(&action, &active_team));
 
     // Try and decode and execute the special
     let move_status = hoive::pmoore::decode_specials(
@@ -322,11 +323,11 @@ async fn do_special(
         &action.get_special(),
         active_team,
         action.get_chip_name(),
-        action.rowcol,
+        action.rowcol.unwrap(),
     );
 
     // Create an event to track history of moves
-    let event = Event::new_by_action(&action.into_inner());
+    let event = Event::new_by_action(&action);
 
     // Execute it on the db if it was successful
     match move_status {
@@ -363,13 +364,8 @@ fn execute_on_db<T: Coord>(
     }
 }
 
-/// Make sure the requested move is for the active player
-fn cheat_check(form_input: &web::Json<BoardAction>, active_team: &Team) -> bool {
-    let team_chips = form_input.which_team();
-    team_chips == *active_team
-}
 
-async fn skip_turn(
+fn skip_turn(
     game_state: GameState,
     session_id: &str,
     conn: &mut SqliteConnection,
@@ -400,7 +396,7 @@ async fn skip_turn(
     }
 }
 
-async fn forfeit(
+fn forfeit(
     game_state: GameState,
     session_id: &str,
     conn: &mut SqliteConnection,

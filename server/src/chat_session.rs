@@ -5,6 +5,10 @@ use std::usize;
 use actix::prelude::*;
 use actix_web_actors::ws;
 use actix_web_actors::ws::WebsocketContext;
+use hoive::game::actions::BoardAction;
+use hoive::game::comps::convert_static_basic;
+use hoive::game::movestatus::MoveStatus;
+use hoive::maths::coord::DoubleHeight;
 use hoive::pmoore;
 
 use crate::api;
@@ -34,6 +38,9 @@ pub struct WsChatSession {
 
     /// Whether the player is actively taking a turn
     pub active: bool,
+
+    /// Command list for executing a move
+    pub cmdlist: BoardAction,
 
     /// Chat server
     pub addr: Addr<chat_server::ChatServer>,
@@ -415,45 +422,185 @@ fn in_game_parser(
                 ctx.text(pmoore::xylophone());
             }
             "/quit" => {}
-            "/build" => {
-                if v.len() == 2 {
-                    // If this is our first rodeo then we're going to check if the player is the active player
-                    // Get the gamestate and make sure it's this player's turn
-                    let gamestate = api::get_game_state(&chatsess.game_room)?;
-                    if chatsess.id.to_string() != gamestate.last_user_id.unwrap() {
-                        // set the player's active state in the chat struct to true. This reduces how often we have to query the db.
-                        // It'll get set back to false later.
-                        chatsess.active = true;
-                    }
+            "/play" => {
+
+                // This should auto happen later.
+                // If this is our first rodeo then we're going to check if the player is the active player
+                // Get the gamestate and make sure it's this player's turn
+                let gamestate = api::get_game_state(&chatsess.game_room)?;
+                if chatsess.id.to_string() != gamestate.last_user_id.unwrap() {
+                    // Player is initiating a play, so prompt them to select a chip.
+                    ctx.text("Select a tile from the board or your hand to move.");
+                    // set the player's active state in the chat struct to true. This reduces how often we have to query the db.
+                    // It'll get set back to false later.
+                    chatsess.active = true;
+                } else {
+                    ctx.text("It's not your turn");
                 }
-
-                if chatsess.active {
-                    // Go ahead
-                    match v.len() - 2 {
-                        0 => {
-                            // Stage 0. We're expecting a chip name, try find a valid chip on the board and pass back a response
-                            // for the user and for the client program. E.g. if it's a pillbug, provide guidance on what to do next.
-                        },
-                        1 => {
-                            // Stage 1. We're..
-
-                            // if we're done, we now send back an execute command to the client. It'll then ping it back to us so we can recieve it.
-
-                        },
-                        2 => {
-
-                        },
-                        _ => {
-                            //ctx.text("Error: Invalid build command sent");
-                            //send back an empty build command to start again
-                        },
-                    }
-                }
-                // Build an action by passing text back and forth. Each build command gets checked and
-                // and then appended to the string if it's valid
-                // Erase cmd and then exectue cmd.
             }
+            "/select" => {
+                if !chatsess.active {
+                    ctx.text("It's not your turn");
+                } else {
+                    // Go ahead
+                    let textin = v[1].to_owned();
+                    ctx.text(format!("You're selecting {textin}"));
 
+                    // Empty. Stage 0, we should be fed a chip name, or a skip request
+                    let chip_name = match textin {
+                        _ if textin == "w" => {
+                            // Atempt to skip turn, return db response
+                            None
+                        }
+                        _ if textin == "mb" => {
+                            // The player is probably trying to select their mosquito acting like a beetle
+                            convert_static_basic("m1".to_string())
+                        }
+                        _ if textin.contains('*') => {
+                            // The player is probably trying to select a beetle (or a mosquito acting like one).
+                            // Grab the first 2 chars of the string
+                            let (mut first, _) = textin.split_at(2);
+
+                            // If the first two chars are mosquito, convert to m1
+                            if first.contains('m') {
+                                first = "m1";
+                            }
+                            convert_static_basic(first.to_string())
+                        }
+                        _ if textin
+                            .starts_with(|c| c == 'l' || c == 'p' || c == 'q' || c == 'm') =>
+                        {
+                            let proper_str = match textin.chars().next().unwrap() {
+                                'l' => "l1",
+                                'p' => "p1",
+                                'q' => "q1",
+                                'm' => "m1",
+                                _ => panic!("unreachable"),
+                            };
+                            convert_static_basic(proper_str.to_string())
+                        }
+                        c => {
+                            // Try and match a chip by this name
+                            let chip_str = convert_static_basic(c);
+
+                            match chip_str.is_some() {
+                                true => chip_str,
+                                false => {
+                                    println!("You don't have this tile in your hand.");
+                                    None
+                                }
+                            }
+                        }
+                    };
+
+                    // Stage 0. We're expecting a chip name, try find a valid chip on the board and pass back a response
+                    // for the user and for the client program. E.g. if it's a pillbug, provide guidance on what to do next.
+
+                    match chip_name {
+                        Some(value) if value == "p1" => {
+                            chatsess.cmdlist.name = value.to_string();
+                            ctx.text("Hit m to sumo a neighbour, or select co-ordinate to move to. If moving, input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
+                        
+                            ctx.text("//cmd moveto");
+                        }
+                        Some(value) if value == "m1" => {
+                            chatsess.cmdlist.name = value.to_string();
+                            ctx.text("Hit m to suck a neighbour now, here is some neighbours to choose from:");
+                            
+                            ctx.text("//cmd moveto");
+                        }
+                        None => {
+                            // Repeat yourself
+                            ctx.text("Select a tile from the board or your hand to move.");
+                        }
+                        Some(value) => {
+                            chatsess.cmdlist.name = value.to_string();
+                            ctx.text("Select co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
+                            ctx.text("//cmd moveto");
+                        }
+                    }
+                }
+            }
+            "/moveto" => {
+
+                if !chatsess.active {
+                    ctx.text("It's not your turn");
+                } else {
+                // We're expect comma separated values to doubleheight or the letter m to enter special state
+
+                let textin = v[1].to_owned();
+                println!("recieved moveto: {textin}");
+
+                if textin == "m" {
+                        ctx.text("Select a neighbour to special from the following choices...");
+                        ctx.text("//cmd special");
+                } else {
+                    //attempt to parse a move
+                    let usr_hex = pmoore::coord_from_string(textin);
+                    println!("user hex = {:?}", usr_hex);
+                    
+                    chatsess.cmdlist.rowcol = match usr_hex[..] {
+                        [Some(x), Some(y)] => {
+                            match (x + y) % 2 {
+                                // The sum of doubleheight coords should always be an even no.
+                                0 => {
+                                
+                                    Some(DoubleHeight::from((x, y)))
+                                },
+                                _ => {
+                                    ctx.text("Invalid co-ordinates, try again. Enter to abort.");
+                                    // don't update the client state
+                                    None
+                                }
+                            }
+                        }
+                        _ => {
+                            ctx.text("Try again: enter two numbers separated by a comma. Enter to abort.");
+                            None
+                        }
+                    };
+
+                    ctx.text(format!("Board action is {:?}", &chatsess.cmdlist));
+
+                }
+            }
+        }
+            "/execute" => {
+                // Execute the move
+                if !chatsess.active {
+                    ctx.text("It's not your turn");
+                } else {
+                    let board_action = &chatsess.cmdlist;
+
+                    let result = api::make_action(board_action,&chatsess.game_room)?;
+
+                    match result {
+                        MoveStatus::Success => {
+                            // no longer this player's turn
+                            chatsess.active = false;
+                            chatsess.cmdlist = BoardAction::default();
+
+                            // update all player gamestates
+                            let session_id = chatsess.game_room.to_owned();
+                            let game_state = api::get_game_state(&session_id)?;
+
+                            // Tell all players the gamestate has updated
+                            chatsess.addr.do_send(chat_server::UpdateGame {
+                                session_id,
+                                game_state,
+                            });
+
+
+                        }
+                        _ => {},
+                    }
+
+                    ctx.text(result.to_string());
+
+
+                }
+
+            }
             _ => ctx.text(format!("!!! unknown command: {m:?}")),
         }
     } else {
