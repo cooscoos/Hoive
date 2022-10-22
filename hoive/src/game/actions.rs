@@ -1,5 +1,6 @@
 use crate::maths::coord::{Coord, DoubleHeight};
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeSet;
 
 use super::comps::{convert_static_basic, Team};
 
@@ -9,6 +10,8 @@ pub struct BoardAction {
     pub name: String,            // chip name
     pub rowcol: Option<DoubleHeight>,    // destination row, col
     pub special: Option<String>, // Contains source (row,col) if doing mosquito/pillbug special
+    pub neighbours: Option<BTreeSet<String>>, // the neighbours of that chip
+
 }
 
 impl BoardAction {
@@ -18,6 +21,8 @@ impl BoardAction {
             name: String::new(),
             rowcol: None,
             special: None,
+            neighbours: None,
+            
         }
     }
     /// Generate command to forfeit a game
@@ -26,6 +31,7 @@ impl BoardAction {
             name: "".to_string(),
             rowcol: None,
             special: Some("forfeit".to_string()),
+            neighbours: None,
         }
     }
 
@@ -35,6 +41,7 @@ impl BoardAction {
             name: "".to_string(),
             rowcol: None,
             special: Some("skip".to_string()),
+            neighbours: None,
         }
     }
 
@@ -59,6 +66,7 @@ impl BoardAction {
             name: case_chip_name,
             rowcol: Some(rowcol),
             special,
+            neighbours: None,
         }
     }
 

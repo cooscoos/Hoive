@@ -60,6 +60,19 @@ pub struct Chip {
     pub team: Team,
 }
 
+// Converts team to a string "B", "W"
+impl ToString for Chip {
+    fn to_string(&self) -> String {
+
+        match self.team {
+            Team::Black => self.name.to_string().to_uppercase(),
+            Team::White => self.name.to_string(),
+        }
+
+    }
+}
+
+
 impl Chip {
     /// Create one new chip with given name and team.
     pub fn new(name: &'static str, team: Team) -> Self {

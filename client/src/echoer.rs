@@ -96,12 +96,17 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                                     my_team = match my_turn{
                                         true => {
                                             println!("You take your turn first!");
+
                                             ws.send(ws::Message::Text("/play".into())).await.unwrap(); // tell server you're ready to play
                                             precursor = "/select ".to_string(); // get into a select state
                                             Team::Black
                                         },
-                                        false => {println!("Other player goes first.");Team::White}, 
+                                        false => {
+                                            ws.send(ws::Message::Text("/second".into())).await.unwrap(); // tell server to switch you to team white
+                                            println!("Other player goes first.");Team::White}, 
                                     };
+
+
                                     // reset the local copy of the board, winner .. may no longer be needed
                                     winner = Winner::default();
 
@@ -159,6 +164,21 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                                     // This isn't really needed, could just execute within the server's code
                                     ws.send(ws::Message::Text("/execute".into())).await.unwrap();
                                 }
+                                "mosquito" => {
+                                    // can gather these up into a single statement by taking the input and adding to / later
+                                    precursor = "/mosquito".to_string();
+                                }
+                                "pillbug" => {
+                                    precursor = "/pillbug".to_string();
+
+                                }
+                                "upboard" => {
+                                    // Update the board
+                                    let board_string = v[2].to_owned();
+                                    // Decode the board and update the local copy
+                                    board = board.decode_spiral(board_string);
+
+                                }
                                 "winner" => {}, // and so on
                                 _ => {},
                             }
@@ -196,6 +216,7 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                     // Otherwise we're in game so keyboard should behave appropriately
 
                     let thing = cmd.trim();
+                    println!("Sending: {}{}", precursor,thing);
                     match thing {
                         _ if thing.is_empty() => {
                             // Dont't send anything
@@ -214,7 +235,7 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                         _ if thing == "x" => {
                             // x is the universal letter to abort a move
                             ws.send(ws::Message::Text("/abort".into())).await.unwrap();
-                            precursor = "/select".to_string();
+                            precursor = "/select ".to_string();
                             
                             
                         }

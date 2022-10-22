@@ -25,6 +25,7 @@ use hoive::game::{
     specials,
 };
 use hoive::maths::coord::Coord;
+use hoive::maths::coord::Cube;
 
 /// Defines web form to parse a game session's uuid
 #[derive(Deserialize)]
@@ -64,6 +65,8 @@ pub async fn chat_route(
             name: None,
             active: false,
             cmdlist: BoardAction::default(),
+            board: Board::<Cube>::default(),
+            team: Team::Black,
             addr: srv.get_ref().clone(),
         },
         &req,
