@@ -21,9 +21,8 @@ The Hoive directory contains the game logic.
 
 ### Client
 
-- Teams are totally jank. Need the server to assign team on chatsess and then tell each client what their team is.
-- Can then start fixing mossies
-- Going quite well but the colours mismatch about half of the time..
+- Time to have a good tidy up of the chatsess and think about how to consolidate its behaviour with that of a local client.
+
 - start writing websocket client, make user choose a name / register it before joining main
 - Figure out how to turn (features on in submodules)[https://doc.rust-lang.org/cargo/reference/features.html] 
 - write some tests
