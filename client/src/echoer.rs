@@ -93,18 +93,18 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                                     // Find out who goves first
                                     my_turn = my_id != game_state.last_user_id.unwrap();
 
-                                    my_team = match my_turn{
+                                    match my_turn{
                                         true => {
                                             println!("You take your turn first!");
 
                                             ws.send(ws::Message::Text("/play".into())).await.unwrap(); // tell server you're ready to play
                                             precursor = "/select ".to_string(); // get into a select state
-                                            Team::Black
+                                
                                         },
                                         false => {
                                             ws.send(ws::Message::Text("/second".into())).await.unwrap(); // tell server to switch you to team white
-                                            println!("Other player goes first.");Team::White}, 
-                                    };
+                                            println!("Other player goes first.")}, 
+                                    }
 
 
                                     // reset the local copy of the board, winner .. may no longer be needed
@@ -166,10 +166,10 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                                 }
                                 "mosquito" => {
                                     // can gather these up into a single statement by taking the input and adding to / later
-                                    precursor = "/mosquito".to_string();
+                                    precursor = "/mosquito ".to_string();
                                 }
                                 "pillbug" => {
-                                    precursor = "/pillbug".to_string();
+                                    precursor = "/pillbug ".to_string();
 
                                 }
                                 "upboard" => {
@@ -178,6 +178,14 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                                     // Decode the board and update the local copy
                                     board = board.decode_spiral(board_string);
 
+                                }
+                                "team" => {
+                                    //update player team
+                                    my_team = match v[2] {
+                                        _ if v[2] == "B" => Team::Black,
+                                        _ if v[2] == "W" => Team::White,
+                                        _ => panic!(),
+                                    };
                                 }
                                 "winner" => {}, // and so on
                                 _ => {},

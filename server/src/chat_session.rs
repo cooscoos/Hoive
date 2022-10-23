@@ -232,6 +232,10 @@ fn main_lobby_parser(
                                 username: chatsess.name.as_ref().unwrap().to_owned(),
                             });
 
+                            // Set player to team white and notify the client
+                            chatsess.team = Team::White;
+                            ctx.text("//cmd team W");
+
                             ctx.text(format!("You joined game room {}", session_id));
 
                             let game_state = api::get_game_state(&session_id)?;
@@ -318,7 +322,12 @@ fn main_lobby_parser(
                     name: chatsess.game_room.clone(),
                     username: chatsess.name.as_ref().unwrap().to_owned(),
                 });
-                ctx.text(format!("You joined game room {}", session_id));
+
+                // Set player to team black and notify the client
+                chatsess.team = Team::Black;
+                ctx.text("//cmd team B");
+
+                ctx.text(format!("You joined game room as team black {}", session_id));
             }
             _ => ctx.text(format!("!!! unknown command: {m:?}")),
         }
@@ -454,11 +463,6 @@ fn in_game_parser(
                     ctx.text("It's not your turn");
                 }
             }
-            "/second" => {
-                // This player has asked to be team white.
-                // A better way to do this would be to auto set it without comms at newgame. but this hack is fine for now
-                chatsess.team = hoive::game::comps::Team::White;
-            }
             "/select" if chatsess.active => {
 
                     //make sure the board is up to date
@@ -558,7 +562,7 @@ fn in_game_parser(
                                 ctx.text("Select a neighbour to special from the following choices...");
 
                                 let chip_name = convert_static_basic(chatsess.cmdlist.name.to_owned()).unwrap();
-                                let active_team = hoive::game::comps::get_team_from_chip(&chip_name);
+                                let active_team = chatsess.team;
                                 
                                 let board = chatsess.board.to_owned();
                                 // Get pillbug/mosquito's position, save to rowcol
@@ -573,8 +577,13 @@ fn in_game_parser(
                                 let neighbours = neighbours.into_iter().collect::<BTreeSet<Chip>>();
                                 ctx.text(hoive::draw::list_these_chips(neighbours.clone()));
 
+                                // need to map to upper/lowercase string
                                 let neighbours = neighbours.into_iter().map(|c| c.to_string()).collect::<BTreeSet<String>>();
                                 
+
+                                
+
+
                                 // Store the neighbours for later
                                 chatsess.cmdlist.neighbours = Some(neighbours);
                                 ctx.text("//cmd mosquito");
@@ -600,36 +609,35 @@ fn in_game_parser(
             "/mosquito" if chatsess.active => {
                 // Expect the second entry to be  number that selects one of our neighbours
 
-                let selection = v[1].parse::<usize>().unwrap();
+                let selection = v[1].parse::<usize>().expect("Couldn't parse input into usize");
+
                 let neighbours = chatsess.cmdlist.neighbours.to_owned().unwrap();
+
+
+                println!("\n\nNeighbours are: {:#?}\n\n", neighbours);
+
                 let selected = neighbours.into_iter().nth(selection).unwrap();
+
+                ctx.text(format!("Selected {} which was {} on team {:?}", selection, selected, get_team_from_chip(&selected)));
 
                 // Get the coordinates of that selected chip
                 let chipselect = Chip{
-                    name: convert_static_basic(selected.to_owned()).unwrap(),
+                    name: convert_static_basic(selected.to_lowercase()).expect("Invalid chip"),
                     team: get_team_from_chip(&selected),
                 };
 
                 // get a board
                 let mut board = chatsess.board.to_owned();
                 let source = board.chips.get(&chipselect).unwrap().unwrap();
+                let victim_pos = source.to_doubleheight(source);
 
      
-                // get own position
-                let position = board.coord.mapfrom_doubleheight(chatsess.cmdlist.rowcol.unwrap());
+                // Add to special string to signify mosquito sucking victim at row,col
+                let special = format!("m,{},{},", victim_pos.col, victim_pos.row);
+                chatsess.cmdlist.special = Some(special);
 
-                // Execute the special move to become the victim for this turn
-                match hoive::game::specials::mosquito_suck(&mut board, source, position) {
-                    Some(value) => {
-                        // Update the client and chatsess gamestates
-                        chatsess.board = board.to_owned();
-                        ctx.text(format!("//cmd upboard {}", board.encode_spiral()));
-                        ctx.text("Suck successful");
-                    }
-                    None => {
-                        ctx.text("Cannot suck from another mosquito!");
-                    }
-                }
+                ctx.text("And where would you like to move to?");
+                ctx.text("//cmd moveto");
 
 
             }
@@ -638,12 +646,10 @@ fn in_game_parser(
             }
             "/moveto" if chatsess.active => {
 
-                // We're expect comma separated values to doubleheight or the letter m to enter special state
+                // We're expect comma separated values to doubleheight
 
                 let textin = v[1].to_owned();
                 
-
-         
                     //attempt to parse a move
                     let usr_hex = pmoore::coord_from_string(textin);
                     println!("user hex = {:?}", usr_hex);
@@ -672,6 +678,7 @@ fn in_game_parser(
                     };
 
                     if chatsess.cmdlist.rowcol.is_some(){
+                        ctx.text(format!("Going to execute the following: {:?}", chatsess.cmdlist));
                         ctx.text("//cmd execute");
                     }
 

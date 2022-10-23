@@ -64,6 +64,11 @@ pub fn spider_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveSta
             let move_rules = vec![false, false, false];
             let visitable = mod_dist_lim_floodfill(board, source, move_rules);
 
+            // // bugtest lines for spider
+            // use crate::maths::coord::DoubleHeight;
+            // let bugtest: HashSet<DoubleHeight> = visitable.iter().map(|h| h.to_doubleheight(*h)).collect();
+            // println!("List of visitable hexes: {:#?}", bugtest);
+
             // If the destination is visitable on turn 3, the move is good.
             match visitable.contains(dest) {
                 true => MoveStatus::Success,
@@ -205,6 +210,10 @@ pub fn mod_dist_lim_floodfill<T: Coord>(
                     true => obstacles.contains(n), // they are blocked by an obstacle
                     false => !obstacles.contains(n), // they are not blocked by an obstacle
                 };
+
+                // Bugfix: We should also not be allowed to backtrack into previous visitors
+                // Bugfix: and we must never leave the hive (always need at least one chip neighbour)
+
 
                 if can_visit & !visitable.contains(n) {
                     // don't keep overwriting values in hashset (inefficient)

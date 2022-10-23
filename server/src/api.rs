@@ -318,7 +318,6 @@ fn do_special(
     let mut board = game_state.to_cube_board();
 
     let active_team = game_state.which_team()?;
-    //assert!(cheat_check(&action, &active_team));
 
     // Try and decode and execute the special
     let move_status = hoive::pmoore::decode_specials(

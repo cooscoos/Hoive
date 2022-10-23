@@ -14,6 +14,11 @@ The Hoive directory contains the game logic.
 - install on virtual machine and list dependencies in readme
 - play test
 
+
+### Base game
+
+- Spiders are bugged and can move <3 distance! It's because they can backtrack and leave the hive. Solve this another day.
+
 ### Client
 
 - Teams are totally jank. Need the server to assign team on chatsess and then tell each client what their team is.
