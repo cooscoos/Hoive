@@ -36,7 +36,10 @@ Consider:
 
 - coming along nicely, need to work up the client side to handle websocket
 - (websockets)[https://github.com/actix/examples/tree/99d0afde28d14a0b641ac52de821d79fa244d50a/websockets/echo] are the solution to having a more responsive UI (and a chat feature) -- have websocket to notify when turn complete (then check db), same for ctrl+c or quitting. Need to rewrite client in (awc)[https://docs.rs/awc/latest/awc/] rather than reqwest because reqwest doesn't have websocket features.
+- have a flag / option for running an html server. Client advanced options.
+
 - Complete writing tests for server/tests/api.rs --- need to figure out how to create sessions in tests.
+
 
 <!-- 
 Things I wrote that no longer seem to apply:
