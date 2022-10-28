@@ -473,98 +473,25 @@ fn in_game_parser(
                 chatsess.board = board;
 
                 // Go ahead
-                let textin = v[1].to_owned();
-
-                ctx.text(format!("You're selecting {textin}"));
-
-                websocket_pmoore::select_chip(&mut chatsess.cmdlist, textin, &mut chatsess.board, chatsess.team)?;
-
+                websocket_pmoore::select_chip(&mut chatsess.cmdlist, v[1], &chatsess.board, chatsess.team)?;
 
                 ctx.text(chatsess.cmdlist.message.to_owned());
                 ctx.text(chatsess.cmdlist.command.to_string());
 
-
-
             }
             "/mosquito" if chatsess.active => {
-                // Expect the second entry to be  number that selects one of our neighbours
-
-                let selection = v[1]
-                    .parse::<usize>()
-                    .expect("Couldn't parse input into usize");
-
-                let neighbours = chatsess.cmdlist.neighbours.to_owned().unwrap();
-
-                println!("\n\nNeighbours are: {:#?}\n\n", neighbours);
-
-                let selected = neighbours.into_iter().nth(selection).unwrap();
-
-                ctx.text(format!(
-                    "Selected {} which was {} on team {:?}",
-                    selection,
-                    selected,
-                    get_team_from_chip(&selected)
-                ));
-
-                // Get the coordinates of that selected chip
-                let chipselect = Chip {
-                    name: convert_static_basic(selected.to_lowercase()).expect("Invalid chip"),
-                    team: get_team_from_chip(&selected),
-                };
-
-                // get a board
-                let mut board = chatsess.board.to_owned();
-                let source = board.chips.get(&chipselect).unwrap().unwrap();
-                let victim_pos = source.to_doubleheight(source);
-
-                // Add to special string to signify mosquito sucking victim at row,col
-                let special = format!("m,{},{},", victim_pos.col, victim_pos.row);
-                chatsess.cmdlist.special = Some(special);
-
-                ctx.text("And where would you like to move to?");
-                ctx.text("//cmd moveto");
+                // Parse the input into a victim for the mosquito
+                websocket_pmoore::mosquito_prompts(&mut chatsess.cmdlist, v[1], &chatsess.board)?;
+                ctx.text(chatsess.cmdlist.message.to_owned());
+                ctx.text(chatsess.cmdlist.command.to_string());
             }
-            "/pillbug" if chatsess.active => {}
+            "/pillbug" if chatsess.active => {!unimplemented!()},
             "/moveto" if chatsess.active => {
                 // We're expect comma separated values to doubleheight
+                websocket_pmoore::make_move(&mut chatsess.cmdlist, v[1])?;
+                ctx.text(chatsess.cmdlist.message.to_owned());
+                ctx.text(chatsess.cmdlist.command.to_string());
 
-                let textin = v[1].to_owned();
-
-                //attempt to parse a move
-                let usr_hex = pmoore::coord_from_string(textin);
-                println!("user hex = {:?}", usr_hex);
-
-                chatsess.cmdlist.rowcol = match usr_hex[..] {
-                    [Some(x), Some(y)] => {
-                        match (x + y) % 2 {
-                            // The sum of doubleheight coords should always be an even no.
-                            0 => {
-                                // Tell the client to tell us to execute
-
-                                Some(DoubleHeight::from((x, y)))
-                            }
-                            _ => {
-                                ctx.text("Invalid co-ordinates, try again or hit x to abort.");
-                                // don't update the client state
-                                None
-                            }
-                        }
-                    }
-                    _ => {
-                        ctx.text(
-                            "Try again: enter two numbers separated by a comma or hit x to abort.",
-                        );
-                        None
-                    }
-                };
-
-                if chatsess.cmdlist.rowcol.is_some() {
-                    ctx.text(format!(
-                        "Going to execute the following: {:?}",
-                        chatsess.cmdlist
-                    ));
-                    ctx.text("//cmd execute");
-                }
             }
             "/execute" if chatsess.active => {
                 let board_action = &chatsess.cmdlist;
@@ -606,9 +533,6 @@ fn in_game_parser(
                 ctx.text(format!("//cmd upboard {}", game_state.board.unwrap()));
 
                 ctx.text("//cmd select");
-            }
-            "/mosquito" if chatsess.active => {
-                // Do a mosquito suck
             }
             _ => ctx.text(format!("Invalid command.")),
         }

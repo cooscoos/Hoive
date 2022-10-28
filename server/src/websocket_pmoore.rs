@@ -7,12 +7,15 @@ use hoive::game::comps::Team;
 use hoive::maths::coord::Coord;
 use std::collections::BTreeSet;
 use std::error::Error;
+use hoive::game::comps::get_team_from_chip;
+use hoive::maths::coord::DoubleHeight;
 
 
+/// Uses a select chip input string (textin) from a given active_team to update a BoardAction
 pub fn select_chip<T: Coord>(
     action: &mut BoardAction,
-    textin: String,
-    board: &mut Board<T>,
+    textin: &str,
+    board: &Board<T>,
     active_team: Team,
 ) -> Result<(), Box<dyn Error>> {
 
@@ -50,7 +53,7 @@ pub fn select_chip<T: Coord>(
         }
         c => {
             // Try and match a chip by this name
-            convert_static_basic(c)
+            convert_static_basic(c.to_owned())
         }
     };
 
@@ -113,5 +116,60 @@ pub fn select_chip<T: Coord>(
     }
     }
    
+    Ok(())
+}
+
+/// Parse user inputs into a set of coordinates and update board action
+pub fn make_move (
+    action: &mut BoardAction,
+    textin: &str,
+) -> Result<(), Box<dyn Error>>{
+
+    //attempt to parse a move
+    let usr_hex = hoive::pmoore::coord_from_string(textin.to_owned());
+
+
+    if let [Some(x), Some(y)] = usr_hex[..] {
+        if (x + y) % 2 == 0 {
+            action.rowcol = Some(DoubleHeight::from((x, y)));
+            action.message = "Attemptig to executing move on the game board".to_string();
+            action.command = Command::Execute;
+        }
+    } else {
+        action.message = "Invalid co-ordinates, enter coordinates again or hit x to abort.".to_string();
+        action.command = Command::Move;
+    }
+
+    Ok(())
+}
+
+/// Converts an input number str (textin) into a mosquito action for sucking
+pub fn mosquito_prompts<T:Coord> (
+    action: &mut BoardAction,
+    textin: &str,
+    board: &Board<T>,
+) -> Result<(), Box<dyn Error>>{
+
+    let selection = textin
+    .parse::<usize>()
+    .expect("Couldn't parse input into usize");
+
+    let neighbours = action.neighbours.as_ref().unwrap();
+    let selected = neighbours.into_iter().nth(selection).unwrap();
+
+    // Get the coordinates of that selected chip
+    let chipselect = Chip {
+        name: convert_static_basic(selected.to_lowercase()).expect("Invalid chip"),
+        team: get_team_from_chip(&selected),
+    };
+    let source = board.chips.get(&chipselect).unwrap().unwrap();
+    let victim_pos = source.to_doubleheight(source);
+
+    // Add to the action's special string to signify mosquito sucking victim at row,col
+    let special = format!("m,{},{},", victim_pos.col, victim_pos.row);
+    action.special = Some(special);
+    action.message = "And where would you like to move to?".to_string();
+    action.command = Command::Move;
+
     Ok(())
 }

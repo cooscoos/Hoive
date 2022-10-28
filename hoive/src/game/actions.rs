@@ -7,10 +7,12 @@ use super::comps::{convert_static_basic, Team};
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub enum Command {
     Start,
+    Select,
     Move,
     Mosquito,
     Pillbug,
     SkipTurn,
+    Execute,
 }
 
 // Converts team to a string "B", "W"
@@ -21,9 +23,11 @@ impl ToString for Command {
         
         match self {
             Start => "".to_string(),
+            Select => "//cmd select".to_string(),
             Move => "//cmd moveto".to_string(),
             Mosquito => "//cmd mosquito".to_string(),
             Pillbug => "//cmd pillbug".to_string(),
+            Execute => "//cmd execute".to_string(),
             SkipTurn => "".to_string(),
         }
 
