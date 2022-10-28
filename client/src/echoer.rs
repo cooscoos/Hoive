@@ -98,7 +98,7 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                                             println!("You take your turn first!");
 
                                             ws.send(ws::Message::Text("/play".into())).await.unwrap(); // tell server you're ready to play
-                                            precursor = "/select ".to_string(); // get into a select state
+                                            
                                 
                                         },
                                         false => {
@@ -158,6 +158,9 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                                 "moveto" => {
                                     // Get into a moveto state
                                     precursor = "/moveto ".to_string();
+                                }
+                                "select" => {
+                                    precursor = "/select ".to_string(); // get into a select state
                                 }
                                 "execute" => {
                                     // Server says it's ready, so send an execute cmd to the server to do the move

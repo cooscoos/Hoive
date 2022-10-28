@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::process::Command;
 use std::time::{Duration, Instant};
 use std::usize;
 
@@ -439,25 +440,13 @@ fn in_game_parser(
             }
             "/quit" => {}
             "/play" => {
-                // This should auto happen later.
-                // If this is our first rodeo then we're going to check if the player is the active player
-                // Get the gamestate and make sure it's this player's turn
+                // Get the gamestate from the db and make sure it's this player's turn
                 let gamestate = api::get_game_state(&chatsess.game_room)?;
 
-                // Save the board to chatsess to stop us from having to query db so much
-                // This is a snazzier way of doing what you've been doing with Board::new this whole time
-                let mut board = Board::<Cube>::default();
-                board = board.decode_spiral(gamestate.board.unwrap());
-                chatsess.board = board;
-
                 if chatsess.id.to_string() != gamestate.last_user_id.unwrap() {
-                    // Player is initiating a play, so prompt them to select a chip.
-                    ctx.text("Select a tile from the board or your hand to move.");
-                    // set the player's active state in the chat struct to true. This reduces how often we have to query the db.
-                    // It'll get set back to false later.
                     chatsess.active = true;
-                    // tell the client to get into a select state
-                    //ctx.text("//cmd select");
+                    ctx.text("Select a tile from the board or your hand to move.");
+                    ctx.text(hoive::game::actions::Command::Select.to_string())
                 } else {
                     ctx.text("It's not your turn");
                 }
