@@ -246,10 +246,7 @@ pub fn get_game_state(session_id: &str) -> Result<GameState, Error> {
 }
 
 /// Allow player to take some sort of action
-pub fn make_action(
-    action: &BoardAction,
-    session_id: &str,
-) -> Result<MoveStatus, Error> {
+pub fn make_action(action: &BoardAction, session_id: &str) -> Result<MoveStatus, Error> {
     // Inefficient way, for now, to make progress
     let mut conn = db::establish_connection();
 
@@ -275,7 +272,6 @@ pub fn make_action(
             do_movement(game_state, action, session_id, &mut conn)
         }
     }
-
 }
 
 /// Try and execute movement
@@ -365,7 +361,6 @@ fn execute_on_db<T: Coord>(
         ))),
     }
 }
-
 
 fn skip_turn(
     game_state: GameState,

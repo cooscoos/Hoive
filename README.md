@@ -22,6 +22,8 @@ The Hoive directory contains the game logic.
 ### Client
 
 - Time to have a good tidy up of the chatsess and think about how to consolidate its behaviour with that of a local client.
+- We need to have the local and websocket versions of pmoore responding in the same way or it'll be a nightmare to write tests
+- Plan: rewrite a pmoore that is compatible with the websocket ping pong style and then get it working locally
 
 - start writing websocket client, make user choose a name / register it before joining main
 - Figure out how to turn (features on in submodules)[https://doc.rust-lang.org/cargo/reference/features.html] 

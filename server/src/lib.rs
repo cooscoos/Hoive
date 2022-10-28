@@ -14,6 +14,7 @@ pub mod chat_session;
 pub mod db;
 pub mod models;
 pub mod schema;
+pub mod websocket_pmoore;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 

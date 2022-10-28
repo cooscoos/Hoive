@@ -1778,10 +1778,12 @@ dependencies = [
  "actix-session",
  "actix-web",
  "actix-web-actors",
+ "awc",
  "bytes",
  "diesel",
  "dotenvy",
  "env_logger",
+ "futures-util",
  "hex-spiral",
  "hoive",
  "log",
@@ -1789,6 +1791,8 @@ dependencies = [
  "rustrict",
  "serde",
  "serde_json",
+ "tokio",
+ "tokio-stream",
  "uuid",
 ]
 

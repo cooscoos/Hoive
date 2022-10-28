@@ -6,21 +6,20 @@ use actix::prelude::*;
 use actix_web_actors::ws;
 use actix_web_actors::ws::WebsocketContext;
 use hoive::game::actions::BoardAction;
-use hoive::game::comps::{convert_static_basic,Chip, get_team_from_chip};
+use hoive::game::comps::{convert_static_basic, get_team_from_chip, Chip};
 use hoive::game::movestatus::MoveStatus;
-use hoive::maths::coord::{DoubleHeight, Coord};
-use hoive::{pmoore, game};
 use hoive::maths::coord::Cube;
+use hoive::maths::coord::{Coord, DoubleHeight};
+use hoive::{game, pmoore};
 
 use std::collections::BTreeSet;
 
-
-use crate::api;
+use crate::{api, websocket_pmoore};
 use crate::chat_server;
 use crate::models::GameState;
-use rustrict::CensorStr;
-use hoive::game::comps::Team;
 use hoive::game::board::Board;
+use hoive::game::comps::Team;
+use rustrict::CensorStr;
 
 /// How often heartbeat pings are sent
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -444,7 +443,7 @@ fn in_game_parser(
                 // If this is our first rodeo then we're going to check if the player is the active player
                 // Get the gamestate and make sure it's this player's turn
                 let gamestate = api::get_game_state(&chatsess.game_room)?;
-                
+
                 // Save the board to chatsess to stop us from having to query db so much
                 // This is a snazzier way of doing what you've been doing with Board::new this whole time
                 let mut board = Board::<Cube>::default();
@@ -464,164 +463,51 @@ fn in_game_parser(
                 }
             }
             "/select" if chatsess.active => {
+                //make sure the board is up to date
+                let gamestate = api::get_game_state(&chatsess.game_room)?;
 
-                    //make sure the board is up to date
-                    let gamestate = api::get_game_state(&chatsess.game_room)?;
-                    
-                    // Save the board to chatsess to stop us from having to query db so much
-                    // This is a snazzier way of doing what you've been doing with Board::new this whole time
-                    let mut board = Board::<Cube>::default();
-                    board = board.decode_spiral(gamestate.board.unwrap());
-                    chatsess.board = board;
+                // Save the board to chatsess to stop us from having to query db so much
+                // This is a snazzier way of doing what you've been doing with Board::new this whole time
+                let mut board = Board::<Cube>::default();
+                board = board.decode_spiral(gamestate.board.unwrap());
+                chatsess.board = board;
 
+                // Go ahead
+                let textin = v[1].to_owned();
 
-                    // Go ahead
-                    let textin = v[1].to_owned();
-                    ctx.text(format!("You're selecting {textin}"));
+                ctx.text(format!("You're selecting {textin}"));
 
-                    // Empty. Stage 0, we should be fed a chip name, or a skip request
-                    let chip_name = match textin {
-                        _ if textin == "w" => {
-                            // Atempt to skip turn, return db response
-                            None
-                        }
-                        _ if textin == "mb" => {
-                            // The player is probably trying to select their mosquito acting like a beetle
-                            convert_static_basic("m1".to_string())
-                        }
-                        _ if textin.contains('*') => {
-                            // The player is probably trying to select a beetle (or a mosquito acting like one).
-                            // Grab the first 2 chars of the string
-                            let (mut first, _) = textin.split_at(2);
-
-                            // If the first two chars are mosquito, convert to m1
-                            if first.contains('m') {
-                                first = "m1";
-                            }
-                            convert_static_basic(first.to_string())
-                        }
-                        _ if textin
-                            .starts_with(|c| c == 'l' || c == 'p' || c == 'q' || c == 'm') =>
-                        {
-                            let proper_str = match textin.chars().next().unwrap() {
-                                'l' => "l1",
-                                'p' => "p1",
-                                'q' => "q1",
-                                'm' => "m1",
-                                _ => panic!("unreachable"),
-                            };
-                            convert_static_basic(proper_str.to_string())
-                        }
-                        c => {
-                            // Try and match a chip by this name
-                            let chip_str = convert_static_basic(c);
-
-                            match chip_str.is_some() {
-                                true => chip_str,
-                                false => {
-                                    println!("You don't have this tile in your hand.");
-                                    None
-                                }
-                            }
-                        }
-                    };
-
-                    // Stage 0. We're expecting a chip name, try find a valid chip on the board and pass back a response
-                    // for the user and for the client program. E.g. if it's a pillbug, provide guidance on what to do next.
+                websocket_pmoore::select_chip(&mut chatsess.cmdlist, textin, &mut chatsess.board, chatsess.team)?;
 
 
-                    match chip_name {
-                        Some(value) if value == "p1" => {
-                            chatsess.cmdlist.name = value.to_string();
-                            ctx.text("Hit m to sumo a neighbour, or select co-ordinate to move to. If moving, input column then row, separated by comma, e.g.: 0, 0. Hit x to abort the move.");
-                        
-                            ctx.text("//cmd moveto");
-                        }
-                        Some(value) if value == "m1" => {
-
-                            println!("Mosquito been selected");
-                            
-                            chatsess.cmdlist.name = value.to_string();
-
-                            let board = chatsess.board.to_owned();
-                            
-                            // let active_team = chatsess.cmdlist.which_team();
-                            // We need a better way
-
-                            // Check if selected chip is on the board already
-                            let on_board = board.get_position_byname(chatsess.team, value);
-
-                            let mosquito_suck =
-                            on_board.is_some() && on_board.unwrap().get_layer() == 0;
-                            
-
-                            ctx.text(format!("I think the mosquito called {} on team {:?} is on the board? {}", value, chatsess.team, on_board.is_some()));
-                            ctx.text(format!("You've selected a mosquito which is mosquito_suck = {:?}", mosquito_suck));
-
-                            if mosquito_suck {
-                                ctx.text("Select a neighbour to special from the following choices...");
-
-                                let chip_name = convert_static_basic(chatsess.cmdlist.name.to_owned()).unwrap();
-                                let active_team = chatsess.team;
-                                
-                                let board = chatsess.board.to_owned();
-                                // Get pillbug/mosquito's position, save to rowcol
-                                let position = board.get_position_byname(active_team, chip_name).unwrap();
-                                chatsess.cmdlist.rowcol = Some(position.to_doubleheight(position));
-
-                                let neighbours = board.get_neighbour_chips(position);
-
-                                // stick them into a BTree to preserve order.
-                                // Probably want to store these later for retrieval
-                                // This here is wonk. but works. It's converting back and forth from chip to string dozens of times
-                                let neighbours = neighbours.into_iter().collect::<BTreeSet<Chip>>();
-                                ctx.text(hoive::draw::list_these_chips(neighbours.clone()));
-
-                                // need to map to upper/lowercase string
-                                let neighbours = neighbours.into_iter().map(|c| c.to_string()).collect::<BTreeSet<String>>();
-                                
-
-                                
+                ctx.text(chatsess.cmdlist.message.to_owned());
+                ctx.text(chatsess.cmdlist.command.to_string());
 
 
-                                // Store the neighbours for later
-                                chatsess.cmdlist.neighbours = Some(neighbours);
-                                ctx.text("//cmd mosquito");
-                            } else {
-                                ctx.text("Select co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit x to abort the move.");
-                                ctx.text("//cmd moveto");
-                    
-                            }
-                            
-                        }
-                        None => {
-                            // Repeat yourself
-                            ctx.text("Select a tile from the board or your hand to move.");
-                        }
-                        Some(value) => {
-                            chatsess.cmdlist.name = value.to_string();
-                            ctx.text("Select co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit x to abort the move.");
-                            ctx.text("//cmd moveto");
-                        }
-                    }
-                
+
             }
             "/mosquito" if chatsess.active => {
                 // Expect the second entry to be  number that selects one of our neighbours
 
-                let selection = v[1].parse::<usize>().expect("Couldn't parse input into usize");
+                let selection = v[1]
+                    .parse::<usize>()
+                    .expect("Couldn't parse input into usize");
 
                 let neighbours = chatsess.cmdlist.neighbours.to_owned().unwrap();
-
 
                 println!("\n\nNeighbours are: {:#?}\n\n", neighbours);
 
                 let selected = neighbours.into_iter().nth(selection).unwrap();
 
-                ctx.text(format!("Selected {} which was {} on team {:?}", selection, selected, get_team_from_chip(&selected)));
+                ctx.text(format!(
+                    "Selected {} which was {} on team {:?}",
+                    selection,
+                    selected,
+                    get_team_from_chip(&selected)
+                ));
 
                 // Get the coordinates of that selected chip
-                let chipselect = Chip{
+                let chipselect = Chip {
                     name: convert_static_basic(selected.to_lowercase()).expect("Invalid chip"),
                     team: get_team_from_chip(&selected),
                 };
@@ -631,103 +517,88 @@ fn in_game_parser(
                 let source = board.chips.get(&chipselect).unwrap().unwrap();
                 let victim_pos = source.to_doubleheight(source);
 
-     
                 // Add to special string to signify mosquito sucking victim at row,col
                 let special = format!("m,{},{},", victim_pos.col, victim_pos.row);
                 chatsess.cmdlist.special = Some(special);
 
                 ctx.text("And where would you like to move to?");
                 ctx.text("//cmd moveto");
-
-
             }
-            "/pillbug" if chatsess.active => {
-
-            }
+            "/pillbug" if chatsess.active => {}
             "/moveto" if chatsess.active => {
-
                 // We're expect comma separated values to doubleheight
 
                 let textin = v[1].to_owned();
-                
-                    //attempt to parse a move
-                    let usr_hex = pmoore::coord_from_string(textin);
-                    println!("user hex = {:?}", usr_hex);
-                    
-                    chatsess.cmdlist.rowcol = match usr_hex[..] {
-                        [Some(x), Some(y)] => {
-                            match (x + y) % 2 {
-                                // The sum of doubleheight coords should always be an even no.
-                                0 => {
-                                    // Tell the client to tell us to execute
-                                    
-                                    Some(DoubleHeight::from((x, y)))
-         
-                                },
-                                _ => {
-                                    ctx.text("Invalid co-ordinates, try again or hit x to abort.");
-                                    // don't update the client state
-                                    None
-                                }
+
+                //attempt to parse a move
+                let usr_hex = pmoore::coord_from_string(textin);
+                println!("user hex = {:?}", usr_hex);
+
+                chatsess.cmdlist.rowcol = match usr_hex[..] {
+                    [Some(x), Some(y)] => {
+                        match (x + y) % 2 {
+                            // The sum of doubleheight coords should always be an even no.
+                            0 => {
+                                // Tell the client to tell us to execute
+
+                                Some(DoubleHeight::from((x, y)))
+                            }
+                            _ => {
+                                ctx.text("Invalid co-ordinates, try again or hit x to abort.");
+                                // don't update the client state
+                                None
                             }
                         }
-                        _ => {
-                            ctx.text("Try again: enter two numbers separated by a comma or hit x to abort.");
-                            None
-                        }
-                    };
-
-                    if chatsess.cmdlist.rowcol.is_some(){
-                        ctx.text(format!("Going to execute the following: {:?}", chatsess.cmdlist));
-                        ctx.text("//cmd execute");
                     }
+                    _ => {
+                        ctx.text(
+                            "Try again: enter two numbers separated by a comma or hit x to abort.",
+                        );
+                        None
+                    }
+                };
 
-                
-            
-        }
+                if chatsess.cmdlist.rowcol.is_some() {
+                    ctx.text(format!(
+                        "Going to execute the following: {:?}",
+                        chatsess.cmdlist
+                    ));
+                    ctx.text("//cmd execute");
+                }
+            }
             "/execute" if chatsess.active => {
-                
+                let board_action = &chatsess.cmdlist;
 
-                    let board_action = &chatsess.cmdlist;
+                let result = api::make_action(board_action, &chatsess.game_room)?;
 
-                    let result = api::make_action(board_action,&chatsess.game_room)?;
+                match result {
+                    MoveStatus::Success => {
+                        // no longer this player's turn
+                        chatsess.active = false;
+                        chatsess.cmdlist = BoardAction::default();
 
-                    match result {
-                        MoveStatus::Success => {
-                            // no longer this player's turn
-                            chatsess.active = false;
-                            chatsess.cmdlist = BoardAction::default();
+                        // update all player gamestates
+                        let session_id = chatsess.game_room.to_owned();
+                        let game_state = api::get_game_state(&session_id)?;
 
-                            // update all player gamestates
-                            let session_id = chatsess.game_room.to_owned();
-                            let game_state = api::get_game_state(&session_id)?;
-
-                            // Tell all players the gamestate has updated
-                            chatsess.addr.do_send(chat_server::UpdateGame {
-                                session_id,
-                                game_state,
-                            });
-
-
-                        }
-                        _ => {
-                            // Get the client back into the select phase
-                            ctx.text("//cmd select");
-                        },
+                        // Tell all players the gamestate has updated
+                        chatsess.addr.do_send(chat_server::UpdateGame {
+                            session_id,
+                            game_state,
+                        });
                     }
+                    _ => {
+                        // Get the client back into the select phase
+                        ctx.text("//cmd select");
+                    }
+                }
 
-                    ctx.text(result.to_string());
-               
-
-
-                
-
+                ctx.text(result.to_string());
             }
             "/abort" if chatsess.active => {
                 // Abort the move go back into select phase
                 ctx.text("Aborting move. Select a chip.");
                 chatsess.cmdlist = BoardAction::default();
-
 
                 // reset the client and local boards
                 let session_id = chatsess.game_room.to_owned();
@@ -738,7 +609,6 @@ fn in_game_parser(
             }
             "/mosquito" if chatsess.active => {
                 // Do a mosquito suck
-
             }
             _ => ctx.text(format!("Invalid command.")),
         }

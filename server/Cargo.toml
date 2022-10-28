@@ -33,3 +33,9 @@ bytes = {workspace = true}
 # for envent logging
 env_logger = "0.9"
 log = "0.4"
+
+# for tests
+awc = "3"
+futures-util = { version = "0.3.17", default-features = false, features = ["std", "sink"] }
+tokio-stream = "0.1.8"
+tokio = {workspace = true}

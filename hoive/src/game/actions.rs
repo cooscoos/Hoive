@@ -4,6 +4,32 @@ use std::collections::BTreeSet;
 
 use super::comps::{convert_static_basic, Team};
 
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
+pub enum Command {
+    Start,
+    Move,
+    Mosquito,
+    Pillbug,
+    SkipTurn,
+}
+
+// Converts team to a string "B", "W"
+impl ToString for Command {
+    fn to_string(&self) -> String {
+
+        use Command::*;
+        
+        match self {
+            Start => "".to_string(),
+            Move => "//cmd moveto".to_string(),
+            Mosquito => "//cmd mosquito".to_string(),
+            Pillbug => "//cmd pillbug".to_string(),
+            SkipTurn => "".to_string(),
+        }
+
+    }
+}
+
 /// Used to formulate requests for in-game actions from the Hoive server
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct BoardAction {
@@ -11,6 +37,8 @@ pub struct BoardAction {
     pub rowcol: Option<DoubleHeight>,    // destination row, col
     pub special: Option<String>, // Contains source (row,col) if doing mosquito/pillbug special
     pub neighbours: Option<BTreeSet<String>>, // the neighbours of that chip
+    pub command: Command,   // a thing to tell the program what stage comes next
+    pub message: String, // a thing to print to the user, defined at compile time, could be stat?
 
 }
 
@@ -22,7 +50,8 @@ impl BoardAction {
             rowcol: None,
             special: None,
             neighbours: None,
-            
+            command: Command::Start,
+            message: "".to_string(),
         }
     }
     /// Generate command to forfeit a game
@@ -32,6 +61,8 @@ impl BoardAction {
             rowcol: None,
             special: Some("forfeit".to_string()),
             neighbours: None,
+            command: Command::Start,
+            message: "".to_string(),
         }
     }
 
@@ -42,6 +73,8 @@ impl BoardAction {
             rowcol: None,
             special: Some("skip".to_string()),
             neighbours: None,
+            command: Command::Start,
+            message: "".to_string(),
         }
     }
 
@@ -67,6 +100,8 @@ impl BoardAction {
             rowcol: Some(rowcol),
             special,
             neighbours: None,
+            command: Command::Start,
+            message: "".to_string(),
         }
     }
 
