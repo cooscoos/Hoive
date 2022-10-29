@@ -21,6 +21,10 @@ The Hoive directory contains the game logic.
 
 ### Client
 
+
+- Implement mosquito become pillbug
+- Can develop everything on local pmoore and get it working, cut out all the chaff.
+
 - Time to have a good tidy up of the chatsess and think about how to consolidate its behaviour with that of a local client.
 - We need to have the local and websocket versions of pmoore responding in the same way or it'll be a nightmare to write tests
 - Plan: rewrite a pmoore that is compatible with the websocket ping pong style and then get it working locally

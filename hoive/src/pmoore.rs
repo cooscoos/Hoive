@@ -2,12 +2,13 @@
 /// - provides a human-readable interface between players and the game logic;
 /// - orchestrates normal/special moves in a way that tries to comply with game rules.
 /// Pmoore functions are used by
-use crate::draw;
+use crate::{draw, websocket_pmoore};
 use crate::game::comps::{convert_static_basic, Chip, Team};
-use crate::game::{actions::BoardAction, board::Board, movestatus::MoveStatus, specials};
+use crate::game::{actions::BoardAction, actions::Command,board::Board, movestatus::MoveStatus, specials};
 use crate::maths::coord::{Coord, DoubleHeight};
 use std::collections::BTreeSet;
 use std::{error::Error, io};
+
 
 /// Say hello to the player
 pub fn welcome() {
@@ -29,90 +30,61 @@ pub fn action_prompts<T: Coord>(
 ) -> Result<MoveStatus, Box<dyn Error>> {
     println!("Team {}, it's your turn!", draw::team_string(active_team));
 
+    let mut action = BoardAction::default();
     // Keep asking player to select chip until Some(value) happens
-    let mut chip_selection = None;
-    while chip_selection == None {
-        chip_selection = chip_select(board, active_team)
+    while action.command == Command::Select {
+        chip_select(&mut action, board, active_team);
+        println!("{}",action.message);
     }
 
-    // The user's entry decides what chip to select
-    // Safe to unwrap because of loop above
-    let base_chip_name = match chip_selection.unwrap() {
-        "w" => return Ok(MoveStatus::SkipTurn),   // try and skip turn
-        "quit" => return Ok(MoveStatus::Forfeit), // try and forfeit
-        valid_name => valid_name,
-    };
 
-    // Make a mutable copy of the chip name
-    let mut chip_name = base_chip_name;
-
-    // Check if selected chip is on the board already
-    let on_board = board.get_position_byname(active_team, chip_name);
-
-    // Create a string to store info on special moves
-    let mut special = String::new();
-
-    // If it's a mosquito, on the board, on layer 0, then it must suck from another chip
-    let mosquito_suck =
-        chip_name == "m1" && on_board.is_some() && on_board.unwrap().get_layer() == 0;
-
-    if mosquito_suck {
-        let victim_pos;
-        // Change mosquito's name now so that we can catch a pillbug prompt later
-        (victim_pos, chip_name) = match mosquito_prompts(board, chip_name, active_team) {
-            Some((new_name, vic_pos)) => (vic_pos, new_name), // mosquito morphs into another chip
-            None => return Ok(MoveStatus::Nothing),           // aborted suck
-        };
-
-        // Add to special string to signify mosquito sucking victim at row,col
-        special.push_str(&format!("m,{},{},", victim_pos.col, victim_pos.row));
+    if action.command == Command::SkipTurn {
+        return Ok(MoveStatus::SkipTurn);   // try and skip turn
+    }
+    
+    if action.command == Command::Mosquito {
+        println!("{}",action.message);
+        let textin = get_usr_input();
+        websocket_pmoore::mosquito_prompts(&mut action, &textin, board)?;
+        // Have a check to see if we're a pillbug and correct the prompts
+        // either here or in websocket pmoore
     }
 
-    // Is this chip a pillbug (or a mosquito acting like one?) and on the board?
-    let is_pillbug = chip_name.contains('p') && on_board.is_some();
-    if is_pillbug {
-        println!("Hit m to sumo a neighbour, or select co-ordinate to move to. If moving, input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
+    if action.command == Command::Pillbug {
+        println!("{}",action.message);
+        let textin = get_usr_input();
+        websocket_pmoore::pillbug_prompts(&mut action, &textin)?;
+    }
+
+    if action.command == Command::Sumo {
+        println!("{}",action.message);
+        let textin = get_usr_input();
+        websocket_pmoore::sumo_prompts(&mut action, &textin, &board)?
+    }
+
+
+    while action.command == Command::SumoTo {
+        println!("{}",action.message);
+        let textin = get_usr_input();
+        websocket_pmoore::sumo_to_prompts(&mut action, &textin)?
+    }
+
+    if action.command == Command::Move {
+        println!("{}",action.message);
+        let textin = get_usr_input();
+        websocket_pmoore::make_move(&mut action, &textin)?
+    }
+
+    
+    println!("Final action was {:#?}", action);
+
+    if action.command == Command::Execute {
+    Ok(MoveStatus::Action(action))
     } else {
-        println!("Select co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit enter to abort the move.");
-    };
-
-    // Ask the user for input. If they hit m, try execute pillbug special, otherwise normal move
-    let textin = get_usr_input();
-    if textin == "m" {
-        // Only pillbugs can do specials
-        if !is_pillbug {
-            return Ok(MoveStatus::NoSpecial);
-        }
-
-        let (victim_source, victim_dest) = match pillbug_prompts(board, chip_name, active_team) {
-            Some(value) => value,
-            None => return Ok(MoveStatus::Nothing),
-        };
-
-        special.push_str(&format!("p,{},{}", victim_source.col, victim_source.row));
-
-        // Generate and return a BoardAction based on the special
-        let sumo_action = BoardAction::do_move(
-            base_chip_name,
-            active_team,
-            DoubleHeight::from((victim_dest.col, victim_dest.row)),
-            special,
-        );
-        Ok(MoveStatus::Action(sumo_action))
-    } else {
-        match coord_prompts(textin) {
-            Some((row, col)) => {
-                let move_action = BoardAction::do_move(
-                    base_chip_name,
-                    active_team,
-                    DoubleHeight::from((row, col)),
-                    special,
-                );
-                Ok(MoveStatus::Action(move_action))
-            }
-            None => Ok(MoveStatus::Nothing),
-        }
+        panic!("Not executing")
     }
+
+    
 }
 
 /// Decode a special string into a series of mosquito and/or pillbug actions
@@ -174,88 +146,21 @@ pub fn get_usr_input() -> String {
 }
 
 /// Ask user on active team to select chip. Returns None if user input invalid.
-fn chip_select<T: Coord>(board: &mut Board<T>, active_team: Team) -> Option<&'static str> {
+fn chip_select<T: Coord>(action: &mut BoardAction, board: &Board<T>, active_team: Team) -> Result<(), Box<dyn Error>> {
     println!("Hit enter to see the board and your hand, h (help), w (skip turn), 'quit' (forfeit).\nSelect a tile from the board or your hand to move.");
     #[cfg(feature = "debug")]
     println!("Or hit s to save");
 
     let textin = get_usr_input();
 
-    match textin {
-        _ if textin.is_empty() => {
-            println!(
-                "{}\n\n-------------------- PLAYER HAND --------------------\n\n{}\n\n-----------------------------------------------------\n",
-                draw::show_board(board),
-                draw::list_chips(board, active_team)
-            );
-            None
-        }
-        _ if textin == "xylophone" => {
-            xylophone();
-            None
-        }
-        _ if textin == "quit" => Some("quit"),
-        _ if textin == "h" => {
-            println!("{}", help_me());
-            None
-        }
-        _ if textin == "s" => {
-            #[cfg(feature = "debug")]
-            {
-                println!("Enter a filename:");
-                let filename = get_usr_input();
-                match board.history.save(filename) {
-                    Ok(()) => println!("Successfully saved to ./saved_games/"),
-                    Err(err) => println!("Could not save because: {}", err),
-                }
-            }
-            None
-        }
-        _ if textin == "w" => Some("w"), // skip turn
-        _ if textin == "mb" => {
-            // The player is probably trying to select their mosquito acting like a beetle
-            convert_static_basic("m1".to_string())
-        }
-        _ if textin.contains('*') => {
-            // The player is probably trying to select a beetle (or a mosquito acting like one).
-            // Grab the first 2 chars of the string
-            let (mut first, _) = textin.split_at(2);
+    websocket_pmoore::select_chip(action, &textin, &board, active_team)?;
+    Ok(())
 
-            // If the first two chars are mosquito, convert to m1
-            if first.contains('m') {
-                first = "m1";
-            }
-            convert_static_basic(first.to_string())
-        }
-        _ if textin.starts_with(|c| c == 'l' || c == 'p' || c == 'q' || c == 'm') => {
-            let proper_str = match textin.chars().next().unwrap() {
-                'l' => "l1",
-                'p' => "p1",
-                'q' => "q1",
-                'm' => "m1",
-                _ => panic!("unreachable"),
-            };
-
-            convert_static_basic(proper_str.to_string())
-        }
-        c => {
-            // Try and match a chip by this name
-            let chip_str = convert_static_basic(c);
-
-            match chip_str.is_some() {
-                true => chip_str,
-                false => {
-                    println!("You don't have this tile in your hand.");
-                    None
-                }
-            }
-        }
-    }
 }
 
 /// Ask user to select a coordinate or hit enter to return None so that we can
 /// abort the parent function.
-fn coord_prompts(mut textin: String) -> Option<(i8, i8)> {
+pub fn coord_prompts(mut textin: String) -> Option<(i8, i8)> {
     if textin.is_empty() {
         return None;
     }; // escape this function and start again

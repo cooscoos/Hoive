@@ -214,6 +214,16 @@ pub fn list_these_chips(chips_vec: BTreeSet<Chip>) -> String {
     make_numbered_chip_string(chip_list)
 }
 
+/// Lists the chips that are passed and returns a colourful single string for display
+pub fn list_these_chips_str(chips_vec: BTreeSet<String>) -> String {
+    let chip_list = chips_vec
+        .into_iter()
+        .collect::<Vec<String>>();
+
+    make_numbered_chip_string(chip_list)
+}
+
+
 /// Makes a formatted string to display the chips in a player's hand
 fn make_chip_string(mut chip_list: Vec<String>) -> String {
     // sort alphabetically

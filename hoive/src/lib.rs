@@ -3,3 +3,4 @@ pub mod draw;
 pub mod game;
 pub mod maths;
 pub mod pmoore;
+pub mod websocket_pmoore;

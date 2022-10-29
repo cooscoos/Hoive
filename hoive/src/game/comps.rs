@@ -60,7 +60,7 @@ pub struct Chip {
     pub team: Team,
 }
 
-// Converts team to a string "B", "W"
+
 impl ToString for Chip {
     fn to_string(&self) -> String {
 
@@ -69,6 +69,19 @@ impl ToString for Chip {
             Team::White => self.name.to_string(),
         }
 
+    }
+}
+
+// Converts case-sensitive string to chip
+impl FromStr for Chip {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+
+        // First char uppercase means team is black
+        let team = get_team_from_chip(s);
+        let name = convert_static_basic(s.to_lowercase()).unwrap();
+
+        Ok(Chip{name,team})
     }
 }
 

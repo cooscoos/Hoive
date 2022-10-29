@@ -6,13 +6,17 @@ use super::comps::{convert_static_basic, Team};
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub enum Command {
-    Start,
+    Nothing, // do nothing
     Select,
     Move,
     Mosquito,
-    Pillbug,
+    Pillbug, // preps to sumo or move
+    Sumo,
+    SumoTo,
     SkipTurn,
     Execute,
+    Save,
+
 }
 
 // Converts team to a string "B", "W"
@@ -22,13 +26,16 @@ impl ToString for Command {
         use Command::*;
         
         match self {
-            Start => "".to_string(),
+            Nothing => "".to_string(),
             Select => "//cmd select".to_string(),
             Move => "//cmd moveto".to_string(),
             Mosquito => "//cmd mosquito".to_string(),
             Pillbug => "//cmd pillbug".to_string(),
+            Sumo => "//cmd sumo".to_string(),
+            SumoTo => "//cmd sumoto".to_string(),
             Execute => "//cmd execute".to_string(),
             SkipTurn => "".to_string(),
+            Save => "".to_string(),
         }
 
     }
@@ -54,7 +61,7 @@ impl BoardAction {
             rowcol: None,
             special: None,
             neighbours: None,
-            command: Command::Start,
+            command: Command::Select,
             message: "".to_string(),
         }
     }
@@ -65,7 +72,7 @@ impl BoardAction {
             rowcol: None,
             special: Some("forfeit".to_string()),
             neighbours: None,
-            command: Command::Start,
+            command: Command::Nothing,
             message: "".to_string(),
         }
     }
@@ -77,7 +84,7 @@ impl BoardAction {
             rowcol: None,
             special: Some("skip".to_string()),
             neighbours: None,
-            command: Command::Start,
+            command: Command::Nothing,
             message: "".to_string(),
         }
     }
@@ -104,7 +111,7 @@ impl BoardAction {
             rowcol: Some(rowcol),
             special,
             neighbours: None,
-            command: Command::Start,
+            command: Command::Nothing,
             message: "".to_string(),
         }
     }
