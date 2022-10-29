@@ -22,7 +22,7 @@ The Hoive directory contains the game logic.
 ### Client
 
 
-- Implement mosquito become pillbug
+- Implement mosquito become pillbug in pmoore
 - Can develop everything on local pmoore and get it working, cut out all the chaff.
 
 - Time to have a good tidy up of the chatsess and think about how to consolidate its behaviour with that of a local client.

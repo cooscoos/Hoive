@@ -35,8 +35,8 @@ pub fn play_offline() -> Result<(), Box<dyn Error>> {
         let mut action = BoardAction::default();
 
         // Loop until action prompts returns false to exit
-        while action_prompts(&mut action, &mut board.clone(), active_team)?{};
-        
+        while action_prompts(&mut action, &mut board.clone(), active_team)? {}
+
         let move_status = match action.command {
             Command::SkipTurn => board.try_skip_turn(active_team),
             Command::Forfeit => MoveStatus::Win(Some(!active_team)),
@@ -44,10 +44,14 @@ pub fn play_offline() -> Result<(), Box<dyn Error>> {
             _ => !unreachable!(),
         };
 
-        println!("{}", move_status.to_string());
+
         // Refresh all mosquito names back to m1
         specials::mosquito_desuck(&mut board);
+
+        // Display the move status to user
+        println!("{}", move_status.to_string());
         println!("{}", draw::show_board(&board));
+        
         if let MoveStatus::Win(_) = move_status {
             println!("Play again? y/n");
             let textin = get_usr_input();
@@ -81,17 +85,12 @@ pub fn action_prompts<T: Coord>(
     board: &mut Board<T>,
     active_team: Team,
 ) -> Result<bool, Box<dyn Error>> {
-
     println!("{}", action.message);
     let textin = get_usr_input();
 
     match action.command {
         Command::Select => pmoore::select_chip(action, &textin, &board, active_team)?,
-        Command::Mosquito => {
-            pmoore::mosquito_prompts(action, &textin, board)?;
-            // Have a check to see if we're a pillbug and correct the prompts
-            // either here or in websocket pmoore
-        }
+        Command::Mosquito => pmoore::mosquito_prompts(action, &textin, board)?,
         Command::Pillbug => pmoore::pillbug_prompts(action, &textin)?,
         Command::Sumo => pmoore::sumo_prompts(action, &textin, &board)?,
         Command::SumoTo => pmoore::sumo_to_prompts(action, &textin)?,

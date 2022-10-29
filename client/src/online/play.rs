@@ -9,7 +9,9 @@ use super::comms;
 use server::models::{GameState, Winner};
 
 use hoive::draw;
-use hoive::game::{actions::BoardAction, actions::Command,board::Board, comps::Team, movestatus::MoveStatus};
+use hoive::game::{
+    actions::BoardAction, actions::Command, board::Board, comps::Team, movestatus::MoveStatus,
+};
 use hoive::maths::coord::Coord;
 use hoive::pmoore;
 
@@ -30,9 +32,7 @@ pub async fn take_turn<T: Coord>(
         }
 
         let move_status = match action.command {
-            Command::SkipTurn => {
-                comms::send_action(BoardAction::skip(), client, base_url).await?
-            }
+            Command::SkipTurn => comms::send_action(BoardAction::skip(), client, base_url).await?,
             Command::Forfeit => {
                 comms::send_action(BoardAction::forfeit(), client, base_url).await?
             }
