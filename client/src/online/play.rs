@@ -1,5 +1,6 @@
 /// Take actions to play live games of Hoive on the server
 use reqwest::Client;
+
 use std::{error::Error, thread, time::Duration};
 
 use crate::local;
@@ -8,7 +9,7 @@ use super::comms;
 use server::models::{GameState, Winner};
 
 use hoive::draw;
-use hoive::game::{actions::BoardAction, board::Board, comps::Team, movestatus::MoveStatus};
+use hoive::game::{actions::BoardAction, actions::Command,board::Board, comps::Team, movestatus::MoveStatus};
 use hoive::maths::coord::Coord;
 use hoive::pmoore;
 
@@ -21,18 +22,22 @@ pub async fn take_turn<T: Coord>(
 ) -> Result<GameState, Box<dyn Error>> {
     println!("{}\n", draw::show_board(&board));
     'turn: loop {
+        let mut action = BoardAction::default();
         // Ask player to do action, provide them with response message, break loop if move was successful
-        let temp_move_status = local::action_prompts(&mut board.clone(), active_team)?;
+        let mut booly = true;
+        while booly {
+            booly = local::action_prompts(&mut action, &mut board.clone(), active_team)?;
+        }
 
-        let move_status = match temp_move_status {
-            MoveStatus::SkipTurn => {
+        let move_status = match action.command {
+            Command::SkipTurn => {
                 comms::send_action(BoardAction::skip(), client, base_url).await?
             }
-            MoveStatus::Forfeit => {
+            Command::Forfeit => {
                 comms::send_action(BoardAction::forfeit(), client, base_url).await?
             }
-            MoveStatus::Action(action) => comms::send_action(action, &client, &base_url).await?,
-            _ => temp_move_status,
+            Command::Execute => comms::send_action(action, &client, &base_url).await?,
+            _ => !unreachable!(),
         };
 
         println!("{}", move_status.to_string());

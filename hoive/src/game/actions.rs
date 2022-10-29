@@ -16,6 +16,7 @@ pub enum Command {
     SkipTurn,
     Execute,
     Save,
+    Forfeit,
 
 }
 
@@ -36,6 +37,7 @@ impl ToString for Command {
             Execute => "//cmd execute".to_string(),
             SkipTurn => "".to_string(),
             Save => "".to_string(),
+            Forfeit => "//cmd forfeit".to_string(),
         }
 
     }

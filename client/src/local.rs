@@ -27,14 +27,21 @@ pub fn play_offline() -> Result<(), Box<dyn Error>> {
             0 => first,
             _ => !first,
         };
+        println!("Team {}, it's your turn!", draw::team_string(active_team));
+        println!(
+            "Hit enter to see the board and your hand, h (help), w (skip turn), 'quit' (forfeit)."
+        );
 
-        let temp_move_status = action_prompts(&mut board.clone(), active_team)?;
+        let mut action = BoardAction::default();
 
-        let move_status = match temp_move_status {
-            MoveStatus::SkipTurn => board.try_skip_turn(active_team),
-            MoveStatus::Forfeit => MoveStatus::Win(Some(!active_team)),
-            MoveStatus::Action(action) => try_execute_action(&mut board, action, active_team),
-            _ => temp_move_status,
+        // Loop until action prompts returns false to exit
+        while action_prompts(&mut action, &mut board.clone(), active_team)?{};
+        
+        let move_status = match action.command {
+            Command::SkipTurn => board.try_skip_turn(active_team),
+            Command::Forfeit => MoveStatus::Win(Some(!active_team)),
+            Command::Execute => try_execute_action(&mut board, action, active_team),
+            _ => !unreachable!(),
         };
 
         println!("{}", move_status.to_string());
@@ -70,65 +77,29 @@ fn pick_team() -> Team {
 
 /// For the team who are playing, take guided actions and request those actions from the board.
 pub fn action_prompts<T: Coord>(
+    action: &mut BoardAction,
     board: &mut Board<T>,
     active_team: Team,
-) -> Result<MoveStatus, Box<dyn Error>> {
-    println!("Team {}, it's your turn!", draw::team_string(active_team));
-    println!(
-        "Hit enter to see the board and your hand, h (help), w (skip turn), 'quit' (forfeit)."
-    );
+) -> Result<bool, Box<dyn Error>> {
 
-    let mut action = BoardAction::default();
-    // Keep asking player to select chip until Some(value) happens
-    while action.command == Command::Select {
-        println!("{}", action.message);
-        let textin = get_usr_input();
-        pmoore::select_chip(&mut action, &textin, &board, active_team)?;
+    println!("{}", action.message);
+    let textin = get_usr_input();
+
+    match action.command {
+        Command::Select => pmoore::select_chip(action, &textin, &board, active_team)?,
+        Command::Mosquito => {
+            pmoore::mosquito_prompts(action, &textin, board)?;
+            // Have a check to see if we're a pillbug and correct the prompts
+            // either here or in websocket pmoore
+        }
+        Command::Pillbug => pmoore::pillbug_prompts(action, &textin)?,
+        Command::Sumo => pmoore::sumo_prompts(action, &textin, &board)?,
+        Command::SumoTo => pmoore::sumo_to_prompts(action, &textin)?,
+        Command::Move => pmoore::make_move(action, &textin)?,
+        _ => return Ok(false),
     }
 
-    if action.command == Command::SkipTurn {
-        return Ok(MoveStatus::SkipTurn); // try and skip turn
-    }
-
-    if action.command == Command::Mosquito {
-        println!("{}", action.message);
-        let textin = get_usr_input();
-        pmoore::mosquito_prompts(&mut action, &textin, board)?;
-        // Have a check to see if we're a pillbug and correct the prompts
-        // either here or in websocket pmoore
-    }
-
-    if action.command == Command::Pillbug {
-        println!("{}", action.message);
-        let textin = get_usr_input();
-        pmoore::pillbug_prompts(&mut action, &textin)?;
-    }
-
-    if action.command == Command::Sumo {
-        println!("{}", action.message);
-        let textin = get_usr_input();
-        pmoore::sumo_prompts(&mut action, &textin, &board)?
-    }
-
-    while action.command == Command::SumoTo {
-        println!("{}", action.message);
-        let textin = get_usr_input();
-        pmoore::sumo_to_prompts(&mut action, &textin)?
-    }
-
-    if action.command == Command::Move {
-        println!("{}", action.message);
-        let textin = get_usr_input();
-        pmoore::make_move(&mut action, &textin)?
-    }
-
-    println!("Final action was {:#?}", action);
-
-    if action.command == Command::Execute {
-        Ok(MoveStatus::Action(action))
-    } else {
-        panic!("Not executing")
-    }
+    Ok(true)
 }
 
 /// Try and execute a player action using the board. This emulates how the server decodes and then does actions.

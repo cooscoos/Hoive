@@ -237,7 +237,7 @@ pub fn make_move (
     if let [Some(x), Some(y)] = usr_hex[..] {
         if (x + y) % 2 == 0 {
             action.rowcol = Some(DoubleHeight::from((x, y)));
-            action.message = "Attemptig to executing move on the game board".to_string();
+            action.message = "Press enter to execute move on the game board".to_string();
             action.command = Command::Execute;
         }
     } else {
