@@ -3,6 +3,7 @@ pub mod comms;
 pub mod play;
 pub mod setup;
 
+use crate::local::get_usr_input;
 use hoive::game::board::Board;
 use hoive::maths::coord::{Coord, Cube};
 use server::models::Winner;
@@ -15,7 +16,7 @@ pub async fn play_online() -> Result<(), Box<dyn Error>> {
 
     // For development, option to wipe the server clean
     println!("Dev wipe db? Enter nothing to do so.");
-    if hoive::pmoore::get_usr_input().is_empty() {
+    if get_usr_input().is_empty() {
         comms::wipe_db(&client, &base_url).await?;
     }
 

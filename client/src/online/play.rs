@@ -2,13 +2,15 @@
 use reqwest::Client;
 use std::{error::Error, thread, time::Duration};
 
+use crate::local;
+
 use super::comms;
 use server::models::{GameState, Winner};
 
+use hoive::draw;
 use hoive::game::{actions::BoardAction, board::Board, comps::Team, movestatus::MoveStatus};
 use hoive::maths::coord::Coord;
 use hoive::pmoore;
-use hoive::{draw, pmoore::get_usr_input};
 
 /// Ask player to take a turn
 pub async fn take_turn<T: Coord>(
@@ -20,7 +22,7 @@ pub async fn take_turn<T: Coord>(
     println!("{}\n", draw::show_board(&board));
     'turn: loop {
         // Ask player to do action, provide them with response message, break loop if move was successful
-        let temp_move_status = pmoore::action_prompts(&mut board.clone(), active_team)?;
+        let temp_move_status = local::action_prompts(&mut board.clone(), active_team)?;
 
         let move_status = match temp_move_status {
             MoveStatus::SkipTurn => {
@@ -89,5 +91,5 @@ pub fn endgame(winner: Winner, my_team: Team) -> bool {
     println!("{endgame_msg}");
 
     println!("Hit y to play again, anything else to quit.");
-    get_usr_input() == "y"
+    local::get_usr_input() == "y"
 }

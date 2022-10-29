@@ -1,21 +1,20 @@
+use crate::local::get_usr_input;
 use actix_web::body::MessageBody;
 use actix_web::web::Bytes;
 use awc::ws;
 use futures_util::{SinkExt as _, StreamExt as _};
-use hoive::pmoore::get_usr_input;
 use std::error::Error;
 use std::str::FromStr;
 use std::{io, thread};
 use tokio::{select, sync::mpsc};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-
+use hoive::draw;
 use hoive::game::board::Board;
 use hoive::game::{comps::Team, movestatus::MoveStatus};
 use hoive::maths::coord::{Coord, Cube};
-use server::models::{Winner, GameState};
-use hoive::draw;
 use hoive::pmoore;
+use server::models::{GameState, Winner};
 
 pub async fn echo_service() -> Result<(), Box<dyn Error>> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
@@ -64,7 +63,6 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
     let mut my_team = Team::White;
     let mut precursor = "/name ".to_string();
 
-
     loop {
         select! {
             Some(msg) = ws.next() => {
@@ -98,12 +96,12 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                                             println!("You take your turn first!");
 
                                             ws.send(ws::Message::Text("/play".into())).await.unwrap(); // tell server you're ready to play
-                                            
-                                
+
+
                                         },
                                         false => {
                                             ws.send(ws::Message::Text("/second".into())).await.unwrap(); // tell server to switch you to team white
-                                            println!("Other player goes first.")}, 
+                                            println!("Other player goes first.")},
                                     }
 
 
@@ -127,7 +125,7 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
 
                                     // Figure out if it's your turn
                                     my_turn = my_id != game_state.last_user_id.unwrap();
-                                    
+
 
                                     if my_turn {
                                         ws.send(ws::Message::Text("/play".into())).await.unwrap(); // tell server you're ready to play
@@ -141,7 +139,7 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                                         true => format!("It's your turn!"),
                                         false => format!("Waiting for other player to take turn..."),
                                     };
-        
+
                                     // show the board
                                     println!(
                                         "{}\n\n-------------------- PLAYER HAND --------------------\n\n{}\n\n-----------------------------------------------------\n{turn_string}\n",
@@ -211,7 +209,7 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                 if cmd.is_empty() {
                     continue;
                 }
-                
+
                 if !in_game{
                     if cmd == "\n" {
                         // Default to sending /who
@@ -220,7 +218,7 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
 
                             let sendme = format!("{}{}", precursor, cmd);
                            ws.send(ws::Message::Text(sendme.into())).await.unwrap();
-                        
+
                     }
                 } else {
 
@@ -247,14 +245,14 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                             // x is the universal letter to abort a move
                             ws.send(ws::Message::Text("/abort".into())).await.unwrap();
                             precursor = "/select ".to_string();
-                            
-                            
+
+
                         }
                         _ if thing.starts_with("/t") || thing.starts_with("/tell") => {
                             // t and tell should always work
                             ws.send(ws::Message::Text(cmd.into())).await.unwrap();
 
-                        }  
+                        }
                         _ => {
                             let sendme = format!("{}{}", precursor, cmd);
                             //println!("sending {sendme}");
@@ -267,11 +265,10 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
 
             else => break
         }
-        }
+    }
 
     input_thread.join().unwrap();
     Ok(())
-    
 }
 
 /// Run user through prompts to attempt to join a Hoive server

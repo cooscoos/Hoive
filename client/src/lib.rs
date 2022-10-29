@@ -15,7 +15,7 @@ pub async fn play_games() -> Result<(), Box<dyn Error>> {
     hoive::pmoore::welcome();
 
     println!("Choose to play:\n1) Online (default),\n2) Local,\n3) Echo service (debug)");
-    let textin = hoive::pmoore::get_usr_input();
+    let textin = local::get_usr_input();
 
     match textin {
         _ if textin.contains('2') => local::play_offline(),

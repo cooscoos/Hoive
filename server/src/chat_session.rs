@@ -12,7 +12,7 @@ use hoive::game::movestatus::MoveStatus;
 use hoive::maths::coord::Cube;
 use hoive::maths::coord::{Coord, DoubleHeight};
 use hoive::{game, pmoore};
-use hoive::websocket_pmoore;
+
 
 use std::collections::BTreeSet;
 
@@ -463,7 +463,7 @@ fn in_game_parser(
                 chatsess.board = board;
 
                 // Go ahead
-                websocket_pmoore::select_chip(&mut chatsess.cmdlist, v[1], &chatsess.board, chatsess.team)?;
+                pmoore::select_chip(&mut chatsess.cmdlist, v[1], &chatsess.board, chatsess.team)?;
 
                 ctx.text(chatsess.cmdlist.message.to_owned());
                 ctx.text(chatsess.cmdlist.command.to_string());
@@ -471,14 +471,14 @@ fn in_game_parser(
             }
             "/mosquito" if chatsess.active => {
                 // Parse the input into a victim for the mosquito
-                websocket_pmoore::mosquito_prompts(&mut chatsess.cmdlist, v[1], &chatsess.board)?;
+                pmoore::mosquito_prompts(&mut chatsess.cmdlist, v[1], &chatsess.board)?;
                 ctx.text(chatsess.cmdlist.message.to_owned());
                 ctx.text(chatsess.cmdlist.command.to_string());
             }
             "/pillbug" if chatsess.active => {!unimplemented!()},
             "/moveto" if chatsess.active => {
                 // We're expect comma separated values to doubleheight
-                websocket_pmoore::make_move(&mut chatsess.cmdlist, v[1])?;
+                pmoore::make_move(&mut chatsess.cmdlist, v[1])?;
                 ctx.text(chatsess.cmdlist.message.to_owned());
                 ctx.text(chatsess.cmdlist.command.to_string());
 
