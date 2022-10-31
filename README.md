@@ -22,14 +22,11 @@ The Hoive directory contains the game logic.
 ### Client
 
 
-- Implement mosquito become pillbug in pmoore
-- Can develop everything on local pmoore and get it working, cut out all the chaff.
+- Local client is working again. Tidy it up
+- Tidy up chatsess and integrate its behaviour with pmoore, adding in pillbug
+- Write tests to probe local client's use of BoardActions and Ask:: enums.
+- Try get http server working.
 
-- Time to have a good tidy up of the chatsess and think about how to consolidate its behaviour with that of a local client.
-- We need to have the local and websocket versions of pmoore responding in the same way or it'll be a nightmare to write tests
-- Plan: rewrite a pmoore that is compatible with the websocket ping pong style and then get it working locally
-
-- start writing websocket client, make user choose a name / register it before joining main
 - Figure out how to turn (features on in submodules)[https://doc.rust-lang.org/cargo/reference/features.html] 
 - write some tests
 - "Check whether there are any games available on the server, if there are you have to join the empty one": can change later to play with friends based on uid, private flag in db
