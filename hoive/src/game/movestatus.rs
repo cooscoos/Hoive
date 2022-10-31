@@ -114,8 +114,8 @@ impl ToString for MoveStatus {
             MoveStatus::Win(teamopt) => {
                 match teamopt {
                     Some(team) => {
-                        //let team_str = draw::team_string(*team);
-                        let team_str = team.to_string();
+                        let team_str = crate::draw::team_string(*team);
+                        //let team_str = team.to_string();
                         format!("\n << {team_str} team wins. Well done!  >> \n")
                     }
                     None => "\n << Draw. Both teams have suffered defeat! >> \n".to_string(),
@@ -124,4 +124,13 @@ impl ToString for MoveStatus {
             MoveStatus::Nothing => String::new(),
         }
     }
+}
+
+impl MoveStatus{
+
+    /// Does MoveStatus == MoveStatus::Success?
+    pub fn is_success(&self) -> bool {
+        self == &MoveStatus::Success
+    }
+    
 }

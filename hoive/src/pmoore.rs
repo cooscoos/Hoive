@@ -2,7 +2,7 @@
 /// - provides a human-readable interface between players and the game logic;
 /// - orchestrates normal/special moves in a way that tries to comply with game rules.
 /// Pmoore functions are used by
-use crate::draw;
+use crate::draw::chipteam_to_str;
 use crate::game::comps::get_team_from_chip;
 use crate::game::comps::{convert_static_basic, Chip, Team};
 use crate::game::{actions::BoardAction, ask::Ask, board::Board, movestatus::MoveStatus, specials};
@@ -79,14 +79,6 @@ pub fn select_chip<T: Coord>(
 ) -> Result<(), Box<dyn Error>> {
     // At this stage, the text input will define what our chip is
     let chip_select = match textin {
-        _ if textin.is_empty() => {
-            action.message = format!(
-                "{}\n\n-------------------- PLAYER HAND --------------------\n\n{}\n\n-----------------------------------------------------\n",
-                draw::show_board(board),
-                draw::list_chips(board, active_team)
-            );
-            return Ok(());
-        }
         _ if textin == "w" => {
             // Atempt to skip turn, return db response
             action.special = Some("skip".to_string());
@@ -149,7 +141,7 @@ pub fn select_chip<T: Coord>(
         Some(chip_name) => {
             // Default params
             action.name = chip_name.to_string();
-            action.message = "Select co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit x to abort the move.".to_string();
+            action.message = format!("Select co-ordinate to move {} to. Input column then row, separated by comma, e.g.: 0, 0. Hit x to abort the move.", chipteam_to_str(chip_name,active_team));
             action.command = Ask::Move;
 
             let on_board = board.get_position_byname(active_team, chip_name);
@@ -276,14 +268,15 @@ pub fn mosquito_prompts<T: Coord>(
 
     if chipselect.name != "p1" {
         action.message = format!(
-            "You've absorbed from chip {}. Where would you like to move to?",
-            chipselect.name
+            "You've absorbed from chip {}. Enter coordinates of where you would like to move to.",
+            chipteam_to_str(chipselect.name, chipselect.team)
         );
         action.command = Ask::Move;
     } else {
-        action.message =
-            "You've absorbed from p1. Hit m to sumo a neighbour, or anything else to move."
-                .to_string();
+        action.message = format!(
+            "You've absorbed from chip {}. Hit m to sumo a neighbour, or enter coordinates of where you would like to move to.",
+            chipteam_to_str(chipselect.name, chipselect.team)
+        );
         action.command = Ask::Pillbug;
     }
 
@@ -312,11 +305,21 @@ pub fn sumo_prompts<T: Coord>(
     textin: &str,
     board: &Board<T>,
 ) -> Result<(), Box<dyn Error>> {
-    let selection = textin
-        .parse::<usize>()
-        .expect("Couldn't parse input into usize");
+    let selection = match textin.parse::<usize>() {
+        Ok(value) => value,
+        Err(_) => {
+            action.message = "That's not a valid number. Try again.".to_string();
+            return Ok(());
+        }
+    };
 
     let neighbours = action.neighbours.as_ref().unwrap();
+
+    if selection > neighbours.len() - 1 {
+        action.message = "Pick a number from the options. Try again.".to_string();
+        return Ok(());
+    }
+
     let selected = neighbours.into_iter().nth(selection).unwrap();
 
     // Get the coordinates of that selected chip
@@ -330,7 +333,7 @@ pub fn sumo_prompts<T: Coord>(
     // Add to the action's special string to signify sumo victim at row,col
     let special = format!("p,{},{},", victim_pos.col, victim_pos.row);
     action.special = Some(special);
-    action.message = "Select a co-ordinate to sumo this chip to. Input column then row, separated by a comma, e.g.: 0, 0. Hit enter to abort the sumo.".to_string();
+    action.message = format!("Select a co-ordinate to sumo chip {} to. Input column then row, separated by a comma, e.g.: 0, 0. Hit x to abort the sumo.",chipteam_to_str(chipselect.name, chipselect.team));
 
     action.command = Ask::SumoTo;
 

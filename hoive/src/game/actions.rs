@@ -23,17 +23,17 @@ impl BoardAction {
             special: None,
             neighbours: None,
             command: Ask::Select,
-            message: "Select a chip to move".to_string(),
+            message: "Select a chip to move. Hit enter to see the board and chips in your hand, h (help), w (skip turn), 'quit' (forfeit).".to_string(),
         }
     }
 
     pub fn reset(&mut self) {
-        self.name = String::new();
-        self.rowcol = None;
-        self.special = None;
-        self.neighbours = None;
-        self.command = Ask::Select;
-        self.message = "Select a chip to move".to_string();
+        self.name = Self::default().name;
+        self.rowcol = Self::default().rowcol;
+        self.special = Self::default().special;
+        self.neighbours = Self::default().neighbours;
+        self.command = Self::default().command;
+        self.message = Self::default().message;
     }
 
     /// Generate command to forfeit a game

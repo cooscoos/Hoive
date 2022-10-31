@@ -2,7 +2,7 @@
 use hoive::game::{
     actions::BoardAction, ask::Ask, board::Board, comps::Team, movestatus::MoveStatus, specials,
 };
-use hoive::maths::coord::Coord;
+use hoive::maths::coord::{Coord, Cube};
 use hoive::{draw, pmoore};
 
 use rand::Rng;
@@ -11,22 +11,18 @@ use std::{error::Error, io};
 /// Set up connection to Hoive server, set user id, and play some games
 pub fn play_offline() -> Result<(), Box<dyn Error>> {
     // Initialise game board in cube co-ordinates
-    let coord = hoive::maths::coord::Cube::default();
-    let mut board = Board::new(coord);
+    let mut board = Board::<Cube>::default();
 
     // Say hello, tell players who goes first
-    let first = pick_team();
+    let first_team = pick_team();
 
     // Loop game until someone wins
     loop {
         let active_team = match board.turns % 2 {
-            0 => first,
-            _ => !first,
+            0 => first_team,
+            _ => !first_team,
         };
         println!("Team {}, it's your turn!", draw::team_string(active_team));
-        println!(
-            "Hit enter to see the board and your hand, h (help), w (skip turn), 'quit' (forfeit)."
-        );
 
         let mut action = BoardAction::default();
 
@@ -43,7 +39,10 @@ pub fn play_offline() -> Result<(), Box<dyn Error>> {
 
         // Display the move status to user
         println!("{}", move_status.to_string());
-        println!("{}", draw::show_board(&board));
+
+        if move_status.is_success() {
+            println!("{}", draw::show_board(&board));
+        }
 
         if let MoveStatus::Win(_) = move_status {
             println!("Play again? y/n");
@@ -72,7 +71,7 @@ fn pick_team() -> Team {
     first
 }
 
-/// For the team who are playing, take guided actions and request those actions from the board.
+/// Guides the player through formulating an action request from the board.
 pub fn action_prompts<T: Coord>(
     action: &mut BoardAction,
     board: &mut Board<T>,
@@ -81,10 +80,19 @@ pub fn action_prompts<T: Coord>(
     println!("{}", action.message);
     let textin = get_usr_input();
 
+    // Commands that always need to be caught regardless of what we're doing
     if textin.starts_with('x') {
-        // Abort
-        println!("YUP");
+        // Abort whatever action is being built
         action.reset();
+        return Ok(());
+    } else if textin.is_empty() {
+        // Display the board
+        action.message = format!(
+            "{}\n\n-------------------- PLAYER HAND --------------------\n\n{}\n\n-----------------------------------------------------\n{}\n",
+            draw::show_board(board),
+            draw::list_chips(board, active_team),
+            action.message
+        );
         return Ok(());
     }
 

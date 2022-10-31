@@ -488,8 +488,8 @@ fn in_game_parser(
 
                 let result = api::make_action(board_action, &chatsess.game_room)?;
 
-                match result {
-                    MoveStatus::Success => {
+                match result.is_success() {
+                    true => {
                         // no longer this player's turn
                         chatsess.active = false;
                         chatsess.cmdlist = BoardAction::default();
@@ -504,7 +504,7 @@ fn in_game_parser(
                             game_state,
                         });
                     }
-                    _ => {
+                    false => {
                         // Get the client back into the select phase
                         ctx.text("//cmd select");
                     }
