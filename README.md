@@ -25,7 +25,7 @@ The Hoive directory contains the game logic.
 - Local client is working again. Tidy it up
 - Tidy up chatsess and integrate its behaviour with pmoore, adding in pillbug
 - Write tests to probe local client's use of BoardActions and Ask:: enums.
-- Try get http server working.
+- Try get http server working as an option.
 
 - Figure out how to turn (features on in submodules)[https://doc.rust-lang.org/cargo/reference/features.html] 
 - write some tests
