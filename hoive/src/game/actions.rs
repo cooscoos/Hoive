@@ -27,14 +27,6 @@ impl BoardAction {
         }
     }
 
-    pub fn reset(&mut self) {
-        self.name = Self::default().name;
-        self.rowcol = Self::default().rowcol;
-        self.special = Self::default().special;
-        self.neighbours = Self::default().neighbours;
-        self.command = Self::default().command;
-        self.message = Self::default().message;
-    }
 
     /// Generate command to forfeit a game
     pub fn forfeit() -> Self {

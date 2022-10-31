@@ -83,7 +83,8 @@ pub fn action_prompts<T: Coord>(
     // Commands that always need to be caught regardless of what we're doing
     if textin.starts_with('x') {
         // Abort whatever action is being built
-        action.reset();
+        *action = BoardAction::default();
+       
         return Ok(());
     } else if textin.is_empty() {
         // Display the board
