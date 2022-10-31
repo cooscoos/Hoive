@@ -60,15 +60,12 @@ pub struct Chip {
     pub team: Team,
 }
 
-
 impl ToString for Chip {
     fn to_string(&self) -> String {
-
         match self.team {
             Team::Black => self.name.to_string().to_uppercase(),
             Team::White => self.name.to_string(),
         }
-
     }
 }
 
@@ -76,15 +73,13 @@ impl ToString for Chip {
 impl FromStr for Chip {
     type Err = Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-
         // First char uppercase means team is black
         let team = get_team_from_chip(s);
         let name = convert_static_basic(s.to_lowercase()).unwrap();
 
-        Ok(Chip{name,team})
+        Ok(Chip { name, team })
     }
 }
-
 
 impl Chip {
     /// Create one new chip with given name and team.

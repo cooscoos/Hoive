@@ -2,14 +2,13 @@
 /// - provides a human-readable interface between players and the game logic;
 /// - orchestrates normal/special moves in a way that tries to comply with game rules.
 /// Pmoore functions are used by
-use crate::{draw};
+use crate::draw;
+use crate::game::comps::get_team_from_chip;
 use crate::game::comps::{convert_static_basic, Chip, Team};
-use crate::game::{actions::BoardAction, actions::Command,board::Board, movestatus::MoveStatus, specials};
+use crate::game::{actions::BoardAction, ask::Ask, board::Board, movestatus::MoveStatus, specials};
 use crate::maths::coord::{Coord, DoubleHeight};
 use std::collections::BTreeSet;
 use std::{error::Error, io};
-use crate::game::comps::get_team_from_chip;
-
 
 /// Say hello to the player
 pub fn welcome() {
@@ -71,12 +70,6 @@ pub fn decode_specials<T: Coord>(
     board.move_chip(chip_name, active_team, d_dest.mapto(board.coord))
 }
 
-
-
-
-
-
-
 /// Uses a select chip input string (textin) from a given active_team to update a BoardAction
 pub fn select_chip<T: Coord>(
     action: &mut BoardAction,
@@ -84,7 +77,6 @@ pub fn select_chip<T: Coord>(
     board: &Board<T>,
     active_team: Team,
 ) -> Result<(), Box<dyn Error>> {
-
     // At this stage, the text input will define what our chip is
     let chip_select = match textin {
         _ if textin.is_empty() => {
@@ -97,14 +89,25 @@ pub fn select_chip<T: Coord>(
         }
         _ if textin == "w" => {
             // Atempt to skip turn, return db response
-            action.command = Command::SkipTurn;
+            action.special = Some("skip".to_string());
+            action.command = Ask::Execute;
+            return Ok(());
+        }
+        _ if textin == "quit" => {
+            // Forfeit the game
+            action.special = Some("forfeit".to_string());
+            action.command = Ask::Execute;
+            return Ok(());
+        }
+        _ if textin == "h" => {
+            action.message = help_me().to_string();
             return Ok(());
         }
         #[cfg(feature = "debug")]
         _ if textin == "s" => {
-            action.command = Command::Save;
+            action.command = Ask::Save;
             action.message = "Enter a filename".to_string();
-            return Ok(())
+            return Ok(());
         }
         _ if textin == "mb" => {
             // The player is probably trying to select their mosquito acting like a beetle
@@ -140,30 +143,27 @@ pub fn select_chip<T: Coord>(
     match chip_select {
         None => {
             // Player tried to select a chip that doesn't exist.
-            action.message = "You don't have this tile in your hand. Select a chip.".to_string();
+            action.message =
+                "You don't have this tile in your hand. Try select a chip again.".to_string();
         }
         Some(chip_name) => {
             // Default params
             action.name = chip_name.to_string();
             action.message = "Select co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit x to abort the move.".to_string();
-            action.command = Command::Move;
+            action.command = Ask::Move;
 
             let on_board = board.get_position_byname(active_team, chip_name);
             let can_special = on_board.is_some() && on_board.unwrap().get_layer() == 0;
 
             match chip_name {
-            _ if chip_name == "p1" && can_special => {
-                // Player selected pillbug on the board
-                action.message = "Hit m to sumo a neighbour, or anything else to do move.".to_string();
-                action.command = Command::Pillbug;
-
-
-
+                _ if chip_name == "p1" && can_special => {
+                    // Player selected pillbug on the board
+                    action.message =
+                        "Hit m to sumo a neighbour, or anything else to do move.".to_string();
+                    action.command = Ask::Pillbug;
 
                     // Get pillbug's position, save to rowcol
-                    let position = board
-                        .get_position_byname(active_team, chip_name)
-                        .unwrap();
+                    let position = board.get_position_byname(active_team, chip_name).unwrap();
                     action.rowcol = Some(position.to_doubleheight(position));
 
                     // Get the neighbours
@@ -181,16 +181,12 @@ pub fn select_chip<T: Coord>(
                         .collect::<BTreeSet<String>>();
                     // Store the neighbours for later
                     action.neighbours = Some(neighbours);
+                }
+                _ if chip_name == "m1" && can_special => {
+                    // Player selected mosquito on the board
 
-
-            }
-            _ if chip_name == "m1" && can_special => {
-                // Player selected mosquito on the board
-  
                     // Get Mosquito's position, save to rowcol
-                    let position = board
-                        .get_position_byname(active_team, chip_name)
-                        .unwrap();
+                    let position = board.get_position_byname(active_team, chip_name).unwrap();
                     action.rowcol = Some(position.to_doubleheight(position));
 
                     // Get the neighbours
@@ -205,7 +201,7 @@ pub fn select_chip<T: Coord>(
                         "Select a neighbour to suck from...\n{}",
                         crate::draw::list_these_chips(neighbours.clone())
                     );
-                    action.command = Command::Mosquito;
+                    action.command = Ask::Mosquito;
 
                     // need to map to upper/lowercase string
                     let neighbours = neighbours
@@ -214,52 +210,56 @@ pub fn select_chip<T: Coord>(
                         .collect::<BTreeSet<String>>();
                     // Store the neighbours for later
                     action.neighbours = Some(neighbours);
-                
-            },
-            _ => {}, // nothing needs changing
+                }
+                _ => {} // nothing needs changing
+            }
         }
     }
-    }
-   
+
     Ok(())
 }
 
 /// Parse user inputs into a set of coordinates and update board action
-pub fn make_move (
-    action: &mut BoardAction,
-    textin: &str,
-) -> Result<(), Box<dyn Error>>{
-
+pub fn make_move(action: &mut BoardAction, textin: &str) -> Result<(), Box<dyn Error>> {
     //attempt to parse a move
     let usr_hex = crate::pmoore::coord_from_string(textin.to_owned());
-
 
     if let [Some(x), Some(y)] = usr_hex[..] {
         if (x + y) % 2 == 0 {
             action.rowcol = Some(DoubleHeight::from((x, y)));
             action.message = "Press enter to execute move on the game board".to_string();
-            action.command = Command::Execute;
+            action.command = Ask::Execute;
         }
     } else {
-        action.message = "Invalid co-ordinates, enter coordinates again or hit x to abort.".to_string();
-        action.command = Command::Move;
+        action.message =
+            "Invalid co-ordinates, enter coordinates again or hit x to abort.".to_string();
+        action.command = Ask::Move;
     }
 
     Ok(())
 }
 
 /// Converts an input number str (textin) into a mosquito action for sucking
-pub fn mosquito_prompts<T:Coord> (
+pub fn mosquito_prompts<T: Coord>(
     action: &mut BoardAction,
     textin: &str,
     board: &Board<T>,
-) -> Result<(), Box<dyn Error>>{
-
-    let selection = textin
-    .parse::<usize>()
-    .expect("Couldn't parse input into usize");
+) -> Result<(), Box<dyn Error>> {
+    let selection = match textin.parse::<usize>() {
+        Ok(value) => value,
+        Err(_) => {
+            action.message = "That's not a valid number. Try again.".to_string();
+            return Ok(());
+        }
+    };
 
     let neighbours = action.neighbours.as_ref().unwrap();
+
+    if selection > neighbours.len() - 1 {
+        action.message = "Pick a number from the options. Try again.".to_string();
+        return Ok(());
+    }
+
     let selected = neighbours.into_iter().nth(selection).unwrap();
 
     // Get the coordinates of that selected chip
@@ -273,44 +273,48 @@ pub fn mosquito_prompts<T:Coord> (
     // Add to the action's special string to signify mosquito sucking victim at row,col
     let special = format!("m,{},{},", victim_pos.col, victim_pos.row);
     action.special = Some(special);
-    action.message = "And where would you like to move to?".to_string();
-    action.command = Command::Move;
+
+    if chipselect.name != "p1" {
+        action.message = format!(
+            "You've absorbed from chip {}. Where would you like to move to?",
+            chipselect.name
+        );
+        action.command = Ask::Move;
+    } else {
+        action.message =
+            "You've absorbed from p1. Hit m to sumo a neighbour, or anything else to move."
+                .to_string();
+        action.command = Ask::Pillbug;
+    }
 
     Ok(())
 }
 
-pub fn pillbug_prompts(
-    action: &mut BoardAction,
-    textin: &str,
-) -> Result<(), Box<dyn Error>>{
-
+pub fn pillbug_prompts(action: &mut BoardAction, textin: &str) -> Result<(), Box<dyn Error>> {
     match textin == "m" {
         true => {
             action.message = format!(
                 "Select a neighbour to sumo from...\n{}",
                 crate::draw::list_these_chips_str(action.neighbours.clone().unwrap())
             );
-            action.command = Command::Sumo;
-
-        },
+            action.command = Ask::Sumo;
+        }
         false => {
             action.message = "Select co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit x to abort the move.".to_string();
-            action.command = Command::Move;
-        },
+            action.command = Ask::Move;
+        }
     }
-        Ok(())
-    
+    Ok(())
 }
 
-pub fn sumo_prompts<T:Coord> (
+pub fn sumo_prompts<T: Coord>(
     action: &mut BoardAction,
     textin: &str,
     board: &Board<T>,
-) -> Result<(), Box<dyn Error>>{
-
+) -> Result<(), Box<dyn Error>> {
     let selection = textin
-    .parse::<usize>()
-    .expect("Couldn't parse input into usize");
+        .parse::<usize>()
+        .expect("Couldn't parse input into usize");
 
     let neighbours = action.neighbours.as_ref().unwrap();
     let selected = neighbours.into_iter().nth(selection).unwrap();
@@ -323,37 +327,30 @@ pub fn sumo_prompts<T:Coord> (
     let source = board.chips.get(&chipselect).unwrap().unwrap();
     let victim_pos = source.to_doubleheight(source);
 
-    // Add to the action's special string to signify mosquito sucking victim at row,col
+    // Add to the action's special string to signify sumo victim at row,col
     let special = format!("p,{},{},", victim_pos.col, victim_pos.row);
     action.special = Some(special);
     action.message = "Select a co-ordinate to sumo this chip to. Input column then row, separated by a comma, e.g.: 0, 0. Hit enter to abort the sumo.".to_string();
 
-    action.command = Command::SumoTo;
+    action.command = Ask::SumoTo;
 
     Ok(())
 }
 
-pub fn sumo_to_prompts(
-    action: &mut BoardAction,
-    textin: &str,
-
-) -> Result<(), Box<dyn Error>>{
-
+pub fn sumo_to_prompts(action: &mut BoardAction, textin: &str) -> Result<(), Box<dyn Error>> {
     let coord = match crate::pmoore::coord_prompts(textin.to_string()) {
         None => {
             action.message = "Invalid coordinates".to_string();
-            return Ok(())
-        }, // abort move
+            return Ok(());
+        } // abort move
         Some((row, col)) => (row, col),
     };
 
     action.rowcol = Some(DoubleHeight::from(coord));
-    action.command = Command::Execute;
-
+    action.command = Ask::Execute;
 
     Ok(())
 }
-
 
 /// Ask user to select a coordinate or hit enter to return None so that we can
 /// abort the parent function.
@@ -369,14 +366,10 @@ pub fn coord_prompts(mut textin: String) -> Option<(i8, i8)> {
             match (x + y) % 2 {
                 // The sum of doubleheight coords should always be an even no.
                 0 => Some((x, y)),
-                _ => {
-                    None
-                }
+                _ => None,
             }
         }
-        _ => {
-            None
-        }
+        _ => None,
     }
 }
 

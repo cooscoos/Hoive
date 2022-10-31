@@ -98,7 +98,6 @@ pub fn ladybird_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveS
     }
 }
 
-
 /// Check whether chip can move from source to dest.
 /// If there is a small gap between source and dest then this will return
 /// MoveStatus::SmallGap. This check will work on any chip that only moves one
@@ -213,7 +212,6 @@ pub fn mod_dist_lim_floodfill<T: Coord>(
 
                 // Bugfix: We should also not be allowed to backtrack into previous visitors
                 // Bugfix: and we must never leave the hive (always need at least one chip neighbour)
-
 
                 if can_visit & !visitable.contains(n) {
                     // don't keep overwriting values in hashset (inefficient)

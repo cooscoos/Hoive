@@ -447,7 +447,7 @@ fn in_game_parser(
                 if chatsess.id.to_string() != gamestate.last_user_id.unwrap() {
                     chatsess.active = true;
                     ctx.text("Select a tile from the board or your hand to move.");
-                    ctx.text(hoive::game::actions::Command::Select.to_string())
+                    ctx.text(hoive::game::ask::Ask::Select.to_string())
                 } else {
                     ctx.text("It's not your turn");
                 }

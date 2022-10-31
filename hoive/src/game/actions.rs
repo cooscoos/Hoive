@@ -1,72 +1,41 @@
+use super::ask::Ask;
+use super::comps::{convert_static_basic, Team};
 use crate::maths::coord::{Coord, DoubleHeight};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 
-use super::comps::{convert_static_basic, Team};
-
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
-pub enum Command {
-    Nothing, // do nothing
-    Select,
-    Move,
-    Mosquito,
-    Pillbug, // preps to sumo or move
-    Sumo,
-    SumoTo,
-    SkipTurn,
-    Execute,
-    Save,
-    Forfeit,
-
-}
-
-// Converts team to a string "B", "W"
-impl ToString for Command {
-    fn to_string(&self) -> String {
-
-        use Command::*;
-        
-        match self {
-            Nothing => "".to_string(),
-            Select => "//cmd select".to_string(),
-            Move => "//cmd moveto".to_string(),
-            Mosquito => "//cmd mosquito".to_string(),
-            Pillbug => "//cmd pillbug".to_string(),
-            Sumo => "//cmd sumo".to_string(),
-            SumoTo => "//cmd sumoto".to_string(),
-            Execute => "//cmd execute".to_string(),
-            SkipTurn => "".to_string(),
-            Save => "".to_string(),
-            Forfeit => "//cmd forfeit".to_string(),
-        }
-
-    }
-}
-
 /// Used to formulate requests for in-game actions from the Hoive server
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct BoardAction {
-    pub name: String,            // chip name
-    pub rowcol: Option<DoubleHeight>,    // destination row, col
+    pub name: String,                         // chip name
+    pub rowcol: Option<DoubleHeight>,         // destination row, col
     pub special: Option<String>, // Contains source (row,col) if doing mosquito/pillbug special
     pub neighbours: Option<BTreeSet<String>>, // the neighbours of that chip
-    pub command: Command,   // a thing to tell the program what stage comes next
+    pub command: Ask,            // a thing to tell the program what stage comes next
     pub message: String, // a thing to print to the user, defined at compile time, could be stat?
-
 }
 
 impl BoardAction {
-
     pub fn default() -> Self {
         BoardAction {
             name: String::new(),
             rowcol: None,
             special: None,
             neighbours: None,
-            command: Command::Select,
-            message: "".to_string(),
+            command: Ask::Select,
+            message: "Select a chip to move".to_string(),
         }
     }
+
+    pub fn reset(&mut self) {
+        self.name = String::new();
+        self.rowcol = None;
+        self.special = None;
+        self.neighbours = None;
+        self.command = Ask::Select;
+        self.message = "Select a chip to move".to_string();
+    }
+
     /// Generate command to forfeit a game
     pub fn forfeit() -> Self {
         BoardAction {
@@ -74,7 +43,7 @@ impl BoardAction {
             rowcol: None,
             special: Some("forfeit".to_string()),
             neighbours: None,
-            command: Command::Nothing,
+            command: Ask::Nothing,
             message: "".to_string(),
         }
     }
@@ -86,7 +55,7 @@ impl BoardAction {
             rowcol: None,
             special: Some("skip".to_string()),
             neighbours: None,
-            command: Command::Nothing,
+            command: Ask::Nothing,
             message: "".to_string(),
         }
     }
@@ -113,14 +82,14 @@ impl BoardAction {
             rowcol: Some(rowcol),
             special,
             neighbours: None,
-            command: Command::Nothing,
+            command: Ask::Nothing,
             message: "".to_string(),
         }
     }
 
     /// Get chip name as a &'static str without team capitalisation
     pub fn get_chip_name(&self) -> &'static str {
-        convert_static_basic(self.name.to_lowercase()).unwrap()
+        convert_static_basic(self.name.clone().to_lowercase()).unwrap()
     }
 
     /// Get the special string

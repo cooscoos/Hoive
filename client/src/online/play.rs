@@ -10,10 +10,9 @@ use server::models::{GameState, Winner};
 
 use hoive::draw;
 use hoive::game::{
-    actions::BoardAction, actions::Command, board::Board, comps::Team, movestatus::MoveStatus,
+    actions::BoardAction, ask::Ask, board::Board, comps::Team, movestatus::MoveStatus,
 };
 use hoive::maths::coord::Coord;
-use hoive::pmoore;
 
 /// Ask player to take a turn
 pub async fn take_turn<T: Coord>(
@@ -26,19 +25,12 @@ pub async fn take_turn<T: Coord>(
     'turn: loop {
         let mut action = BoardAction::default();
         // Ask player to do action, provide them with response message, break loop if move was successful
-        let mut booly = true;
-        while booly {
-            booly = local::action_prompts(&mut action, &mut board.clone(), active_team)?;
+
+        while action.command != Ask::Execute {
+            local::action_prompts(&mut action, &mut board.clone(), active_team)?;
         }
 
-        let move_status = match action.command {
-            Command::SkipTurn => comms::send_action(BoardAction::skip(), client, base_url).await?,
-            Command::Forfeit => {
-                comms::send_action(BoardAction::forfeit(), client, base_url).await?
-            }
-            Command::Execute => comms::send_action(action, &client, &base_url).await?,
-            _ => !unreachable!(),
-        };
+        let move_status = local::try_execute_action(&mut board.clone(), action, active_team);
 
         println!("{}", move_status.to_string());
         if move_status == MoveStatus::Success {

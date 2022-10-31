@@ -19,9 +19,6 @@ pub struct Board<T: Coord> {
     pub size: i8,                        // the size of the board in dheight
 }
 
-
-
-
 impl<T> Board<T>
 where
     T: Coord,

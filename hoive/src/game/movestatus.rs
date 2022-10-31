@@ -1,8 +1,6 @@
-use super::actions::BoardAction;
 use super::comps::Team;
 use serde::{Deserialize, Serialize};
-/// Enum to return the attempt or result of a player action.
-/// These can be results or attempts, described below.
+/// Enum to return the result of an action attempt on the board.
 /// ___
 /// MoveStatus::Selection | Result
 ///--- | ---
@@ -26,11 +24,6 @@ use serde::{Deserialize, Serialize};
 /// NoJump | Grasshopper can't make this jump
 /// NoSuck | Mosquito can't do this suck
 /// ___
-/// MoveStatus::Selection | Attempt
-///--- | ---
-/// Forfeit | Player requested forfeit
-/// SkipTurn| Player requested skip turn
-/// Action | Player Requested action
 #[derive(Serialize, Deserialize, Debug, Eq, PartialEq, Clone)]
 pub enum MoveStatus {
     // Results of actions
@@ -58,11 +51,6 @@ pub enum MoveStatus {
 
     NoJump,
     NoSuck,
-
-    // Attempted actions
-    Forfeit,
-    SkipTurn,
-    Action(BoardAction),
 }
 
 impl ToString for MoveStatus {
@@ -133,10 +121,7 @@ impl ToString for MoveStatus {
                     None => "\n << Draw. Both teams have suffered defeat! >> \n".to_string(),
                 }
             }
-            MoveStatus::Nothing
-            | MoveStatus::Forfeit
-            | MoveStatus::SkipTurn
-            | MoveStatus::Action(_) => String::new(),
+            MoveStatus::Nothing => String::new(),
         }
     }
 }
