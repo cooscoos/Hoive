@@ -447,7 +447,7 @@ fn in_game_parser(
                 if chatsess.id.to_string() != gamestate.last_user_id.unwrap() {
                     chatsess.active = true;
                     ctx.text("Select a tile from the board or your hand to move.");
-                    ctx.text(hoive::game::ask::Ask::Select.to_string())
+                    ctx.text(hoive::game::ask::Req::Select.to_string())
                 } else {
                     ctx.text("It's not your turn");
                 }
@@ -466,21 +466,21 @@ fn in_game_parser(
                 pmoore::select_chip(&mut chatsess.cmdlist, v[1], &chatsess.board, chatsess.team)?;
 
                 ctx.text(chatsess.cmdlist.message.to_owned());
-                ctx.text(chatsess.cmdlist.command.to_string());
+                ctx.text(chatsess.cmdlist.request.to_string());
 
             }
             "/mosquito" if chatsess.active => {
                 // Parse the input into a victim for the mosquito
                 pmoore::mosquito_prompts(&mut chatsess.cmdlist, v[1], &chatsess.board)?;
                 ctx.text(chatsess.cmdlist.message.to_owned());
-                ctx.text(chatsess.cmdlist.command.to_string());
+                ctx.text(chatsess.cmdlist.request.to_string());
             }
             "/pillbug" if chatsess.active => {!unimplemented!()},
             "/moveto" if chatsess.active => {
                 // We're expect comma separated values to doubleheight
                 pmoore::make_move(&mut chatsess.cmdlist, v[1])?;
                 ctx.text(chatsess.cmdlist.message.to_owned());
-                ctx.text(chatsess.cmdlist.command.to_string());
+                ctx.text(chatsess.cmdlist.request.to_string());
 
             }
             "/execute" if chatsess.active => {

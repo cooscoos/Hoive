@@ -5,7 +5,7 @@
 use crate::draw::chipteam_to_str;
 use crate::game::comps::get_team_from_chip;
 use crate::game::comps::{convert_static_basic, Chip, Team};
-use crate::game::{actions::BoardAction, ask::Ask, board::Board, movestatus::MoveStatus, specials};
+use crate::game::{actions::BoardAction, ask::Req, board::Board, movestatus::MoveStatus, specials};
 use crate::maths::coord::{Coord, DoubleHeight};
 use std::collections::BTreeSet;
 use std::{error::Error, io};
@@ -70,37 +70,16 @@ pub fn decode_specials<T: Coord>(
     board.move_chip(chip_name, active_team, d_dest.mapto(board.coord))
 }
 
-/// Uses a select chip input string (textin) from a given active_team to update a BoardAction
+/// Use input string (textin) to select a chip from a active_team. Update the action.
 pub fn select_chip<T: Coord>(
     action: &mut BoardAction,
     textin: &str,
     board: &Board<T>,
     active_team: Team,
 ) -> Result<(), Box<dyn Error>> {
-    // At this stage, the text input will define what our chip is
+    
+    // The text input should define a chip to select
     let chip_select = match textin {
-        _ if textin == "w" => {
-            // Atempt to skip turn, return db response
-            action.special = Some("skip".to_string());
-            action.command = Ask::Execute;
-            return Ok(());
-        }
-        _ if textin == "quit" => {
-            // Forfeit the game
-            action.special = Some("forfeit".to_string());
-            action.command = Ask::Execute;
-            return Ok(());
-        }
-        _ if textin == "h" => {
-            action.message = help_me().to_string();
-            return Ok(());
-        }
-        #[cfg(feature = "debug")]
-        _ if textin == "s" => {
-            action.command = Ask::Save;
-            action.message = "Enter a filename".to_string();
-            return Ok(());
-        }
         _ if textin == "mb" => {
             // The player is probably trying to select their mosquito acting like a beetle
             convert_static_basic("m1".to_string())
@@ -117,6 +96,7 @@ pub fn select_chip<T: Coord>(
             convert_static_basic(first.to_string())
         }
         _ if textin.starts_with(|c| c == 'l' || c == 'p' || c == 'q' || c == 'm') => {
+            // Player can select ladybird, pillbug, queen, and mosquito without specifying the 1
             let proper_str = match textin.chars().next().unwrap() {
                 'l' => "l1",
                 'p' => "p1",
@@ -127,11 +107,12 @@ pub fn select_chip<T: Coord>(
             convert_static_basic(proper_str.to_string())
         }
         c => {
-            // Try and match a chip by this name
+            // Otherwise, try and match a chip based on the input name
             convert_static_basic(c.to_owned())
         }
     };
 
+    // Now, based on the chip selected
     match chip_select {
         None => {
             // Player tried to select a chip that doesn't exist.
@@ -139,11 +120,13 @@ pub fn select_chip<T: Coord>(
                 "You don't have this tile in your hand. Try select a chip again.".to_string();
         }
         Some(chip_name) => {
-            // Default params
-            action.name = chip_name.to_string();
+            
+            // Start building the action with some default params.
+            action.chip_name = chip_name.to_string();
             action.message = format!("Select co-ordinate to move {} to. Input column then row, separated by comma, e.g.: 0, 0. Hit x to abort the move.", chipteam_to_str(chip_name,active_team));
-            action.command = Ask::Move;
+            action.request = Req::Move;
 
+            // Is the chip on the board, and can it possibly do a special move (e.g. sumo, mosquito suck)?
             let on_board = board.get_position_byname(active_team, chip_name);
             let can_special = on_board.is_some() && on_board.unwrap().get_layer() == 0;
 
@@ -152,13 +135,13 @@ pub fn select_chip<T: Coord>(
                     // Player selected pillbug on the board
                     action.message =
                         "Hit m to sumo a neighbour, or anything else to do move.".to_string();
-                    action.command = Ask::Pillbug;
+                    action.request = Req::Pillbug;
 
-                    // Get pillbug's position, save to rowcol
+                    // Get pillbug's current position, save to rowcol
                     let position = board.get_position_byname(active_team, chip_name).unwrap();
                     action.rowcol = Some(position.to_doubleheight(position));
 
-                    // Get the neighbours
+                    // Get its neighbours
                     let neighbours = board.get_neighbour_chips(position);
 
                     // stick them into a BTree to preserve order.
@@ -177,7 +160,7 @@ pub fn select_chip<T: Coord>(
                 _ if chip_name == "m1" && can_special => {
                     // Player selected mosquito on the board
 
-                    // Get Mosquito's position, save to rowcol
+                    // Get Mosquito's current position, save to rowcol
                     let position = board.get_position_byname(active_team, chip_name).unwrap();
                     action.rowcol = Some(position.to_doubleheight(position));
 
@@ -193,7 +176,7 @@ pub fn select_chip<T: Coord>(
                         "Select a neighbour to suck from...\n{}",
                         crate::draw::list_these_chips(neighbours.clone())
                     );
-                    action.command = Ask::Mosquito;
+                    action.request = Req::Mosquito;
 
                     // need to map to upper/lowercase string
                     let neighbours = neighbours
@@ -220,12 +203,12 @@ pub fn make_move(action: &mut BoardAction, textin: &str) -> Result<(), Box<dyn E
         if (x + y) % 2 == 0 {
             action.rowcol = Some(DoubleHeight::from((x, y)));
             action.message = "Press enter to execute move on the game board".to_string();
-            action.command = Ask::Execute;
+            action.request = Req::Execute;
         }
     } else {
         action.message =
             "Invalid co-ordinates, enter coordinates again or hit x to abort.".to_string();
-        action.command = Ask::Move;
+        action.request = Req::Move;
     }
 
     Ok(())
@@ -271,13 +254,13 @@ pub fn mosquito_prompts<T: Coord>(
             "You've absorbed from chip {}. Enter coordinates of where you would like to move to.",
             chipteam_to_str(chipselect.name, chipselect.team)
         );
-        action.command = Ask::Move;
+        action.request = Req::Move;
     } else {
         action.message = format!(
             "You've absorbed from chip {}. Hit m to sumo a neighbour, or enter coordinates of where you would like to move to.",
             chipteam_to_str(chipselect.name, chipselect.team)
         );
-        action.command = Ask::Pillbug;
+        action.request = Req::Pillbug;
     }
 
     Ok(())
@@ -290,11 +273,11 @@ pub fn pillbug_prompts(action: &mut BoardAction, textin: &str) -> Result<(), Box
                 "Select a neighbour to sumo from...\n{}",
                 crate::draw::list_these_chips_str(action.neighbours.clone().unwrap())
             );
-            action.command = Ask::Sumo;
+            action.request = Req::Sumo;
         }
         false => {
             action.message = "Select co-ordinate to move to. Input column then row, separated by comma, e.g.: 0, 0. Hit x to abort the move.".to_string();
-            action.command = Ask::Move;
+            action.request = Req::Move;
         }
     }
     Ok(())
@@ -335,7 +318,7 @@ pub fn sumo_prompts<T: Coord>(
     action.special = Some(special);
     action.message = format!("Select a co-ordinate to sumo chip {} to. Input column then row, separated by a comma, e.g.: 0, 0. Hit x to abort the sumo.",chipteam_to_str(chipselect.name, chipselect.team));
 
-    action.command = Ask::SumoTo;
+    action.request = Req::SumoTo;
 
     Ok(())
 }
@@ -350,7 +333,7 @@ pub fn sumo_to_prompts(action: &mut BoardAction, textin: &str) -> Result<(), Box
     };
 
     action.rowcol = Some(DoubleHeight::from(coord));
-    action.command = Ask::Execute;
+    action.request = Req::Execute;
 
     Ok(())
 }

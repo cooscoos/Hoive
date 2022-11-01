@@ -1,41 +1,50 @@
-use super::ask::Ask;
+use super::ask::Req;
 use super::comps::{convert_static_basic, Team};
 use crate::maths::coord::{Coord, DoubleHeight};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 
-/// Used to formulate requests for in-game actions from the Hoive server
+/// Used to formulate requests for in-game actions from a Hoive server
+/// The fields of this struct are:
+/// - name: the chip name (case sensitive, black team chips are capitalised)
+/// - rowcol: the destination row, col of the move
+/// - special: information on special actions (e.g. mosquito suck, pillbug sumo)
+/// - neighbours: a sorted list of immediate neighbouring chips
+/// - request: a request of what to do next: used to control UI logic
+/// - message: information which is displayed to the player
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct BoardAction {
-    pub name: String,                         // chip name
-    pub rowcol: Option<DoubleHeight>,         // destination row, col
-    pub special: Option<String>, // Contains source (row,col) if doing mosquito/pillbug special
-    pub neighbours: Option<BTreeSet<String>>, // the neighbours of that chip
-    pub command: Ask,            // a thing to tell the program what stage comes next
-    pub message: String, // a thing to print to the user, defined at compile time, could be stat?
+    pub chip_name: String,
+    pub rowcol: Option<DoubleHeight>,
+    pub special: Option<String>,
+    pub neighbours: Option<BTreeSet<String>>,
+    pub request: Req,
+    pub message: String,
 }
 
 impl BoardAction {
+    /// Default state is to ask the user to select a chip to move
     pub fn default() -> Self {
         BoardAction {
-            name: String::new(),
+            chip_name: String::new(),
             rowcol: None,
             special: None,
             neighbours: None,
-            command: Ask::Select,
+            request: Req::Select,
             message: "Select a chip to move. Hit enter to see the board and chips in your hand, h (help), w (skip turn), 'quit' (forfeit).".to_string(),
         }
     }
 
+    // The following are only used by the http webserver. Could be deleted?
 
     /// Generate command to forfeit a game
     pub fn forfeit() -> Self {
         BoardAction {
-            name: "".to_string(),
+            chip_name: "".to_string(),
             rowcol: None,
             special: Some("forfeit".to_string()),
             neighbours: None,
-            command: Ask::Nothing,
+            request: Req::Nothing,
             message: "".to_string(),
         }
     }
@@ -43,11 +52,11 @@ impl BoardAction {
     /// Generate a command to skip your turn
     pub fn skip() -> Self {
         BoardAction {
-            name: "".to_string(),
+            chip_name: "".to_string(),
             rowcol: None,
             special: Some("skip".to_string()),
             neighbours: None,
-            command: Ask::Nothing,
+            request: Req::Nothing,
             message: "".to_string(),
         }
     }
@@ -70,18 +79,18 @@ impl BoardAction {
         };
 
         BoardAction {
-            name: case_chip_name,
+            chip_name: case_chip_name,
             rowcol: Some(rowcol),
             special,
             neighbours: None,
-            command: Ask::Nothing,
+            request: Req::Nothing,
             message: "".to_string(),
         }
     }
 
-    /// Get chip name as a &'static str without team capitalisation
+    /// Extract the chip name as a &'static str without capitalisation
     pub fn get_chip_name(&self) -> &'static str {
-        convert_static_basic(self.name.clone().to_lowercase()).unwrap()
+        convert_static_basic(self.chip_name.clone().to_lowercase()).unwrap()
     }
 
     /// Get the special string
@@ -89,7 +98,7 @@ impl BoardAction {
         self.special.as_ref().unwrap().to_owned()
     }
 
-    /// Get destination in board coords
+    /// Get the rowcol field in board coords
     pub fn get_dest<T: Coord>(&self, coord: T) -> T {
         let dheight = self.rowcol;
         coord.mapfrom_doubleheight(dheight.unwrap())
@@ -98,6 +107,6 @@ impl BoardAction {
     /// Get the team of the chips which are doing the action
     pub fn which_team(&self) -> Team {
         // Black chips get passed as uppercase, white as lowercase
-        crate::game::comps::get_team_from_chip(&self.name)
+        crate::game::comps::get_team_from_chip(&self.chip_name)
     }
 }

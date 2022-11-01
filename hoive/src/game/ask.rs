@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-/// Enum that allows player to request actions from the game logic.
+/// Enum that allows us to request responses from the game's client.
 /// ___
-/// AskFor::Selection | Player would like to...
+/// Req::Selection | Player would like to...
 ///--- | ---
 /// Nothing| Do nothing (no request)
 /// Select| Select a chip
@@ -14,8 +14,9 @@ use serde::{Deserialize, Serialize};
 /// Execute| Execute a move
 /// Save| Save the game (local games only)
 /// ___
+/// 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
-pub enum Ask {
+pub enum Req {
     Nothing,
     Select,
     Move,
@@ -27,10 +28,10 @@ pub enum Ask {
     Save,
 }
 
-// Converts an ask into a string. Used by websocket client.
-impl ToString for Ask {
+// Converts a Do command into a string. Used by websocket client.
+impl ToString for Req {
     fn to_string(&self) -> String {
-        use Ask::*;
+        use Req::*;
 
         match self {
             Nothing => "".to_string(),

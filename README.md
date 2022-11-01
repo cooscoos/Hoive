@@ -22,7 +22,7 @@ The Hoive directory contains the game logic.
 ### Client
 
 
-- Local client is working again. Tidy it up
+- Local client is working again. Tidy it up. Lines 133-187 pmoore consolidated.
 - Tidy up chatsess and integrate its behaviour with pmoore, adding in pillbug
 - Write tests to probe local client's use of BoardActions and Ask:: enums.
 - Try get http server working as an option.

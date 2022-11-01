@@ -10,7 +10,7 @@ use server::models::{GameState, Winner};
 
 use hoive::draw;
 use hoive::game::{
-    actions::BoardAction, ask::Ask, board::Board, comps::Team, movestatus::MoveStatus,
+    actions::BoardAction, ask::Req, board::Board, comps::Team, movestatus::MoveStatus,
 };
 use hoive::maths::coord::Coord;
 
@@ -26,7 +26,7 @@ pub async fn take_turn<T: Coord>(
         let mut action = BoardAction::default();
         // Ask player to do action, provide them with response message, break loop if move was successful
 
-        while action.command != Ask::Execute {
+        while action.request != Req::Execute {
             local::action_prompts(&mut action, &mut board.clone(), active_team)?;
         }
 

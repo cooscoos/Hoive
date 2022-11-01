@@ -1,6 +1,11 @@
 /// Play games of Hoive locally (couch co-op)
 use hoive::game::{
-    actions::BoardAction, ask::Ask, board::Board, comps::Team, movestatus::MoveStatus, specials,
+    actions::BoardAction,
+    ask::Req,
+    board::Board,
+    comps::Team,
+    movestatus::MoveStatus,
+    specials,
 };
 use hoive::maths::coord::{Coord, Cube};
 use hoive::{draw, pmoore};
@@ -8,7 +13,7 @@ use hoive::{draw, pmoore};
 use rand::Rng;
 use std::{error::Error, io};
 
-/// Set up connection to Hoive server, set user id, and play some games
+/// Play games of Hoive on the same computer offline
 pub fn play_offline() -> Result<(), Box<dyn Error>> {
     // Initialise game board in cube co-ordinates
     let mut board = Board::<Cube>::default();
@@ -16,7 +21,7 @@ pub fn play_offline() -> Result<(), Box<dyn Error>> {
     // Say hello, tell players who goes first
     let first_team = pick_team();
 
-    // Loop game until someone wins
+    // Loop the game until someone wins
     loop {
         let active_team = match board.turns % 2 {
             0 => first_team,
@@ -24,11 +29,12 @@ pub fn play_offline() -> Result<(), Box<dyn Error>> {
         };
         println!("Team {}, it's your turn!", draw::team_string(active_team));
 
+        // BoardActions store information on the move a player wants to make
         let mut action = BoardAction::default();
 
-        // Loop until we're told to execute something
-        while action.command != Ask::Execute {
-            action_prompts(&mut action, &mut board.clone(), active_team)?;
+        // Ask the player to build up an action until there's a request to execute it
+        while action.request != Req::Execute {
+            action_prompts(&mut action, &board, active_team)?;
         }
 
         // Try and execute action we've been given
@@ -58,7 +64,7 @@ pub fn play_offline() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-/// Select random team to go first
+/// Select a random team (Black or White) to go first
 fn pick_team() -> Team {
     // Select a random team to go first
     let mut rand = rand::thread_rng();
@@ -71,40 +77,65 @@ fn pick_team() -> Team {
     first
 }
 
-/// Guides the player through formulating an action request from the board.
+/// Guides the player through building and then requesting an action to be taken on the board.
 pub fn action_prompts<T: Coord>(
     action: &mut BoardAction,
-    board: &mut Board<T>,
+    board: &Board<T>,
     active_team: Team,
 ) -> Result<(), Box<dyn Error>> {
+    
+    // Display guidance to the user and ask for their input
     println!("{}", action.message);
     let textin = get_usr_input();
 
-    // Commands that always need to be caught regardless of what we're doing
-    if textin.starts_with('x') {
-        // Abort whatever action is being built
-        *action = BoardAction::default();
-       
-        return Ok(());
-    } else if textin.is_empty() {
-        // Display the board
-        action.message = format!(
-            "{}\n\n-------------------- PLAYER HAND --------------------\n\n{}\n\n-----------------------------------------------------\n{}\n",
-            draw::show_board(board),
-            draw::list_chips(board, active_team),
-            action.message
-        );
-        return Ok(());
-    }
-
-    match action.command {
-        Ask::Select => pmoore::select_chip(action, &textin, &board, active_team)?,
-        Ask::Mosquito => pmoore::mosquito_prompts(action, &textin, board)?,
-        Ask::Pillbug => pmoore::pillbug_prompts(action, &textin)?,
-        Ask::Sumo => pmoore::sumo_prompts(action, &textin, &board)?,
-        Ask::SumoTo => pmoore::sumo_to_prompts(action, &textin)?,
-        Ask::Move => pmoore::make_move(action, &textin)?,
-        _ => {}
+    // Inputs like x, enter, quit should always be caught
+    match textin {
+        _ if textin.starts_with('x') => {
+            // Abort whatever action is being built
+            *action = BoardAction::default();
+        },
+        _ if textin.is_empty() => {
+            // User hit return/enter: display the board
+            action.message = format!(
+                "{}\n\n-------------------- PLAYER HAND --------------------\n\n{}\n\n-----------------------------------------------------\n{}\n",
+                draw::show_board(board),
+                draw::list_chips(board, active_team),
+                action.message
+            );
+        },
+        _ if textin == "w" => {
+            // Request skip turn
+            action.special = Some("skip".to_string());
+            action.request = Req::Execute;
+        }
+        _ if textin == "quit" => {
+            // Forfeit the game
+            action.special = Some("forfeit".to_string());
+            action.request = Req::Execute;
+        }
+        _ if textin == "h" => {
+            // Display help, abort action
+            *action = BoardAction::default();
+            println!("{}",pmoore::help_me());
+        }
+        #[cfg(feature = "debug")]
+        _ if textin == "s" => {
+            action.command = Req::Save;
+            action.message = "Enter a filename".to_string();
+          
+        }
+        _ => {
+            // Otherwise select an appropriate path based on request being made
+            match action.request {
+                Req::Select => pmoore::select_chip(action, &textin, &board, active_team)?,
+                Req::Mosquito => pmoore::mosquito_prompts(action, &textin, board)?,
+                Req::Pillbug => pmoore::pillbug_prompts(action, &textin)?,
+                Req::Sumo => pmoore::sumo_prompts(action, &textin, &board)?,
+                Req::SumoTo => pmoore::sumo_to_prompts(action, &textin)?,
+                Req::Move => pmoore::make_move(action, &textin)?,
+                _ => {}
+            }
+        },
     }
 
     Ok(())
