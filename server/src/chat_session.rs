@@ -463,7 +463,7 @@ fn in_game_parser(
                 chatsess.board = board;
 
                 // Go ahead
-                pmoore::select_chip(&mut chatsess.cmdlist, v[1], &chatsess.board, chatsess.team)?;
+                pmoore::select_chip_prompts(&mut chatsess.cmdlist, v[1], &chatsess.board, chatsess.team)?;
 
                 ctx.text(chatsess.cmdlist.message.to_owned());
                 ctx.text(chatsess.cmdlist.request.to_string());
@@ -478,7 +478,7 @@ fn in_game_parser(
             "/pillbug" if chatsess.active => {!unimplemented!()},
             "/moveto" if chatsess.active => {
                 // We're expect comma separated values to doubleheight
-                pmoore::make_move(&mut chatsess.cmdlist, v[1])?;
+                pmoore::move_chip_prompts(&mut chatsess.cmdlist, v[1])?;
                 ctx.text(chatsess.cmdlist.message.to_owned());
                 ctx.text(chatsess.cmdlist.request.to_string());
 

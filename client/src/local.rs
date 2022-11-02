@@ -37,7 +37,7 @@ pub fn play_offline() -> Result<(), Box<dyn Error>> {
             action_prompts(&mut action, &board, active_team)?;
         }
 
-        // Try and execute action we've been given
+        // Try and execute action the player has generated
         let move_status = try_execute_action(&mut board, action, active_team);
 
         // Refresh all mosquito names back to m1
@@ -127,12 +127,11 @@ pub fn action_prompts<T: Coord>(
         _ => {
             // Otherwise select an appropriate path based on request being made
             match action.request {
-                Req::Select => pmoore::select_chip(action, &textin, &board, active_team)?,
+                Req::Select => pmoore::select_chip_prompts(action, &textin, &board, active_team)?,
                 Req::Mosquito => pmoore::mosquito_prompts(action, &textin, board)?,
                 Req::Pillbug => pmoore::pillbug_prompts(action, &textin)?,
-                Req::Sumo => pmoore::sumo_prompts(action, &textin, &board)?,
-                Req::SumoTo => pmoore::sumo_to_prompts(action, &textin)?,
-                Req::Move => pmoore::make_move(action, &textin)?,
+                Req::Sumo => pmoore::sumo_victim_prompts(action, &textin, &board)?,
+                Req::Move | Req::SumoTo => pmoore::move_chip_prompts(action, &textin)?,
                 _ => {}
             }
         },
@@ -141,7 +140,8 @@ pub fn action_prompts<T: Coord>(
     Ok(())
 }
 
-/// Try and execute a player action using the board. This emulates how the server decodes and then does actions.
+/// Try and execute a player action using the board. Just like a Hoive game webserver: we decode actions, try them out on a board, and return how successful the move was.
+/// If the move is successful then the mut Board passed to this function is updated automatically.
 pub fn try_execute_action<T: Coord>(
     board: &mut Board<T>,
     action: BoardAction,

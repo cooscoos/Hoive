@@ -3,6 +3,7 @@ use super::comps::{convert_static_basic, Team};
 use crate::maths::coord::{Coord, DoubleHeight};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
+use crate::game::comps::Chip;
 
 /// Used to formulate requests for in-game actions from a Hoive server
 /// The fields of this struct are:
@@ -12,12 +13,12 @@ use std::collections::BTreeSet;
 /// - neighbours: a sorted list of immediate neighbouring chips
 /// - request: a request of what to do next: used to control UI logic
 /// - message: information which is displayed to the player
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct BoardAction {
     pub chip_name: String,
     pub rowcol: Option<DoubleHeight>,
     pub special: Option<String>,
-    pub neighbours: Option<BTreeSet<String>>,
+    pub neighbours: Option<BTreeSet<Chip>>, // got rid of deserialize to prevent lifetime error, otherwise need to use String, may impact http webserver later...
     pub request: Req,
     pub message: String,
 }
