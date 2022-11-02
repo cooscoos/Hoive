@@ -19,7 +19,6 @@ use std::collections::BTreeSet;
 
 use crate::{api};
 use crate::chat_server;
-use crate::models::GameState;
 use hoive::game::board::Board;
 use hoive::game::comps::Team;
 use rustrict::CensorStr;
@@ -515,12 +514,13 @@ fn in_game_parser(
 
                     let moo = game_state.winner;
 
+                    // The use of this thing is stupid. Improve later.
                     use crate::models::Winner;
                     let mut winner = Winner::default();
                     winner.happened(&moo);
 
                     
-                    // send a message to everyone. this will do for now
+                    // send a message to everyone saying who winner is
                     chatsess.addr.do_send(chat_server::Winner {
                         team: winner.team,
                         room_name: chatsess.game_room.to_owned(),
@@ -528,10 +528,23 @@ fn in_game_parser(
                         forfeit: winner.forfeit,
                     });
 
-                    // boot both players out
+                    // boot players. Need to figure out how to grab their usernames.
+                    chatsess.addr.do_send(chat_server::Join {
+                        id: game_state.user_1.unwrap().parse::<usize>().unwrap(),
+                        room_name: "main".to_string(),
+                        username: "player".to_string(),
+                    });
 
+                    chatsess.addr.do_send(chat_server::Join {
+                        id: game_state.user_2.unwrap().parse::<usize>().unwrap(),
+                        room_name: "main".to_string(),
+                        username: "player".to_string(),
+                    });
+
+                    // set the players as not in a game, remove precursor, reset all 
+                    
                     // delete the game from the db
-
+                    // needs implementing!
 
                 }
 
@@ -571,6 +584,10 @@ fn in_game_parser(
                 ctx.text(format!("//cmd upboard {}", game_state.board.unwrap()));
 
                 ctx.text("//cmd select");
+            },
+            "/main" => {
+                chatsess.game_room = "main".to_string();
+
             }
             _ => ctx.text(format!("Invalid command.")),
         }
