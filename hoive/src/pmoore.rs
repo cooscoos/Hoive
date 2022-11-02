@@ -69,6 +69,18 @@ pub fn decode_specials<T: Coord>(
     board.move_chip(chip_name, active_team, d_dest.mapto(board.coord))
 }
 
+/// Try skip turn
+pub fn skip_turn(action: &mut BoardAction) {
+    action.special = Some("skip".to_string());
+    action.request = Req::Execute;
+}
+
+/// Forfeit
+pub fn forfeit(action: &mut BoardAction) {
+    action.special = Some("forfeit".to_string());
+    action.request = Req::Execute;
+}
+
 /// Use input string (textin) to select a chip from a active_team. Update the action.
 pub fn select_chip_prompts<T: Coord>(
     action: &mut BoardAction,
@@ -273,7 +285,7 @@ pub fn sumo_victim_prompts<T: Coord>(
     action.special = Some(special);
     action.message = format!("Select a co-ordinate to sumo chip {} to. Input column then row, separated by a comma, e.g.: 0, 0. Hit x to abort the sumo.",chipteam_to_str(victim_chip.name, victim_chip.team));
 
-    action.request = Req::SumoTo;
+    action.request = Req::Move;
 
     Ok(())
 }

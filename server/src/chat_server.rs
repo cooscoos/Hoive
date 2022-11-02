@@ -1,6 +1,8 @@
 //! `ChatServer` is an actor. It maintains list of connection client session.
 //! And manages available rooms. Peers send messages to other peers in same
 //! room through `ChatServer`.
+//! 
+use hoive::game::comps::Team;
 
 use std::{
     collections::{HashMap, HashSet},
@@ -90,8 +92,20 @@ pub struct Join {
     pub username: String,
 
     /// Room name
-    pub name: String,
+    pub room_name: String,
 }
+
+/// A game has been won!
+#[derive(Message, Debug)]
+#[rtype(result = "()")]
+pub struct Winner {
+    pub team: Option<Team>, // the winning team's colour
+    pub room_name: String, // the room id
+    pub username: Option<String>, // the username of the winner
+    pub forfeit: bool, // whether it was a win because of a forfeit
+}
+
+
 
 /// `ChatServer` manages chat rooms and responsible for coordinating chat session.
 ///
@@ -210,7 +224,7 @@ impl Handler<Who> for ChatServer {
 impl Handler<NewGame> for ChatServer {
     type Result = ();
 
-    fn handle(&mut self, mut msg: NewGame, _: &mut Context<Self>) -> Self::Result {
+    fn handle(&mut self, msg: NewGame, _: &mut Context<Self>) -> Self::Result {
         // Convert gamestate into text
         let gamestate_txt = serde_json::to_string(&msg.game_state).unwrap();
 
@@ -226,7 +240,7 @@ impl Handler<NewGame> for ChatServer {
 impl Handler<UpdateGame> for ChatServer {
     type Result = ();
 
-    fn handle(&mut self, mut msg: UpdateGame, _: &mut Context<Self>) -> Self::Result {
+    fn handle(&mut self, msg: UpdateGame, _: &mut Context<Self>) -> Self::Result {
         // Convert gamestate into text
         let gamestate_txt = serde_json::to_string(&msg.game_state).unwrap();
 
@@ -243,7 +257,7 @@ impl Handler<UpdateGame> for ChatServer {
 impl Handler<NewName> for ChatServer {
     type Result = ();
 
-    fn handle(&mut self, mut msg: NewName, _: &mut Context<Self>) -> Self::Result {
+    fn handle(&mut self, msg: NewName, _: &mut Context<Self>) -> Self::Result {
         self.visitor_list.insert(msg.id, msg.name.to_owned());
 
         // Notify all users that the new person joined
@@ -307,7 +321,7 @@ impl Handler<Join> for ChatServer {
     type Result = ();
 
     fn handle(&mut self, msg: Join, _: &mut Context<Self>) {
-        let Join { id, name, username } = msg;
+        let Join { id, room_name: name, username } = msg;
         let mut rooms = Vec::new();
 
         // remove session from all rooms
@@ -328,5 +342,36 @@ impl Handler<Join> for ChatServer {
             .insert(id);
 
         self.send_message(&format!("{} joined this room.", &username), &name, id);
+    }
+}
+
+/// Tell all users in a game room who won and why
+impl Handler<Winner> for ChatServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: Winner, _: &mut Context<Self>) {
+        
+
+        let mut endgame_msg = "\x1b[33;1m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\x1b[0m\n\n".to_string();
+
+        // Create message send to all users saying who won and why
+        match msg.team {
+            Some(team)  => endgame_msg.push_str(&format!("{} team wins ", hoive::draw::team_string(team))),
+            None => endgame_msg.push_str("It's a draw!"),
+        };
+    
+        if msg.team.is_some() {
+            match msg.forfeit {
+                true => endgame_msg.push_str("because the other player forfeit!"),
+                false => endgame_msg.push_str("by destroying opponent's queen bee!"),
+            }
+            endgame_msg.push_str(&format!("\n\n\x1b[32;1m== {} wins the game == \x1b[0m\n\n", msg.username.unwrap()));
+        }
+
+        endgame_msg.push_str("\x1b[33;1m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\x1b[0m\n");
+
+        // Send the endgame message out to everyone in the gameroom
+        self.send_message(&endgame_msg, &msg.room_name, 0);
+
     }
 }

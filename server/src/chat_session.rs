@@ -11,6 +11,7 @@ use hoive::game::comps::{convert_static_basic, get_team_from_chip, Chip};
 use hoive::game::movestatus::MoveStatus;
 use hoive::maths::coord::Cube;
 use hoive::maths::coord::{Coord, DoubleHeight};
+use hoive::pmoore::forfeit;
 use hoive::{game, pmoore};
 
 
@@ -229,7 +230,7 @@ fn main_lobby_parser(
                             chatsess.game_room = session_id.to_owned();
                             chatsess.addr.do_send(chat_server::Join {
                                 id: chatsess.id,
-                                name: chatsess.game_room.clone(),
+                                room_name: chatsess.game_room.clone(),
                                 username: chatsess.name.as_ref().unwrap().to_owned(),
                             });
 
@@ -320,7 +321,7 @@ fn main_lobby_parser(
                 chatsess.game_room = session_id.to_owned();
                 chatsess.addr.do_send(chat_server::Join {
                     id: chatsess.id,
-                    name: chatsess.game_room.clone(),
+                    room_name: chatsess.game_room.clone(),
                     username: chatsess.name.as_ref().unwrap().to_owned(),
                 });
 
@@ -464,7 +465,6 @@ fn in_game_parser(
 
                 // Go ahead
                 pmoore::select_chip_prompts(&mut chatsess.cmdlist, v[1], &chatsess.board, chatsess.team)?;
-
                 ctx.text(chatsess.cmdlist.message.to_owned());
                 ctx.text(chatsess.cmdlist.request.to_string());
 
@@ -475,18 +475,65 @@ fn in_game_parser(
                 ctx.text(chatsess.cmdlist.message.to_owned());
                 ctx.text(chatsess.cmdlist.request.to_string());
             }
-            "/pillbug" if chatsess.active => {!unimplemented!()},
+            "/pillbug" if chatsess.active => {
+                pmoore::pillbug_prompts(&mut chatsess.cmdlist, v[1])?;
+                ctx.text(chatsess.cmdlist.message.to_owned());
+                ctx.text(chatsess.cmdlist.request.to_string());
+            },
+            "/sumo" if chatsess.active => {
+                pmoore::sumo_victim_prompts(&mut chatsess.cmdlist, v[1], &chatsess.board)?;
+                ctx.text(chatsess.cmdlist.message.to_owned());
+                ctx.text(chatsess.cmdlist.request.to_string());
+            },
             "/moveto" if chatsess.active => {
-                // We're expect comma separated values to doubleheight
                 pmoore::move_chip_prompts(&mut chatsess.cmdlist, v[1])?;
                 ctx.text(chatsess.cmdlist.message.to_owned());
                 ctx.text(chatsess.cmdlist.request.to_string());
-
-            }
+            },
+            "/skip" if chatsess.active => {
+                pmoore::skip_turn(&mut chatsess.cmdlist);
+                ctx.text(chatsess.cmdlist.message.to_owned());
+                ctx.text(chatsess.cmdlist.request.to_string());
+            },
+            "/forfeit" if chatsess.active => {
+                pmoore::forfeit(&mut chatsess.cmdlist);
+                ctx.text(chatsess.cmdlist.message.to_owned());
+                ctx.text(chatsess.cmdlist.request.to_string());
+            },
             "/execute" if chatsess.active => {
                 let board_action = &chatsess.cmdlist;
 
                 let result = api::make_action(board_action, &chatsess.game_room)?;
+
+
+                if result.is_winner() {
+                    ctx.text("The game is won!");
+                    // Grab the winning id off the game server
+                    // update all player gamestates
+                    let session_id = chatsess.game_room.to_owned();
+                    let game_state = api::get_game_state(&session_id)?;
+
+                    let moo = game_state.winner;
+
+                    use crate::models::Winner;
+                    let mut winner = Winner::default();
+                    winner.happened(&moo);
+
+                    
+                    // send a message to everyone. this will do for now
+                    chatsess.addr.do_send(chat_server::Winner {
+                        team: winner.team,
+                        room_name: chatsess.game_room.to_owned(),
+                        username: Some(winner.username),
+                        forfeit: winner.forfeit,
+                    });
+
+                    // boot both players out
+
+                    // delete the game from the db
+
+
+                }
 
                 match result.is_success() {
                     true => {
@@ -505,7 +552,8 @@ fn in_game_parser(
                         });
                     }
                     false => {
-                        // Get the client back into the select phase
+                        // Get the client back into the select phase, reset the cmdlist
+                        chatsess.cmdlist = BoardAction::default();
                         ctx.text("//cmd select");
                     }
                 }

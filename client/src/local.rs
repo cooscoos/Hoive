@@ -50,7 +50,7 @@ pub fn play_offline() -> Result<(), Box<dyn Error>> {
             println!("{}", draw::show_board(&board));
         }
 
-        if let MoveStatus::Win(_) = move_status {
+        if move_status.is_winner() {
             println!("Play again? y/n");
             let textin = get_usr_input();
             match textin {
@@ -105,13 +105,13 @@ pub fn action_prompts<T: Coord>(
         },
         _ if textin == "w" => {
             // Request skip turn
-            action.special = Some("skip".to_string());
-            action.request = Req::Execute;
+            pmoore::skip_turn(action);
+            // action.special = Some("skip".to_string());
+            // action.request = Req::Execute;
         }
         _ if textin == "quit" => {
             // Forfeit the game
-            action.special = Some("forfeit".to_string());
-            action.request = Req::Execute;
+            pmoore::forfeit(action);
         }
         _ if textin == "h" => {
             // Display help, abort action
@@ -131,7 +131,7 @@ pub fn action_prompts<T: Coord>(
                 Req::Mosquito => pmoore::mosquito_prompts(action, &textin, board)?,
                 Req::Pillbug => pmoore::pillbug_prompts(action, &textin)?,
                 Req::Sumo => pmoore::sumo_victim_prompts(action, &textin, &board)?,
-                Req::Move | Req::SumoTo => pmoore::move_chip_prompts(action, &textin)?,
+                Req::Move => pmoore::move_chip_prompts(action, &textin)?,
                 _ => {}
             }
         },

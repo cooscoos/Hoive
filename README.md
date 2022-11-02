@@ -19,13 +19,16 @@ The hoive directory contains the game logic.
 
 ### Client
 
-- Tidy up chatsess and integrate its behaviour with pmoore, adding in pillbug as per local client.
+- Tidy up chatsess and integrate its behaviour with pmoore, adding in skipturns and forfeit as per local
 - Write tests to probe local client's use of BoardActions and Req:: enums.
 - Try get http server working as an option. - have a flag / option for running an html server. Client advanced options.
 - Consider: Bevy, maybe with (egui)[https://github.com/emilk/egui] or Fyrox.
 
 
 ### Server
+
+- now boot players back into main and delete the game
+- winstring is probably gubbed for a natural win
 
 - Option to select an empty game to join based on its id in websocket version so can play with friends
 - Flesh out a help readme for websocket functions

@@ -43,6 +43,8 @@ use std::{
     time::Instant,
 };
 
+use self::schema::game_state::{self, last_user_id, user_2, user_1};
+
 /// Entry point for our websocket route
 /// Define the username, check it for profanity, register it on the db, and in the chat.
 /// Auto join the main lobby
@@ -298,9 +300,10 @@ fn do_movement(
     let event = Event::new_by_action(&action);
 
     match move_status {
-        MoveStatus::Success => execute_on_db(&mut board, game_state, event, session_id, conn),
-        _ => Ok(move_status),
-    }
+        MoveStatus::Success | MoveStatus::Win(_) => execute_on_db(&mut board, game_state, event, session_id, conn)?,
+        _ => {},
+    };
+    Ok(move_status)
 }
 
 /// Try and execute a chip special
@@ -329,9 +332,11 @@ fn do_special(
 
     // Execute it on the db if it was successful
     match move_status {
-        MoveStatus::Success => execute_on_db(&mut board, game_state, event, session_id, conn),
-        _ => Ok(move_status),
-    }
+        MoveStatus::Success | MoveStatus::Win(_) => execute_on_db(&mut board, game_state, event, session_id, conn)?,
+        _ => {},
+    };
+
+    Ok(move_status)
 }
 
 /// Execute a successful action on the db
@@ -341,7 +346,7 @@ fn execute_on_db<T: Coord>(
     event: Event,
     session_id: &str,
     conn: &mut SqliteConnection,
-) -> Result<MoveStatus, Error> {
+) -> Result<(), Error> {
     // Refresh all mosquito names back to m1 and update board on server
     specials::mosquito_desuck(board);
     let board_str = board.encode_spiral();
@@ -355,7 +360,7 @@ fn execute_on_db<T: Coord>(
     let res = db::update_game_state(session_id, &l_user, &board_str, &history, conn);
 
     match res {
-        Ok(_) => Ok(MoveStatus::Success),
+        Ok(_) => Ok(()),
         Err(err) => Err(error::ErrorInternalServerError(format!(
             "Problem updating gamestate because {err}"
         ))),
@@ -398,11 +403,20 @@ fn forfeit(
     session_id: &str,
     conn: &mut SqliteConnection,
 ) -> Result<MoveStatus, Error> {
-    // The winner is the team who didn't forfeit
-    let winner = !game_state.which_team()?;
+    // The winner is the team who didn't forfeit (the inactive team)
+    let winner_team = !game_state.which_team()?;
+    let winner_id = game_state.inactive_user()?.parse::<usize>().expect("Couldn't parse user id to usize");
+
+    // Get the winner's name
+    let winner_name = match db::get_user_name(&winner_id, conn) {
+        Ok(value) => value,
+        Err(err) => return Err(error::ErrorInternalServerError(format!(
+            "Problem getting winner name from user id because {err}"
+        ))),
+    };
 
     // Append F to to designate the reason for winning as a forfeit
-    let win_string = format!("{}F", winner.to_string());
+    let win_string = format!("{},{},F", winner_team.to_string(),winner_name);
 
     // Update the last user id to the person who forfeit (the active team)
     let l_user_id = game_state.which_user()?;
@@ -411,7 +425,10 @@ fn forfeit(
     let res = db::update_winner(session_id, &l_user_id, &win_string, conn);
 
     match res {
-        Ok(_) => Ok(MoveStatus::Success),
+        Ok(_) => {
+            Ok(MoveStatus::Win(Some(winner_team)))
+        }
+            ,
         Err(err) => Err(error::ErrorInternalServerError(format!(
             "Problem updating winner in gamestate because {err}"
         ))),

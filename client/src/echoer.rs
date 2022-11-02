@@ -146,32 +146,19 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                                         draw::show_board(&board),
                                         draw::list_chips(&board, my_team)
                                     );
-
-
                                 }
                                 "yourid" => {
                                     // Update player id
                                     my_id = v[2].to_owned();
                                 }
-                                "moveto" => {
-                                    // Get into a moveto state
-                                    precursor = "/moveto ".to_string();
-                                }
-                                "select" => {
-                                    precursor = "/select ".to_string(); // get into a select state
+                                "moveto" | "select" | "mosquito" | "pillbug" | "sumo" => {
+                                    // Echo the cmd back to the websocket server in response to show that the client is synced up
+                                    precursor = format!("/{cmd} ");
                                 }
                                 "execute" => {
                                     // Server says it's ready, so send an execute cmd to the server to do the move
                                     // This isn't really needed, could just execute within the server's code
                                     ws.send(ws::Message::Text("/execute".into())).await.unwrap();
-                                }
-                                "mosquito" => {
-                                    // can gather these up into a single statement by taking the input and adding to / later
-                                    precursor = "/mosquito ".to_string();
-                                }
-                                "pillbug" => {
-                                    precursor = "/pillbug ".to_string();
-
                                 }
                                 "upboard" => {
                                     // Update the board
@@ -244,9 +231,14 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                         _ if thing == "x" => {
                             // x is the universal letter to abort a move
                             ws.send(ws::Message::Text("/abort".into())).await.unwrap();
-                            precursor = "/select ".to_string();
-
-
+                        }
+                        _ if thing == "w" => {
+                            // w is the universal letter to skip turn
+                            ws.send(ws::Message::Text("/skip".into())).await.unwrap();
+                        }
+                        _ if thing == "quit" => {
+                            // quit is the universal to forfeit the game
+                            ws.send(ws::Message::Text("/forfeit".into())).await.unwrap();
                         }
                         _ if thing.starts_with("/t") || thing.starts_with("/tell") => {
                             // t and tell should always work

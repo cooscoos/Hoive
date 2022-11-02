@@ -23,7 +23,6 @@ pub enum Req {
     Mosquito,
     Pillbug,
     Sumo,
-    SumoTo,
     Execute,
     Save,
 }
@@ -40,7 +39,6 @@ impl ToString for Req {
             Mosquito => "//cmd mosquito".to_string(),
             Pillbug => "//cmd pillbug".to_string(),
             Sumo => "//cmd sumo".to_string(),
-            SumoTo => "//cmd sumoto".to_string(),
             Execute => "//cmd execute".to_string(),
             Save => "".to_string(), // unimplemented
         }
