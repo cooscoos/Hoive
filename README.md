@@ -3,9 +3,9 @@ The boardgame [Hive](https://en.wikipedia.org/wiki/Hive_(game)), written in Rust
 
 Choose one of the following directories and do `cargo run`:
 - **client**: play locally (couch co-op) or on a Hoive game web server, or;
-- **server**: host a Hoive game web server.
+- **server**: host a Hoive game web server using websocket (default) or http.
 
-The Hoive directory contains the game logic.
+The hoive directory contains the game logic.
 
 ![snapshot of the app](/misc/gameplay.png "snapshot of the app")
 
@@ -14,34 +14,28 @@ The Hoive directory contains the game logic.
 - install on virtual machine and list dependencies in readme
 - play test
 
-
-### Base game
-
+### Hoive base game
 - Spiders are bugged and can move <3 distance! It's because they can backtrack and leave the hive. Solve this another day.
 
 ### Client
 
-
-- Local client is working again. Tidy it up. Lines 133-187 pmoore consolidated.
-- Tidy up chatsess and integrate its behaviour with pmoore, adding in pillbug
-- Write tests to probe local client's use of BoardActions and Ask:: enums.
-- Try get http server working as an option.
-
-- Figure out how to turn (features on in submodules)[https://doc.rust-lang.org/cargo/reference/features.html] 
-- write some tests
-- "Check whether there are any games available on the server, if there are you have to join the empty one": can change later to play with friends based on uid, private flag in db
-
-Consider:
-- Bevy with (egui)[https://github.com/emilk/egui] or Fyrox.
+- Tidy up chatsess and integrate its behaviour with pmoore, adding in pillbug as per local client.
+- Write tests to probe local client's use of BoardActions and Req:: enums.
+- Try get http server working as an option. - have a flag / option for running an html server. Client advanced options.
+- Consider: Bevy, maybe with (egui)[https://github.com/emilk/egui] or Fyrox.
 
 
 ### Server
 
-- coming along nicely, need to work up the client side to handle websocket
-- (websockets)[https://github.com/actix/examples/tree/99d0afde28d14a0b641ac52de821d79fa244d50a/websockets/echo] are the solution to having a more responsive UI (and a chat feature) -- have websocket to notify when turn complete (then check db), same for ctrl+c or quitting. Need to rewrite client in (awc)[https://docs.rs/awc/latest/awc/] rather than reqwest because reqwest doesn't have websocket features.
-- have a flag / option for running an html server. Client advanced options.
+- Option to select an empty game to join based on its id in websocket version so can play with friends
+- Flesh out a help readme for websocket functions
+- have a flag / option for running an html server.
 
-- Complete writing tests for server/tests/api.rs --- need to figure out how to create sessions in tests.
+
+### Useful references
+- [websockets](https://github.com/actix/examples/tree/99d0afde28d14a0b641ac52de821d79fa244d50a/websockets/echo)
+- [http server games](https://github.com/vascokk/fullstack-rust/tree/main/server/src)
+- [actix and diesel](https://fdeantoni.medium.com/rust-actix-diesel-sqlite-d67a1c3ef0e)
 
 
 <!-- 
@@ -49,13 +43,7 @@ Things I wrote that no longer seem to apply:
 
 - beetle rendering on stringboard is weird
 - does pillbug sumoing need a bee check for either party? - I don't think this can ever happen given the other constraints
-
-
-#### Refs
-
- [good ref](https://fdeantoni.medium.com/rust-actix-diesel-sqlite-d67a1c3ef0e) [good ref 2](https://github.com/vascokk/fullstack-rust/tree/main/server/src) [half done, now finish]
-
-
+- Figure out how to turn (features on in submodules)[https://doc.rust-lang.org/cargo/reference/features.html] 
 
 ### "House rules"
 Then it might be "fun" to add new animals in a non-standard version of the game e.g.:
