@@ -27,7 +27,8 @@ The hoive directory contains the game logic.
 
 ### Server
 
-- now boot players back into main and delete the game
+- time to have a good tidy up of websock session and server
+- now boots players back into main and delete the game, but doing this is a bit jank
 - winstring is probably gubbed for a natural win
 
 - Option to select an empty game to join based on its id in websocket version so can play with friends

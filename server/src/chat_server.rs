@@ -368,10 +368,15 @@ impl Handler<Winner> for ChatServer {
             endgame_msg.push_str(&format!("\n\n\x1b[32;1m== {} wins the game == \x1b[0m\n\n", msg.username.unwrap()));
         }
 
-        endgame_msg.push_str("\x1b[33;1m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\x1b[0m\n");
+        endgame_msg.push_str("\x1b[33;1m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\x1b[0m\n\nRejoining main lobby...");
 
         // Send the endgame message out to everyone in the gameroom
         self.send_message(&endgame_msg, &msg.room_name, 0);
+
+        // reset their clients
+        self.send_message("//cmd goback", &msg.room_name, 0);
+
+
 
     }
 }

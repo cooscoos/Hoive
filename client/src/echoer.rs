@@ -79,8 +79,17 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
 
                             match cmd {
                                 "default" => {
-                                    // reset precursor
+                                    // reset precursor and other things
                                     precursor = String::new();
+                                }
+                                "goback" => {
+                                    // reset precursor and other things
+                                    precursor = String::new();
+                                    in_game = false;
+                                    my_team = Team::White;
+
+                                    // tell the chat server to bring the session back to main
+                                    ws.send(ws::Message::Text("/main".into())).await.unwrap();
                                 }
                                 "newgame" => {
                                     // grab the gamestate and decode it into a local copy of the board
