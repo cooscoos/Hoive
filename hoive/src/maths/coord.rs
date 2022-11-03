@@ -338,8 +338,6 @@ impl Coord for Cube {
 
         let x = ring_offset..(ring_offset + ring_index * 6);
 
-        println!("Search area is..{:?}", x);
-
         match x
             .into_iter()
             .map(|u| (u, self.mapfrom_spiral(Spiral { u, l: self.l })))

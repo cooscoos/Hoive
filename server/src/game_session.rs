@@ -17,7 +17,7 @@ use hoive::game::actions::BoardAction;
 use hoive::game::board::Board;
 use hoive::game::comps::Team;
 use hoive::maths::coord::Cube;
-use hoive::pmoore;
+use hoive::{pmoore, game};
 
 /// How often heartbeat pings are sent to server
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -453,6 +453,16 @@ fn in_game_parser(
                 let gamestate = api::get_game_state(&gamesess.room)?;
 
                 if gamesess.id.to_string() != gamestate.last_user_id.unwrap() {
+
+                    // This is the first thing a player does on their turn, so first, make sure the board is up to date
+                    let gamestate = api::get_game_state(&gamesess.room)?;
+
+                    // Save copy of the board to WsGameSession so that we don't have to keep querying the sqlite db
+                    let mut board = Board::<Cube>::default();
+                    board = board.decode_spiral(gamestate.board.unwrap());
+                    gamesess.board = board;
+
+                    // Set this player as active and ask them to select a chip to move
                     gamesess.active = true;
                     ctx.text("Select a tile from the board or your hand to move.");
                     ctx.text(hoive::game::ask::Req::Select.to_string())
@@ -460,65 +470,31 @@ fn in_game_parser(
                     ctx.text("It's not your turn");
                 }
             }
-            "/select" if gamesess.active => {
-                // Player is selecting a chip to move.
+            "/select" | "/mosquito" | "/pillbug" | "/sumo" | "/skip" | "/moveto" | "/forfeit" if gamesess.active => {
 
+                // All of these are standard commands covered by pmoore.
+                match v[0] {
+                    "/select" => pmoore::select_chip_prompts(
+                        &mut gamesess.action,
+                        v[1],
+                        &gamesess.board,
+                        gamesess.team,
+                    )?,
+                    "/mosquito" => pmoore::mosquito_prompts(&mut gamesess.action, v[1], &gamesess.board)?,
+                    "/pillbug" => pmoore::pillbug_prompts(&mut gamesess.action, v[1])?,
+                    "/sumo" => pmoore::sumo_victim_prompts(&mut gamesess.action, v[1], &gamesess.board)?,
+                    "/skip" => pmoore::skip_turn(&mut gamesess.action),
+                    "/moveto" => pmoore::move_chip_prompts(&mut gamesess.action, v[1])?,
+                    "/forfeit" =>pmoore::forfeit(&mut gamesess.action),
+                    _ => !unreachable!(),
+                }
 
-                // If we branch this into a separate fn we can tidy up /select etc into something resembling local
-
-                // This is the first thing a player does on their turn, so first, make sure the board is up to date
-                let gamestate = api::get_game_state(&gamesess.room)?;
-
-                // Save copy of the board to WsGameSession so that we don't have to keep querying the sqlite db
-                let mut board = Board::<Cube>::default();
-                board = board.decode_spiral(gamestate.board.unwrap());
-                gamesess.board = board;
-
-
-
-                // v[1] should be the chip the user wants to select: try and do this and return the response
-                pmoore::select_chip_prompts(
-                    &mut gamesess.action,
-                    v[1],
-                    &gamesess.board,
-                    gamesess.team,
-                )?;
-                ctx.text(gamesess.action.message.to_owned());
-                ctx.text(gamesess.action.request.to_string());
-            }
-            "/mosquito" if gamesess.active => {
-                // Parse the input into a victim for the mosquito
-                pmoore::mosquito_prompts(&mut gamesess.action, v[1], &gamesess.board)?;
-                ctx.text(gamesess.action.message.to_owned());
-                ctx.text(gamesess.action.request.to_string());
-            }
-            "/pillbug" if gamesess.active => {
-                pmoore::pillbug_prompts(&mut gamesess.action, v[1])?;
-                ctx.text(gamesess.action.message.to_owned());
-                ctx.text(gamesess.action.request.to_string());
-            }
-            "/sumo" if gamesess.active => {
-                pmoore::sumo_victim_prompts(&mut gamesess.action, v[1], &gamesess.board)?;
-                ctx.text(gamesess.action.message.to_owned());
-                ctx.text(gamesess.action.request.to_string());
-            }
-            "/moveto" if gamesess.active => {
-                pmoore::move_chip_prompts(&mut gamesess.action, v[1])?;
-                ctx.text(gamesess.action.message.to_owned());
-                ctx.text(gamesess.action.request.to_string());
-            }
-            "/skip" if gamesess.active => {
-                pmoore::skip_turn(&mut gamesess.action);
-                ctx.text(gamesess.action.message.to_owned());
-                ctx.text(gamesess.action.request.to_string());
-            }
-            "/forfeit" if gamesess.active => {
-                pmoore::forfeit(&mut gamesess.action);
                 ctx.text(gamesess.action.message.to_owned());
                 ctx.text(gamesess.action.request.to_string());
             }
             "/execute" if gamesess.active => {
                 let board_action = &gamesess.action;
+                ctx.text(format!("{:?}", board_action));
 
                 let result = api::make_action(board_action, &gamesess.room)?;
 
@@ -558,7 +534,6 @@ fn in_game_parser(
                     });
 
                     // set the players as not in a game, remove precursor, reset all
-
                     // delete the game from the db
                     // needs implementing!
                 }
@@ -572,6 +547,8 @@ fn in_game_parser(
                         // update all player gamestates
                         let session_id = gamesess.room.to_owned();
                         let game_state = api::get_game_state(&session_id)?;
+
+                        ctx.text(format!("Board in spiral is {:?}", game_state.board));
 
                         // Tell all players the gamestate has updated
                         gamesess.addr.do_send(game_server::UpdateGame {
@@ -596,17 +573,19 @@ fn in_game_parser(
                 // reset the client and local boards
                 let session_id = gamesess.room.to_owned();
                 let game_state = api::get_game_state(&session_id)?;
+
                 ctx.text(format!("//cmd upboard {}", game_state.board.unwrap()));
 
                 ctx.text("//cmd select");
             }
             "/main" => {
+                // Can't do it this way or the user can select main themselves. Could have a flag, or figure out how to dump both server/local clients back in main properly.
                 gamesess.room = "main".to_string();
             }
             _ => ctx.text(format!("Invalid command.")),
         }
     } else {
-        // Default is off in game
+        // Default chat is off in game. Need to use /t
         ctx.text("Normal chat is off during games. Use /tell or /t to talk to the other player");
     }
 

@@ -16,6 +16,7 @@ The hoive directory contains the game logic.
 
 ### Hoive base game
 - Spiders are bugged and can move <3 distance! It's because they can backtrack and leave the hive. Solve this another day.
+- Spiral decoder is buggered because always assumes hex (0,0) has something in it. Need to be able to support an empty hex (0,0). Add test for spiral decoder.
 
 ### Client
 
