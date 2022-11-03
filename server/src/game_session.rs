@@ -8,16 +8,18 @@ use actix::prelude::*;
 use actix_web_actors::ws;
 use actix_web_actors::ws::WebsocketContext;
 
+use hoive::game::movestatus::MoveStatus;
 use rustrict::CensorStr;
 
 use crate::api;
 use crate::game_server;
 
-use hoive::game::actions::BoardAction;
-use hoive::game::board::Board;
-use hoive::game::comps::Team;
+use hoive::game::{
+    actions::BoardAction,
+    board::Board,
+    comps::Team};
 use hoive::maths::coord::Cube;
-use hoive::{game, pmoore};
+use hoive::pmoore;
 
 /// How often heartbeat pings are sent to server
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -496,70 +498,63 @@ fn in_game_parser(
                 ctx.text(gamesess.action.request.to_string());
             }
             "/execute" if gamesess.active => {
-                let board_action = &gamesess.action;
-                ctx.text(format!("{:?}", board_action));
+                // Ask the server to execute the move and return the response
+                let result = api::make_action(&gamesess.action, &gamesess.room)?;
 
-                let result = api::make_action(board_action, &gamesess.room)?;
-
-                if result.is_winner() {
-                    ctx.text("The game is won!");
-                    // Grab the winning id off the game server
-                    // update all player gamestates
-                    let session_id = gamesess.room.to_owned();
-                    let game_state = api::get_game_state(&session_id)?;
-
-                    let moo = game_state.winner;
-
-                    // The use of this thing is stupid. Improve later.
-                    use crate::models::Winner;
-                    let mut winner = Winner::default();
-                    winner.happened(&moo);
-
-                    // send a message to everyone saying who winner is
-                    gamesess.addr.do_send(game_server::Winner {
-                        team: winner.team,
-                        room: gamesess.room.to_owned(),
-                        username: Some(winner.username),
-                        forfeit: winner.forfeit,
-                    });
-
-                    // boot players. Need to figure out how to grab their usernames.
-                    gamesess.addr.do_send(game_server::Join {
-                        id: game_state.user_1.unwrap().parse::<usize>().unwrap(),
-                        room: "main".to_string(),
-                        username: "player".to_string(),
-                    });
-
-                    gamesess.addr.do_send(game_server::Join {
-                        id: game_state.user_2.unwrap().parse::<usize>().unwrap(),
-                        room: "main".to_string(),
-                        username: "player".to_string(),
-                    });
-
-                    // set the players as not in a game, remove precursor, reset all
-                    // delete the game from the db
-                    // needs implementing!
-                }
-
-                match result.is_success() {
-                    true => {
-                        // no longer this player's turn
+                match result {
+                    MoveStatus::Success => {
+                        // No longer this player's turn
                         gamesess.active = false;
                         gamesess.action = BoardAction::default();
 
-                        // update all player gamestates
+                        // Update all players on what the new gamestate is
                         let session_id = gamesess.room.to_owned();
                         let game_state = api::get_game_state(&session_id)?;
 
+                        // For debug
                         ctx.text(format!("Board in spiral is {:?}", game_state.board));
 
-                        // Tell all players the gamestate has updated
                         gamesess.addr.do_send(game_server::UpdateGame {
                             session_id,
                             game_state,
                         });
                     }
-                    false => {
+                    MoveStatus::Win(_) => {
+                        // Grab the winner's id off the game server
+                        // update all player gamestates
+                        let session_id = gamesess.room.to_owned();
+                        let game_state = api::get_game_state(&session_id)?;
+
+                        let winner = game_state.get_winner().unwrap();
+                        // send a message to everyone saying who winner is
+                        gamesess.addr.do_send(game_server::Winner {
+                            team: winner.team,
+                            room: gamesess.room.to_owned(),
+                            username: Some(winner.username),
+                            forfeit: winner.forfeit,
+                        });
+
+                        // boot players. Need to figure out how to grab their usernames.
+                        let usr1 = game_state.clone().user_1.unwrap();
+                        let usr2 = game_state.user_2.unwrap();
+                 
+                        gamesess.addr.do_send(game_server::Join {
+                            id: usr1.parse::<usize>().unwrap(),
+                            room: "main".to_string(),
+                            username: "player".to_string(),
+                        });
+
+                        gamesess.addr.do_send(game_server::Join {
+                            id: usr2.parse::<usize>().unwrap(),
+                            room: "main".to_string(),
+                            username: "player".to_string(),
+                        });
+
+                        // set the players as not in a game, remove precursor, reset all
+                        // delete the game from the db
+                        // needs implementing!
+                    }
+                    _ => {
                         // Get the client back into the select phase, reset the cmdlist
                         gamesess.action = BoardAction::default();
                         ctx.text("//cmd select");
