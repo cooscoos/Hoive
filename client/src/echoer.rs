@@ -211,10 +211,8 @@ pub async fn echo_service() -> Result<(), Box<dyn Error>> {
                         // Default to sending /who
                         ws.send(ws::Message::Text("/who".into())).await.unwrap();
                     } else {
-
-                            let sendme = format!("{}{}", precursor, cmd);
-                           ws.send(ws::Message::Text(sendme.into())).await.unwrap();
-
+                        let sendme = format!("{}{}", precursor, cmd);
+                        ws.send(ws::Message::Text(sendme.into())).await.unwrap();
                     }
                 } else {
 

@@ -30,7 +30,8 @@ The hoive directory contains the game logic.
 
 ### Server
 
-- time to have a good tidy up of websock session and server
+- tidy select
+- time to have a good tidy up of websock session and server and "echoer"
 - now boots players back into main and delete the game, but doing this is a bit jank
 - winstring is probably gubbed for a natural win
 

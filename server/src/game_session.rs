@@ -1,85 +1,80 @@
+//! Module to create and define the behaviour of a client game session (WsGameSession)
+//!
 use std::error::Error;
-use std::process::Command;
 use std::time::{Duration, Instant};
 use std::usize;
 
 use actix::prelude::*;
 use actix_web_actors::ws;
 use actix_web_actors::ws::WebsocketContext;
-use hoive::game::actions::BoardAction;
-use hoive::game::comps::{convert_static_basic, get_team_from_chip, Chip};
-use hoive::game::movestatus::MoveStatus;
-use hoive::maths::coord::Cube;
-use hoive::maths::coord::{Coord, DoubleHeight};
-use hoive::pmoore::forfeit;
-use hoive::{game, pmoore};
 
-use std::collections::BTreeSet;
+use rustrict::CensorStr;
 
 use crate::api;
 use crate::game_server;
+
+use hoive::game::actions::BoardAction;
 use hoive::game::board::Board;
 use hoive::game::comps::Team;
-use rustrict::CensorStr;
+use hoive::maths::coord::Cube;
+use hoive::pmoore;
 
-/// How often heartbeat pings are sent
+/// How often heartbeat pings are sent to server
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 
 /// How long before lack of client response causes a timeout
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 
+/// WsGameSession: the websocket client session
 #[derive(Debug, Clone)]
-pub struct WsChatSession {
-    /// unique client session id (User id in db)
+pub struct WsGameSession {
+    /// unique client session id (mirrors the user_id in the sqlite db)
     pub id: usize,
 
-    /// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT),
-    /// otherwise we drop connection.
+    /// Client must ping once per CLIENT_TIMEOUT seconds, or get dropped
     pub hb: Instant,
 
-    /// joined game (game_state id in the db)
-    pub game_room: String,
+    /// Joined room, ("main" or game_state id, mirrored in sqlite db)
+    pub room: String,
 
-    /// peer name
+    /// Username
     pub name: Option<String>,
-
-    /// Whether the player is actively taking a turn
-    pub active: bool,
-
-    /// Command list for executing a move
-    pub cmdlist: BoardAction,
-
-    /// The current board
-    pub board: Board<Cube>,
-
-    /// What team the player is on
-    pub team: Team,
 
     /// Chat server
     pub addr: Addr<game_server::GameServer>,
+
+    /// In-game: Is it the client's turn in game?
+    pub active: bool,
+
+    /// In-game: Actions used to execute moves in Hoive games
+    pub action: BoardAction,
+
+    /// In-game: The current board
+    pub board: Board<Cube>,
+
+    /// In-game: What team the player is on
+    pub team: Team,
 }
 
-impl WsChatSession {
-    /// helper method that sends ping to client every 5 seconds (HEARTBEAT_INTERVAL).
-    ///
-    /// also this method checks heartbeats from client
+impl WsGameSession {
+    /// Send ping to client every HEARTBEAT_INTERVAL, and check heartbeat from client
     fn hb(&self, ctx: &mut ws::WebsocketContext<Self>) {
         ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
-            // check client heartbeats
+            // Check client heartbeats
             if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
-                // heartbeat timed out
+                // Heartbeat timed out
                 println!("Websocket Client heartbeat failed, disconnecting!");
 
-                // notify chat server
+                // Notify chat server
                 act.addr.do_send(game_server::Disconnect {
                     id: act.id,
                     name: act.name.clone(),
                 });
 
-                // stop actor
+                // Stop actor
                 ctx.stop();
 
-                // don't try to send a ping
+                // Don't try to send a ping
                 return;
             }
 
@@ -88,28 +83,28 @@ impl WsChatSession {
     }
 }
 
-impl Actor for WsChatSession {
+impl Actor for WsGameSession {
     type Context = ws::WebsocketContext<Self>;
 
-    /// Method is called on actor start.
-    /// We register ws session with ChatServer
+    /// On actor start: register websocket session with GameServer
     fn started(&mut self, ctx: &mut Self::Context) {
-        // we'll start heartbeat process on session start.
+        // Start heartbeat process
         self.hb(ctx);
 
-        // Default name is just your randomly generated id
-        let namey = self.id.to_string();
+        // For now, default username is the same as the randomly generated user id
+        // The session user will be asked to change it before they can do anything.
+        let def_name = self.id.to_string();
 
-        // register self in chat server. `AsyncContext::wait` register
+        // Register self in chat server. `AsyncContext::wait` register
         // future within context, but context waits until this future resolves
         // before processing any other events.
-        // HttpContext::state() is instance of WsChatSessionState, state is shared
-        // across all routes within application
+        // HttpContext::state() is instance of WsGameSessionState, state is shared
+        // across all routes within application.
         let addr = ctx.address();
         self.addr
             .send(game_server::Connect {
                 addr: addr.recipient(),
-                name: Some(namey),
+                name: Some(def_name),
             })
             .into_actor(self)
             .then(|res, act, ctx| {
@@ -123,8 +118,9 @@ impl Actor for WsChatSession {
             .wait(ctx);
     }
 
+    /// On actor stop: disconnect session.
     fn stopping(&mut self, _: &mut Self::Context) -> Running {
-        // notify chat server
+        // Notify chat server
         self.addr.do_send(game_server::Disconnect {
             id: self.id,
             name: self.name.clone(),
@@ -133,8 +129,8 @@ impl Actor for WsChatSession {
     }
 }
 
-/// Handle messages from chat server, we simply send it to peer websocket
-impl Handler<game_server::Message> for WsChatSession {
+/// Handle messages from the chat server: simply send them to the peer websocket.
+impl Handler<game_server::Message> for WsGameSession {
     type Result = ();
 
     fn handle(&mut self, msg: game_server::Message, ctx: &mut Self::Context) {
@@ -142,9 +138,10 @@ impl Handler<game_server::Message> for WsChatSession {
     }
 }
 
-/// WebSocket message handler
-impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
+/// WebSocket message handler: how is text received from a client handled by WsGameSession?
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsGameSession {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
+        // Get the content of the msg
         let msg = match msg {
             Err(_) => {
                 ctx.stop();
@@ -153,17 +150,21 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
             Ok(msg) => msg,
         };
 
-        log::info!("WEBSOCKET MESSAGE: {msg:?}");
+        //log::info!("WEBSOCKET MESSAGE: {msg:?}");
+
         match msg {
             ws::Message::Ping(msg) => {
+                // If ping, send back pong
                 self.hb = Instant::now();
                 ctx.pong(&msg);
             }
             ws::Message::Pong(_) => {
+                // If pong, reset the clock
                 self.hb = Instant::now();
             }
             ws::Message::Text(text) => {
-                let result = match self.game_room == "main" {
+                // Response to other messages depends on whether client is in main lobby or in-game
+                let result = match self.room == "main" {
                     true => main_lobby_parser(self, text.to_string(), ctx),
                     false => in_game_parser(self, text.to_string(), ctx),
                 };
@@ -173,6 +174,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                     Err(err) => ctx.text(format!("Error: {err}")),
                 }
             }
+            // Handle other possible inputs, like binary, requests to close sessions.
             ws::Message::Binary(_) => println!("Unexpected binary"),
             ws::Message::Close(reason) => {
                 ctx.close(reason);
@@ -186,73 +188,33 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
     }
 }
 
-/// Parses user inputs when they're typed in the main lobby
+/// Parse user inputs when they're typed in the main lobby
 fn main_lobby_parser(
-    chatsess: &mut WsChatSession,
+    gamesess: &mut WsGameSession,
     text: String,
-    ctx: &mut WebsocketContext<WsChatSession>,
+    ctx: &mut WebsocketContext<WsGameSession>,
 ) -> Result<(), Box<dyn Error>> {
-    // Don't do anything if user hits enter. This should be caught and prevented at the client end anyway.
-    if text == "\n" {
+    //  This should be caught by the user's local client: but don't do anything if user has hit sent blank message.
+    // if text == "\n" {
+    //     return Ok(());
+    // }
+
+    // Trim the whitespace from the input message
+    let m = text.trim();
+
+    // Don't let user do anything if they haven't got a username and aren't trying to define one
+    if gamesess.name.is_none() && !m.starts_with("/name") {
+        ctx.text("Define a username before chatting. Type your username below:");
         return Ok(());
     }
 
-    let m = text.trim();
-    // we check for /sss type of messages
+    // Anything that begins with a / is a command.
     if m.starts_with('/') {
         let v: Vec<&str> = m.splitn(2, ' ').collect();
-
-        if chatsess.name.is_none() && v[0] != "/name" {
-            ctx.text("Define a username before chatting. Type your username below:");
-            return Ok(());
-        }
-
         match v[0] {
-            "/join" => {
-                if v.len() == 2 {
-                    // Check the db to see if there's a session with this id
-                    //let session_id = v[1].to_owned();
-                    // no function to do this yet, create one later
-                    ctx.text("Joining specific games is unimplemented. Just type /join");
-                } else {
-                    // Join an empty game if there is one available
-                    match api::find()? {
-                        Some(game_state) => {
-                            // Join the game
-                            let session_id = game_state.id.to_owned();
-
-                            // Join on the db
-                            api::join(&session_id, &chatsess.id)?;
-
-                            // Join in the chat
-                            chatsess.game_room = session_id.to_owned();
-                            chatsess.addr.do_send(game_server::Join {
-                                id: chatsess.id,
-                                room: chatsess.game_room.clone(),
-                                username: chatsess.name.as_ref().unwrap().to_owned(),
-                            });
-
-                            // Set player to team white and notify the client
-                            chatsess.team = Team::White;
-                            ctx.text("//cmd team W");
-
-                            ctx.text(format!("You joined game room {}", session_id));
-
-                            let game_state = api::get_game_state(&session_id)?;
-
-                            // send a new game command to everyone in the game room
-                            // and define the team colours
-                            chatsess.addr.do_send(game_server::NewGame {
-                                session_id,
-                                game_state,
-                            });
-                        }
-                        None => ctx.text("No empty games available. Try /create one!"),
-                    }
-                }
-            }
             "/name" => {
-                if let Some(name) = &chatsess.name {
+                // Let the user define their username
+                if let Some(name) = &gamesess.name {
                     ctx.text(format!("You already have the name {name}!"));
                 } else if v.len() != 2 {
                     ctx.text("You need to input a name!");
@@ -262,21 +224,22 @@ fn main_lobby_parser(
                 } else {
                     // Try register the username on the game db.
                     let user_name = v[1];
-                    match api::register_user(user_name, chatsess.id)? {
+                    match api::register_user(user_name, gamesess.id)? {
                         false => ctx.text("Username already exists. Pick another."),
                         true => {
                             // Assign username in the chat session
-                            chatsess.name = Some(user_name.to_owned());
+                            gamesess.name = Some(user_name.to_owned());
 
                             // Update the chat session's visitor list
-                            chatsess.addr.do_send(game_server::NewName {
+                            gamesess.addr.do_send(game_server::NewName {
                                 name: user_name.to_owned(),
-                                id: chatsess.id,
+                                id: gamesess.id,
                             });
 
-                            ctx.text(format!("//cmd yourid {}", chatsess.id));
+                            // Notify the player's local client what their user id is
+                            ctx.text(format!("//cmd yourid {}", gamesess.id));
                             ctx.text(format!("Welcome {}. Begin typing to chat.", user_name));
-                            // reset the client's precursor
+                            // Reset the local client
                             ctx.text("//cmd default");
                         }
                     }
@@ -293,15 +256,15 @@ fn main_lobby_parser(
                 // Display info to user on themselves
                 ctx.text(format!(
                     "Your user id is: {}, and username is {:?}. You're in game_session: {}",
-                    chatsess.id, chatsess.name, chatsess.game_room
+                    gamesess.id, gamesess.name, gamesess.room
                 ));
             }
             "/who" => {
                 // Display who is online
-                chatsess
+                gamesess
                     .addr
                     .send(game_server::Who {})
-                    .into_actor(chatsess)
+                    .into_actor(gamesess)
                     .then(|res, _, ctx| {
                         match res {
                             Ok(res) => ctx.text(res),
@@ -313,32 +276,76 @@ fn main_lobby_parser(
             }
             "/create" => {
                 // Create a new game on the db, register creator as user_1
-                let session_id = api::new_game(&chatsess.id)?;
+                let session_id = api::new_game(&gamesess.id)?;
 
                 // Join the game session's chat room
-                chatsess.game_room = session_id.to_owned();
-                chatsess.addr.do_send(game_server::Join {
-                    id: chatsess.id,
-                    room: chatsess.game_room.clone(),
-                    username: chatsess.name.as_ref().unwrap().to_owned(),
+                gamesess.room = session_id.to_owned();
+                gamesess.addr.do_send(game_server::Join {
+                    id: gamesess.id,
+                    room: gamesess.room.clone(),
+                    username: gamesess.name.as_ref().unwrap().to_owned(),
                 });
 
                 // Set player to team black and notify the client
-                chatsess.team = Team::Black;
+                gamesess.team = Team::Black;
                 ctx.text("//cmd team B");
 
-                ctx.text(format!("You joined game room as team black {}", session_id));
+                ctx.text(format!(
+                    "You have created and joined game room {}.\nNow waiting for an opponent...",
+                    session_id
+                ));
+            }
+            "/join" => {
+                if v.len() == 2 {
+                    // Check the db to see if there's a session with this id
+                    // let session_id = v[1].to_owned();
+                    // no function to do this yet, create one later
+                    ctx.text("Joining specific games is unimplemented. Just type /join to see if any are available.");
+                } else {
+                    // Join an empty game if one is available
+                    match api::find()? {
+                        Some(game_state) => {
+                            // The game_state's id will define the game room name
+                            let session_id = game_state.id.to_owned();
+
+                            // Join on the sqlite db
+                            api::join(&session_id, &gamesess.id)?;
+
+                            // Join in the chat
+                            gamesess.room = session_id.to_owned();
+                            gamesess.addr.do_send(game_server::Join {
+                                id: gamesess.id,
+                                room: gamesess.room.clone(),
+                                username: gamesess.name.as_ref().unwrap().to_owned(),
+                            });
+
+                            // Set joining player to team white and notify their local client
+                            gamesess.team = Team::White;
+                            ctx.text("//cmd team W");
+                            ctx.text(format!("You joined game room {}", session_id));
+
+                            // Get updated GameState and notify both players of what it is
+                            let game_state = api::get_game_state(&session_id)?;
+                            gamesess.addr.do_send(game_server::NewGame {
+                                session_id,
+                                game_state,
+                            });
+                        }
+                        None => ctx.text("No empty games available. Try /create one!"),
+                    }
+                }
             }
             _ => ctx.text(format!("!!! unknown command: {m:?}")),
         }
     } else {
-        let msg = format!("\x1b[36;2m{}:\x1b[0m {m}", &chatsess.name.as_ref().unwrap());
+        // Anything that doesn't start with a / is a chat msg
+        let msg = format!("\x1b[36;2m{}:\x1b[0m {m}", &gamesess.name.as_ref().unwrap());
 
-        // send message to chat server
-        chatsess.addr.do_send(game_server::ClientMessage {
-            id: chatsess.id,
+        // Send msg to everyone in the same room.
+        gamesess.addr.do_send(game_server::ClientMessage {
+            id: gamesess.id,
             msg,
-            room: chatsess.game_room.clone(),
+            room: gamesess.room.clone(),
         })
     }
 
@@ -347,17 +354,18 @@ fn main_lobby_parser(
 
 /// Parses user inputs when they're typed in game
 fn in_game_parser(
-    chatsess: &mut WsChatSession,
+    gamesess: &mut WsGameSession,
     text: String,
-    ctx: &mut WebsocketContext<WsChatSession>,
+    ctx: &mut WebsocketContext<WsGameSession>,
 ) -> Result<(), Box<dyn Error>> {
-    // Don't do anything if user hits enter. This should be caught and prevented at the client end anyway.
+
+    //  This should be caught by the user's local client: but don't do anything if user has hit sent blank message.
     // if text == "\n" {
     //     return Ok(());
     // }
-
+    
     let m = text.trim();
-    // we check for /sss type of messages
+    // Anything that begins with a / is a command
     if m.starts_with('/') {
         let v: Vec<&str> = m.splitn(2, ' ').collect();
         match v[0] {
@@ -394,22 +402,22 @@ fn in_game_parser(
             //     }
             // }
             // "/leave" => {
-            // create an api to remove self from session, lose game, join main etc.
+            // create an api to remove self from session, lose game, join main etc. Mimic join above.
             // api::remove
             // }
             "/id" => {
                 // Display info to user on themselves
                 ctx.text(format!(
                     "Your user id is: {}, and username is {:?}. You're in game_session: {}",
-                    chatsess.id, chatsess.name, chatsess.game_room
+                    gamesess.id, gamesess.name, gamesess.room
                 ));
             }
             "/who" => {
                 // Display who is online
-                chatsess
+                gamesess
                     .addr
                     .send(game_server::Who {})
-                    .into_actor(chatsess)
+                    .into_actor(gamesess)
                     .then(|res, _, ctx| {
                         match res {
                             Ok(res) => ctx.text(res),
@@ -420,98 +428,105 @@ fn in_game_parser(
                     .wait(ctx);
             }
             "/t" | "/tell" => {
+                // User wants to send msg to opponent
                 let words = v[1];
                 let msg = format!(
                     "\x1b[36;2m{}:\x1b[0m {words}",
-                    &chatsess.name.as_ref().unwrap()
+                    &gamesess.name.as_ref().unwrap()
                 );
-                // send message to chat server
-                chatsess.addr.do_send(game_server::ClientMessage {
-                    id: chatsess.id,
+                // Send msg to opponent
+                gamesess.addr.do_send(game_server::ClientMessage {
+                    id: gamesess.id,
                     msg,
-                    room: chatsess.game_room.clone(),
+                    room: gamesess.room.clone(),
                 })
             }
             "/help" => {
+                // User wants help on game controls
                 ctx.text(pmoore::help_me());
             }
             "/xylophone" => {
                 ctx.text(pmoore::xylophone());
             }
-            "/quit" => {}
             "/play" => {
                 // Get the gamestate from the db and make sure it's this player's turn
-                let gamestate = api::get_game_state(&chatsess.game_room)?;
+                let gamestate = api::get_game_state(&gamesess.room)?;
 
-                if chatsess.id.to_string() != gamestate.last_user_id.unwrap() {
-                    chatsess.active = true;
+                if gamesess.id.to_string() != gamestate.last_user_id.unwrap() {
+                    gamesess.active = true;
                     ctx.text("Select a tile from the board or your hand to move.");
                     ctx.text(hoive::game::ask::Req::Select.to_string())
                 } else {
                     ctx.text("It's not your turn");
                 }
             }
-            "/select" if chatsess.active => {
-                //make sure the board is up to date
-                let gamestate = api::get_game_state(&chatsess.game_room)?;
+            "/select" if gamesess.active => {
+                // Player is selecting a chip to move.
 
-                // Save the board to chatsess to stop us from having to query db so much
-                // This is a snazzier way of doing what you've been doing with Board::new this whole time
+
+                // If we branch this into a separate fn we can tidy up /select etc into something resembling local
+
+                // This is the first thing a player does on their turn, so first, make sure the board is up to date
+                let gamestate = api::get_game_state(&gamesess.room)?;
+
+                // Save copy of the board to WsGameSession so that we don't have to keep querying the sqlite db
                 let mut board = Board::<Cube>::default();
                 board = board.decode_spiral(gamestate.board.unwrap());
-                chatsess.board = board;
+                gamesess.board = board;
 
-                // Go ahead
+
+
+                // v[1] should be the chip the user wants to select: try and do this and return the response
                 pmoore::select_chip_prompts(
-                    &mut chatsess.cmdlist,
+                    &mut gamesess.action,
                     v[1],
-                    &chatsess.board,
-                    chatsess.team,
+                    &gamesess.board,
+                    gamesess.team,
                 )?;
-                ctx.text(chatsess.cmdlist.message.to_owned());
-                ctx.text(chatsess.cmdlist.request.to_string());
+                ctx.text(gamesess.action.message.to_owned());
+                ctx.text(gamesess.action.request.to_string());
             }
-            "/mosquito" if chatsess.active => {
+            "/mosquito" if gamesess.active => {
                 // Parse the input into a victim for the mosquito
-                pmoore::mosquito_prompts(&mut chatsess.cmdlist, v[1], &chatsess.board)?;
-                ctx.text(chatsess.cmdlist.message.to_owned());
-                ctx.text(chatsess.cmdlist.request.to_string());
+                pmoore::mosquito_prompts(&mut gamesess.action, v[1], &gamesess.board)?;
+                ctx.text(gamesess.action.message.to_owned());
+                ctx.text(gamesess.action.request.to_string());
             }
-            "/pillbug" if chatsess.active => {
-                pmoore::pillbug_prompts(&mut chatsess.cmdlist, v[1])?;
-                ctx.text(chatsess.cmdlist.message.to_owned());
-                ctx.text(chatsess.cmdlist.request.to_string());
+            "/pillbug" if gamesess.active => {
+                pmoore::pillbug_prompts(&mut gamesess.action, v[1])?;
+                ctx.text(gamesess.action.message.to_owned());
+                ctx.text(gamesess.action.request.to_string());
             }
-            "/sumo" if chatsess.active => {
-                pmoore::sumo_victim_prompts(&mut chatsess.cmdlist, v[1], &chatsess.board)?;
-                ctx.text(chatsess.cmdlist.message.to_owned());
-                ctx.text(chatsess.cmdlist.request.to_string());
+            "/sumo" if gamesess.active => {
+                pmoore::sumo_victim_prompts(&mut gamesess.action, v[1], &gamesess.board)?;
+                ctx.text(gamesess.action.message.to_owned());
+                ctx.text(gamesess.action.request.to_string());
             }
-            "/moveto" if chatsess.active => {
-                pmoore::move_chip_prompts(&mut chatsess.cmdlist, v[1])?;
-                ctx.text(chatsess.cmdlist.message.to_owned());
-                ctx.text(chatsess.cmdlist.request.to_string());
+            "/moveto" if gamesess.active => {
+                pmoore::move_chip_prompts(&mut gamesess.action, v[1])?;
+                ctx.text(gamesess.action.message.to_owned());
+                ctx.text(gamesess.action.request.to_string());
             }
-            "/skip" if chatsess.active => {
-                pmoore::skip_turn(&mut chatsess.cmdlist);
-                ctx.text(chatsess.cmdlist.message.to_owned());
-                ctx.text(chatsess.cmdlist.request.to_string());
+            "/skip" if gamesess.active => {
+                pmoore::skip_turn(&mut gamesess.action);
+                ctx.text(gamesess.action.message.to_owned());
+                ctx.text(gamesess.action.request.to_string());
             }
-            "/forfeit" if chatsess.active => {
-                pmoore::forfeit(&mut chatsess.cmdlist);
-                ctx.text(chatsess.cmdlist.message.to_owned());
-                ctx.text(chatsess.cmdlist.request.to_string());
+            "/forfeit" if gamesess.active => {
+                pmoore::forfeit(&mut gamesess.action);
+                ctx.text(gamesess.action.message.to_owned());
+                ctx.text(gamesess.action.request.to_string());
             }
-            "/execute" if chatsess.active => {
-                let board_action = &chatsess.cmdlist;
+            "/execute" if gamesess.active => {
+                let board_action = &gamesess.action;
 
-                let result = api::make_action(board_action, &chatsess.game_room)?;
+                let result = api::make_action(board_action, &gamesess.room)?;
 
                 if result.is_winner() {
                     ctx.text("The game is won!");
                     // Grab the winning id off the game server
                     // update all player gamestates
-                    let session_id = chatsess.game_room.to_owned();
+                    let session_id = gamesess.room.to_owned();
                     let game_state = api::get_game_state(&session_id)?;
 
                     let moo = game_state.winner;
@@ -522,21 +537,21 @@ fn in_game_parser(
                     winner.happened(&moo);
 
                     // send a message to everyone saying who winner is
-                    chatsess.addr.do_send(game_server::Winner {
+                    gamesess.addr.do_send(game_server::Winner {
                         team: winner.team,
-                        room: chatsess.game_room.to_owned(),
+                        room: gamesess.room.to_owned(),
                         username: Some(winner.username),
                         forfeit: winner.forfeit,
                     });
 
                     // boot players. Need to figure out how to grab their usernames.
-                    chatsess.addr.do_send(game_server::Join {
+                    gamesess.addr.do_send(game_server::Join {
                         id: game_state.user_1.unwrap().parse::<usize>().unwrap(),
                         room: "main".to_string(),
                         username: "player".to_string(),
                     });
 
-                    chatsess.addr.do_send(game_server::Join {
+                    gamesess.addr.do_send(game_server::Join {
                         id: game_state.user_2.unwrap().parse::<usize>().unwrap(),
                         room: "main".to_string(),
                         username: "player".to_string(),
@@ -551,42 +566,42 @@ fn in_game_parser(
                 match result.is_success() {
                     true => {
                         // no longer this player's turn
-                        chatsess.active = false;
-                        chatsess.cmdlist = BoardAction::default();
+                        gamesess.active = false;
+                        gamesess.action = BoardAction::default();
 
                         // update all player gamestates
-                        let session_id = chatsess.game_room.to_owned();
+                        let session_id = gamesess.room.to_owned();
                         let game_state = api::get_game_state(&session_id)?;
 
                         // Tell all players the gamestate has updated
-                        chatsess.addr.do_send(game_server::UpdateGame {
+                        gamesess.addr.do_send(game_server::UpdateGame {
                             session_id,
                             game_state,
                         });
                     }
                     false => {
                         // Get the client back into the select phase, reset the cmdlist
-                        chatsess.cmdlist = BoardAction::default();
+                        gamesess.action = BoardAction::default();
                         ctx.text("//cmd select");
                     }
                 }
 
                 ctx.text(result.to_string());
             }
-            "/abort" if chatsess.active => {
+            "/abort" if gamesess.active => {
                 // Abort the move go back into select phase
                 ctx.text("Aborting move. Select a chip.");
-                chatsess.cmdlist = BoardAction::default();
+                gamesess.action = BoardAction::default();
 
                 // reset the client and local boards
-                let session_id = chatsess.game_room.to_owned();
+                let session_id = gamesess.room.to_owned();
                 let game_state = api::get_game_state(&session_id)?;
                 ctx.text(format!("//cmd upboard {}", game_state.board.unwrap()));
 
                 ctx.text("//cmd select");
             }
             "/main" => {
-                chatsess.game_room = "main".to_string();
+                gamesess.room = "main".to_string();
             }
             _ => ctx.text(format!("Invalid command.")),
         }

@@ -60,13 +60,13 @@ pub async fn chat_route(
 
     // start the websocket
     ws::start(
-        game_session::WsChatSession {
+        game_session::WsGameSession {
             id: 0,
             hb: Instant::now(),
-            game_room: "main".to_owned(),
+            room: "main".to_owned(),
             name: None,
             active: false,
-            cmdlist: BoardAction::default(),
+            action: BoardAction::default(),
             board: Board::<Cube>::default(),
             team: Team::Black,
             addr: srv.get_ref().clone(),
