@@ -1,11 +1,6 @@
 /// Play games of Hoive locally (couch co-op)
 use hoive::game::{
-    actions::BoardAction,
-    ask::Req,
-    board::Board,
-    comps::Team,
-    movestatus::MoveStatus,
-    specials,
+    actions::BoardAction, ask::Req, board::Board, comps::Team, movestatus::MoveStatus, specials,
 };
 use hoive::maths::coord::{Coord, Cube};
 use hoive::{draw, pmoore};
@@ -83,7 +78,6 @@ pub fn action_prompts<T: Coord>(
     board: &Board<T>,
     active_team: Team,
 ) -> Result<(), Box<dyn Error>> {
-    
     // Display guidance to the user and ask for their input
     println!("{}", action.message);
     let textin = get_usr_input();
@@ -93,7 +87,7 @@ pub fn action_prompts<T: Coord>(
         _ if textin.starts_with('x') => {
             // Abort whatever action is being built
             *action = BoardAction::default();
-        },
+        }
         _ if textin.is_empty() => {
             // User hit return/enter: display the board
             action.message = format!(
@@ -102,7 +96,7 @@ pub fn action_prompts<T: Coord>(
                 draw::list_chips(board, active_team),
                 action.message
             );
-        },
+        }
         _ if textin == "w" => {
             // Request skip turn
             pmoore::skip_turn(action);
@@ -116,13 +110,12 @@ pub fn action_prompts<T: Coord>(
         _ if textin == "h" => {
             // Display help, abort action
             *action = BoardAction::default();
-            println!("{}",pmoore::help_me());
+            println!("{}", pmoore::help_me());
         }
         #[cfg(feature = "debug")]
         _ if textin == "s" => {
             action.command = Req::Save;
             action.message = "Enter a filename".to_string();
-          
         }
         _ => {
             // Otherwise select an appropriate path based on request being made
@@ -134,7 +127,7 @@ pub fn action_prompts<T: Coord>(
                 Req::Move => pmoore::move_chip_prompts(action, &textin)?,
                 _ => {}
             }
-        },
+        }
     }
 
     Ok(())

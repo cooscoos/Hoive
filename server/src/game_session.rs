@@ -17,7 +17,7 @@ use hoive::game::actions::BoardAction;
 use hoive::game::board::Board;
 use hoive::game::comps::Team;
 use hoive::maths::coord::Cube;
-use hoive::{pmoore, game};
+use hoive::{game, pmoore};
 
 /// How often heartbeat pings are sent to server
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -358,12 +358,11 @@ fn in_game_parser(
     text: String,
     ctx: &mut WebsocketContext<WsGameSession>,
 ) -> Result<(), Box<dyn Error>> {
-
     //  This should be caught by the user's local client: but don't do anything if user has hit sent blank message.
     // if text == "\n" {
     //     return Ok(());
     // }
-    
+
     let m = text.trim();
     // Anything that begins with a / is a command
     if m.starts_with('/') {
@@ -449,11 +448,10 @@ fn in_game_parser(
                 ctx.text(pmoore::xylophone());
             }
             "/play" => {
-                // Get the gamestate from the db and make sure it's this player's turn
+                // Get the gamestate from the db and make sure it is this player's turn
                 let gamestate = api::get_game_state(&gamesess.room)?;
 
                 if gamesess.id.to_string() != gamestate.last_user_id.unwrap() {
-
                     // This is the first thing a player does on their turn, so first, make sure the board is up to date
                     let gamestate = api::get_game_state(&gamesess.room)?;
 
@@ -470,8 +468,9 @@ fn in_game_parser(
                     ctx.text("It's not your turn");
                 }
             }
-            "/select" | "/mosquito" | "/pillbug" | "/sumo" | "/skip" | "/moveto" | "/forfeit" if gamesess.active => {
-
+            "/select" | "/mosquito" | "/pillbug" | "/sumo" | "/skip" | "/moveto" | "/forfeit"
+                if gamesess.active =>
+            {
                 // All of these are standard commands covered by pmoore.
                 match v[0] {
                     "/select" => pmoore::select_chip_prompts(
@@ -480,12 +479,16 @@ fn in_game_parser(
                         &gamesess.board,
                         gamesess.team,
                     )?,
-                    "/mosquito" => pmoore::mosquito_prompts(&mut gamesess.action, v[1], &gamesess.board)?,
+                    "/mosquito" => {
+                        pmoore::mosquito_prompts(&mut gamesess.action, v[1], &gamesess.board)?
+                    }
                     "/pillbug" => pmoore::pillbug_prompts(&mut gamesess.action, v[1])?,
-                    "/sumo" => pmoore::sumo_victim_prompts(&mut gamesess.action, v[1], &gamesess.board)?,
+                    "/sumo" => {
+                        pmoore::sumo_victim_prompts(&mut gamesess.action, v[1], &gamesess.board)?
+                    }
                     "/skip" => pmoore::skip_turn(&mut gamesess.action),
                     "/moveto" => pmoore::move_chip_prompts(&mut gamesess.action, v[1])?,
-                    "/forfeit" =>pmoore::forfeit(&mut gamesess.action),
+                    "/forfeit" => pmoore::forfeit(&mut gamesess.action),
                     _ => !unreachable!(),
                 }
 
