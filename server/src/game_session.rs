@@ -14,11 +14,10 @@ use hoive::maths::coord::{Coord, DoubleHeight};
 use hoive::pmoore::forfeit;
 use hoive::{game, pmoore};
 
-
 use std::collections::BTreeSet;
 
-use crate::{api};
-use crate::chat_server;
+use crate::api;
+use crate::game_server;
 use hoive::game::board::Board;
 use hoive::game::comps::Team;
 use rustrict::CensorStr;
@@ -57,7 +56,7 @@ pub struct WsChatSession {
     pub team: Team,
 
     /// Chat server
-    pub addr: Addr<chat_server::ChatServer>,
+    pub addr: Addr<game_server::GameServer>,
 }
 
 impl WsChatSession {
@@ -72,7 +71,7 @@ impl WsChatSession {
                 println!("Websocket Client heartbeat failed, disconnecting!");
 
                 // notify chat server
-                act.addr.do_send(chat_server::Disconnect {
+                act.addr.do_send(game_server::Disconnect {
                     id: act.id,
                     name: act.name.clone(),
                 });
@@ -108,7 +107,7 @@ impl Actor for WsChatSession {
         // across all routes within application
         let addr = ctx.address();
         self.addr
-            .send(chat_server::Connect {
+            .send(game_server::Connect {
                 addr: addr.recipient(),
                 name: Some(namey),
             })
@@ -126,7 +125,7 @@ impl Actor for WsChatSession {
 
     fn stopping(&mut self, _: &mut Self::Context) -> Running {
         // notify chat server
-        self.addr.do_send(chat_server::Disconnect {
+        self.addr.do_send(game_server::Disconnect {
             id: self.id,
             name: self.name.clone(),
         });
@@ -135,10 +134,10 @@ impl Actor for WsChatSession {
 }
 
 /// Handle messages from chat server, we simply send it to peer websocket
-impl Handler<chat_server::Message> for WsChatSession {
+impl Handler<game_server::Message> for WsChatSession {
     type Result = ();
 
-    fn handle(&mut self, msg: chat_server::Message, ctx: &mut Self::Context) {
+    fn handle(&mut self, msg: game_server::Message, ctx: &mut Self::Context) {
         ctx.text(msg.0);
     }
 }
@@ -227,9 +226,9 @@ fn main_lobby_parser(
 
                             // Join in the chat
                             chatsess.game_room = session_id.to_owned();
-                            chatsess.addr.do_send(chat_server::Join {
+                            chatsess.addr.do_send(game_server::Join {
                                 id: chatsess.id,
-                                room_name: chatsess.game_room.clone(),
+                                room: chatsess.game_room.clone(),
                                 username: chatsess.name.as_ref().unwrap().to_owned(),
                             });
 
@@ -243,7 +242,7 @@ fn main_lobby_parser(
 
                             // send a new game command to everyone in the game room
                             // and define the team colours
-                            chatsess.addr.do_send(chat_server::NewGame {
+                            chatsess.addr.do_send(game_server::NewGame {
                                 session_id,
                                 game_state,
                             });
@@ -270,7 +269,7 @@ fn main_lobby_parser(
                             chatsess.name = Some(user_name.to_owned());
 
                             // Update the chat session's visitor list
-                            chatsess.addr.do_send(chat_server::NewName {
+                            chatsess.addr.do_send(game_server::NewName {
                                 name: user_name.to_owned(),
                                 id: chatsess.id,
                             });
@@ -301,7 +300,7 @@ fn main_lobby_parser(
                 // Display who is online
                 chatsess
                     .addr
-                    .send(chat_server::Who {})
+                    .send(game_server::Who {})
                     .into_actor(chatsess)
                     .then(|res, _, ctx| {
                         match res {
@@ -318,9 +317,9 @@ fn main_lobby_parser(
 
                 // Join the game session's chat room
                 chatsess.game_room = session_id.to_owned();
-                chatsess.addr.do_send(chat_server::Join {
+                chatsess.addr.do_send(game_server::Join {
                     id: chatsess.id,
-                    room_name: chatsess.game_room.clone(),
+                    room: chatsess.game_room.clone(),
                     username: chatsess.name.as_ref().unwrap().to_owned(),
                 });
 
@@ -336,7 +335,7 @@ fn main_lobby_parser(
         let msg = format!("\x1b[36;2m{}:\x1b[0m {m}", &chatsess.name.as_ref().unwrap());
 
         // send message to chat server
-        chatsess.addr.do_send(chat_server::ClientMessage {
+        chatsess.addr.do_send(game_server::ClientMessage {
             id: chatsess.id,
             msg,
             room: chatsess.game_room.clone(),
@@ -409,7 +408,7 @@ fn in_game_parser(
                 // Display who is online
                 chatsess
                     .addr
-                    .send(chat_server::Who {})
+                    .send(game_server::Who {})
                     .into_actor(chatsess)
                     .then(|res, _, ctx| {
                         match res {
@@ -427,7 +426,7 @@ fn in_game_parser(
                     &chatsess.name.as_ref().unwrap()
                 );
                 // send message to chat server
-                chatsess.addr.do_send(chat_server::ClientMessage {
+                chatsess.addr.do_send(game_server::ClientMessage {
                     id: chatsess.id,
                     msg,
                     room: chatsess.game_room.clone(),
@@ -463,10 +462,14 @@ fn in_game_parser(
                 chatsess.board = board;
 
                 // Go ahead
-                pmoore::select_chip_prompts(&mut chatsess.cmdlist, v[1], &chatsess.board, chatsess.team)?;
+                pmoore::select_chip_prompts(
+                    &mut chatsess.cmdlist,
+                    v[1],
+                    &chatsess.board,
+                    chatsess.team,
+                )?;
                 ctx.text(chatsess.cmdlist.message.to_owned());
                 ctx.text(chatsess.cmdlist.request.to_string());
-
             }
             "/mosquito" if chatsess.active => {
                 // Parse the input into a victim for the mosquito
@@ -478,32 +481,31 @@ fn in_game_parser(
                 pmoore::pillbug_prompts(&mut chatsess.cmdlist, v[1])?;
                 ctx.text(chatsess.cmdlist.message.to_owned());
                 ctx.text(chatsess.cmdlist.request.to_string());
-            },
+            }
             "/sumo" if chatsess.active => {
                 pmoore::sumo_victim_prompts(&mut chatsess.cmdlist, v[1], &chatsess.board)?;
                 ctx.text(chatsess.cmdlist.message.to_owned());
                 ctx.text(chatsess.cmdlist.request.to_string());
-            },
+            }
             "/moveto" if chatsess.active => {
                 pmoore::move_chip_prompts(&mut chatsess.cmdlist, v[1])?;
                 ctx.text(chatsess.cmdlist.message.to_owned());
                 ctx.text(chatsess.cmdlist.request.to_string());
-            },
+            }
             "/skip" if chatsess.active => {
                 pmoore::skip_turn(&mut chatsess.cmdlist);
                 ctx.text(chatsess.cmdlist.message.to_owned());
                 ctx.text(chatsess.cmdlist.request.to_string());
-            },
+            }
             "/forfeit" if chatsess.active => {
                 pmoore::forfeit(&mut chatsess.cmdlist);
                 ctx.text(chatsess.cmdlist.message.to_owned());
                 ctx.text(chatsess.cmdlist.request.to_string());
-            },
+            }
             "/execute" if chatsess.active => {
                 let board_action = &chatsess.cmdlist;
 
                 let result = api::make_action(board_action, &chatsess.game_room)?;
-
 
                 if result.is_winner() {
                     ctx.text("The game is won!");
@@ -519,33 +521,31 @@ fn in_game_parser(
                     let mut winner = Winner::default();
                     winner.happened(&moo);
 
-                    
                     // send a message to everyone saying who winner is
-                    chatsess.addr.do_send(chat_server::Winner {
+                    chatsess.addr.do_send(game_server::Winner {
                         team: winner.team,
-                        room_name: chatsess.game_room.to_owned(),
+                        room: chatsess.game_room.to_owned(),
                         username: Some(winner.username),
                         forfeit: winner.forfeit,
                     });
 
                     // boot players. Need to figure out how to grab their usernames.
-                    chatsess.addr.do_send(chat_server::Join {
+                    chatsess.addr.do_send(game_server::Join {
                         id: game_state.user_1.unwrap().parse::<usize>().unwrap(),
-                        room_name: "main".to_string(),
+                        room: "main".to_string(),
                         username: "player".to_string(),
                     });
 
-                    chatsess.addr.do_send(chat_server::Join {
+                    chatsess.addr.do_send(game_server::Join {
                         id: game_state.user_2.unwrap().parse::<usize>().unwrap(),
-                        room_name: "main".to_string(),
+                        room: "main".to_string(),
                         username: "player".to_string(),
                     });
 
-                    // set the players as not in a game, remove precursor, reset all 
-                    
+                    // set the players as not in a game, remove precursor, reset all
+
                     // delete the game from the db
                     // needs implementing!
-
                 }
 
                 match result.is_success() {
@@ -559,7 +559,7 @@ fn in_game_parser(
                         let game_state = api::get_game_state(&session_id)?;
 
                         // Tell all players the gamestate has updated
-                        chatsess.addr.do_send(chat_server::UpdateGame {
+                        chatsess.addr.do_send(game_server::UpdateGame {
                             session_id,
                             game_state,
                         });
@@ -584,10 +584,9 @@ fn in_game_parser(
                 ctx.text(format!("//cmd upboard {}", game_state.board.unwrap()));
 
                 ctx.text("//cmd select");
-            },
+            }
             "/main" => {
                 chatsess.game_room = "main".to_string();
-
             }
             _ => ctx.text(format!("Invalid command.")),
         }

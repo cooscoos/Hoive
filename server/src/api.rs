@@ -33,7 +33,7 @@ pub struct SessionInfo {
     id: Uuid,
 }
 
-use crate::{chat_server, chat_session};
+use crate::{game_server, game_session};
 use actix::Addr;
 use std::{
     sync::{
@@ -43,7 +43,7 @@ use std::{
     time::Instant,
 };
 
-use self::schema::game_state::{self, last_user_id, user_2, user_1};
+use self::schema::game_state::{self, last_user_id, user_1, user_2};
 
 /// Entry point for our websocket route
 /// Define the username, check it for profanity, register it on the db, and in the chat.
@@ -52,7 +52,7 @@ pub async fn chat_route(
     //form_input: web::Form<User>,
     req: HttpRequest,
     stream: web::Payload,
-    srv: web::Data<Addr<chat_server::ChatServer>>,
+    srv: web::Data<Addr<game_server::GameServer>>,
 ) -> Result<HttpResponse, Error> {
     // if let Some(pool) = req.app_data::<Pool<ConnectionManager<SqliteConnection>>>() {
     //     match pool.get() {
@@ -60,7 +60,7 @@ pub async fn chat_route(
 
     // start the websocket
     ws::start(
-        chat_session::WsChatSession {
+        game_session::WsChatSession {
             id: 0,
             hb: Instant::now(),
             game_room: "main".to_owned(),
@@ -300,8 +300,10 @@ fn do_movement(
     let event = Event::new_by_action(&action);
 
     match move_status {
-        MoveStatus::Success | MoveStatus::Win(_) => execute_on_db(&mut board, game_state, event, session_id, conn)?,
-        _ => {},
+        MoveStatus::Success | MoveStatus::Win(_) => {
+            execute_on_db(&mut board, game_state, event, session_id, conn)?
+        }
+        _ => {}
     };
     Ok(move_status)
 }
@@ -332,8 +334,10 @@ fn do_special(
 
     // Execute it on the db if it was successful
     match move_status {
-        MoveStatus::Success | MoveStatus::Win(_) => execute_on_db(&mut board, game_state, event, session_id, conn)?,
-        _ => {},
+        MoveStatus::Success | MoveStatus::Win(_) => {
+            execute_on_db(&mut board, game_state, event, session_id, conn)?
+        }
+        _ => {}
     };
 
     Ok(move_status)
@@ -405,18 +409,23 @@ fn forfeit(
 ) -> Result<MoveStatus, Error> {
     // The winner is the team who didn't forfeit (the inactive team)
     let winner_team = !game_state.which_team()?;
-    let winner_id = game_state.inactive_user()?.parse::<usize>().expect("Couldn't parse user id to usize");
+    let winner_id = game_state
+        .inactive_user()?
+        .parse::<usize>()
+        .expect("Couldn't parse user id to usize");
 
     // Get the winner's name
     let winner_name = match db::get_user_name(&winner_id, conn) {
         Ok(value) => value,
-        Err(err) => return Err(error::ErrorInternalServerError(format!(
-            "Problem getting winner name from user id because {err}"
-        ))),
+        Err(err) => {
+            return Err(error::ErrorInternalServerError(format!(
+                "Problem getting winner name from user id because {err}"
+            )))
+        }
     };
 
     // Append F to to designate the reason for winning as a forfeit
-    let win_string = format!("{},{},F", winner_team.to_string(),winner_name);
+    let win_string = format!("{},{},F", winner_team.to_string(), winner_name);
 
     // Update the last user id to the person who forfeit (the active team)
     let l_user_id = game_state.which_user()?;
@@ -425,10 +434,7 @@ fn forfeit(
     let res = db::update_winner(session_id, &l_user_id, &win_string, conn);
 
     match res {
-        Ok(_) => {
-            Ok(MoveStatus::Win(Some(winner_team)))
-        }
-            ,
+        Ok(_) => Ok(MoveStatus::Win(Some(winner_team))),
         Err(err) => Err(error::ErrorInternalServerError(format!(
             "Problem updating winner in gamestate because {err}"
         ))),

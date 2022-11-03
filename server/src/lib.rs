@@ -9,12 +9,11 @@ use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{cookie::Key, middleware, web, App, HttpServer};
 
 pub mod api;
-pub mod chat_server;
-pub mod chat_session;
 pub mod db;
+pub mod game_server;
+pub mod game_session;
 pub mod models;
 pub mod schema;
-
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -31,7 +30,7 @@ pub async fn start_server() -> std::io::Result<()> {
     // keep a count of the number of visitors
     let app_state = Arc::new(AtomicUsize::new(0));
     // start chat server actor
-    let servery = chat_server::ChatServer::new(app_state).start();
+    let servery = game_server::GameServer::new(app_state).start();
 
     let secret_key = get_secret_key();
 

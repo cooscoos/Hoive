@@ -120,7 +120,7 @@ pub struct NewGameState {
 pub struct Winner {
     pub team: Option<Team>, // who won?
     pub forfeit: bool,      // did they win because of a forfeit from other team?
-    pub username: String, // username of winner
+    pub username: String,   // username of winner
 }
 
 impl Winner {
@@ -130,7 +130,6 @@ impl Winner {
     pub fn happened(&mut self, winstring: &Option<String>) -> bool {
         match winstring {
             Some(value) => {
-
                 // We're getting a comma separated value where the first is the winner_team, then their id, then maybe an F (or not)
 
                 let v: Vec<&str> = value.split(',').collect();
