@@ -1,8 +1,11 @@
 //! `GameServer` is an actor that allows players to send messages
 //! to other players in the same room. It:
-//! - keeps list of connected client sessions
+//! - keeps a list of connected client sessions
 //! - manages lists of available game rooms.
 //!
+//!  This module defines the GameServer actor, and also defines:
+//! - structs called "messages" that the GameServer actor will respond to
+//! - handlers that define how GameServer responds to each message.
 
 use actix::prelude::*;
 use rand::{self, rngs::ThreadRng, Rng};
@@ -15,9 +18,9 @@ use std::{
 };
 
 use crate::{api::deregister_user, models::GameState};
-use hoive::game::comps::Team;
+use hoive::{game::comps::Team, pmoore::endgame_msg};
 
-/// `GameServer` manages chat / game rooms and keeps note of
+/// `GameServer` manages chat / game rooms and tracks
 /// which client sessions are connected.
 #[derive(Debug)]
 pub struct GameServer {
@@ -59,24 +62,20 @@ impl GameServer {
     }
 }
 
-/// Make GameServer and actor
+/// Make GameServer an actor
 impl Actor for GameServer {
     type Context = Context<Self>;
 }
 
-// Now we define:
-// - structs called "messages" that the GameServer actor will respond to
-// - handlers that define how GameServer responds to each message.
-
-// -----------------------------------------------------------------------
-// 1. BASIC MESSAGES ==========================================~~~~~
-// connect, disconnect, and send a msg to other connected clients
-// -----------------------------------------------------------------------
-
-/// Send a message to a session
+/// Define message. Can be sent to a session.
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct Message(pub String);
+
+// -----------------------------------------------------------------------
+// 1. BASIC MESSAGES ==========================================~~~~~
+// connect, disconnect, and send text to other connected clients
+// -----------------------------------------------------------------------
 
 /// Connect: Create a new client session on the GameServer
 #[derive(Message)]
@@ -108,7 +107,7 @@ impl Handler<Connect> for GameServer {
     }
 }
 
-/// Disconnect a client session of given id
+/// Disconnect client session of given id. Can optionally give client's username.
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct Disconnect {
@@ -116,7 +115,7 @@ pub struct Disconnect {
     pub name: Option<String>,
 }
 
-/// Disconnect Handler
+/// Disconnect Handler: do disconnect, and tell everyone who left if username is defined.
 impl Handler<Disconnect> for GameServer {
     type Result = ();
 
@@ -170,9 +169,9 @@ impl Handler<ClientMessage> for GameServer {
 
     fn handle(&mut self, msg: ClientMessage, _: &mut Context<Self>) {
         // Don't send to self.
-        //self.send_message(msg.msg.as_str(), &msg.room, msg.id);
+        self.send_message(msg.msg.as_str(), &msg.room, msg.id);
         // Do send to self
-        self.send_message(msg.msg.as_str(), &msg.room, 0);
+        //self.send_message(msg.msg.as_str(), &msg.room, 0);
     }
 }
 
@@ -256,7 +255,7 @@ impl Handler<Who> for GameServer {
     type Result = String;
 
     fn handle(&mut self, _msg: Who, _: &mut Context<Self>) -> Self::Result {
-        // Incredibly hacky because don't understand how to handle arc yet.
+        // This is incredibly hacky because don't understand how to handle arc yet.
         let unnamed = format!("{:?}", &self.visitor_count);
         let numby = unnamed.parse::<usize>().unwrap();
 
@@ -348,36 +347,14 @@ impl Handler<Winner> for GameServer {
     type Result = ();
 
     fn handle(&mut self, msg: Winner, _: &mut Context<Self>) {
-        let mut endgame_msg =
-            "\x1b[33;1m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\x1b[0m\n\n".to_string();
+        // Generate an endgame msg
+        let mut endgame_msg = endgame_msg(msg.username.unwrap(), msg.team, msg.forfeit);
+        endgame_msg.push_str("Rejoining main lobby...");
 
-        // Create message send to all users saying who won and why
-        match msg.team {
-            Some(team) => {
-                endgame_msg.push_str(&format!("{} team wins ", hoive::draw::team_string(team)))
-            }
-            None => endgame_msg.push_str("It's a draw!"),
-        };
-
-        if msg.team.is_some() {
-            match msg.forfeit {
-                true => endgame_msg.push_str("because the other player forfeit!"),
-                false => endgame_msg.push_str("by destroying opponent's queen bee!"),
-            }
-            endgame_msg.push_str(&format!(
-                "\n\n\x1b[32;1m== {} wins the game == \x1b[0m\n\n",
-                msg.username.unwrap()
-            ));
-        }
-
-        endgame_msg.push_str(
-            "\x1b[33;1m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\x1b[0m\n\nRejoining main lobby...",
-        );
-
-        // Send the endgame message out to everyone in the gameroom
+        // Send it out to everyone in the game room
         self.send_message(&endgame_msg, &msg.room, 0);
 
-        // reset their clients
+        // Reset their clients
         self.send_message("//cmd goback", &msg.room, 0);
     }
 }

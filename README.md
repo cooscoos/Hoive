@@ -21,6 +21,9 @@ The hoive directory contains the game logic.
 
 - Tidy up chatsess and integrate its behaviour with pmoore, adding in skipturns and forfeit as per local
 - Write tests to probe local client's use of BoardActions and Req:: enums.
+- display you: for chat
+- fix colour of others to random? maybe...
+
 - Try get http server working as an option. - have a flag / option for running an html server. Client advanced options.
 - Consider: Bevy, maybe with (egui)[https://github.com/emilk/egui] or Fyrox.
 
@@ -34,6 +37,8 @@ The hoive directory contains the game logic.
 - Option to select an empty game to join based on its id in websocket version so can play with friends
 - Flesh out a help readme for websocket functions
 - have a flag / option for running an html server.
+- reinstate connection to db with pool
+- In game_server.rs: "This is incredibly hacky because don't understand how to handle arc yet."
 
 
 ### Useful references
