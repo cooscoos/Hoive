@@ -8,9 +8,11 @@ use std::ops::Not;
 use std::str::FromStr;
 
 /// Enum for the two teams, Team::Black and Team::White
-#[derive(Hash, Eq, Ord, PartialOrd, PartialEq, Debug, Clone, Copy, Deserialize, Serialize)]
+#[derive(Hash, Eq, Ord, PartialOrd, PartialEq, Debug, Default, Clone, Copy, Deserialize, Serialize)]
 pub enum Team {
+    #[default]
     Black,
+    
     White,
 }
 

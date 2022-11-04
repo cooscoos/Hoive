@@ -13,7 +13,7 @@ use crate::game::comps::Chip;
 /// - neighbours: a sorted list of immediate neighbouring chips
 /// - request: a request of what to do next: used to control UI logic
 /// - message: information which is displayed to the player
-#[derive(Serialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Debug, Default, Clone, PartialEq, Eq)]
 pub struct BoardAction {
     pub chip_name: String,
     pub rowcol: Option<DoubleHeight>,

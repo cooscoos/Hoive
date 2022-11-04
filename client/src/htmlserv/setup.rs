@@ -5,7 +5,7 @@ use std::{error::Error, thread, time::Duration};
 use uuid::Uuid;
 
 use super::comms;
-use crate::local::get_usr_input;
+use crate::get_usr_input;
 use hoive::draw;
 use hoive::game::comps::Team;
 use server::models::GameState;

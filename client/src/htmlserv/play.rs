@@ -88,5 +88,5 @@ pub fn endgame(winner: Winner, my_team: Team) -> bool {
     println!("{endgame_msg}");
 
     println!("Hit y to play again, anything else to quit.");
-    local::get_usr_input() == "y"
+    crate::get_usr_input() == "y"
 }

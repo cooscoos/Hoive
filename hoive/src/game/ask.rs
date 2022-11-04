@@ -15,9 +15,11 @@ use serde::{Deserialize, Serialize};
 /// Save| Save the game (local games only)
 /// ___
 /// 
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Deserialize, Serialize, Debug, Default, Clone, PartialEq, Eq)]
 pub enum Req {
+    #[default]
     Nothing,
+    
     Select,
     Move,
     Mosquito,
@@ -34,12 +36,12 @@ impl ToString for Req {
 
         match self {
             Nothing => "".to_string(),
-            Select => "//cmd select".to_string(),
-            Move => "//cmd moveto".to_string(),
-            Mosquito => "//cmd mosquito".to_string(),
-            Pillbug => "//cmd pillbug".to_string(),
-            Sumo => "//cmd sumo".to_string(),
-            Execute => "//cmd execute".to_string(),
+            Select => "//cmd;select".to_string(),
+            Move => "//cmd;moveto".to_string(),
+            Mosquito => "//cmd;mosquito".to_string(),
+            Pillbug => "//cmd;pillbug".to_string(),
+            Sumo => "//cmd;sumo".to_string(),
+            Execute => "//cmd;execute".to_string(),
             Save => "".to_string(), // unimplemented
         }
     }

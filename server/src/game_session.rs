@@ -36,14 +36,14 @@ pub struct WsGameSession {
     /// Client must ping once per CLIENT_TIMEOUT seconds, or get dropped
     pub hb: Instant,
 
+    /// Chat server
+    pub addr: Addr<game_server::GameServer>,
+
     /// Joined room, ("main" or game_state id, mirrored in sqlite db)
     pub room: String,
 
     /// Username
     pub name: Option<String>,
-
-    /// Chat server
-    pub addr: Addr<game_server::GameServer>,
 
     /// In-game: Is it the client's turn in game?
     pub active: bool,
@@ -239,10 +239,10 @@ fn main_lobby_parser(
                             });
 
                             // Notify the player's local client what their user id is
-                            ctx.text(format!("//cmd yourid {}", gamesess.id));
+                            ctx.text(format!("//cmd;yourid;{}", gamesess.id));
                             ctx.text(format!("Welcome {}. Begin typing to chat.", user_name));
                             // Reset the local client
-                            ctx.text("//cmd default");
+                            ctx.text("//cmd;default");
                         }
                     }
                 }
@@ -290,7 +290,7 @@ fn main_lobby_parser(
 
                 // Set player to team black and notify the client
                 gamesess.team = Team::Black;
-                ctx.text("//cmd team B");
+                ctx.text("//cmd;team;B");
 
                 ctx.text(format!(
                     "You have created and joined game room {}.\nNow waiting for an opponent...",
@@ -323,7 +323,7 @@ fn main_lobby_parser(
 
                             // Set joining player to team white and notify their local client
                             gamesess.team = Team::White;
-                            ctx.text("//cmd team W");
+                            ctx.text("//cmd;team;W");
                             ctx.text(format!("You joined game room {}", session_id));
 
                             // Get updated GameState and notify both players of what it is
@@ -464,7 +464,7 @@ fn in_game_parser(
 
                     // Set this player as active and ask them to select a chip to move
                     gamesess.active = true;
-                    ctx.text("Select a tile from the board or your hand to move.");
+                    ctx.text("//cmd;msg;Select a chip from the board or your hand to move.");
                     ctx.text(hoive::game::ask::Req::Select.to_string())
                 } else {
                     ctx.text("It's not your turn");
@@ -494,7 +494,7 @@ fn in_game_parser(
                     _ => !unreachable!(),
                 }
 
-                ctx.text(gamesess.action.message.to_owned());
+                ctx.text(format!("//cmd;msg;{}",gamesess.action.message.to_owned()));
                 ctx.text(gamesess.action.request.to_string());
             }
             "/execute" if gamesess.active => {
@@ -557,7 +557,7 @@ fn in_game_parser(
                     _ => {
                         // Get the client back into the select phase, reset the cmdlist
                         gamesess.action = BoardAction::default();
-                        ctx.text("//cmd select");
+                        ctx.text("//cmd;select");
                     }
                 }
 
@@ -565,16 +565,17 @@ fn in_game_parser(
             }
             "/abort" if gamesess.active => {
                 // Abort the move go back into select phase
-                ctx.text("Aborting move. Select a chip.");
+
                 gamesess.action = BoardAction::default();
 
                 // reset the client and local boards
                 let session_id = gamesess.room.to_owned();
                 let game_state = api::get_game_state(&session_id)?;
 
-                ctx.text(format!("//cmd upboard {}", game_state.board.unwrap()));
-
-                ctx.text("//cmd select");
+                ctx.text(format!("//cmd;upboard;{}", game_state.board.unwrap()));
+                ctx.text("//cmd;select");
+                ctx.text("Move aborted.");
+                ctx.text("//cmd;msg;Select a chip from the board or your hand to move.");
             }
             "/main" => {
                 // Can't do it this way or the user can select main themselves. Could have a flag, or figure out how to dump both server/local clients back in main properly.

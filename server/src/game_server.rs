@@ -299,7 +299,13 @@ impl Handler<NewGame> for GameServer {
 
         // Notify all users to start a new game and send the gamestate
         self.send_message(
-            &format!("//cmd newgame {}", gamestate_txt),
+            &format!("//cmd;newgame;{}", gamestate_txt),
+            &msg.session_id,
+            0,
+        );
+
+        self.send_message(
+            &format!("//cmd;room;{}", msg.session_id),
             &msg.session_id,
             0,
         );
@@ -324,7 +330,7 @@ impl Handler<UpdateGame> for GameServer {
 
         // Notify all users to update their gamestate
         self.send_message(
-            &format!("//cmd gamestate {}", gamestate_txt),
+            &format!("//cmd;gamestate;{}", gamestate_txt),
             &msg.session_id,
             0,
         );
@@ -355,6 +361,6 @@ impl Handler<Winner> for GameServer {
         self.send_message(&endgame_msg, &msg.room, 0);
 
         // Reset their clients
-        self.send_message("//cmd goback", &msg.room, 0);
+        self.send_message("//cmd;goback", &msg.room, 0);
     }
 }

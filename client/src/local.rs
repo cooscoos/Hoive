@@ -4,9 +4,10 @@ use hoive::game::{
 };
 use hoive::maths::coord::{Coord, Cube};
 use hoive::{draw, pmoore};
+use crate::get_usr_input;
 
 use rand::Rng;
-use std::{error::Error, io};
+use std::error::Error;
 
 /// Play games of Hoive on the same computer offline
 pub fn play_offline() -> Result<(), Box<dyn Error>> {
@@ -163,13 +164,3 @@ pub fn try_execute_action<T: Coord>(
     }
 }
 
-/// Request user input into terminal, return a trimmed string
-pub fn get_usr_input() -> String {
-    let mut textin = String::new();
-
-    io::stdin()
-        .read_line(&mut textin)
-        .expect("Failed to read line");
-
-    textin.trim().to_string()
-}

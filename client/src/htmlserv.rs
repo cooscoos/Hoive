@@ -3,13 +3,13 @@ pub mod comms;
 pub mod play;
 pub mod setup;
 
-use crate::local::get_usr_input;
+use crate::get_usr_input;
 use hoive::game::board::Board;
 use hoive::maths::coord::{Coord, Cube};
 use server::models::Winner;
 use std::error::Error;
 
-/// Play games of Hoive online on a server
+/// Play games of Hoive online on an http server
 pub async fn play_online() -> Result<(), Box<dyn Error>> {
     // Run user through prompts to join a Hoive server
     let (client, base_url) = setup::join_server().await?;
