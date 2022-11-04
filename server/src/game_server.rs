@@ -267,7 +267,7 @@ impl Handler<Who> for GameServer {
             .collect::<String>();
 
         format!(
-            "There are {} players and {} ghosts online. Player list:\n{}",
+            "There are {} players and {} ghosts online. Player list:\n{}\nType \x1b[31;1m/help\x1b[0m for help on other commands.",
             self.visitor_list.len(),
             numby - self.visitor_list.len(),
             fmt_visitors

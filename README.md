@@ -31,7 +31,6 @@ Lower priority:
 
 - prioritise: on game end, boot players back into main and delete the game. Current implementation is jank.
 - Test it works for natural wins (not forfeits)
-- Flesh out a help readme for websocket functions
 - In game_server.rs: "This is incredibly hacky because don't understand how to handle arc yet."
 - reinstate connection to db with pool
 

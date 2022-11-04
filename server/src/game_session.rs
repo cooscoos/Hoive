@@ -247,6 +247,10 @@ fn main_lobby_parser(
                     }
                 }
             }
+            "/help" => {
+                // User wants help on commands they can use
+                ctx.text(helpme());
+            }
             "/wipe" => {
                 // For debug
                 match api::delete_all() {
@@ -333,7 +337,7 @@ fn main_lobby_parser(
                                 game_state,
                             });
                         }
-                        None => ctx.text("No empty games available. Try /create one!"),
+                        None => ctx.text("No empty games available. Try \x1b[31;1m/create\x1b[0m one!"),
                     }
                 }
             }
@@ -585,8 +589,25 @@ fn in_game_parser(
         }
     } else {
         // Default chat is off in game. Need to use /t
-        ctx.text("Normal chat is off during games. Use /tell or /t to talk to the other player");
+        ctx.text("Normal chat is off during games. Use \x1b[31;1m/tell\x1b[0m or \x1b[31;1m/t\x1b[0m to talk to the other player");
     }
 
     Ok(())
+}
+
+/// User help
+fn helpme() -> &'static str {
+"
+----------------------------------------------------------------\n
+= Main lobby chat =\n
+Type into your terminal to start chatting to other players in the main lobby.\n
+You can also use the following commands:\n
+\x1b[31;1m/create\x1b[0m:\tcreate a new game of Hoive;
+\x1b[31;1m/join\x1b[0m:\t\tsearch for and join a game of Hoive;
+\x1b[31;1m/id\x1b[0m:\t\tget your player id and the game you are in;
+\x1b[31;1m/who\x1b[0m:\t\tdisplay who is online (alternatively hit enter/return);
+\x1b[31;1m/help\x1b[0m:\t\tdisplay this help message.
+----------------------------------------------------------------
+"
+
 }

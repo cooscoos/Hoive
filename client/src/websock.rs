@@ -213,6 +213,10 @@ pub async fn play_websock(def_setup: bool) -> Result<(), Box<dyn Error>> {
                                 // t and tell should always work too
                                 ws.send(ws::Message::Text(cmd.into())).await.unwrap();
                             }
+                            _ if cmd == "help" || cmd == "/help" => {
+                                println!("{}",hoive::pmoore::help_me());
+                                println!("Use \x1b[31;1m/tell\x1b[0m or \x1b[31;1m/t\x1b[0m to talk to the other player.");
+                            }
                             _ => {
                                 // Otherwise, send their input with precursor
                                 let sendme = format!("{}{}", local.precursor, cmd);
@@ -276,10 +280,11 @@ async fn websock_setup() -> Result<String, Box<dyn Error>> {
 fn show_game_info(local: &LGameSession) -> String {
     // Show the board
     format!(
-        "{}\n\n-------------------- PLAYER HAND --------------------\n\n{}\n\n-----------------------------------------------------\n{}\n{}\n",
+        "{}\n\n-------------------- PLAYER HAND --------------------\n\n{}\n\n-----------------------------------------------------\nType \x1b[31;1m/help\x1b[0m for help\n\n{}{}\n.",
         draw::show_board(&local.board),
         draw::list_chips(&local.board, local.team),
         local.turn_string(),
         local.game_message,
     )
+
 }

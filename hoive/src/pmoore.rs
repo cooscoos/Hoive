@@ -390,11 +390,11 @@ and then enter a location to move the peice to on the board using
 comma separated values e.g. 1,-3.\n
 The dots in the terminal represent the centres of hexagons: positions
 where each hexagonal peice can be placed. Each hex is surrounded by 6 neighbours.\n
-Press enter at any time to abort moves, or to see the peices
+Type x at any time to abort moves, or press enter to see the peices
 on the board and in your hand.\n
 You can attempt to move any peice you own that is in your hand
-or on the board. The game won't hint about whether a move is
-legal, but it will tell you if an attempted action is illegal.\n
+or on the board. The game won't provide hints about whether a move is
+legal until the move is attempted.\n
 Beetles can move on top of the hive. When they are on
 top of the hive, they will be have an asterix (*) next
 to their name. They can be reselected later by typing their code
