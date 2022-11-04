@@ -20,27 +20,24 @@ The hoive directory contains the game logic.
 
 ### Client
 
-- Tidy up chatsess and integrate its behaviour with pmoore, adding in skipturns and forfeit as per local
 - Write tests to probe local client's use of BoardActions and Req:: enums.
-- display you: for chat
-- fix colour of others to random? maybe...
 
+Lower priority:
 - Try get http server working as an option. - have a flag / option for running an html server. Client advanced options.
 - Consider: Bevy, maybe with (egui)[https://github.com/emilk/egui] or Fyrox.
-
-
+- display you: for chat
+- fix colour of other players to random?
 ### Server
 
-- tidy select
-- time to have a good tidy up of websock session and server and "echoer"
-- now boots players back into main and delete the game, but doing this is a bit jank
-- winstring is probably gubbed for a natural win
-
-- Option to select an empty game to join based on its id in websocket version so can play with friends
+- prioritise: on game end, boot players back into main and delete the game. Current implementation is jank.
+- Test it works for natural wins (not forfeits)
 - Flesh out a help readme for websocket functions
-- have a flag / option for running an html server.
-- reinstate connection to db with pool
 - In game_server.rs: "This is incredibly hacky because don't understand how to handle arc yet."
+- reinstate connection to db with pool
+
+Lower priority:
+- have a flag / option for running an html server.
+- Option to select an empty game to join based on its id in websocket version so can play with friends
 
 
 ### Useful references
