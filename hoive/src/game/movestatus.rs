@@ -1,8 +1,6 @@
-use super::actions::BoardAction;
 use super::comps::Team;
 use serde::{Deserialize, Serialize};
-/// Enum to return the attempt or result of a player action.
-/// These can be results or attempts, described below.
+/// Enum to return the result of an action attempt on the board.
 /// ___
 /// MoveStatus::Selection | Result
 ///--- | ---
@@ -26,11 +24,6 @@ use serde::{Deserialize, Serialize};
 /// NoJump | Grasshopper can't make this jump
 /// NoSuck | Mosquito can't do this suck
 /// ___
-/// MoveStatus::Selection | Attempt
-///--- | ---
-/// Forfeit | Player requested forfeit
-/// SkipTurn| Player requested skip turn
-/// Action | Player Requested action
 #[derive(Serialize, Deserialize, Debug, Eq, PartialEq, Clone)]
 pub enum MoveStatus {
     // Results of actions
@@ -58,11 +51,6 @@ pub enum MoveStatus {
 
     NoJump,
     NoSuck,
-
-    // Attempted actions
-    Forfeit,
-    SkipTurn,
-    Action(BoardAction),
 }
 
 impl ToString for MoveStatus {
@@ -126,17 +114,34 @@ impl ToString for MoveStatus {
             MoveStatus::Win(teamopt) => {
                 match teamopt {
                     Some(team) => {
-                        //let team_str = draw::team_string(*team);
-                        let team_str = team.to_string();
+                        let team_str = crate::draw::team_string(*team);
+                        //let team_str = team.to_string();
                         format!("\n << {team_str} team wins. Well done!  >> \n")
                     }
                     None => "\n << Draw. Both teams have suffered defeat! >> \n".to_string(),
                 }
             }
-            MoveStatus::Nothing
-            | MoveStatus::Forfeit
-            | MoveStatus::SkipTurn
-            | MoveStatus::Action(_) => String::new(),
+            MoveStatus::Nothing => String::new(),
         }
     }
+}
+
+impl MoveStatus{
+
+    /// Does MoveStatus == MoveStatus::Success?
+    pub fn is_success(&self) -> bool {
+        self == &MoveStatus::Success
+    }
+
+    /// Do we have a winner?
+    pub fn is_winner(&self) -> bool {
+        if let MoveStatus::Win(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    
+    
 }

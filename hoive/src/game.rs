@@ -4,6 +4,7 @@
 
 pub mod actions;
 pub mod animals;
+pub mod ask;
 pub mod board;
 pub mod comps;
 pub mod history;

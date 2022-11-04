@@ -3,19 +3,20 @@ pub mod comms;
 pub mod play;
 pub mod setup;
 
+use crate::get_usr_input;
 use hoive::game::board::Board;
 use hoive::maths::coord::{Coord, Cube};
 use server::models::Winner;
 use std::error::Error;
 
-/// Play games of Hoive online on a server
+/// Play games of Hoive online on an http server
 pub async fn play_online() -> Result<(), Box<dyn Error>> {
     // Run user through prompts to join a Hoive server
     let (client, base_url) = setup::join_server().await?;
 
     // For development, option to wipe the server clean
     println!("Dev wipe db? Enter nothing to do so.");
-    if hoive::pmoore::get_usr_input().is_empty() {
+    if get_usr_input().is_empty() {
         comms::wipe_db(&client, &base_url).await?;
     }
 

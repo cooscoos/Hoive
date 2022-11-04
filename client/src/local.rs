@@ -1,45 +1,54 @@
 /// Play games of Hoive locally (couch co-op)
+use hoive::game::{
+    actions::BoardAction, ask::Req, board::Board, comps::Team, movestatus::MoveStatus, specials,
+};
+use hoive::maths::coord::{Coord, Cube};
+use hoive::{draw, pmoore};
+use crate::get_usr_input;
+
 use rand::Rng;
 use std::error::Error;
 
-use hoive::game::{
-    actions::BoardAction, board::Board, comps::Team, movestatus::MoveStatus, specials,
-};
-use hoive::maths::coord::Coord;
-use hoive::{draw, pmoore};
-
-/// Set up connection to Hoive server, set user id, and play some games
+/// Play games of Hoive on the same computer offline
 pub fn play_offline() -> Result<(), Box<dyn Error>> {
     // Initialise game board in cube co-ordinates
-    let coord = hoive::maths::coord::Cube::default();
-    let mut board = Board::new(coord);
+    let mut board = Board::<Cube>::default();
 
     // Say hello, tell players who goes first
-    let first = pick_team();
+    let first_team = pick_team();
 
-    // Loop game until someone wins
+    // Loop the game until someone wins
     loop {
         let active_team = match board.turns % 2 {
-            0 => first,
-            _ => !first,
+            0 => first_team,
+            _ => !first_team,
         };
+        println!("Team {}, it's your turn!", draw::team_string(active_team));
 
-        let temp_move_status = pmoore::action_prompts(&mut board.clone(), active_team)?;
+        // BoardActions store information on the move a player wants to make
+        let mut action = BoardAction::default();
 
-        let move_status = match temp_move_status {
-            MoveStatus::SkipTurn => board.try_skip_turn(active_team),
-            MoveStatus::Forfeit => MoveStatus::Win(Some(!active_team)),
-            MoveStatus::Action(action) => try_execute_action(&mut board, action, active_team),
-            _ => temp_move_status,
-        };
+        // Ask the player to build up an action until there's a request to execute it
+        while action.request != Req::Execute {
+            action_prompts(&mut action, &board, active_team)?;
+        }
 
-        println!("{}", move_status.to_string());
+        // Try and execute action the player has generated
+        let move_status = try_execute_action(&mut board, action, active_team);
+
         // Refresh all mosquito names back to m1
         specials::mosquito_desuck(&mut board);
-        println!("{}",draw::show_board(&board));
-        if let MoveStatus::Win(_) = move_status {
+
+        // Display the move status to user
+        println!("{}", move_status.to_string());
+
+        if move_status.is_success() {
+            println!("{}", draw::show_board(&board));
+        }
+
+        if move_status.is_winner() {
             println!("Play again? y/n");
-            let textin = pmoore::get_usr_input();
+            let textin = get_usr_input();
             match textin {
                 _ if textin == "y" => {
                     let _result = play_offline();
@@ -51,7 +60,7 @@ pub fn play_offline() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-/// Select random team to go first
+/// Select a random team (Black or White) to go first
 fn pick_team() -> Team {
     // Select a random team to go first
     let mut rand = rand::thread_rng();
@@ -64,20 +73,94 @@ fn pick_team() -> Team {
     first
 }
 
-/// Try and execute a player action using the board. This emulates how the server decodes and then does actions.
-fn try_execute_action<T: Coord>(
+/// Guides the player through building and then requesting an action to be taken on the board.
+pub fn action_prompts<T: Coord>(
+    action: &mut BoardAction,
+    board: &Board<T>,
+    active_team: Team,
+) -> Result<(), Box<dyn Error>> {
+    // Display guidance to the user and ask for their input
+    println!("{}", action.message);
+    let textin = get_usr_input();
+
+    // Inputs like x, enter, quit should always be caught
+    match textin {
+        _ if textin.starts_with('x') => {
+            // Abort whatever action is being built
+            *action = BoardAction::default();
+        }
+        _ if textin.is_empty() => {
+            // User hit return/enter: display the board
+            action.message = format!(
+                "{}\n\n-------------------- PLAYER HAND --------------------\n\n{}\n\n-----------------------------------------------------\n{}\n",
+                draw::show_board(board),
+                draw::list_chips(board, active_team),
+                action.message
+            );
+        }
+        _ if textin == "w" => {
+            // Request skip turn
+            pmoore::skip_turn(action);
+            // action.special = Some("skip".to_string());
+            // action.request = Req::Execute;
+        }
+        _ if textin == "quit" => {
+            // Forfeit the game
+            pmoore::forfeit(action);
+        }
+        _ if textin == "h" => {
+            // Display help, abort action
+            *action = BoardAction::default();
+            println!("{}", pmoore::help_me());
+        }
+        #[cfg(feature = "debug")]
+        _ if textin == "s" => {
+            action.command = Req::Save;
+            action.message = "Enter a filename".to_string();
+        }
+        _ => {
+            // Otherwise select an appropriate path based on request being made
+            match action.request {
+                Req::Select => pmoore::select_chip_prompts(action, &textin, &board, active_team)?,
+                Req::Mosquito => pmoore::mosquito_prompts(action, &textin, board)?,
+                Req::Pillbug => pmoore::pillbug_prompts(action, &textin)?,
+                Req::Sumo => pmoore::sumo_victim_prompts(action, &textin, &board)?,
+                Req::Move => pmoore::move_chip_prompts(action, &textin)?,
+                _ => {}
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// Try and execute a player action using the board. Just like a Hoive game webserver: we decode actions, try them out on a board, and return how successful the move was.
+/// If the move is successful then the mut Board passed to this function is updated automatically.
+pub fn try_execute_action<T: Coord>(
     board: &mut Board<T>,
     action: BoardAction,
     active_team: Team,
 ) -> MoveStatus {
     // Unwrap the action struct to get chip name, destination and special string
-    let chip_name = action.get_chip_name();
+    let special_str = action.clone().special;
     let d_dest = action.rowcol;
-    let special_str = action.special;
 
     // Try execute a special if one is requested, otherwise normal move
     match special_str {
-        Some(special) => pmoore::decode_specials(board, &special, active_team, chip_name, d_dest),
-        None => board.move_chip(chip_name, active_team, d_dest.mapto(board.coord)),
+        Some(special) if special == "forfeit" => MoveStatus::Win(Some(!active_team)),
+        Some(special) if special == "skip" => board.try_skip_turn(active_team),
+        Some(special) => pmoore::decode_specials(
+            board,
+            &special,
+            active_team,
+            action.get_chip_name(),
+            d_dest.unwrap(),
+        ),
+        None => board.move_chip(
+            action.get_chip_name(),
+            active_team,
+            d_dest.unwrap().mapto(board.coord),
+        ),
     }
 }
+

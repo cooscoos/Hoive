@@ -117,16 +117,12 @@ fn beetle_gate() {
     );
 }
 
-
 #[test]
 fn beetle_too_far_same_layer() {
     // Try move wb1 from 0,-2 to 0,4 (too far)
     let mut board = beetle_test_setup("snapshot_20".to_string());
 
-    let too_far = board
-        .coord
-        .mapfrom_doubleheight(DoubleHeight::from((0, 4)));
-
+    let too_far = board.coord.mapfrom_doubleheight(DoubleHeight::from((0, 4)));
 
     assert_eq!(
         MoveStatus::BadDistance(1),
@@ -139,10 +135,7 @@ fn beetle_too_far_up_layer() {
     // Try move wb1 from 0,-2 to 0,2 (too far and up one layer)
     let mut board = beetle_test_setup("snapshot_20".to_string());
 
-    let too_far = board
-        .coord
-        .mapfrom_doubleheight(DoubleHeight::from((0, 2)));
-
+    let too_far = board.coord.mapfrom_doubleheight(DoubleHeight::from((0, 2)));
 
     assert_eq!(
         MoveStatus::BadDistance(1),

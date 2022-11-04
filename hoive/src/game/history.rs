@@ -100,7 +100,7 @@ impl Event {
         Event {
             chip_name: action.get_chip_name(),
             team: action.which_team(),
-            location: action.rowcol,
+            location: action.rowcol.unwrap(),
         }
     }
 

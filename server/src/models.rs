@@ -55,6 +55,17 @@ impl GameState {
         }
     }
 
+    /// Returns the user is of the inactive player
+    pub fn inactive_user(&self) -> Result<String, Box<dyn Error>> {
+        // Find the active team
+        let active_team = self.which_team()?;
+
+        match !active_team {
+            Team::Black => Ok(self.user_1.to_owned().unwrap()),
+            Team::White => Ok(self.user_2.to_owned().unwrap()),
+        }
+    }
+
     /// Generate a board from a gamestate's spiral coordinates on the db
     pub fn to_cube_board(&self) -> Board<Cube> {
         let mut board = Board::new(Cube::default());
@@ -94,6 +105,43 @@ impl GameState {
 
         history
     }
+
+
+    /// Get the winner
+    pub fn get_winner(&self) -> Option<Winner> {
+
+        match &self.winner {
+            Some(value) => {
+                // We're getting a comma separated list where the first is the winner_team, then their id, then maybe an F (or not)
+
+                let mut winner = Winner::default();
+
+                let v: Vec<&str> = value.split(',').collect();
+                let winner_team = v[0];
+                let winner_name = v[1];
+
+                // Check if a forfeit happened
+                if value.ends_with('F') {
+                    winner.forfeit = true;
+                }
+
+                // Check who won (black, white, or draw)
+                winner.team = match winner_team {
+                    _ if winner_team.starts_with('B') => Some(Team::Black),
+                    _ if winner_team.starts_with('W') => Some(Team::White),
+                    _ if winner_team.starts_with('D') => None,
+                    _ => panic!("Unrecognised winner"),
+                };
+
+                winner.username = winner_name.to_owned();
+
+                Some(winner)
+   
+            }
+            None => None,
+        }
+    }
+
 }
 
 #[derive(Deserialize, Serialize, Insertable)]
@@ -109,6 +157,7 @@ pub struct NewGameState {
 pub struct Winner {
     pub team: Option<Team>, // who won?
     pub forfeit: bool,      // did they win because of a forfeit from other team?
+    pub username: String,   // username of winner
 }
 
 impl Winner {
@@ -118,18 +167,26 @@ impl Winner {
     pub fn happened(&mut self, winstring: &Option<String>) -> bool {
         match winstring {
             Some(value) => {
+                // We're getting a comma separated value where the first is the winner_team, then their id, then maybe an F (or not)
+
+                let v: Vec<&str> = value.split(',').collect();
+                let winner_team = v[0];
+                let winner_name = v[1];
+
                 // Check if a forfeit happened
                 if value.ends_with('F') {
                     self.forfeit = true;
                 }
 
                 // Check who won (black, white, or draw)
-                self.team = match value {
-                    _ if value.starts_with('B') => Some(Team::Black),
-                    _ if value.starts_with('W') => Some(Team::White),
-                    _ if value.starts_with('D') => None,
+                self.team = match winner_team {
+                    _ if winner_team.starts_with('B') => Some(Team::Black),
+                    _ if winner_team.starts_with('W') => Some(Team::White),
+                    _ if winner_team.starts_with('D') => None,
                     _ => panic!("Unrecognised winner"),
                 };
+
+                self.username = winner_name.to_owned();
 
                 true // someone won
             }

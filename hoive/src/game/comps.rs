@@ -8,9 +8,11 @@ use std::ops::Not;
 use std::str::FromStr;
 
 /// Enum for the two teams, Team::Black and Team::White
-#[derive(Hash, Eq, Ord, PartialOrd, PartialEq, Debug, Clone, Copy, Deserialize, Serialize)]
+#[derive(Hash, Eq, Ord, PartialOrd, PartialEq, Debug, Default, Clone, Copy, Deserialize, Serialize)]
 pub enum Team {
+    #[default]
     Black,
+    
     White,
 }
 
@@ -58,6 +60,27 @@ impl FromStr for Team {
 pub struct Chip {
     pub name: &'static str,
     pub team: Team,
+}
+
+impl ToString for Chip {
+    fn to_string(&self) -> String {
+        match self.team {
+            Team::Black => self.name.to_string().to_uppercase(),
+            Team::White => self.name.to_string(),
+        }
+    }
+}
+
+// Converts case-sensitive string to chip
+impl FromStr for Chip {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        // First char uppercase means team is black
+        let team = get_team_from_chip(s);
+        let name = convert_static_basic(s.to_lowercase()).unwrap();
+
+        Ok(Chip { name, team })
+    }
 }
 
 impl Chip {

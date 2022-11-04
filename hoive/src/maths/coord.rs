@@ -12,6 +12,7 @@ use std::str::FromStr;
 /// Any coordinate system that is used by game logic must implement this trait.
 pub trait Coord:
     Debug
+    + Default
     + Hash
     + PartialOrd
     + Ord
@@ -23,7 +24,7 @@ pub trait Coord:
     + Add<Output = Self>
     + Sub<Output = Self>
 {
-    fn default() -> Self;
+    //fn default() -> Self;
     fn new(x: i8, y: i8, z: i8) -> Self;
     fn new_layer(x: i8, y: i8, z: i8, l: i8) -> Self;
     fn get_layer(&self) -> i8;
@@ -111,7 +112,7 @@ pub struct Spiral {
 }
 
 /// Cube coordinate system, used by game logic
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Default, Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct Cube {
     q: i8,
     r: i8,
@@ -147,9 +148,9 @@ impl Sub for Cube {
 
 /// Methods for Cube coordinates (trait: Coord)
 impl Coord for Cube {
-    fn default() -> Self {
-        Cube::new(0, 0, 0)
-    }
+    // fn default() -> Self {
+    //     Cube::new(0, 0, 0)
+    // }
 
     fn new(q: i8, r: i8, s: i8) -> Self {
         Cube { q, r, s, l: 0 }
@@ -337,8 +338,6 @@ impl Coord for Cube {
         // x = (ring_offset + ring_index * 6), we should find matching q, r, s values for some value of x.
 
         let x = ring_offset..(ring_offset + ring_index * 6);
-
-        println!("Search area is..{:?}", x);
 
         match x
             .into_iter()

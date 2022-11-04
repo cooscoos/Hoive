@@ -8,9 +8,11 @@ use super::comps::{self, Chip, Team}; // Game components (chips, teams)
 use crate::game::{animals, history::History, movestatus::MoveStatus}; // Animal logic, move tracking and history
 use crate::maths::coord::Coord; // Hexagonal coordinate system
 use crate::maths::coord::Spiral;
+use crate::maths::coord::DoubleHeight;
+use std::error::Error;
 
 /// The Board struct keeps track of game's progress, history and execution of rules
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct Board<T: Coord> {
     pub chips: HashMap<Chip, Option<T>>, // player chips (both teams)
     pub turns: usize,                    // number of turns that have elapsed
@@ -23,6 +25,11 @@ impl<T> Board<T>
 where
     T: Coord,
 {
+    /// Initialises a new board with a given coordinate system.
+    pub fn default() -> Self {
+        Board::new(T::default())
+    }
+
     /// Initialises a new board with a given coordinate system.
     pub fn new(coord: T) -> Self {
         // Chips for each team initialised in players' hands (position == None)
@@ -399,6 +406,16 @@ where
             None => panic!("Something went very wrong: the chip doesn't exist."),
         }
     }
+
+    /// Return a chip's position in doubleheight coordinates
+    pub fn get_dheight_position(&self, chip: &Chip) -> Result<DoubleHeight, Box<dyn Error>> {
+        // Get the position in board coordinates
+        let victim_pos = self.chips.get(chip).expect("No chip with that name on the board").expect("Chip is not on the board!");
+
+        // return as doubleheight
+        Ok(victim_pos.to_doubleheight(victim_pos))
+
+    } 
 
     /// Count number of neighbouring chips at given position
     /// This always counts neighbours in layer 0, even if position is in layer 1, 2, etc.
