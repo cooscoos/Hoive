@@ -136,6 +136,7 @@ pub fn register_user(user_name: &str, session_id: usize) -> Result<bool, Error> 
     }
 }
 
+/// Delete the user from the db
 pub fn deregister_user(user_id: &usize) -> Result<(), Error> {
     // Inefficient way, for now, to make progress
     let mut conn = db::establish_connection();
@@ -143,7 +144,20 @@ pub fn deregister_user(user_id: &usize) -> Result<(), Error> {
     match db::remove_user(&user_id.to_string(), &mut conn) {
         Ok(_) => Ok(()),
         Err(error) => Err(error::ErrorBadGateway(format!(
-            "Cant deregister user: {error}"
+            "Can't deregister user: {error}"
+        ))),
+    }
+}
+
+/// Delete the game from the db
+pub fn deregister_game(session_id: &str) -> Result<(), Error> {
+    // Inefficient way, for now, to make progress
+    let mut conn = db::establish_connection();
+
+    match db::remove_game(&session_id.to_string(), &mut conn) {
+        Ok(_) => Ok(()),
+        Err(error) => Err(error::ErrorBadGateway(format!(
+            "Can't delete game: {error}"
         ))),
     }
 }

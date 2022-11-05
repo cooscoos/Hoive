@@ -1,5 +1,6 @@
 //! Module to create and define the behaviour of a client game session (WsGameSession)
 //!
+use std::collections::HashMap;
 use std::error::Error;
 use std::time::{Duration, Instant};
 use std::usize;
@@ -14,10 +15,7 @@ use rustrict::CensorStr;
 use crate::api;
 use crate::game_server;
 
-use hoive::game::{
-    actions::BoardAction,
-    board::Board,
-    comps::Team};
+use hoive::game::{actions::BoardAction, board::Board, comps::Team};
 use hoive::maths::coord::Cube;
 use hoive::pmoore;
 
@@ -266,19 +264,19 @@ fn main_lobby_parser(
                 ));
             }
             "/who" => {
-                // Display who is online
+                // Display who is in main
                 gamesess
-                    .addr
-                    .send(game_server::Who {})
-                    .into_actor(gamesess)
-                    .then(|res, _, ctx| {
-                        match res {
-                            Ok(res) => ctx.text(res),
-                            _ => ctx.stop(),
-                        }
-                        fut::ready(())
-                    })
-                    .wait(ctx);
+                .addr
+                .send(game_server::WhoIn {room: "main".to_string()})
+                .into_actor(gamesess)
+                .then(|res, _, ctx| {
+                    match res {
+                        Ok(res) => ctx.text(who_display(res)),
+                        _ => ctx.stop(),
+                    }
+                    fut::ready(())
+                })
+                .wait(ctx);
             }
             "/create" => {
                 // Create a new game on the db, register creator as user_1
@@ -337,7 +335,9 @@ fn main_lobby_parser(
                                 game_state,
                             });
                         }
-                        None => ctx.text("No empty games available. Try \x1b[31;1m/create\x1b[0m one!"),
+                        None => {
+                            ctx.text("No empty games available. Try \x1b[31;1m/create\x1b[0m one!")
+                        }
                     }
                 }
             }
@@ -418,19 +418,25 @@ fn in_game_parser(
                 ));
             }
             "/who" => {
-                // Display who is online
+
+
+                // Display who is in this game
                 gamesess
-                    .addr
-                    .send(game_server::Who {})
-                    .into_actor(gamesess)
-                    .then(|res, _, ctx| {
-                        match res {
-                            Ok(res) => ctx.text(res),
-                            _ => ctx.stop(),
-                        }
-                        fut::ready(())
-                    })
-                    .wait(ctx);
+                .addr
+                .send(game_server::WhoIn {room: gamesess.room.to_owned()})
+                .into_actor(gamesess)
+                .then(|res, _, ctx| {
+                    match res {
+                        Ok(res) => ctx.text(who_display(res)),
+                        _ => ctx.stop(),
+                    }
+                    fut::ready(())
+                })
+                .wait(ctx);
+
+
+
+
             }
             "/t" | "/tell" => {
                 // User wants to send msg to opponent
@@ -498,7 +504,7 @@ fn in_game_parser(
                     _ => !unreachable!(),
                 }
 
-                ctx.text(format!("//cmd;msg;{}",gamesess.action.message.to_owned()));
+                ctx.text(format!("//cmd;msg;{}", gamesess.action.message.to_owned()));
                 ctx.text(gamesess.action.request.to_string());
             }
             "/execute" if gamesess.active => {
@@ -541,7 +547,7 @@ fn in_game_parser(
                         // boot players. Need to figure out how to grab their usernames.
                         let usr1 = game_state.clone().user_1.unwrap();
                         let usr2 = game_state.user_2.unwrap();
-                 
+
                         gamesess.addr.do_send(game_server::Join {
                             id: usr1.parse::<usize>().unwrap(),
                             room: "main".to_string(),
@@ -554,9 +560,8 @@ fn in_game_parser(
                             username: "player".to_string(),
                         });
 
-                        // set the players as not in a game, remove precursor, reset all
-                        // delete the game from the db
-                        // needs implementing!
+                        // Deregister game from sql db
+                        let _result = api::deregister_game(&session_id);
                     }
                     _ => {
                         // Get the client back into the select phase, reset the cmdlist
@@ -597,7 +602,7 @@ fn in_game_parser(
 
 /// User help
 fn helpme() -> &'static str {
-"
+    "
 ----------------------------------------------------------------\n
 = Main lobby chat =\n
 Type into your terminal to start chatting to other players in the main lobby.\n
@@ -609,5 +614,31 @@ You can also use the following commands:\n
 \x1b[31;1m/help\x1b[0m:\t\tdisplay this help message.
 ----------------------------------------------------------------
 "
+}
+
+/// Displays who is online. who_all is all active users (json string), who_here is who is in this room.
+fn who_display(who_string: String) -> String {
+
+    // Decode the list of everyone
+    let everyone: HashMap<usize, String> = serde_json::from_str(&who_string).unwrap();
+
+    // Sort the usernames alphabetically
+    let mut everyone_sorted = everyone.into_iter().map(|(_,v)| v).collect::<Vec<_>>();
+    everyone_sorted.sort();
+
+    // Create a pretty list
+    let everyone_list = everyone_sorted
+                .iter()
+                .map(|v| {
+                    format!("- \x1b[36;2m{v}\x1b[0m\n")
+                }
+                )
+                .collect::<String>();
+
+    format!(
+        "There are {} players in this room:\n{}\nType \x1b[31;1m/help\x1b[0m for a list of other commands.\n",
+        everyone_sorted.len(),
+        everyone_list,
+    )
 
 }

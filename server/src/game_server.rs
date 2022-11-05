@@ -7,8 +7,11 @@
 //! - structs called "messages" that the GameServer actor will respond to
 //! - handlers that define how GameServer responds to each message.
 
+use std::fmt;
+
 use actix::prelude::*;
 use rand::{self, rngs::ThreadRng, Rng};
+use serde::Serialize;
 use std::{
     collections::{HashMap, HashSet},
     sync::{
@@ -245,33 +248,51 @@ impl Handler<NewName> for GameServer {
     }
 }
 
-/// Who: Request a list of the usernames of all connected clients
-#[derive(Message)]
-#[rtype(String)]
-pub struct Who;
+// /// Who: Request a list of the usernames of all connected clients
+// #[derive(Message)]
+// #[rtype(String)]
+// pub struct CountVisitors;
 
-/// Who Handler: see who is in the same room
-impl Handler<Who> for GameServer {
+// /// CountVisitors: display how many visitors there are
+// impl Handler<CountVisitors> for GameServer {
+//     type Result = String;
+
+//     fn handle(&mut self, _msg: CountVisitors, _: &mut Context<Self>) -> Self::Result {
+//         format!("There are {:?} people online.\n", self.visitor_count)   
+//     }
+// }
+
+
+/// WhoIn: What user_ids / usernames are in this room?
+#[derive(Message, Debug)]
+#[rtype(String)]
+pub struct WhoIn {
+    pub room: String,
+}
+
+/// Connect Handler: Register new client session and assign it a unique id.
+impl Handler<WhoIn> for GameServer {
     type Result = String;
 
-    fn handle(&mut self, _msg: Who, _: &mut Context<Self>) -> Self::Result {
-        // This is incredibly hacky because don't understand how to handle arc yet.
-        let unnamed = format!("{:?}", &self.visitor_count);
-        let numby = unnamed.parse::<usize>().unwrap();
+    fn handle(&mut self, msg: WhoIn, _: &mut Context<Self>) -> Self::Result {
+        
+        let mut return_string = String::new();
+        // Get a list of user_ids for the room of interest.
+        if let Some(user_id_list) = self.rooms.get(&msg.room) {
 
-        // formatted list of visitors
-        let fmt_visitors = self
-            .visitor_list
-            .iter()
-            .map(|(k, v)| format!("{v}\n"))
-            .collect::<String>();
+            let visitor_list = user_id_list
+                .iter()
+                .map(|c| self.visitor_list.get_key_value(c).unwrap())
+                .map(|(k, v)| (*k, v.to_owned()))
+                .collect::<HashMap<usize,String>>();
 
-        format!(
-            "There are {} players and {} ghosts online. Player list:\n{}\nType \x1b[31;1m/help\x1b[0m for help on other commands.",
-            self.visitor_list.len(),
-            numby - self.visitor_list.len(),
-            fmt_visitors
-        )
+            // Serialize to json and push
+            let serialized = serde_json::to_string(&visitor_list).unwrap();
+            return_string.push_str(&serialized);
+        };
+
+        return_string
+
     }
 }
 
@@ -362,5 +383,26 @@ impl Handler<Winner> for GameServer {
 
         // Reset their clients
         self.send_message("//cmd;goback", &msg.room, 0);
+
+        // Create a message / handler to retrieve user names / ids of all players in  room.
+
+        // // boot players. Need to figure out how to grab their usernames.
+        // let usr1 = game_state.clone().user_1.unwrap();
+        // let usr2 = game_state.user_2.unwrap();
+
+        // gamesess.addr.do_send(game_server::Join {
+        //     id: usr1.parse::<usize>().unwrap(),
+        //     room: "main".to_string(),
+        //     username: "player".to_string(),
+        // });
+
+        // gamesess.addr.do_send(game_server::Join {
+        //     id: usr2.parse::<usize>().unwrap(),
+        //     room: "main".to_string(),
+        //     username: "player".to_string(),
+        // });
+
+        // // Deregister game from sql db
+        // let _result = api::deregister_game(&session_id);
     }
 }

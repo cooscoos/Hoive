@@ -239,6 +239,15 @@ pub fn remove_user(user_id: &str, conn: &mut SqliteConnection) -> QueryResult<()
     Ok(())
 }
 
+/// Remove a game from the db
+pub fn remove_game(session_id: &str, conn: &mut SqliteConnection) -> QueryResult<()> {
+    use super::schema::game_state::dsl::*;
+    diesel::delete(game_state.filter(id.eq(session_id.to_string())))
+        .execute(conn)
+        .unwrap();
+    Ok(())
+}
+
 /// Clear the db (wipe all gamestates and users)
 pub fn clean_db(conn: &mut SqliteConnection) {
     use super::schema::game_state::dsl::*;

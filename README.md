@@ -27,12 +27,12 @@ Lower priority:
 - Consider: Bevy, maybe with (egui)[https://github.com/emilk/egui] or Fyrox.
 - display you: for chat
 - fix colour of other players to random?
+
 ### Server
 
-- prioritise: on game end, boot players back into main and delete the game. Current implementation is jank.
-- Test it works for natural wins (not forfeits)
-- In game_server.rs: "This is incredibly hacky because don't understand how to handle arc yet."
+- Test winnin works for natural wins (not forfeits)
 - reinstate connection to db with pool
+- test that db games / users are being wiped on leave.
 
 Lower priority:
 - have a flag / option for running an html server.

@@ -106,10 +106,8 @@ impl GameState {
         history
     }
 
-
     /// Get the winner
     pub fn get_winner(&self) -> Option<Winner> {
-
         match &self.winner {
             Some(value) => {
                 // We're getting a comma separated list where the first is the winner_team, then their id, then maybe an F (or not)
@@ -136,12 +134,10 @@ impl GameState {
                 winner.username = winner_name.to_owned();
 
                 Some(winner)
-   
             }
             None => None,
         }
     }
-
 }
 
 #[derive(Deserialize, Serialize, Insertable)]
