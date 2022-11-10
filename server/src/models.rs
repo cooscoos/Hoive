@@ -113,27 +113,35 @@ impl GameState {
                 // We're getting a comma separated list where the first is the winner_team, then their id, then maybe an F (or not)
 
                 let mut winner = Winner::default();
-
+                
                 let v: Vec<&str> = value.split(',').collect();
                 let winner_team = v[0];
-                let winner_name = v[1];
 
-                // Check if a forfeit happened
-                if value.ends_with('F') {
-                    winner.forfeit = true;
+
+                if winner_team.starts_with('D') {
+                    // It's a draw
+                    winner.team = None;
+                    return Some(winner)
+                } else {
+
+                    let winner_name = v[1];
+
+                    // Check if a forfeit happened
+                    if value.ends_with('F') {
+                        winner.forfeit = true;
+                    }
+
+                    // Check who won (black, white, or draw)
+                    winner.team = match winner_team {
+                        _ if winner_team.starts_with('B') => Some(Team::Black),
+                        _ if winner_team.starts_with('W') => Some(Team::White),
+                        _ => panic!("Unrecognised winner"),
+                    };
+
+                    winner.username = winner_name.to_owned();
+
+                    Some(winner)
                 }
-
-                // Check who won (black, white, or draw)
-                winner.team = match winner_team {
-                    _ if winner_team.starts_with('B') => Some(Team::Black),
-                    _ if winner_team.starts_with('W') => Some(Team::White),
-                    _ if winner_team.starts_with('D') => None,
-                    _ => panic!("Unrecognised winner"),
-                };
-
-                winner.username = winner_name.to_owned();
-
-                Some(winner)
             }
             None => None,
         }

@@ -201,6 +201,28 @@ pub fn update_winner(
         .execute(conn)
 }
 
+/// Update the gamestate and the winner
+pub fn update_game_and_winner(
+session_id: &str,
+l_user_id: &str,
+board_str: &str,
+history_str: &str,
+is_winner: &str,
+conn: &mut SqliteConnection,
+) -> QueryResult<usize> {
+use schema::game_state::dsl::*;
+
+diesel::update(game_state)
+    .filter(id.eq(session_id.to_string()))
+    .set((
+        last_user_id.eq(l_user_id.to_string()),
+        board.eq(board_str),
+        history.eq(history_str),
+        winner.eq(is_winner),
+    ))
+    .execute(conn)
+}
+
 /// Get the username of a user of given id
 pub fn get_user_name(user_id: &usize, conn: &mut SqliteConnection) -> QueryResult<String> {
     use schema::user::dsl::*;

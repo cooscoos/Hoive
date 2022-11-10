@@ -1,6 +1,7 @@
 /// This module converts HttpRequests into commands that execute gameplay and database updates.
 use std::result::Result;
 
+use hoive::game;
 // Profanity filter for usernames, and random number / uuid generation
 use rand::Rng;
 
@@ -314,9 +315,8 @@ fn do_movement(
     let event = Event::new_by_action(&action);
 
     match move_status {
-        MoveStatus::Success | MoveStatus::Win(_) => {
-            execute_on_db(&mut board, game_state, event, session_id, conn)?
-        }
+        MoveStatus::Success => execute_on_db(&mut board, game_state, event, session_id, conn)?,
+        MoveStatus::Win(team) => execute_win_on_db(team, &mut board, game_state, event, session_id, conn)?,
         _ => {}
     };
     Ok(move_status)
@@ -348,9 +348,8 @@ fn do_special(
 
     // Execute it on the db if it was successful
     match move_status {
-        MoveStatus::Success | MoveStatus::Win(_) => {
-            execute_on_db(&mut board, game_state, event, session_id, conn)?
-        }
+        MoveStatus::Success => execute_on_db(&mut board, game_state, event, session_id, conn)?,
+        MoveStatus::Win(team) => execute_win_on_db(team, &mut board, game_state, event, session_id, conn)?,
         _ => {}
     };
 
@@ -384,6 +383,73 @@ fn execute_on_db<T: Coord>(
         ))),
     }
 }
+
+/// Execute a winning action on the db
+fn execute_win_on_db<T: Coord>(
+    winner: Option<Team>, // winning team
+    board: &mut Board<T>,
+    game_state: GameState,
+    event: Event,
+    session_id: &str,
+    conn: &mut SqliteConnection,
+) -> Result<(), Error> {
+
+    
+    let win_string = match winner {
+        Some(winner_team) => {
+
+        // Team black are user1. This is a bit jank. Need a cleverer way
+        let winner_id = match winner_team {
+            Team::Black => game_state.user_1.as_ref().unwrap().parse::<usize>().expect("Couldn't parse user id to usize"),
+            Team::White => game_state.user_2.as_ref().unwrap().parse::<usize>().expect("Couldn't parse user id to usize"),
+        };
+    
+        // Get the winner's name
+        let winner_name = match db::get_user_name(&winner_id, conn) {
+            Ok(value) => value,
+            Err(err) => {
+                return Err(error::ErrorInternalServerError(format!(
+                    "Problem getting winner name from user id because {err}"
+                )))
+            }
+        };
+
+        // Create a winstring
+        format!("{},{}", winner_team.to_string(), winner_name)
+    },
+    // Otherwise draw
+        None => "D".to_string(),
+    };
+
+
+    // Refresh all mosquito names back to m1 and update board on server
+    specials::mosquito_desuck(board);
+    let board_str = board.encode_spiral();
+
+    // Get the uuid of the current user and set them as the last_user in the db
+    let l_user = game_state.which_user()?;
+
+    // Parse the event into a string and append it to the board's history
+    let history = game_state.add_event(event);
+
+    // Update db
+    let res = db::update_game_and_winner(session_id, &l_user, &board_str, &history, &win_string, conn);
+
+
+
+    match res {
+        Ok(_) => Ok(()),
+        Err(err) => Err(error::ErrorInternalServerError(format!(
+            "Problem updating winner in gamestate because {err}"
+        ))),
+    }
+
+
+}
+
+
+
+
 
 fn skip_turn(
     game_state: GameState,

@@ -374,42 +374,6 @@ fn in_game_parser(
     if m.starts_with('/') {
         let v: Vec<&str> = m.splitn(2, ' ').collect();
         match v[0] {
-            // "/join" => {
-            //     if v.len() == 2 {
-            //         let session_id = v[1].to_owned();
-            //         // Check the db to see if there's a session with this id
-            //         // no function to do this yet, create one later
-
-            //         // If there's a match, then join the session, and join the chat for that room
-            //         return Ok(());
-            //     } else {
-            //         // Join an empty game if there is one available
-            //         match api::find()? {
-            //             Some(game_state) => {
-            //                 // Join the game
-            //                 let session_id = game_state.id.to_owned();
-
-            //                 // Join on the db
-            //                 api::join(&session_id, &chatsess.id)?;
-
-            //                 // Join in the chat
-            //                 chatsess.game_room = session_id.to_owned();
-            //                 chatsess.addr.do_send(chat_server::Join {
-            //                     id: chatsess.id,
-            //                     name: chatsess.game_room.clone(),
-            //                     username: chatsess.name.as_ref().unwrap().to_owned(),
-            //                 });
-
-            //                 ctx.text(format!("You joined game room {}", session_id));
-            //             }
-            //             None => ctx.text("No empty games available. Try /create one!"),
-            //         }
-            //     }
-            // }
-            // "/leave" => {
-            // create an api to remove self from session, lose game, join main etc. Mimic join above.
-            // api::remove
-            // }
             "/id" => {
                 // Display info to user on themselves
                 ctx.text(format!(
@@ -418,8 +382,6 @@ fn in_game_parser(
                 ));
             }
             "/who" => {
-
-
                 // Display who is in this game
                 gamesess
                 .addr
@@ -433,10 +395,6 @@ fn in_game_parser(
                     fut::ready(())
                 })
                 .wait(ctx);
-
-
-
-
             }
             "/t" | "/tell" => {
                 // User wants to send msg to opponent
@@ -510,6 +468,8 @@ fn in_game_parser(
             "/execute" if gamesess.active => {
                 // Ask the server to execute the move and return the response
                 let result = api::make_action(&gamesess.action, &gamesess.room)?;
+
+                println!("Result of move = {:?}", result);
 
                 match result {
                     MoveStatus::Success => {

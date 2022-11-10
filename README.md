@@ -30,7 +30,6 @@ Lower priority:
 
 ### Server
 
-- Test winnin works for natural wins (not forfeits)
 - reinstate connection to db with pool
 - test that db games / users are being wiped on leave.
 

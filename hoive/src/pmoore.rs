@@ -349,7 +349,7 @@ pub fn endgame_msg(player_name: String, team: Option<Team>, forfeit: bool) -> St
         Some(team) => {
             endgame_msg.push_str(&format!("{} team wins ", crate::draw::team_string(team)))
         }
-        None => endgame_msg.push_str("It's a draw!"),
+        None => endgame_msg.push_str("It's a draw.\n\n\x1b[32;1m== Both teams are defeated == \x1b[0m\n\n"),
     };
 
     if team.is_some() {
