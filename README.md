@@ -15,27 +15,27 @@ The hoive directory contains the game logic.
 - play test
 
 ### Hoive base game
-- Spiders are bugged and can move <3 distance! It's because they can backtrack and leave the hive. Solve this another day.
-- Spiral decoder is broken because always assumes hex (0,0) has something in it. Need to be able to support an empty hex (0,0). Add test for spiral decoder.
+- Spiral decoder is broken because always assumes hex (0,0) has something in it. Need to be able to support an empty hex (0,0). Add failing test for spiral decoder and fix.
+- Spiders are bugged (hehe) and can move <3 distance It's because they can backtrack and leave the hive. Check hive connection at each step. Same for ladybird but with below.
+
 
 ### Client
 
 - Write tests to probe local client's use of BoardActions and Req:: enums.
 
-Lower priority:
+### Server
+
+- Reinstate connection to db with pool
+- Test that db games / users are being wiped on leave.
+
+
+### Low priority
+
 - Try get http server working as an option. - have a flag / option for running an html server. Client advanced options.
 - Consider: Bevy, maybe with (egui)[https://github.com/emilk/egui] or Fyrox.
 - display you: for chat
 - fix colour of other players to random?
-
-### Server
-
-- reinstate connection to db with pool
-- test that db games / users are being wiped on leave.
-
-Lower priority:
-- have a flag / option for running an html server.
-- Option to select an empty game to join based on its id in websocket version so can play with friends
+- Option to select an empty game to join based on its id in websocket version so can play with friends on server
 
 
 ### Useful references
