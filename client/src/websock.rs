@@ -58,11 +58,8 @@ pub async fn play_websock(def_setup: bool) -> Result<(), Box<dyn Error>> {
     println!("Connected! Welcome. Enter a username:");
 
     // Store information about game sessions locally
-    let mut local = LGameSession::default();
-
-    // Start knowing that we're going to be dumped in room and need to select a name
-    local.precursor = "/name ".to_string();
-    local.room = "main".to_string();
+    // Start knowing that we're going to be dumped in main room and need to select a name
+    let mut local = LGameSession{precursor: "/name ".to_string(), room: "main".to_string(), ..Default::default()};
 
     loop {
         select! {

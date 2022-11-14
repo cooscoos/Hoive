@@ -1,13 +1,11 @@
 /// This module converts HttpRequests into commands that execute gameplay and database updates.
 use std::result::Result;
 
-use hoive::game;
 // Profanity filter for usernames, and random number / uuid generation
 use rand::Rng;
 
 use uuid::Uuid;
 
-use actix_web::Responder;
 use actix_web::{error, web, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
 use serde::Deserialize;
@@ -29,6 +27,7 @@ use hoive::maths::coord::Coord;
 use hoive::maths::coord::Cube;
 
 /// Defines web form to parse a game session's uuid
+/// Is this even used anymore?
 #[derive(Deserialize)]
 pub struct SessionInfo {
     id: Uuid,
@@ -37,14 +36,8 @@ pub struct SessionInfo {
 use crate::{game_server, game_session};
 use actix::Addr;
 use std::{
-    sync::{
-        atomic::{AtomicUsize, Ordering},
-        Arc,
-    },
     time::Instant,
 };
-
-use self::schema::game_state::{self, last_user_id, user_1, user_2};
 
 /// Entry point for our websocket route
 /// Define the username, check it for profanity, register it on the db, and in the chat.
@@ -155,7 +148,7 @@ pub fn deregister_game(session_id: &str) -> Result<(), Error> {
     // Inefficient way, for now, to make progress
     let mut conn = db::establish_connection();
 
-    match db::remove_game(&session_id.to_string(), &mut conn) {
+    match db::remove_game(session_id, &mut conn) {
         Ok(_) => Ok(()),
         Err(error) => Err(error::ErrorBadGateway(format!(
             "Can't delete game: {error}"
@@ -183,7 +176,7 @@ pub fn new_game(user_id: &usize) -> Result<String, Error> {
     // Inefficient way, for now, to make progress
     let mut conn = db::establish_connection();
 
-    match db::create_session(&user_id, &mut conn) {
+    match db::create_session(user_id, &mut conn) {
         Ok(session_id) => {
             println!("\x1b[32;1mCreated session id {}\x1b[0m\n", session_id);
             Ok(session_id.to_string())
@@ -209,7 +202,7 @@ pub fn join(session_id: &str, user_2_id: &usize) -> Result<(), Error> {
     // Inefficient way, for now, to make progress
     let mut conn = db::establish_connection();
 
-    match db::join_live_session(session_id, &user_2_id, &mut conn) {
+    match db::join_live_session(session_id, user_2_id, &mut conn) {
         Ok(0) => Err(error::ErrorNotFound(format!(
             "No waiting sessions with id {session_id}"
         ))),
@@ -253,7 +246,7 @@ pub fn join(session_id: &str, user_2_id: &usize) -> Result<(), Error> {
 pub fn get_game_state(session_id: &str) -> Result<GameState, Error> {
     // Inefficient way, for now, to make progress
     let mut conn = db::establish_connection();
-    let res = db::get_game_state(&session_id, &mut conn);
+    let res = db::get_game_state(session_id, &mut conn);
     match res {
         Ok(game_state) => Ok(game_state),
         _ => Err(error::ErrorInternalServerError(format!(
@@ -312,7 +305,7 @@ fn do_movement(
     let move_status = board.move_chip(chip_name, active_team, position);
 
     // Create an event to track history of moves
-    let event = Event::new_by_action(&action);
+    let event = Event::new_by_action(action);
 
     match move_status {
         MoveStatus::Success => execute_on_db(&mut board, game_state, event, session_id, conn)?,
@@ -344,7 +337,7 @@ fn do_special(
     );
 
     // Create an event to track history of moves
-    let event = Event::new_by_action(&action);
+    let event = Event::new_by_action(action);
 
     // Execute it on the db if it was successful
     match move_status {

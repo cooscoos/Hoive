@@ -9,7 +9,7 @@ use super::schema::game_state;
 use super::schema::user;
 
 use hoive::game::{board::Board, comps::Team, history::Event};
-use hoive::maths::coord::{Coord, Cube};
+use hoive::maths::coord::Cube;
 
 #[derive(Serialize, Deserialize, Default, Queryable, Insertable, Debug, Clone)]
 #[diesel(table_name = user)]
@@ -81,7 +81,7 @@ impl GameState {
 
         // Add the history in
         board.history = match &self.history {
-            Some(value) if value == "" => History::default(), // No string, history empty
+            Some(value) if value.is_empty() => History::default(), // No string, history empty
             Some(value) => History::from_str(value).expect("Problem parsing history"), // parse history from str
             None => History::default(), // No value, history empty
         };
@@ -121,7 +121,7 @@ impl GameState {
                 if winner_team.starts_with('D') {
                     // It's a draw
                     winner.team = None;
-                    return Some(winner)
+                    Some(winner)
                 } else {
 
                     let winner_name = v[1];

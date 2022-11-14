@@ -5,7 +5,7 @@ pub mod setup;
 
 use crate::get_usr_input;
 use hoive::game::board::Board;
-use hoive::maths::coord::{Coord, Cube};
+use hoive::maths::coord::Cube;
 use server::models::Winner;
 use std::error::Error;
 
@@ -41,7 +41,7 @@ pub async fn play_online() -> Result<(), Box<dyn Error>> {
             // Take a turn, or wait and watch if it's not your turn.
             match my_team == active_team {
                 true => {
-                    game_state = play::take_turn(&mut board, my_team, &client, &base_url).await?
+                    game_state = play::take_turn(&board, my_team, &client, &base_url).await?
                 }
                 false => {
                     game_state = play::observe(&mut board, my_team, &client, &base_url).await?

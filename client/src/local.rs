@@ -121,10 +121,10 @@ pub fn action_prompts<T: Coord>(
         _ => {
             // Otherwise select an appropriate path based on request being made
             match action.request {
-                Req::Select => pmoore::select_chip_prompts(action, &textin, &board, active_team)?,
+                Req::Select => pmoore::select_chip_prompts(action, &textin, board, active_team)?,
                 Req::Mosquito => pmoore::mosquito_prompts(action, &textin, board)?,
                 Req::Pillbug => pmoore::pillbug_prompts(action, &textin)?,
-                Req::Sumo => pmoore::sumo_victim_prompts(action, &textin, &board)?,
+                Req::Sumo => pmoore::sumo_victim_prompts(action, &textin, board)?,
                 Req::Move => pmoore::move_chip_prompts(action, &textin)?,
                 _ => {}
             }

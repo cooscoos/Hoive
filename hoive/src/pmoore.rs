@@ -311,7 +311,7 @@ fn choose_victim_prompts(
         return Ok(None)
     }
 
-    let selected = neighbours.into_iter().nth(selection).expect("Problem selecting chip.");
+    let selected = neighbours.iter().nth(selection).expect("Problem selecting chip.");
 
     // Get the coordinates of that selected chip
     let victim_chip = Chip {

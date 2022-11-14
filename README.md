@@ -11,6 +11,7 @@ The hoive directory contains the game logic.
 
 ## To do
 
+- clippy tidy
 - install on virtual machine and list dependencies in readme
 - play test
 

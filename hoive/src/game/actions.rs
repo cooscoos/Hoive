@@ -1,7 +1,7 @@
 use super::ask::Req;
 use super::comps::{convert_static_basic, Team};
 use crate::maths::coord::{Coord, DoubleHeight};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::collections::BTreeSet;
 use crate::game::comps::Chip;
 

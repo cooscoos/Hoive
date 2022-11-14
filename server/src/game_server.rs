@@ -7,11 +7,10 @@
 //! - structs called "messages" that the GameServer actor will respond to
 //! - handlers that define how GameServer responds to each message.
 
-use std::fmt;
 
 use actix::prelude::*;
 use rand::{self, rngs::ThreadRng, Rng};
-use serde::Serialize;
+
 use std::{
     collections::{HashMap, HashSet},
     sync::{

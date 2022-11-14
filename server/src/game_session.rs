@@ -310,7 +310,7 @@ fn main_lobby_parser(
                     match api::find()? {
                         Some(game_state) => {
                             // The game_state's id will define the game room name
-                            let session_id = game_state.id.to_owned();
+                            let session_id = game_state.id;
 
                             // Join on the sqlite db
                             api::join(&session_id, &gamesess.id)?;
@@ -550,7 +550,7 @@ fn in_game_parser(
                 // Can't do it this way or the user can select main themselves. Could have a flag, or figure out how to dump both server/local clients back in main properly.
                 gamesess.room = "main".to_string();
             }
-            _ => ctx.text(format!("Invalid command.")),
+            _ => ctx.text("Invalid command.".to_string()),
         }
     } else {
         // Default chat is off in game. Need to use /t
