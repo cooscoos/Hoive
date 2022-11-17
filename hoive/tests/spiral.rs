@@ -2,6 +2,37 @@ use hex_spiral::{ring, ring_offset};
 use hoive::maths::coord::Coord;
 use hoive::maths::coord::Cube;
 use hoive::maths::coord::Spiral;
+mod common;
+use hoive::game::board::Board;
+use hoive::game::comps::Chip;
+use std::collections::BTreeMap;
+
+/// Helper function to generate an ordered BTreeMap of chips on the board and their positions
+fn ordered_map<T: Coord>(board: Board<T>) -> BTreeMap<T, Chip> {
+    board
+        .chips
+        .into_iter()
+        .filter(|(_, p)| p.is_some())
+        .map(|(c, p)| (p.unwrap(), c))
+        .collect::<BTreeMap<T, Chip>>()
+}
+
+/// Load a board in from filename, covert it to spiral code and back, and check it's still the same board
+fn test_decoder(filename: &str) {
+    // Load in a snapshot of a board
+    let board = common::emulate::load_board(filename.to_string());
+
+    // Convert it to spiral code and back to a board again
+    let board_string = board.encode_spiral();
+    let board_copy = board.decode_spiral(board_string);
+
+    // Create ordered BTree maps of chips and their positions on the original and decoded board
+    let original = ordered_map(board);
+    let decoded = ordered_map(board_copy);
+
+    assert_eq!(original, decoded);
+}
+
 
 #[test]
 fn convert_spiral_to_cube() {
@@ -93,15 +124,15 @@ fn spiral_offset_test() {
     assert_eq!(expected, result);
 }
 
+
 #[test]
 fn spiral_decoding() {
     // Convert a board to spiral coordinates and back to a board to check it matches
-    
-
+    test_decoder("snapshot_21")
 }
 
 #[test]
 fn spiral_decoding_no_origin() {
     // Convert a board to spiral coordinates and back to a board to check it matches, but no chip at 0,0
-
+    test_decoder("snapshot_22")
 }

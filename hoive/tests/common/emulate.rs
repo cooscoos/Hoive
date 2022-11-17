@@ -4,7 +4,15 @@ use std::io::{prelude::*, BufReader};
 
 use hoive::game::comps::Team;
 use hoive::game::{board::Board, history::Event, specials};
-use hoive::maths::coord::Coord;
+use hoive::maths::coord::{Coord, Cube};
+
+/// Common set up- load in a file at filename, emulate the board and return it
+pub fn load_board(filename: String) -> Board<Cube> {
+    // Create and emulate a board from a named reference/tests/snapshots file
+    let mut board = Board::new(Cube::default());
+    emulate(&mut board, filename, true);
+    board
+}
 
 /// Emulate the moves contained within a history csv of given filename
 /// If test_flag == true, then csvs are loaded from ./tests/snapshots directory
