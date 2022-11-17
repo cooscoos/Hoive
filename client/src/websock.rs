@@ -59,7 +59,11 @@ pub async fn play_websock(def_setup: bool) -> Result<(), Box<dyn Error>> {
 
     // Store information about game sessions locally
     // Start knowing that we're going to be dumped in main room and need to select a name
-    let mut local = LGameSession{precursor: "/name ".to_string(), room: "main".to_string(), ..Default::default()};
+    let mut local = LGameSession {
+        precursor: "/name ".to_string(),
+        room: "main".to_string(),
+        ..Default::default()
+    };
 
     loop {
         select! {
@@ -283,5 +287,4 @@ fn show_game_info(local: &LGameSession) -> String {
         local.turn_string(),
         local.game_message,
     )
-
 }

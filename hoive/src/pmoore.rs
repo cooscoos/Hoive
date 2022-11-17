@@ -88,7 +88,6 @@ pub fn select_chip_prompts<T: Coord>(
     board: &Board<T>,
     active_team: Team,
 ) -> Result<(), Box<dyn Error>> {
-    
     // The text input should define a chip to select
     let chip_select = match textin {
         _ if textin == "mb" => {
@@ -131,7 +130,6 @@ pub fn select_chip_prompts<T: Coord>(
                 "You don't have this tile in your hand. Try select a chip again.".to_string();
         }
         Some(chip_name) => {
-            
             // Start building the action with some default params.
             action.chip_name = chip_name.to_string();
             action.message = format!("Select co-ordinate to move {} to. Input column then row, separated by comma, e.g.: 0, 0. Hit x to abort the move.", chipteam_to_str(chip_name,active_team));
@@ -159,16 +157,17 @@ pub fn select_chip_prompts<T: Coord>(
                     match chip_name {
                         "p1" => {
                             action.message =
-                            "Hit m to sumo a neighbour, or anything else to do move.".to_string();
+                                "Hit m to sumo a neighbour, or anything else to do move."
+                                    .to_string();
                             action.request = Req::Pillbug;
-                        },
+                        }
                         "m1" => {
                             action.message = format!(
                                 "Select a neighbour to suck from...\n{}",
                                 crate::draw::list_these_chips(neighbours.clone())
                             );
                             action.request = Req::Mosquito;
-                        },
+                        }
                         _ => unreachable!(),
                     }
                     action.neighbours = Some(neighbours);
@@ -179,7 +178,6 @@ pub fn select_chip_prompts<T: Coord>(
                     //     .map(|c| c.to_string())
                     //     .collect::<BTreeSet<String>>();
                     // Store the neighbours for later
-                    
                 }
                 _ => {} // nothing needs changing
             }
@@ -214,7 +212,6 @@ pub fn mosquito_prompts<T: Coord>(
     textin: &str,
     board: &Board<T>,
 ) -> Result<(), Box<dyn Error>> {
-
     // Choose a victim
     let victim_chip = match choose_victim_prompts(action, textin)? {
         Some(value) => value,
@@ -270,7 +267,6 @@ pub fn sumo_victim_prompts<T: Coord>(
     textin: &str,
     board: &Board<T>,
 ) -> Result<(), Box<dyn Error>> {
-
     // Choose a victim
     let victim_chip = match choose_victim_prompts(action, textin)? {
         Some(value) => value,
@@ -296,11 +292,10 @@ fn choose_victim_prompts(
     textin: &str,
 ) -> Result<Option<Chip>, Box<dyn Error>> {
     let selection = match textin.parse::<usize>() {
-
         Ok(value) => value,
         Err(_) => {
             action.message = "That's not a valid number. Try again.".to_string();
-            return Ok(None)
+            return Ok(None);
         }
     };
 
@@ -308,15 +303,18 @@ fn choose_victim_prompts(
 
     if selection > neighbours.len() - 1 {
         action.message = "Pick a number from the options. Try again.".to_string();
-        return Ok(None)
+        return Ok(None);
     }
 
-    let selected = neighbours.iter().nth(selection).expect("Problem selecting chip.");
+    let selected = neighbours
+        .iter()
+        .nth(selection)
+        .expect("Problem selecting chip.");
 
     // Get the coordinates of that selected chip
     let victim_chip = Chip {
         name: convert_static_basic(selected.name.to_owned()).expect("Invalid chip"),
-        team: selected.team,//get_team_from_chip(&selected.team),
+        team: selected.team, //get_team_from_chip(&selected.team),
     };
 
     Ok(Some(victim_chip))
@@ -340,16 +338,16 @@ pub fn xylophone() -> &'static str {
 
 /// Create fancy message to say player "name" on "team" won the game, and why.
 pub fn endgame_msg(player_name: String, team: Option<Team>, forfeit: bool) -> String {
-
     let mut endgame_msg =
-    "\x1b[33;1m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\x1b[0m\n\n".to_string();
+        "\x1b[33;1m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\x1b[0m\n\n".to_string();
 
     // Create message send to all users saying who won and why
     match team {
         Some(team) => {
             endgame_msg.push_str(&format!("{} team wins ", crate::draw::team_string(team)))
         }
-        None => endgame_msg.push_str("It's a draw.\n\n\x1b[32;1m== Both teams are defeated == \x1b[0m\n\n"),
+        None => endgame_msg
+            .push_str("It's a draw.\n\n\x1b[32;1m== Both teams are defeated == \x1b[0m\n\n"),
     };
 
     if team.is_some() {
@@ -363,12 +361,9 @@ pub fn endgame_msg(player_name: String, team: Option<Team>, forfeit: bool) -> St
         ));
     }
 
-    endgame_msg.push_str(
-        "\x1b[33;1m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\x1b[0m\n\n",
-    );
+    endgame_msg.push_str("\x1b[33;1m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\x1b[0m\n\n");
 
     endgame_msg
-
 }
 
 /// Returns the game manual.

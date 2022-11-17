@@ -1,4 +1,3 @@
-
 use reqwest::Client;
 /// Set up connections to a Hoive db and generate/join games
 use std::{error::Error, thread, time::Duration};

@@ -7,7 +7,6 @@
 //! - structs called "messages" that the GameServer actor will respond to
 //! - handlers that define how GameServer responds to each message.
 
-
 use actix::prelude::*;
 use rand::{self, rngs::ThreadRng, Rng};
 
@@ -257,10 +256,9 @@ impl Handler<NewName> for GameServer {
 //     type Result = String;
 
 //     fn handle(&mut self, _msg: CountVisitors, _: &mut Context<Self>) -> Self::Result {
-//         format!("There are {:?} people online.\n", self.visitor_count)   
+//         format!("There are {:?} people online.\n", self.visitor_count)
 //     }
 // }
-
 
 /// WhoIn: What user_ids / usernames are in this room?
 #[derive(Message, Debug)]
@@ -274,16 +272,14 @@ impl Handler<WhoIn> for GameServer {
     type Result = String;
 
     fn handle(&mut self, msg: WhoIn, _: &mut Context<Self>) -> Self::Result {
-        
         let mut return_string = String::new();
         // Get a list of user_ids for the room of interest.
         if let Some(user_id_list) = self.rooms.get(&msg.room) {
-
             let visitor_list = user_id_list
                 .iter()
                 .map(|c| self.visitor_list.get_key_value(c).unwrap())
                 .map(|(k, v)| (*k, v.to_owned()))
-                .collect::<HashMap<usize,String>>();
+                .collect::<HashMap<usize, String>>();
 
             // Serialize to json and push
             let serialized = serde_json::to_string(&visitor_list).unwrap();
@@ -291,7 +287,6 @@ impl Handler<WhoIn> for GameServer {
         };
 
         return_string
-
     }
 }
 

@@ -1,10 +1,10 @@
+use crate::get_usr_input;
 /// Play games of Hoive locally (couch co-op)
 use hoive::game::{
     actions::BoardAction, ask::Req, board::Board, comps::Team, movestatus::MoveStatus, specials,
 };
 use hoive::maths::coord::{Coord, Cube};
 use hoive::{draw, pmoore};
-use crate::get_usr_input;
 
 use rand::Rng;
 use std::error::Error;
@@ -163,4 +163,3 @@ pub fn try_execute_action<T: Coord>(
         ),
     }
 }
-

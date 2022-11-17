@@ -14,12 +14,12 @@ use serde::{Deserialize, Serialize};
 /// Execute| Execute a move
 /// Save| Save the game (local games only)
 /// ___
-/// 
+///
 #[derive(Deserialize, Serialize, Debug, Default, Clone, PartialEq, Eq)]
 pub enum Req {
     #[default]
     Nothing,
-    
+
     Select,
     Move,
     Mosquito,

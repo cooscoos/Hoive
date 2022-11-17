@@ -34,9 +34,7 @@ pub struct SessionInfo {
 
 use crate::{game_server, game_session};
 use actix::Addr;
-use std::{
-    time::Instant,
-};
+use std::time::Instant;
 
 /// Entry point for our websocket route
 /// Define the username, check it for profanity, register it on the db, and in the chat.
@@ -308,7 +306,9 @@ fn do_movement(
 
     match move_status {
         MoveStatus::Success => execute_on_db(&mut board, game_state, event, session_id, conn)?,
-        MoveStatus::Win(team) => execute_win_on_db(team, &mut board, game_state, event, session_id, conn)?,
+        MoveStatus::Win(team) => {
+            execute_win_on_db(team, &mut board, game_state, event, session_id, conn)?
+        }
         _ => {}
     };
     Ok(move_status)
@@ -341,7 +341,9 @@ fn do_special(
     // Execute it on the db if it was successful
     match move_status {
         MoveStatus::Success => execute_on_db(&mut board, game_state, event, session_id, conn)?,
-        MoveStatus::Win(team) => execute_win_on_db(team, &mut board, game_state, event, session_id, conn)?,
+        MoveStatus::Win(team) => {
+            execute_win_on_db(team, &mut board, game_state, event, session_id, conn)?
+        }
         _ => {}
     };
 
@@ -385,34 +387,40 @@ fn execute_win_on_db<T: Coord>(
     session_id: &str,
     conn: &mut SqliteConnection,
 ) -> Result<(), Error> {
-
-    
     let win_string = match winner {
         Some(winner_team) => {
+            // Team black are user1. This is a bit jank. Need a cleverer way
+            let winner_id = match winner_team {
+                Team::Black => game_state
+                    .user_1
+                    .as_ref()
+                    .unwrap()
+                    .parse::<usize>()
+                    .expect("Couldn't parse user id to usize"),
+                Team::White => game_state
+                    .user_2
+                    .as_ref()
+                    .unwrap()
+                    .parse::<usize>()
+                    .expect("Couldn't parse user id to usize"),
+            };
 
-        // Team black are user1. This is a bit jank. Need a cleverer way
-        let winner_id = match winner_team {
-            Team::Black => game_state.user_1.as_ref().unwrap().parse::<usize>().expect("Couldn't parse user id to usize"),
-            Team::White => game_state.user_2.as_ref().unwrap().parse::<usize>().expect("Couldn't parse user id to usize"),
-        };
-    
-        // Get the winner's name
-        let winner_name = match db::get_user_name(&winner_id, conn) {
-            Ok(value) => value,
-            Err(err) => {
-                return Err(error::ErrorInternalServerError(format!(
-                    "Problem getting winner name from user id because {err}"
-                )))
-            }
-        };
+            // Get the winner's name
+            let winner_name = match db::get_user_name(&winner_id, conn) {
+                Ok(value) => value,
+                Err(err) => {
+                    return Err(error::ErrorInternalServerError(format!(
+                        "Problem getting winner name from user id because {err}"
+                    )))
+                }
+            };
 
-        // Create a winstring
-        format!("{},{}", winner_team.to_string(), winner_name)
-    },
-    // Otherwise draw
+            // Create a winstring
+            format!("{},{}", winner_team.to_string(), winner_name)
+        }
+        // Otherwise draw
         None => "D".to_string(),
     };
-
 
     // Refresh all mosquito names back to m1 and update board on server
     specials::mosquito_desuck(board);
@@ -425,9 +433,8 @@ fn execute_win_on_db<T: Coord>(
     let history = game_state.add_event(event);
 
     // Update db
-    let res = db::update_game_and_winner(session_id, &l_user, &board_str, &history, &win_string, conn);
-
-
+    let res =
+        db::update_game_and_winner(session_id, &l_user, &board_str, &history, &win_string, conn);
 
     match res {
         Ok(_) => Ok(()),
@@ -435,13 +442,7 @@ fn execute_win_on_db<T: Coord>(
             "Problem updating winner in gamestate because {err}"
         ))),
     }
-
-
 }
-
-
-
-
 
 fn skip_turn(
     game_state: GameState,

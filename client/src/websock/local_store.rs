@@ -1,5 +1,4 @@
 ///! Store info from WsGameSession, but locally
-
 use hoive::game::actions::BoardAction;
 use hoive::game::board::Board;
 use hoive::game::comps::Team;

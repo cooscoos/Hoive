@@ -126,8 +126,7 @@ impl ToString for MoveStatus {
     }
 }
 
-impl MoveStatus{
-
+impl MoveStatus {
     /// Does MoveStatus == MoveStatus::Success?
     pub fn is_success(&self) -> bool {
         self == &MoveStatus::Success
@@ -136,13 +135,5 @@ impl MoveStatus{
     /// Do we have a winner?
     pub fn is_winner(&self) -> bool {
         matches!(self, MoveStatus::Win(_))
-        // if let MoveStatus::Win(_) = self {
-        //     true
-        // } else {
-        //     false
-        // }
     }
-
-    
-    
 }

@@ -40,9 +40,7 @@ pub async fn play_online() -> Result<(), Box<dyn Error>> {
         while !winner.happened(&game_state.winner) {
             // Take a turn, or wait and watch if it's not your turn.
             match my_team == active_team {
-                true => {
-                    game_state = play::take_turn(&board, my_team, &client, &base_url).await?
-                }
+                true => game_state = play::take_turn(&board, my_team, &client, &base_url).await?,
                 false => {
                     game_state = play::observe(&mut board, my_team, &client, &base_url).await?
                 }

@@ -266,17 +266,19 @@ fn main_lobby_parser(
             "/who" => {
                 // Display who is in main
                 gamesess
-                .addr
-                .send(game_server::WhoIn {room: "main".to_string()})
-                .into_actor(gamesess)
-                .then(|res, _, ctx| {
-                    match res {
-                        Ok(res) => ctx.text(who_display(res)),
-                        _ => ctx.stop(),
-                    }
-                    fut::ready(())
-                })
-                .wait(ctx);
+                    .addr
+                    .send(game_server::WhoIn {
+                        room: "main".to_string(),
+                    })
+                    .into_actor(gamesess)
+                    .then(|res, _, ctx| {
+                        match res {
+                            Ok(res) => ctx.text(who_display(res)),
+                            _ => ctx.stop(),
+                        }
+                        fut::ready(())
+                    })
+                    .wait(ctx);
             }
             "/create" => {
                 // Create a new game on the db, register creator as user_1
@@ -384,17 +386,19 @@ fn in_game_parser(
             "/who" => {
                 // Display who is in this game
                 gamesess
-                .addr
-                .send(game_server::WhoIn {room: gamesess.room.to_owned()})
-                .into_actor(gamesess)
-                .then(|res, _, ctx| {
-                    match res {
-                        Ok(res) => ctx.text(who_display(res)),
-                        _ => ctx.stop(),
-                    }
-                    fut::ready(())
-                })
-                .wait(ctx);
+                    .addr
+                    .send(game_server::WhoIn {
+                        room: gamesess.room.to_owned(),
+                    })
+                    .into_actor(gamesess)
+                    .then(|res, _, ctx| {
+                        match res {
+                            Ok(res) => ctx.text(who_display(res)),
+                            _ => ctx.stop(),
+                        }
+                        fut::ready(())
+                    })
+                    .wait(ctx);
             }
             "/t" | "/tell" => {
                 // User wants to send msg to opponent
@@ -578,27 +582,22 @@ You can also use the following commands:\n
 
 /// Displays who is online. who_all is all active users (json string), who_here is who is in this room.
 fn who_display(who_string: String) -> String {
-
     // Decode the list of everyone
     let everyone: HashMap<usize, String> = serde_json::from_str(&who_string).unwrap();
 
     // Sort the usernames alphabetically
-    let mut everyone_sorted = everyone.into_iter().map(|(_,v)| v).collect::<Vec<_>>();
+    let mut everyone_sorted = everyone.into_iter().map(|(_, v)| v).collect::<Vec<_>>();
     everyone_sorted.sort();
 
     // Create a pretty list
     let everyone_list = everyone_sorted
-                .iter()
-                .map(|v| {
-                    format!("- \x1b[36;2m{v}\x1b[0m\n")
-                }
-                )
-                .collect::<String>();
+        .iter()
+        .map(|v| format!("- \x1b[36;2m{v}\x1b[0m\n"))
+        .collect::<String>();
 
     format!(
         "There are {} players in this room:\n{}\nType \x1b[31;1m/help\x1b[0m for a list of other commands.\n",
         everyone_sorted.len(),
         everyone_list,
     )
-
 }

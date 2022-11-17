@@ -1,14 +1,14 @@
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub mod local;
 pub mod htmlserv;
+pub mod local;
 pub mod websock;
 
 use std::error::Error;
 
 use bytes::Bytes;
-use std::str;
 use std::io;
+use std::str;
 
 /// Play games of Hoive online or locally
 pub async fn play_games() -> Result<(), Box<dyn Error>> {

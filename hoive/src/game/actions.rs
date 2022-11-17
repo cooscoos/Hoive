@@ -1,9 +1,9 @@
 use super::ask::Req;
 use super::comps::{convert_static_basic, Team};
+use crate::game::comps::Chip;
 use crate::maths::coord::{Coord, DoubleHeight};
 use serde::Serialize;
 use std::collections::BTreeSet;
-use crate::game::comps::Chip;
 
 /// Used to formulate requests for in-game actions from a Hoive server
 /// The fields of this struct are:

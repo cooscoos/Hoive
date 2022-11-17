@@ -113,17 +113,15 @@ impl GameState {
                 // We're getting a comma separated list where the first is the winner_team, then their id, then maybe an F (or not)
 
                 let mut winner = Winner::default();
-                
+
                 let v: Vec<&str> = value.split(',').collect();
                 let winner_team = v[0];
-
 
                 if winner_team.starts_with('D') {
                     // It's a draw
                     winner.team = None;
                     Some(winner)
                 } else {
-
                     let winner_name = v[1];
 
                     // Check if a forfeit happened
