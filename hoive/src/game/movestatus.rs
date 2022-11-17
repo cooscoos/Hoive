@@ -135,11 +135,12 @@ impl MoveStatus{
 
     /// Do we have a winner?
     pub fn is_winner(&self) -> bool {
-        if let MoveStatus::Win(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, MoveStatus::Win(_))
+        // if let MoveStatus::Win(_) = self {
+        //     true
+        // } else {
+        //     false
+        // }
     }
 
     

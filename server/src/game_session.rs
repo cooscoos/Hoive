@@ -459,7 +459,7 @@ fn in_game_parser(
                     "/skip" => pmoore::skip_turn(&mut gamesess.action),
                     "/moveto" => pmoore::move_chip_prompts(&mut gamesess.action, v[1])?,
                     "/forfeit" => pmoore::forfeit(&mut gamesess.action),
-                    _ => !unreachable!(),
+                    _ => return Err("Unrecognised command".into()),
                 }
 
                 ctx.text(format!("//cmd;msg;{}", gamesess.action.message.to_owned()));

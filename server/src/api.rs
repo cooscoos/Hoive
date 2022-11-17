@@ -26,8 +26,7 @@ use hoive::game::{
 use hoive::maths::coord::Coord;
 use hoive::maths::coord::Cube;
 
-/// Defines web form to parse a game session's uuid
-/// Is this even used anymore?
+/// Defines web form to parse a game session's uuid. Used by web version
 #[derive(Deserialize)]
 pub struct SessionInfo {
     id: Uuid,
@@ -79,20 +78,20 @@ pub async fn chat_route(
 }
 
 /// Get a connection to the db
-fn get_db_connection(
-    req: HttpRequest,
-) -> Result<PooledConnection<ConnectionManager<SqliteConnection>>, Error> {
-    if let Some(pool) = req.app_data::<Pool<ConnectionManager<SqliteConnection>>>() {
-        match pool.get() {
-            Ok(conn) => Ok(conn),
-            Err(error) => Err(error::ErrorBadGateway(error)), // convert error into actix-web error
-        }
-    } else {
-        Err(error::ErrorBadGateway(
-            "[api][get_db_connection] Can't get db connection",
-        ))
-    }
-}
+// fn get_db_connection(
+//     req: HttpRequest,
+// ) -> Result<PooledConnection<ConnectionManager<SqliteConnection>>, Error> {
+//     if let Some(pool) = req.app_data::<Pool<ConnectionManager<SqliteConnection>>>() {
+//         match pool.get() {
+//             Ok(conn) => Ok(conn),
+//             Err(error) => Err(error::ErrorBadGateway(error)), // convert error into actix-web error
+//         }
+//     } else {
+//         Err(error::ErrorBadGateway(
+//             "[api][get_db_connection] Can't get db connection",
+//         ))
+//     }
+// }
 
 /// Default index page that shows the Hoive server version
 pub async fn index() -> HttpResponse {
