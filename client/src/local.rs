@@ -101,8 +101,6 @@ pub fn action_prompts<T: Coord>(
         _ if textin == "w" => {
             // Request skip turn
             pmoore::skip_turn(action);
-            // action.special = Some("skip".to_string());
-            // action.request = Req::Execute;
         }
         _ if textin == "quit" => {
             // Forfeit the game
@@ -115,8 +113,7 @@ pub fn action_prompts<T: Coord>(
         }
         #[cfg(feature = "debug")]
         _ if textin == "s" => {
-            action.command = Req::Save;
-            action.message = "Enter a filename".to_string();
+            pmoore::save_game(board)
         }
         _ => {
             // Otherwise select an appropriate path based on request being made

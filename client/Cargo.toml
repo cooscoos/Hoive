@@ -28,3 +28,8 @@ env_logger = "0.9"
 futures-util = { version = "0.3.17", default-features = false, features = ["std", "sink"] }
 log = "0.4"
 tokio-stream = "0.1.8"
+
+# For some extra features used for debugging
+# cargo run --features debug
+[features]
+debug = []

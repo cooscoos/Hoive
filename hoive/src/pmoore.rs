@@ -81,6 +81,14 @@ pub fn forfeit(action: &mut BoardAction) {
     action.request = Req::Execute;
 }
 
+/// Save the board to file
+pub fn save_game<T: Coord>(board: &Board<T>) {
+    match board.history.save("default".to_string()) {
+        Ok(()) => println!("Successfully saved to ../hoive/tests/snapshots/default.csv"),
+        Err(err) => println!("Could not save because: {}", err),
+    }
+}
+
 /// Use input string (textin) to select a chip from a active_team. Update the action.
 pub fn select_chip_prompts<T: Coord>(
     action: &mut BoardAction,

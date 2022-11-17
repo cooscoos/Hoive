@@ -11,7 +11,6 @@ The hoive directory contains the game logic.
 
 ## To do
 
-- clippy tidy
 - install on virtual machine and list dependencies in readme
 - play test
 
@@ -22,6 +21,7 @@ The hoive directory contains the game logic.
 
 ### Client
 
+- fix saving board with debug
 - Write tests to probe local client's use of BoardActions and Req:: enums.
 
 ### Server

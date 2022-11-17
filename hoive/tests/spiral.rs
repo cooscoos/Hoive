@@ -92,3 +92,16 @@ fn spiral_offset_test() {
     let expected = vec![0, 1, 7, 19, 37];
     assert_eq!(expected, result);
 }
+
+#[test]
+fn spiral_decoding() {
+    // Convert a board to spiral coordinates and back to a board to check it matches
+    
+
+}
+
+#[test]
+fn spiral_decoding_no_origin() {
+    // Convert a board to spiral coordinates and back to a board to check it matches, but no chip at 0,0
+
+}
