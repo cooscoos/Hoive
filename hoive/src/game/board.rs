@@ -441,9 +441,6 @@ where
         let _ = write!(return_string, "{:0>4}", self.turns);
         let _ = write!(return_string, "{:0>2}", self.size);
 
-        //return_string.push_str(&format!("{:0>4}", self.turns));
-        //return_string.push_str(&format!("{:0>2}", self.size));
-
         // Return nothing for the board if it's empty
         if self.get_placed_positions().is_empty() {
             return return_string;
@@ -457,10 +454,21 @@ where
             .map(|(c, p)| (p.unwrap().mapto_spiral().unwrap(), *c))
             .collect::<BTreeMap<Spiral, Chip>>();
 
+        
+        
         // Create a variable to keep track of the previous hex coord we checked
-        let mut previous = *spiral_tree.keys().next().unwrap(); // initialise as the first value in BTree
+        let mut previous = Spiral{u:0,l:0}; // initialise at origin
+
+        let first = *spiral_tree.keys().next().unwrap(); // get the first position in BTree
+
+        // If the first chip is not at the origin, we need to add some blank spaces up until we reach the first chip
+        if first!=previous{
+            return_string.push_str(&(funcs::decimal_to_duo(first.u - previous.u).to_string()));
+            previous = first;
+        }
+
         for (coord, chip) in spiral_tree {
-            // If we've moved more than 1 spiral hex, record how many gaps there are after a forward slash
+            // If we've moved more than 1 spiral hex, record how many gaps there are
             if coord.u - previous.u > 1 {
                 // Record the number of spaces to skip in duodecimal (0-143)
                 return_string

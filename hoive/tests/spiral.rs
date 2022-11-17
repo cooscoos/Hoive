@@ -24,7 +24,9 @@ fn test_decoder(filename: &str) {
 
     // Convert it to spiral code and back to a board again
     let board_string = board.encode_spiral();
+    println!("Board String: {}",board_string);
     let board_copy = board.decode_spiral(board_string);
+
 
     // Create ordered BTree maps of chips and their positions on the original and decoded board
     let original = ordered_map(board);

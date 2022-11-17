@@ -15,12 +15,9 @@ The hoive directory contains the game logic.
 - play test
 
 ### Hoive base game
-- Spiral decoder is broken because always assumes hex (0,0) has something in it. Need to be able to support an empty hex (0,0). Make spiral_decoding_no_origin test pass
 - Spiders are bugged (hehe) and can move <3 distance It's because they can backtrack and leave the hive. Check hive connection at each step. Same for ladybird but with below.
 
-
 ### Client
-
 - Write tests to probe local client's use of BoardActions and Req:: enums.
 
 ### Server
