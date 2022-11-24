@@ -79,8 +79,6 @@ fn ladybird_over_beetle() {
     );
 }
 
-
-
 #[test]
 fn ladybird_illegal_move() {
     // Make a bunch of illegal moves, check they all return error

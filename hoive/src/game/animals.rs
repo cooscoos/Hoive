@@ -187,12 +187,12 @@ pub fn mod_dist_lim_floodfill<T: Coord>(
     // Add the current position to fringes. It can be reached in k = 0 steps.
     fringes.insert(*source, 0);
 
-    // Remove self from the board
+    // Remove the ladybird / spider that is moving from the board
     let chip = board.get_chip(*source).unwrap();
     let mut board = board.clone();
     board.chips.remove(&chip);
 
-    // Also need the position of existing chips on the board
+    // Get the position of all other existing chips on the board
     let obstacles = board.get_placed_positions();
 
     for k in 1..=move_rules.len() {
@@ -214,61 +214,20 @@ pub fn mod_dist_lim_floodfill<T: Coord>(
                     // (match on k-1 because of how vectors are indexed)
                     true => obstacles.contains(n), // they are blocked by an obstacle
                     false => {
-                        //println!("{:?} has chip neighbours?: {:?}", board.coord.to_doubleheight(*n), board.count_neighbours(*n)!=0);
-                        !obstacles.contains(n) &&                                // they are not blocked by an obstacle
-                        board.count_neighbours(*n)!=0 // there is at least one neighbouring chip (we're connected to the hive)
+                        !obstacles.contains(n) &&               // they are not blocked by an obstacle
+                        board.count_neighbours(*n)!=0  && // and, there is at least one neighbouring chip (we're connected to the hive)
+                        !fringes.contains_key(n) // and the hex hasn't already been visited (stops backtracking of spiders)
                     }
                 };
 
-                // Bugfix: We should also not be allowed to backtrack into previous visitors
-                // Bugfix: and we must never leave the hive (always need at least one chip neighbour)
-                // Bugfix: ignore initial self hex
-
+                // Don't keep overwriting values in hashset (inefficient) -- only if the hex can be visited...
                 if can_visit & !visitable.contains(n) {
-                    // don't keep overwriting values in hashset (inefficient)
+                    // add the neighbouring hex to the list of fringes for this k
+                    fringes.insert(*n, k);
 
-                    if chip.name.starts_with('s') {
-                        // if it's a spider, it can't backtrack
-                        // If the hex doesn't appear in a previous k
-                        if !fringes.contains_key(n) {
-                            fringes.insert(*n, k); // add the neighbour to the list of fringes for this k, only if it doesn't appear in previous k
-                                                   // Can visit check
-                            println!(
-                                "On turn {}, we can visit: {:?}",
-                                k,
-                                board.coord.to_doubleheight(*n)
-                            );
-
-                            // We only care about what hexes this peice can visit on its final turn
-                            if k == move_rules.len() {
-                                println!(
-                                    "For turn {}, inserting final: {:?}",
-                                    k,
-                                    board.coord.to_doubleheight(*n)
-                                );
-                                visitable.insert(*n);
-                            }
-                        }
-                    } else {
-                        // it's a ladybird and can backtrack
-
-                        fringes.insert(*n, k); // add the neighbour to the list of fringes for this k, only if it doesn't appear in previous k
-                                               // Can visit check
-                        println!(
-                            "On turn {}, we can visit: {:?}",
-                            k,
-                            board.coord.to_doubleheight(*n)
-                        );
-
-                        // We only care about what hexes this peice can visit on its final turn
-                        if k == move_rules.len() {
-                            println!(
-                                "For turn {}, inserting final: {:?}",
-                                k,
-                                board.coord.to_doubleheight(*n)
-                            );
-                            visitable.insert(*n);
-                        }
+                    // We only care about what hexes this peice can visit on its final turn
+                    if k == move_rules.len() {
+                        visitable.insert(*n);
                     }
                 }
             });

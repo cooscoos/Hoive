@@ -461,7 +461,7 @@ where
 
         // If the first chip is not at the origin, we need to add some blank spaces up until we reach the first chip
         if first != previous {
-            return_string.push_str(&(funcs::decimal_to_duo(first.u - previous.u).to_string()));
+            return_string.push_str(&(funcs::decimal_to_duo(first.u - previous.u)));
             previous = first;
         }
 
