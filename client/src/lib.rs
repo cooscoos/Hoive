@@ -15,7 +15,8 @@ pub async fn play_games() -> Result<(), Box<dyn Error>> {
     // Welcome user with sweet ascii graphics
     hoive::pmoore::welcome();
 
-    #[cfg(feature = "debug")]{
+    #[cfg(feature = "debug")]
+    {
         println!("!!!\nDEVELOPER MODE. Choose local game and then s at any time to save board to /hoive/tests/snapshots/\n!!!\n")
     }
 

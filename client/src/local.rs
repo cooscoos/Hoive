@@ -112,9 +112,7 @@ pub fn action_prompts<T: Coord>(
             println!("{}", pmoore::help_me());
         }
         #[cfg(feature = "debug")]
-        _ if textin == "s" => {
-            pmoore::save_game(board)
-        }
+        _ if textin == "s" => pmoore::save_game(board),
         _ => {
             // Otherwise select an appropriate path based on request being made
             match action.request {

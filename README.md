@@ -15,7 +15,7 @@ The hoive directory contains the game logic.
 - play test
 
 ### Hoive base game
-- Spiders are bugged (hehe) and can move <3 distance It's because they can backtrack and leave the hive. Check hive connection at each step. Same for ladybird but with below.
+- Spiders now totally fixed, but need to check ladybird edge cases for backtraking as rules possibly too lenient?
 
 ### Client
 - Write tests to probe local client's use of BoardActions and Req:: enums.

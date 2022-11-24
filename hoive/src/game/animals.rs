@@ -65,9 +65,10 @@ pub fn spider_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveSta
             let visitable = mod_dist_lim_floodfill(board, source, move_rules);
 
             // // bugtest lines for spider
-            // use crate::maths::coord::DoubleHeight;
-            // let bugtest: HashSet<DoubleHeight> = visitable.iter().map(|h| h.to_doubleheight(*h)).collect();
-            // println!("List of visitable hexes: {:#?}", bugtest);
+            use crate::maths::coord::DoubleHeight;
+            let bugtest: HashSet<DoubleHeight> =
+                visitable.iter().map(|h| h.to_doubleheight(*h)).collect();
+            println!("List of visitable hexes: {:#?}", bugtest);
 
             // If the destination is visitable on turn 3, the move is good.
             match visitable.contains(dest) {
@@ -186,6 +187,11 @@ pub fn mod_dist_lim_floodfill<T: Coord>(
     // Add the current position to fringes. It can be reached in k = 0 steps.
     fringes.insert(*source, 0);
 
+    // Remove self from the board
+    let chip = board.get_chip(*source).unwrap();
+    let mut board = board.clone();
+    board.chips.remove(&chip);
+
     // Also need the position of existing chips on the board
     let obstacles = board.get_placed_positions();
 
@@ -207,19 +213,62 @@ pub fn mod_dist_lim_floodfill<T: Coord>(
                 let can_visit = match move_rules[k - 1] {
                     // (match on k-1 because of how vectors are indexed)
                     true => obstacles.contains(n), // they are blocked by an obstacle
-                    false => !obstacles.contains(n), // they are not blocked by an obstacle
+                    false => {
+                        //println!("{:?} has chip neighbours?: {:?}", board.coord.to_doubleheight(*n), board.count_neighbours(*n)!=0);
+                        !obstacles.contains(n) &&                                // they are not blocked by an obstacle
+                        board.count_neighbours(*n)!=0 // there is at least one neighbouring chip (we're connected to the hive)
+                    }
                 };
 
                 // Bugfix: We should also not be allowed to backtrack into previous visitors
                 // Bugfix: and we must never leave the hive (always need at least one chip neighbour)
+                // Bugfix: ignore initial self hex
 
                 if can_visit & !visitable.contains(n) {
                     // don't keep overwriting values in hashset (inefficient)
-                    fringes.insert(*n, k); // add the neighbour to the list of fringes for this k
 
-                    // We only care about what hexes this peice can visit on its final turn
-                    if k == move_rules.len() {
-                        visitable.insert(*n);
+                    if chip.name.starts_with('s') {
+                        // if it's a spider, it can't backtrack
+                        // If the hex doesn't appear in a previous k
+                        if !fringes.contains_key(n) {
+                            fringes.insert(*n, k); // add the neighbour to the list of fringes for this k, only if it doesn't appear in previous k
+                                                   // Can visit check
+                            println!(
+                                "On turn {}, we can visit: {:?}",
+                                k,
+                                board.coord.to_doubleheight(*n)
+                            );
+
+                            // We only care about what hexes this peice can visit on its final turn
+                            if k == move_rules.len() {
+                                println!(
+                                    "For turn {}, inserting final: {:?}",
+                                    k,
+                                    board.coord.to_doubleheight(*n)
+                                );
+                                visitable.insert(*n);
+                            }
+                        }
+                    } else {
+                        // it's a ladybird and can backtrack
+
+                        fringes.insert(*n, k); // add the neighbour to the list of fringes for this k, only if it doesn't appear in previous k
+                                               // Can visit check
+                        println!(
+                            "On turn {}, we can visit: {:?}",
+                            k,
+                            board.coord.to_doubleheight(*n)
+                        );
+
+                        // We only care about what hexes this peice can visit on its final turn
+                        if k == move_rules.len() {
+                            println!(
+                                "For turn {}, inserting final: {:?}",
+                                k,
+                                board.coord.to_doubleheight(*n)
+                            );
+                            visitable.insert(*n);
+                        }
                     }
                 }
             });

@@ -24,9 +24,8 @@ fn test_decoder(filename: &str) {
 
     // Convert it to spiral code and back to a board again
     let board_string = board.encode_spiral();
-    println!("Board String: {}",board_string);
+    println!("Board String: {}", board_string);
     let board_copy = board.decode_spiral(board_string);
-
 
     // Create ordered BTree maps of chips and their positions on the original and decoded board
     let original = ordered_map(board);
@@ -34,7 +33,6 @@ fn test_decoder(filename: &str) {
 
     assert_eq!(original, decoded);
 }
-
 
 #[test]
 fn convert_spiral_to_cube() {
@@ -125,7 +123,6 @@ fn spiral_offset_test() {
     let expected = vec![0, 1, 7, 19, 37];
     assert_eq!(expected, result);
 }
-
 
 #[test]
 fn spiral_decoding() {

@@ -454,15 +454,13 @@ where
             .map(|(c, p)| (p.unwrap().mapto_spiral().unwrap(), *c))
             .collect::<BTreeMap<Spiral, Chip>>();
 
-        
-        
         // Create a variable to keep track of the previous hex coord we checked
-        let mut previous = Spiral{u:0,l:0}; // initialise at origin
+        let mut previous = Spiral { u: 0, l: 0 }; // initialise at origin
 
         let first = *spiral_tree.keys().next().unwrap(); // get the first position in BTree
 
         // If the first chip is not at the origin, we need to add some blank spaces up until we reach the first chip
-        if first!=previous{
+        if first != previous {
             return_string.push_str(&(funcs::decimal_to_duo(first.u - previous.u).to_string()));
             previous = first;
         }
