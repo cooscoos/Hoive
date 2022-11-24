@@ -15,6 +15,7 @@ The hoive directory contains the game logic.
 - play test to spot bugs in base game
 
 ### Client
+
 - Write tests to probe local client's use of BoardActions and Req:: enums.
 
 ### Server
