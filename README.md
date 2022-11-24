@@ -12,10 +12,7 @@ The hoive directory contains the game logic.
 ## To do
 
 - install on virtual machine and list dependencies in readme
-- play test
-
-### Hoive base game
-- Spiders now totally fixed, but need to check ladybird edge cases for backtraking as rules possibly too lenient?
+- play test to spot bugs in base game
 
 ### Client
 - Write tests to probe local client's use of BoardActions and Req:: enums.

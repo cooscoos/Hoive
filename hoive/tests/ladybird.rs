@@ -8,6 +8,12 @@ use hoive::maths::coord::{Coord, Cube};
 mod common;
 use common::games::game_snapshot_6;
 
+/// Helper function to move lady from initial position (snapshot_24) to a given cube coordinate
+fn move_ladybird_test(m: Cube) -> MoveStatus {
+    let mut board = common::emulate::load_board("snapshot_24".to_string());
+    board.move_chip("l1", Team::Black, m)
+}
+
 #[test]
 fn ladybird_backtrack() {
     // Try move a ladybird over 2 hexes then back on itself (ok).
@@ -70,5 +76,38 @@ fn ladybird_over_beetle() {
     assert_eq!(
         MoveStatus::Success,
         board.move_chip("l1", Team::White, legal_move)
+    );
+}
+
+
+
+#[test]
+fn ladybird_illegal_move() {
+    // Make a bunch of illegal moves, check they all return error
+
+    // All of these doubleheight moves are illegal from snapshot_24 because they require ladybird land on itself.
+    let illegal_moves = [(1, -1), (-1, -1)];
+
+    // Convert all dheight to cube coordinates
+    let board = Board::<Cube>::default();
+    let moves = illegal_moves
+        .into_iter()
+        .map(|m| board.coord.mapfrom_doubleheight(DoubleHeight::from(m)))
+        .collect::<Vec<Cube>>();
+
+    // Do all of those moves (not sequentially, but from initial position) and get the movestatuses back
+    let move_statuses = moves
+        .into_iter()
+        .map(|m| move_ladybird_test(m))
+        .collect::<Vec<MoveStatus>>();
+
+    println!("Move statuses of illegal moves: {:?}", move_statuses);
+
+    // Ensure they're all returning BadDistance(3)
+    assert_eq!(
+        move_statuses
+            .into_iter()
+            .all(|f| f == MoveStatus::BadDistance(3)),
+        true
     );
 }
