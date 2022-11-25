@@ -14,14 +14,11 @@ The hoive directory contains the game logic.
 - install on virtual machine and list dependencies in readme
 - play test to spot bugs in base game
 
-### Client
-
-- Write tests to probe local client's use of BoardActions and Req:: enums.
 
 ### Server
 
 - Reinstate connection to db with pool
-- Test that db games / users are being wiped on leave.
+- Check that db games / users are being wiped on leave.
 
 
 ### Low priority
