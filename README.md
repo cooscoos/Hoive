@@ -21,7 +21,6 @@ The hoive directory contains the game logic.
 
 ### Low priority
 
-- Try get http server working as an option. - have a flag / option for running an html server. Client advanced options.
 - Consider: Bevy, maybe with (egui)[https://github.com/emilk/egui] or Fyrox.
 - display you: for chat
 - fix colour of other players to random?
