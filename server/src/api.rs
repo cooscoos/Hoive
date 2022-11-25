@@ -4,11 +4,8 @@ use std::result::Result;
 // Profanity filter for usernames, and random number / uuid generation
 use rand::Rng;
 
-use uuid::Uuid;
-
 use actix_web::{error, web, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
-use serde::Deserialize;
 
 pub use crate::db;
 use crate::models::GameState;
@@ -25,12 +22,6 @@ use hoive::game::{
 };
 use hoive::maths::coord::Coord;
 use hoive::maths::coord::Cube;
-
-/// Defines web form to parse a game session's uuid. Used by web version
-#[derive(Deserialize)]
-pub struct SessionInfo {
-    id: Uuid,
-}
 
 use crate::{game_server, game_session};
 use actix::Addr;

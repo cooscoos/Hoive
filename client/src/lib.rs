@@ -1,6 +1,5 @@
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub mod htmlserv;
 pub mod local;
 pub mod websock;
 
@@ -27,7 +26,6 @@ pub async fn play_games() -> Result<(), Box<dyn Error>> {
         _ if textin.contains('2') => local::play_offline(),
         _ if textin.contains('3') => websock::play_websock(false).await,
         _ => websock::play_websock(true).await,
-        //_ => htmlserv::play_online().await,
     }
 }
 
