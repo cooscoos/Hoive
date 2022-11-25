@@ -3,7 +3,7 @@ The boardgame [Hive](https://en.wikipedia.org/wiki/Hive_(game)), written in Rust
 
 Choose one of the following directories and do `cargo run`:
 - **client**: play locally (couch co-op) or on a Hoive game web server, or;
-- **server**: host a Hoive game web server using websocket (default) or http.
+- **server**: host a Hoive game websocket server.
 
 The hoive directory contains the game logic.
 
@@ -14,12 +14,10 @@ The hoive directory contains the game logic.
 - install on virtual machine and list dependencies in readme
 - play test to spot bugs in base game
 
-
 ### Server
 
 - Reinstate connection to db with pool
 - Check that db games / users are being wiped on leave.
-
 
 ### Low priority
 
