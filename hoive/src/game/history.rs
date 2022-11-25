@@ -100,7 +100,7 @@ impl Event {
         Event {
             chip_name: action.get_chip_name(),
             team: action.which_team(),
-            location: action.rowcol,
+            location: action.rowcol.unwrap(),
         }
     }
 
@@ -151,7 +151,7 @@ impl History {
 
     /// Save history as a csv in the local saved_games directory
     pub fn save(&self, filename: String) -> std::io::Result<()> {
-        let mut file = File::create(format!("./saved_games/{}.csv", filename))?;
+        let mut file = File::create(format!("../hoive/tests/snapshots/{}.csv", filename))?;
 
         // Write csv line by line
         writeln!(&mut file, "turn,team,name,row,col")?;

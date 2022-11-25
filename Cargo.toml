@@ -15,7 +15,8 @@ rand = "0.8.5"  # For randomising which player goes first
 
 # Diesel and actix-web (required by server)
 actix="0.13.0"
-actix-web = "4"
+actix-web = "4.2.1"
+actix-web-actors = "4.1" # for web sockets
 actix-rt = "2.7.0"
 actix-files = "0.6.2"
 actix-session = {version="0.7.1", features=["cookie-session"]}
@@ -32,6 +33,7 @@ client = {path = "client"}
 reqwest = {version = "0.11.11", features =["blocking", "json", "cookies"]}
 tokio = {version = "1.21.0", features = ["full"]}
 futures = "0.3.24"
+bytes = "1.2.1"
 
 # other stuff
 rustrict = "0.5.0"

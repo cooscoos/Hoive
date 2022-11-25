@@ -3,12 +3,11 @@ use std::result::Result;
 
 // Profanity filter for usernames, and random number / uuid generation
 use rand::Rng;
-use rustrict::CensorStr;
+
 use uuid::Uuid;
 
-use actix_session::Session;
-use actix_web::Responder;
 use actix_web::{error, web, Error, HttpRequest, HttpResponse};
+use actix_web_actors::ws;
 use serde::Deserialize;
 
 pub use crate::db;
@@ -19,37 +18,78 @@ pub use crate::schema;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use diesel::SqliteConnection;
 
-const SESSION_ID_KEY: &str = "session_id";
-const USER_ID_KEY: &str = "user_id";
-
 // Game modules
 use hoive::game::{
     actions::BoardAction, board::Board, comps::Team, history::Event, movestatus::MoveStatus,
     specials,
 };
 use hoive::maths::coord::Coord;
+use hoive::maths::coord::Cube;
 
-/// Defines web form to parse a game session's uuid
+/// Defines web form to parse a game session's uuid. Used by web version
 #[derive(Deserialize)]
 pub struct SessionInfo {
     id: Uuid,
 }
 
-/// Get a connection to the db
-fn get_db_connection(
+use crate::{game_server, game_session};
+use actix::Addr;
+use std::time::Instant;
+
+/// Entry point for our websocket route
+/// Define the username, check it for profanity, register it on the db, and in the chat.
+/// Auto join the main lobby
+pub async fn chat_route(
+    //form_input: web::Form<User>,
     req: HttpRequest,
-) -> Result<PooledConnection<ConnectionManager<SqliteConnection>>, Error> {
-    if let Some(pool) = req.app_data::<Pool<ConnectionManager<SqliteConnection>>>() {
-        match pool.get() {
-            Ok(conn) => Ok(conn),
-            Err(error) => Err(error::ErrorBadGateway(error)), // convert error into actix-web error
-        }
-    } else {
-        Err(error::ErrorBadGateway(
-            "[api][get_db_connection] Can't get db connection",
-        ))
-    }
+    stream: web::Payload,
+    srv: web::Data<Addr<game_server::GameServer>>,
+) -> Result<HttpResponse, Error> {
+    // if let Some(pool) = req.app_data::<Pool<ConnectionManager<SqliteConnection>>>() {
+    //     match pool.get() {
+    //         Ok(conn) => {
+
+    // start the websocket
+    ws::start(
+        game_session::WsGameSession {
+            id: 0,
+            hb: Instant::now(),
+            room: "main".to_owned(),
+            name: None,
+            active: false,
+            action: BoardAction::default(),
+            board: Board::<Cube>::default(),
+            team: Team::Black,
+            addr: srv.get_ref().clone(),
+        },
+        &req,
+        stream,
+    )
+    //         }
+    //         Err(error) => Err(error::ErrorBadGateway(error)), // convert error into actix-web error
+    //     }
+    // } else {
+    //     Err(error::ErrorBadGateway(
+    //         "[api][get_db_connection] Can't get db connection",
+    //     ))
+    // }
 }
+
+/// Get a connection to the db
+// fn get_db_connection(
+//     req: HttpRequest,
+// ) -> Result<PooledConnection<ConnectionManager<SqliteConnection>>, Error> {
+//     if let Some(pool) = req.app_data::<Pool<ConnectionManager<SqliteConnection>>>() {
+//         match pool.get() {
+//             Ok(conn) => Ok(conn),
+//             Err(error) => Err(error::ErrorBadGateway(error)), // convert error into actix-web error
+//         }
+//     } else {
+//         Err(error::ErrorBadGateway(
+//             "[api][get_db_connection] Can't get db connection",
+//         ))
+//     }
+// }
 
 /// Default index page that shows the Hoive server version
 pub async fn index() -> HttpResponse {
@@ -57,30 +97,29 @@ pub async fn index() -> HttpResponse {
 }
 
 /// Register a new user with requested name (input via web form)
-pub async fn register_user(
-    form_input: web::Form<User>,
-    session: Session,
-    req: HttpRequest,
-) -> Result<impl Responder, Error> {
-    let user_name = form_input.user_name.to_owned();
+pub fn register_user(user_name: &str, session_id: usize) -> Result<bool, Error> {
+    // Inefficient way, for now, to make progress
+    let mut conn = db::establish_connection();
 
-    // Refuse to register if username is profanity
-    if user_name.is_inappropriate() {
-        return Ok(web::Json("invalid".to_string()));
+    // Check if the db contains a user with this name already
+    match db::username_available(user_name, &mut conn) {
+        Ok(true) => {}
+        Ok(false) => return Ok(false),
+        Err(error) => {
+            return Err(error::ErrorBadGateway(format!(
+                "Cant access db to check for usernames: {error}"
+            )))
+        }
     }
 
-    println!("REQ: {:?}", req);
-
-    let mut conn = get_db_connection(req)?;
-
-    match db::create_user(&user_name, &mut conn) {
+    match db::create_user(user_name, &mut conn, session_id) {
         Ok(user_id) => {
-            session.insert(USER_ID_KEY, user_id.to_string())?;
+            //session.insert(USER_ID_KEY, user_id.to_string())?;
             println!(
                 "\x1b[32;1mUsername {} registered under {}\x1b[0m\n",
                 user_name, user_id
             );
-            Ok(web::Json(user_id.to_string()))
+            Ok(true)
         }
         Err(error) => Err(error::ErrorBadGateway(format!(
             "Cant register new user: {error}"
@@ -88,15 +127,38 @@ pub async fn register_user(
     }
 }
 
+/// Delete the user from the db
+pub fn deregister_user(user_id: &usize) -> Result<(), Error> {
+    // Inefficient way, for now, to make progress
+    let mut conn = db::establish_connection();
+
+    match db::remove_user(&user_id.to_string(), &mut conn) {
+        Ok(_) => Ok(()),
+        Err(error) => Err(error::ErrorBadGateway(format!(
+            "Can't deregister user: {error}"
+        ))),
+    }
+}
+
+/// Delete the game from the db
+pub fn deregister_game(session_id: &str) -> Result<(), Error> {
+    // Inefficient way, for now, to make progress
+    let mut conn = db::establish_connection();
+
+    match db::remove_game(session_id, &mut conn) {
+        Ok(_) => Ok(()),
+        Err(error) => Err(error::ErrorBadGateway(format!(
+            "Can't delete game: {error}"
+        ))),
+    }
+}
+
 /// Get user name based on an input user id
-pub async fn get_username(
-    form_input: web::Form<User>,
-    req: HttpRequest,
-) -> Result<HttpResponse, Error> {
+pub async fn get_username(user_id: usize, req: HttpRequest) -> Result<HttpResponse, Error> {
     println!("REQ: {:?}", req);
 
-    let user_id = Uuid::parse_str(&form_input.id).unwrap();
-    let mut conn = get_db_connection(req)?;
+    // Inefficient way, for now, to make progress
+    let mut conn = db::establish_connection();
 
     match db::get_user_name(&user_id, &mut conn) {
         Ok(username) => Ok(HttpResponse::Ok().body(username)),
@@ -107,175 +169,123 @@ pub async fn get_username(
 }
 
 /// Create a new game
-pub async fn new_game(session: Session, req: HttpRequest) -> Result<impl Responder, Error> {
-    println!("NEW GAME REQ: {:?}", req);
+pub fn new_game(user_id: &usize) -> Result<String, Error> {
+    // Inefficient way, for now, to make progress
+    let mut conn = db::establish_connection();
 
-    let mut conn = get_db_connection(req)?;
-
-    if let Some(user_id) = session.get::<Uuid>(USER_ID_KEY)? {
-        match db::create_session(&user_id, &mut conn) {
-            Ok(session_id) => {
-                session.insert(SESSION_ID_KEY, session_id.to_string())?;
-                println!("\x1b[32;1mCreated session id {}\x1b[0m\n", session_id);
-                Ok(web::Json(session_id))
-            }
-            Err(error) => Err(error::ErrorBadGateway(format!(
-                "Cant register new session: {error}"
-            ))),
+    match db::create_session(user_id, &mut conn) {
+        Ok(session_id) => {
+            println!("\x1b[32;1mCreated session id {}\x1b[0m\n", session_id);
+            Ok(session_id.to_string())
         }
-    } else {
-        Err(error::ErrorBadGateway(
-            "Cant find the current user ID in this session",
-        ))
+        Err(error) => Err(error::ErrorBadGateway(format!(
+            "Cant register new session: {error}"
+        ))),
     }
 }
 
 /// Find a live session without a player 2
-pub async fn find(session: Session, req: HttpRequest) -> Result<impl Responder, Error> {
-    println!("REQ: {:?}", req);
-    let mut conn = get_db_connection(req)?;
+pub fn find() -> Result<Option<GameState>, Error> {
+    // Inefficient way, for now, to make progress
+    let mut conn = db::establish_connection();
     match db::find_live_session(&mut conn) {
-        Some(game_state) => {
-            session.insert(SESSION_ID_KEY, game_state.id.to_owned())?;
-            Ok(web::Json(game_state.id))
-        }
-        None => Ok(web::Json("None".to_string())),
+        Some(game_state) => Ok(Some(game_state)),
+        None => Ok(None),
     }
 }
 
 /// Join a session with given session_id
-pub async fn join(
-    form_input: web::Form<SessionInfo>,
-    session: Session,
-    req: HttpRequest,
-) -> Result<HttpResponse, Error> {
-    println!("REQ: {:?}", req);
-    let mut conn = get_db_connection(req)?;
-    let session_id = form_input.id.to_owned();
+pub fn join(session_id: &str, user_2_id: &usize) -> Result<(), Error> {
+    // Inefficient way, for now, to make progress
+    let mut conn = db::establish_connection();
 
-    if let Some(user_2_id) = session.get::<Uuid>(USER_ID_KEY)? {
-        match db::join_live_session(&session_id, &user_2_id, &mut conn) {
-            Ok(0) => Err(error::ErrorNotFound(format!(
-                "No waiting sessions with id {session_id}"
-            ))),
-            Ok(1) => {
-                println!("\x1b[32;1mUser joined successfully\x1b[0m\n");
+    match db::join_live_session(session_id, user_2_id, &mut conn) {
+        Ok(0) => Err(error::ErrorNotFound(format!(
+            "No waiting sessions with id {session_id}"
+        ))),
+        Ok(1) => {
+            println!("\x1b[32;1mUser joined successfully\x1b[0m\n");
 
-                // Get the game state so we can retrieve user ids
-                let game_state = match db::get_game_state(&session_id, &mut conn) {
-                    Ok(value) => value,
-                    Err(err) => {
-                        return Err(error::ErrorNotFound(format!(
-                            "Could not load gamestate from {session_id} because {err}"
-                        )))
-                    }
-                };
-
-                // Toss a coin to see who goes first
-                let mut rand = rand::thread_rng();
-                let l_user = match rand.gen() {
-                    true => game_state.user_1.unwrap(),  // User 1 is on team Black
-                    false => game_state.user_2.unwrap(), // User 2 is on team White
-                };
-
-                // Update the db and return ok
-                match db::update_game_state(&session_id, &l_user, "", "", &mut conn) {
-                    Ok(_) => Ok(HttpResponse::Ok().body("")),
-                    Err(err) => Err(error::ErrorInternalServerError(format!(
-                        "Can't update game state of {session_id} because {err}"
-                    ))),
+            // Get the game state so we can retrieve user ids
+            let game_state = match db::get_game_state(session_id, &mut conn) {
+                Ok(value) => value,
+                Err(err) => {
+                    return Err(error::ErrorNotFound(format!(
+                        "Could not load gamestate from {session_id} because {err}"
+                    )))
                 }
+            };
+
+            // Toss a coin to see who goes first
+            let mut rand = rand::thread_rng();
+            let l_user = match rand.gen() {
+                true => game_state.user_1.unwrap(),  // User 1 is on team Black
+                false => game_state.user_2.unwrap(), // User 2 is on team White
+            };
+
+            // Update the db and return ok
+            match db::update_game_state(session_id, &l_user, "", "", &mut conn) {
+                Ok(_) => Ok(()),
+                Err(err) => Err(error::ErrorInternalServerError(format!(
+                    "Can't update game state of {session_id} because {err}"
+                ))),
             }
-            Ok(_) => Err(error::ErrorBadGateway("Multiple sessions updated")),
-            Err(error) => Err(error::ErrorBadGateway(format!(
-                "Cant join session: {}",
-                error
-            ))),
         }
-    } else {
-        println!("Cant find the current user ID in this session");
-        Err(error::ErrorBadGateway(
-            "Cant find the current user ID in this session",
-        ))
-    }
-}
-
-/// Retrieve gamestate of session and return as json
-pub async fn game_state_json(session: Session, req: HttpRequest) -> Result<impl Responder, Error> {
-    println!("REQ: {:?}", req);
-    let mut conn = get_db_connection(req)?;
-
-    // Get the game_state and wrap it in json
-    match get_game_state(&session, &mut conn).await {
-        Ok(game_state) => Ok(web::Json(game_state)),
-        Err(err) => Err(error::ErrorInternalServerError(err)),
+        Ok(_) => Err(error::ErrorBadGateway("Multiple sessions updated")),
+        Err(error) => Err(error::ErrorBadGateway(format!(
+            "Cant join session: {}",
+            error
+        ))),
     }
 }
 
 /// Retrieve the game state of a session
-async fn get_game_state(
-    session: &Session,
-    conn: &mut SqliteConnection,
-) -> Result<GameState, Error> {
-    if let Some(session_id) = session.get::<Uuid>(SESSION_ID_KEY)? {
-        println!("API: board, session_id: {:?}", session_id);
-        session.insert(SESSION_ID_KEY, session_id)?;
-
-        let res = db::get_game_state(&session_id, conn);
-        match res {
-            Ok(game_state) => Ok(game_state),
-            _ => Err(error::ErrorInternalServerError(format!(
-                "Can't find game with session id {session_id}"
-            ))),
-        }
-    } else {
-        Err(error::ErrorInternalServerError("Can't find game session"))
+pub fn get_game_state(session_id: &str) -> Result<GameState, Error> {
+    // Inefficient way, for now, to make progress
+    let mut conn = db::establish_connection();
+    let res = db::get_game_state(session_id, &mut conn);
+    match res {
+        Ok(game_state) => Ok(game_state),
+        _ => Err(error::ErrorInternalServerError(format!(
+            "Can't find game with session id {session_id}"
+        ))),
     }
 }
 
 /// Allow player to take some sort of action
-pub async fn make_action(
-    action: web::Json<BoardAction>,
-    session: Session,
-    req: HttpRequest,
-) -> Result<impl Responder, Error> {
-    println!("REQ: {:?}", req);
-    let mut conn = get_db_connection(req)?;
+pub fn make_action(action: &BoardAction, session_id: &str) -> Result<MoveStatus, Error> {
+    // Inefficient way, for now, to make progress
+    let mut conn = db::establish_connection();
 
-    if let Some(session_id) = session.get::<Uuid>(SESSION_ID_KEY)? {
-        // Retrieve the game_state
-        let game_state = get_game_state(&session, &mut conn).await?;
+    // Retrieve the game_state
+    let game_state = get_game_state(session_id)?;
 
-        // Find out if we have a special player action.
-        let move_status = match action.special.as_ref() {
-            Some(special) if special == "forfeit" => {
-                // Forfeit means active player is giving up
-                forfeit(game_state, &session_id, &mut conn).await?
-            }
-            Some(special) if special == "skip" => {
-                // Try and skip the current player's turn
-                skip_turn(game_state, &session_id, &mut conn).await?
-            }
-            Some(_) => {
-                // Any other special string is a pillbug / mosquito action
-                do_special(game_state, action, &session_id, &mut conn).await?
-            }
-            None => {
-                // Otherwise it's a normal move
-                do_movement(game_state, action, &session_id, &mut conn).await?
-            }
-        };
-        Ok(web::Json(move_status))
-    } else {
-        Err(error::ErrorInternalServerError("Can't find game session"))
+    // Find out if we have a special player action.
+    match action.special.as_ref() {
+        Some(special) if special == "forfeit" => {
+            // Forfeit means active player is giving up
+            forfeit(game_state, session_id, &mut conn)
+        }
+        Some(special) if special == "skip" => {
+            // Try and skip the current player's turn
+            skip_turn(game_state, session_id, &mut conn)
+        }
+        Some(_) => {
+            // Any other special string is a pillbug / mosquito action
+            do_special(game_state, action, session_id, &mut conn)
+        }
+        None => {
+            // Otherwise it's a normal move
+            do_movement(game_state, action, session_id, &mut conn)
+        }
     }
 }
 
 /// Try and execute movement
-async fn do_movement(
+fn do_movement(
     game_state: GameState,
-    action: web::Json<BoardAction>,
-    session_id: &Uuid,
+    action: &BoardAction,
+    session_id: &str,
     conn: &mut SqliteConnection,
 ) -> Result<MoveStatus, Error> {
     // Generate a board based on the gamestate and find the chip name and active team
@@ -283,35 +293,38 @@ async fn do_movement(
 
     let active_team = game_state.which_team()?;
     let chip_name = action.get_chip_name();
-    assert!(cheat_check(&action, &active_team));
+    //assert!(cheat_check(&action, &active_team));
 
     // Convert from doubleheight to the board's co-ordinate system
-    let position = board.coord.mapfrom_doubleheight(action.rowcol);
+    let position = board.coord.mapfrom_doubleheight(action.rowcol.unwrap());
 
     // Try and do the move, see what happens. If it's successful the board struct will update itself
     let move_status = board.move_chip(chip_name, active_team, position);
 
     // Create an event to track history of moves
-    let event = Event::new_by_action(&action.into_inner());
+    let event = Event::new_by_action(action);
 
     match move_status {
-        MoveStatus::Success => execute_on_db(&mut board, game_state, event, session_id, conn),
-        _ => Ok(move_status),
-    }
+        MoveStatus::Success => execute_on_db(&mut board, game_state, event, session_id, conn)?,
+        MoveStatus::Win(team) => {
+            execute_win_on_db(team, &mut board, game_state, event, session_id, conn)?
+        }
+        _ => {}
+    };
+    Ok(move_status)
 }
 
 /// Try and execute a chip special
-async fn do_special(
+fn do_special(
     game_state: GameState,
-    action: web::Json<BoardAction>,
-    session_id: &Uuid,
+    action: &BoardAction,
+    session_id: &str,
     conn: &mut SqliteConnection,
 ) -> Result<MoveStatus, Error> {
     // Generate a board based on the gamestate and find the chip name and active team
     let mut board = game_state.to_cube_board();
 
     let active_team = game_state.which_team()?;
-    assert!(cheat_check(&action, &active_team));
 
     // Try and decode and execute the special
     let move_status = hoive::pmoore::decode_specials(
@@ -319,17 +332,22 @@ async fn do_special(
         &action.get_special(),
         active_team,
         action.get_chip_name(),
-        action.rowcol,
+        action.rowcol.unwrap(),
     );
 
     // Create an event to track history of moves
-    let event = Event::new_by_action(&action.into_inner());
+    let event = Event::new_by_action(action);
 
     // Execute it on the db if it was successful
     match move_status {
-        MoveStatus::Success => execute_on_db(&mut board, game_state, event, session_id, conn),
-        _ => Ok(move_status),
-    }
+        MoveStatus::Success => execute_on_db(&mut board, game_state, event, session_id, conn)?,
+        MoveStatus::Win(team) => {
+            execute_win_on_db(team, &mut board, game_state, event, session_id, conn)?
+        }
+        _ => {}
+    };
+
+    Ok(move_status)
 }
 
 /// Execute a successful action on the db
@@ -337,9 +355,9 @@ fn execute_on_db<T: Coord>(
     board: &mut Board<T>,
     game_state: GameState,
     event: Event,
-    session_id: &Uuid,
+    session_id: &str,
     conn: &mut SqliteConnection,
-) -> Result<MoveStatus, Error> {
+) -> Result<(), Error> {
     // Refresh all mosquito names back to m1 and update board on server
     specials::mosquito_desuck(board);
     let board_str = board.encode_spiral();
@@ -353,22 +371,82 @@ fn execute_on_db<T: Coord>(
     let res = db::update_game_state(session_id, &l_user, &board_str, &history, conn);
 
     match res {
-        Ok(_) => Ok(MoveStatus::Success),
+        Ok(_) => Ok(()),
         Err(err) => Err(error::ErrorInternalServerError(format!(
             "Problem updating gamestate because {err}"
         ))),
     }
 }
 
-/// Make sure the requested move is for the active player
-fn cheat_check(form_input: &web::Json<BoardAction>, active_team: &Team) -> bool {
-    let team_chips = form_input.which_team();
-    team_chips == *active_team
+/// Execute a winning action on the db
+fn execute_win_on_db<T: Coord>(
+    winner: Option<Team>, // winning team
+    board: &mut Board<T>,
+    game_state: GameState,
+    event: Event,
+    session_id: &str,
+    conn: &mut SqliteConnection,
+) -> Result<(), Error> {
+    let win_string = match winner {
+        Some(winner_team) => {
+            // Team black are user1. This is a bit jank. Need a cleverer way
+            let winner_id = match winner_team {
+                Team::Black => game_state
+                    .user_1
+                    .as_ref()
+                    .unwrap()
+                    .parse::<usize>()
+                    .expect("Couldn't parse user id to usize"),
+                Team::White => game_state
+                    .user_2
+                    .as_ref()
+                    .unwrap()
+                    .parse::<usize>()
+                    .expect("Couldn't parse user id to usize"),
+            };
+
+            // Get the winner's name
+            let winner_name = match db::get_user_name(&winner_id, conn) {
+                Ok(value) => value,
+                Err(err) => {
+                    return Err(error::ErrorInternalServerError(format!(
+                        "Problem getting winner name from user id because {err}"
+                    )))
+                }
+            };
+
+            // Create a winstring
+            format!("{},{}", winner_team.to_string(), winner_name)
+        }
+        // Otherwise draw
+        None => "D".to_string(),
+    };
+
+    // Refresh all mosquito names back to m1 and update board on server
+    specials::mosquito_desuck(board);
+    let board_str = board.encode_spiral();
+
+    // Get the uuid of the current user and set them as the last_user in the db
+    let l_user = game_state.which_user()?;
+
+    // Parse the event into a string and append it to the board's history
+    let history = game_state.add_event(event);
+
+    // Update db
+    let res =
+        db::update_game_and_winner(session_id, &l_user, &board_str, &history, &win_string, conn);
+
+    match res {
+        Ok(_) => Ok(()),
+        Err(err) => Err(error::ErrorInternalServerError(format!(
+            "Problem updating winner in gamestate because {err}"
+        ))),
+    }
 }
 
-async fn skip_turn(
+fn skip_turn(
     game_state: GameState,
-    session_id: &Uuid,
+    session_id: &str,
     conn: &mut SqliteConnection,
 ) -> Result<MoveStatus, Error> {
     // Get the board and current user
@@ -397,16 +475,30 @@ async fn skip_turn(
     }
 }
 
-async fn forfeit(
+fn forfeit(
     game_state: GameState,
-    session_id: &Uuid,
+    session_id: &str,
     conn: &mut SqliteConnection,
 ) -> Result<MoveStatus, Error> {
-    // The winner is the team who didn't forfeit
-    let winner = !game_state.which_team()?;
+    // The winner is the team who didn't forfeit (the inactive team)
+    let winner_team = !game_state.which_team()?;
+    let winner_id = game_state
+        .inactive_user()?
+        .parse::<usize>()
+        .expect("Couldn't parse user id to usize");
+
+    // Get the winner's name
+    let winner_name = match db::get_user_name(&winner_id, conn) {
+        Ok(value) => value,
+        Err(err) => {
+            return Err(error::ErrorInternalServerError(format!(
+                "Problem getting winner name from user id because {err}"
+            )))
+        }
+    };
 
     // Append F to to designate the reason for winning as a forfeit
-    let win_string = format!("{}F", winner.to_string());
+    let win_string = format!("{},{},F", winner_team.to_string(), winner_name);
 
     // Update the last user id to the person who forfeit (the active team)
     let l_user_id = game_state.which_user()?;
@@ -415,7 +507,7 @@ async fn forfeit(
     let res = db::update_winner(session_id, &l_user_id, &win_string, conn);
 
     match res {
-        Ok(_) => Ok(MoveStatus::Success),
+        Ok(_) => Ok(MoveStatus::Win(Some(winner_team))),
         Err(err) => Err(error::ErrorInternalServerError(format!(
             "Problem updating winner in gamestate because {err}"
         ))),
@@ -423,8 +515,9 @@ async fn forfeit(
 }
 
 /// For debugging only. Delete the db on the server
-pub async fn delete_all(req: HttpRequest) -> Result<HttpResponse, Error> {
-    let mut conn = get_db_connection(req).unwrap();
+pub fn delete_all() -> Result<HttpResponse, Error> {
+    // Inefficient way, for now, to make progress
+    let mut conn = db::establish_connection();
 
     db::clean_db(&mut conn);
     println!("Database cleared");

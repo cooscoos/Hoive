@@ -3,46 +3,45 @@ The boardgame [Hive](https://en.wikipedia.org/wiki/Hive_(game)), written in Rust
 
 Choose one of the following directories and do `cargo run`:
 - **client**: play locally (couch co-op) or on a Hoive game web server, or;
-- **server**: host a Hoive game web server.
+- **server**: host a Hoive game web server using websocket (default) or http.
 
-The Hoive directory contains the game logic.
+The hoive directory contains the game logic.
 
 ![snapshot of the app](/misc/gameplay.png "snapshot of the app")
 
 ## To do
 
 - install on virtual machine and list dependencies in readme
-- play test
-
-### Client
-
-- Figure out how to turn features on in submodules: https://doc.rust-lang.org/cargo/reference/features.html
-- write some tests
-- oberve fn: A better UI would get usr input to feel responsive ... but also poll for update while waiting. Might need some other fn polling in the background with tx,rx to achieve that
-- observe fn also ques user garbage typing into next move - this is not good
-- Solution to quitting whenever might be tx,rx (something for later)
-- "Check whether there are any games available on the server, if there are you have to join the empty one": can change later to play with friends based on uid, private flag in db
-
-Consider:
-- Bevy with (egui)[https://github.com/emilk/egui]
+- play test to spot bugs in base game
 
 
 ### Server
 
-- Complete writing tests for server/tests/api.rs --- need to figure out how to create sessions in tests.
+- Reinstate connection to db with pool
+- Check that db games / users are being wiped on leave.
+
+
+### Low priority
+
+- Try get http server working as an option. - have a flag / option for running an html server. Client advanced options.
+- Consider: Bevy, maybe with (egui)[https://github.com/emilk/egui] or Fyrox.
+- display you: for chat
+- fix colour of other players to random?
+- Option to select an empty game to join based on its id in websocket version so can play with friends on server
+
+
+### Useful references
+- [websockets](https://github.com/actix/examples/tree/99d0afde28d14a0b641ac52de821d79fa244d50a/websockets/echo)
+- [http server games](https://github.com/vascokk/fullstack-rust/tree/main/server/src)
+- [actix and diesel](https://fdeantoni.medium.com/rust-actix-diesel-sqlite-d67a1c3ef0e)
+
 
 <!-- 
 Things I wrote that no longer seem to apply:
 
 - beetle rendering on stringboard is weird
 - does pillbug sumoing need a bee check for either party? - I don't think this can ever happen given the other constraints
-
-
-#### Refs
-
- [good ref](https://fdeantoni.medium.com/rust-actix-diesel-sqlite-d67a1c3ef0e) [good ref 2](https://github.com/vascokk/fullstack-rust/tree/main/server/src) [half done, now finish]
-
-
+- Figure out how to turn (features on in submodules)[https://doc.rust-lang.org/cargo/reference/features.html] 
 
 ### "House rules"
 Then it might be "fun" to add new animals in a non-standard version of the game e.g.:

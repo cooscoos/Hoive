@@ -1,6 +1,6 @@
 // An ascii renderer for the Hive board
 use crate::game::board::Board;
-use crate::game::comps::{Chip, Team};
+use crate::game::comps::{convert_static_basic, get_team_from_chip, Chip, Team};
 use crate::maths::coord::Coord;
 use crate::maths::coord::DoubleHeight;
 use std::collections::BTreeSet;
@@ -142,15 +142,18 @@ fn chip_to_str(chip: Option<Chip>) -> String {
     // Convert chip to a string character (if None then display as ".")
 
     match chip {
-        Some(value) => {
-            let colour_char = match value.team {
-                Team::Black => '4', // black chips coloured blue
-                Team::White => '5', // white chips coloured magenta
-            };
-            format!("\x1b[3{}m{}\x1b[0m", colour_char, value.name) // uses hex colour for terminal
-        }
+        Some(value) => chipteam_to_str(value.name, value.team),
         None => ".".to_string(),
     }
+}
+
+/// Parse a chip / team combo into a colourful formatted chip string
+pub fn chipteam_to_str(name: &'static str, team: Team) -> String {
+    let colour_char = match team {
+        Team::Black => '4', // black chips coloured blue
+        Team::White => '5', // white chips coloured magenta
+    };
+    format!("\x1b[3{}m{}\x1b[0m", colour_char, name) // uses hex colour for terminal
 }
 
 pub fn empty(n: i8) -> HashMap<DoubleHeight, Option<Chip>> {
@@ -204,11 +207,27 @@ pub fn list_chips<T: Coord>(board: &Board<T>, team: Team) -> String {
     make_chip_string(chip_list)
 }
 
-/// Lists the chips that are passed and returns a colourful single string for display
+/// Lists the chips that are passed (as Chip) and returns a colourful single string for display
 pub fn list_these_chips(chips_vec: BTreeSet<Chip>) -> String {
     let chip_list = chips_vec
         .into_iter()
         .map(|c| chip_to_str(Some(c)))
+        .collect::<Vec<String>>();
+
+    make_numbered_chip_string(chip_list)
+}
+
+/// Lists the chips that are passed (as case-sensitive String) and returns a colourful single string for display
+pub fn list_these_chips_str(chips_vec: BTreeSet<String>) -> String {
+    // Get the names as formatted strings
+    let chip_list = chips_vec
+        .into_iter()
+        .map(|c| {
+            chipteam_to_str(
+                convert_static_basic(c.to_lowercase()).unwrap(),
+                get_team_from_chip(&c),
+            )
+        })
         .collect::<Vec<String>>();
 
     make_numbered_chip_string(chip_list)

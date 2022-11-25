@@ -64,6 +64,12 @@ pub fn spider_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveSta
             let move_rules = vec![false, false, false];
             let visitable = mod_dist_lim_floodfill(board, source, move_rules);
 
+            // // bugtest lines for spider
+            use crate::maths::coord::DoubleHeight;
+            let bugtest: HashSet<DoubleHeight> =
+                visitable.iter().map(|h| h.to_doubleheight(*h)).collect();
+            println!("List of visitable hexes: {:#?}", bugtest);
+
             // If the destination is visitable on turn 3, the move is good.
             match visitable.contains(dest) {
                 true => MoveStatus::Success,
@@ -92,7 +98,6 @@ pub fn ladybird_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveS
         false => MoveStatus::BadDistance(3),
     }
 }
-
 
 /// Check whether chip can move from source to dest.
 /// If there is a small gap between source and dest then this will return
@@ -182,7 +187,12 @@ pub fn mod_dist_lim_floodfill<T: Coord>(
     // Add the current position to fringes. It can be reached in k = 0 steps.
     fringes.insert(*source, 0);
 
-    // Also need the position of existing chips on the board
+    // Remove the ladybird / spider that is moving from the board
+    let chip = board.get_chip(*source).unwrap();
+    let mut board = board.clone();
+    board.chips.remove(&chip);
+
+    // Get the position of all other existing chips on the board
     let obstacles = board.get_placed_positions();
 
     for k in 1..=move_rules.len() {
@@ -203,12 +213,17 @@ pub fn mod_dist_lim_floodfill<T: Coord>(
                 let can_visit = match move_rules[k - 1] {
                     // (match on k-1 because of how vectors are indexed)
                     true => obstacles.contains(n), // they are blocked by an obstacle
-                    false => !obstacles.contains(n), // they are not blocked by an obstacle
+                    false => {
+                        !obstacles.contains(n) &&               // they are not blocked by an obstacle
+                        board.count_neighbours(*n)!=0  && // and, there is at least one neighbouring chip (we're connected to the hive)
+                        !fringes.contains_key(n) // and the hex hasn't already been visited (stops backtracking of spiders)
+                    }
                 };
 
+                // Don't keep overwriting values in hashset (inefficient) -- only if the hex can be visited...
                 if can_visit & !visitable.contains(n) {
-                    // don't keep overwriting values in hashset (inefficient)
-                    fringes.insert(*n, k); // add the neighbour to the list of fringes for this k
+                    // add the neighbouring hex to the list of fringes for this k
+                    fringes.insert(*n, k);
 
                     // We only care about what hexes this peice can visit on its final turn
                     if k == move_rules.len() {
