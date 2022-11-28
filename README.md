@@ -11,14 +11,9 @@ The hoive directory contains the game logic.
 
 ## To do
 
-- install on virtual machine to check and list dependencies
-- play test to spot bugs in base game
-
-### Server
-
-- Games are wiped if win, but not on player leaving as it doesn't result in a forfeit state. (use /getall)
-- bug - forfeit flag is being left on? Forfeit in one game results in all games forfeit
-- Reinstate connection to db with pool
+- Server: reinstate connection to db with pool
+- Install on virtual machine to check and list dependencies
+- Play test to spot bugs in base game
 
 
 ### Low priority

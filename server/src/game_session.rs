@@ -524,6 +524,10 @@ fn in_game_parser(
                         });
                     }
                     MoveStatus::Win(_) => {
+
+                        // Reset the action for the next game of Hoive
+                        gamesess.action = BoardAction::default();
+
                         // Grab the winner's id off the game server
                         // update all player gamestates
                         let session_id = gamesess.room.to_owned();
