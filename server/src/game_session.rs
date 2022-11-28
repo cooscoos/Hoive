@@ -447,6 +447,12 @@ fn in_game_parser(
                     ctx.text("It's not your turn");
                 }
             }
+            "/disconnected" => {
+                // Opponent disconnected
+                
+            }
+
+
             "/select" | "/mosquito" | "/pillbug" | "/sumo" | "/skip" | "/moveto" | "/forfeit"
                 if gamesess.active =>
             {
