@@ -515,3 +515,20 @@ pub fn delete_all() -> Result<HttpResponse, Error> {
 
     Ok(HttpResponse::Ok().body("Cleared"))
 }
+
+/// For debugging, return list of all users and game ids
+pub fn get_all() -> Result<String, Error> {
+    // Inefficient way, for now, to make progress
+    let mut conn = db::establish_connection();
+
+    match db::get_all(&mut conn) {
+        Ok(result) => Ok(result
+            .into_iter()
+            .map(|v| format!("{v}\n"))
+            .collect::<String>()),
+        Err(err) => Err(error::ErrorInternalServerError(format!(
+            "Couldn't retrieve from db because: {}",
+            err
+        ))),
+    }
+}

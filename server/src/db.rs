@@ -17,6 +17,8 @@ pub use crate::models;
 use crate::models::{GameState, NewGameState, User};
 pub use crate::schema;
 
+use self::schema::user;
+
 #[derive(Debug)]
 pub struct ConnectionOptions {
     pub enable_wal: bool,
@@ -277,4 +279,20 @@ pub fn clean_db(conn: &mut SqliteConnection) {
 
     diesel::delete(game_state).execute(conn).unwrap();
     diesel::delete(user).execute(conn).unwrap();
+}
+
+/// Return the entire db's list of users and games, used for debugging
+pub fn get_all(conn: &mut SqliteConnection) -> QueryResult<Vec<String>> {
+    let mut user_list = super::schema::user::dsl::user
+        .select(super::schema::user::user_name)
+        .load::<String>(conn)
+        .expect("Error downloading user list");
+    let mut game_list = super::schema::game_state::dsl::game_state
+        .select(super::schema::game_state::id)
+        .load::<String>(conn)
+        .expect("Error loading game states");
+
+    user_list.append(&mut game_list);
+
+    Ok(user_list)
 }

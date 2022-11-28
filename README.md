@@ -16,8 +16,10 @@ The hoive directory contains the game logic.
 
 ### Server
 
+- Games are wiped if win, but not on player leaving as it doesn't result in a forfeit state. (use /getall)
+- bug - forfeit flag is being left on? Forfeit in one game results in all games forfeit
 - Reinstate connection to db with pool
-- Check that db games / users are being wiped on leave.
+
 
 ### Low priority
 

@@ -245,6 +245,11 @@ fn main_lobby_parser(
                     }
                 }
             }
+            "/getall" => {
+                let result = api::get_all()?;
+                ctx.text(format!("{result}"));
+
+            }
             "/help" => {
                 // User wants help on commands they can use
                 ctx.text(helpme());
