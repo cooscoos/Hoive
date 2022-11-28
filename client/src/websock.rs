@@ -131,8 +131,10 @@ pub async fn play_websock(def_setup: bool) -> Result<(), Box<dyn Error>> {
                                     // Update player id
                                     local.id = v[2].to_owned();
                                 }
-                                "moveto" | "select" | "mosquito" | "pillbug" | "sumo" => {
+                                "moveto" | "select" | "mosquito" | "pillbug" | "sumo" | "disconnected" => {
                                     // Echo the cmd back to the websocket server in response to show that the client is synced up
+                                    println!("sending {cmd}");
+
                                     local.precursor = format!("/{cmd} ");
                                 }
                                 "execute" => {

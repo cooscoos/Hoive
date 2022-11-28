@@ -141,6 +141,13 @@ impl Handler<Disconnect> for GameServer {
             let disc_msg = format!("{} disconnected", name);
             for room in rooms {
                 self.send_message(&disc_msg, &room, 0);
+
+                // Tell the other player you quit if this isn't main lobby
+                if !room.contains("main"){
+                    self.send_message("//cmd;disconnected", &room, 0);
+
+                }
+
             }
         }
 
