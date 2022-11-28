@@ -239,6 +239,20 @@ pub fn get_user_name(user_id: &usize, conn: &mut SqliteConnection) -> QueryResul
     Ok(result[0].clone())
 }
 
+/// Check whether user of given id is not on db --- returns true if there's no matching user
+pub fn is_user_dead(user_id: &str, conn: &mut SqliteConnection) -> QueryResult<bool> {
+    use schema::user::dsl::*;
+
+    let result = user
+        .select(user_name)
+        .filter(id.eq(user_id.to_string()))
+        .limit(1)
+        .load::<String>(conn)
+        .expect("Error getting username");
+
+    Ok(result.is_empty())
+}
+
 /// Get the general game state of the selected session_id
 pub fn get_game_state(
     session_id: &str,

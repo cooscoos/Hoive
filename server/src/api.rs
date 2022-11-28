@@ -159,6 +159,21 @@ pub async fn get_username(user_id: usize, req: HttpRequest) -> Result<HttpRespon
     }
 }
 
+/// Get user name based on an input user id
+pub fn is_user_dead(user_id: &str) -> Result<bool, Error> {
+
+    // Inefficient way, for now, to make progress
+    let mut conn = db::establish_connection();
+
+    match db::is_user_dead(user_id, &mut conn) {
+        Ok(result) => Ok(result),
+        Err(err) => Err(error::ErrorBadGateway(format!(
+            "Error finding if user is active because: {err}"
+        ))),
+    }
+}
+
+
 /// Create a new game
 pub fn new_game(user_id: &usize) -> Result<String, Error> {
     // Inefficient way, for now, to make progress
