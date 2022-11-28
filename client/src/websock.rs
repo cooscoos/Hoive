@@ -132,13 +132,16 @@ pub async fn play_websock(def_setup: bool) -> Result<(), Box<dyn Error>> {
                                     local.id = v[2].to_owned();
                                 }
                                 "moveto" | "select" | "mosquito" | "pillbug" | "sumo" => {
-                                    // Echo the cmd back to the websocket server in response to show that the client is synced up
+                                    // Echo the cmd back to the websocket server after the user has input something to show that the client is synced up
                                     local.precursor = format!("/{cmd} ");
                                 }
                                 "execute" => {
-                                    // Server says it's ready, so send an execute cmd to the server to do the move
-                                    // This isn't really needed, could just execute within the server's code
-                                    ws.send(ws::Message::Text("/execute".into())).await.unwrap();
+                                    // Echo the cmd back to server immediately (before the user types anything)
+                                    ws.send(ws::Message::Text(format!("/{cmd}").into())).await.unwrap();
+                                }
+                                "disconnected" => {
+                                    // Tell the server you think that user_id = v[2] has disconnected
+                                    ws.send(ws::Message::Text(format!("/{cmd} {}",v[2]).into())).await.unwrap();
                                 }
                                 "upboard" => {
                                     // Update the board

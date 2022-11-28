@@ -447,6 +447,34 @@ fn in_game_parser(
                     ctx.text("It's not your turn");
                 }
             }
+            "/disconnected" => {
+                // Opponent disconnected. Check if they're dead. If they are, hand the remaining player the win.
+
+                let dead_opponent = v[1];
+                
+                if api::is_user_dead(dead_opponent)? {
+
+                    // Announce winner
+                    gamesess.addr.do_send(game_server::Winner {
+                        team: Some(gamesess.team),
+                        room: gamesess.room.to_owned(),
+                        username: gamesess.name.to_owned(),
+                        forfeit: true,
+                    });
+
+                    // boot the player
+                    gamesess.addr.do_send(game_server::Join {
+                        id: gamesess.id,
+                        room: "main".to_string(),
+                        username: gamesess.name.to_owned().unwrap(),
+                    });
+
+                    // Deregister game from sql db
+                    let session_id = gamesess.room.to_owned();
+                    let _result = api::deregister_game(&session_id);
+
+                }
+            }
             "/select" | "/mosquito" | "/pillbug" | "/sumo" | "/skip" | "/moveto" | "/forfeit"
                 if gamesess.active =>
             {
@@ -477,9 +505,6 @@ fn in_game_parser(
             "/execute" if gamesess.active => {
                 // Ask the server to execute the move and return the response
                 let result = api::make_action(&gamesess.action, &gamesess.room)?;
-
-                println!("Result of move = {:?}", result);
-
                 match result {
                     MoveStatus::Success => {
                         // No longer this player's turn
@@ -499,6 +524,10 @@ fn in_game_parser(
                         });
                     }
                     MoveStatus::Win(_) => {
+
+                        // Reset the action for the next game of Hoive
+                        gamesess.action = BoardAction::default();
+
                         // Grab the winner's id off the game server
                         // update all player gamestates
                         let session_id = gamesess.room.to_owned();

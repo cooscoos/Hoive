@@ -135,20 +135,28 @@ impl Handler<Disconnect> for GameServer {
 
         self.visitor_count.fetch_sub(1, Ordering::SeqCst);
 
+        // Deregister them from the sql db
+        let _result = deregister_user(&msg.id);
+
         // If the client had a username, tell everyone else in the same room they disconnected.
         if msg.name.is_some() {
             let name = msg.name.unwrap();
             let disc_msg = format!("{} disconnected", name);
             for room in rooms {
                 self.send_message(&disc_msg, &room, 0);
+
+                // Tell the other player you quit if this isn't the main lobby
+                if !room.contains("main"){
+                    self.send_message(&format!("//cmd;disconnected;{}",msg.id), &room, 0);
+
+                }
+
             }
         }
 
         // Remove them from the visitor list
         self.visitor_list.remove(&msg.id);
 
-        // Deregister them from the sql db
-        let _result = deregister_user(&msg.id);
     }
 }
 
