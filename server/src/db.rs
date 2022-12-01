@@ -61,8 +61,7 @@ pub fn create_conn_pool() -> Pool<ConnectionManager<SqliteConnection>> {
         .unwrap()
 }
 
-/// Establish connection to db - not required if we can get the generic connection pool above working
-///
+/// Establish connection to db - not required to be used much if we have the generic connection pool above working
 pub fn establish_connection() -> SqliteConnection {
     dotenv().ok();
 
@@ -226,7 +225,7 @@ pub fn update_game_and_winner(
 }
 
 /// Get the username of a user of given id
-pub fn get_user_name(user_id: &usize, conn: &mut SqliteConnection) -> QueryResult<String> {
+pub fn get_user_name(user_id: &str, conn: &mut SqliteConnection) -> QueryResult<String> {
     use schema::user::dsl::*;
 
     let result = user

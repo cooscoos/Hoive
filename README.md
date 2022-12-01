@@ -11,15 +11,13 @@ The hoive directory contains the game logic.
 
 ## To do
 
-- Server: reinstate connection to db with pool
 - Install on virtual machine to check and list dependencies
 - Play test to spot bugs in base game
-
 
 ### Low priority
 
 - Option to select an empty game to join based on its id in websocket version so can play with friends on server
-
+- Sqlite connections with pool, but is using appdata secure, where else could the pool be generated? Could it be created somewhere else and grabbed by wsgamesessions?
 
 ### Useful references
 - [websockets](https://github.com/actix/examples/tree/99d0afde28d14a0b641ac52de821d79fa244d50a/websockets/echo)

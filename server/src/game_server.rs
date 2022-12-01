@@ -8,6 +8,7 @@
 //! - handlers that define how GameServer responds to each message.
 
 use actix::prelude::*;
+use actix_web::HttpRequest;
 use rand::{self, rngs::ThreadRng, Rng};
 
 use std::{

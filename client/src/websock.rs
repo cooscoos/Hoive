@@ -50,7 +50,7 @@ pub async fn play_websock(def_setup: bool) -> Result<(), Box<dyn Error>> {
         Ok(values) => values,
         Err(err) => {
             log::error!("error: {}", err);
-            panic!("problem")
+            panic!("problem: {}", err)
         }
     };
 
@@ -284,7 +284,7 @@ async fn websock_setup() -> Result<String, Box<dyn Error>> {
 fn show_game_info(local: &LGameSession) -> String {
     // Show the board
     format!(
-        "{}\n\n-------------------- PLAYER HAND --------------------\n\n{}\n\n-----------------------------------------------------\nType \x1b[31;1m/help\x1b[0m for help\n\n{}{}\n.",
+        "{}\n\n-------------------- PLAYER HAND --------------------\n\n{}\n\n-----------------------------------------------------\nType \x1b[31;1m/help\x1b[0m for help\n\n{}\n{}",
         draw::show_board(&local.board),
         draw::list_chips(&local.board, local.team),
         local.turn_string(),

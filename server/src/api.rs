@@ -35,10 +35,8 @@ pub async fn chat_route(
     req: HttpRequest,
     stream: web::Payload,
     srv: web::Data<Addr<game_server::GameServer>>,
+    pool: web::Data<Pool<ConnectionManager<SqliteConnection>>>
 ) -> Result<HttpResponse, Error> {
-    // if let Some(pool) = req.app_data::<Pool<ConnectionManager<SqliteConnection>>>() {
-    //     match pool.get() {
-    //         Ok(conn) => {
 
     // start the websocket
     ws::start(
@@ -52,35 +50,29 @@ pub async fn chat_route(
             board: Board::<Cube>::default(),
             team: Team::Black,
             addr: srv.get_ref().clone(),
+            pool: pool.get_ref().clone(),
         },
         &req,
         stream,
     )
-    //         }
-    //         Err(error) => Err(error::ErrorBadGateway(error)), // convert error into actix-web error
-    //     }
-    // } else {
-    //     Err(error::ErrorBadGateway(
-    //         "[api][get_db_connection] Can't get db connection",
-    //     ))
-    // }
+
 }
 
 /// Get a connection to the db
-// fn get_db_connection(
-//     req: HttpRequest,
-// ) -> Result<PooledConnection<ConnectionManager<SqliteConnection>>, Error> {
-//     if let Some(pool) = req.app_data::<Pool<ConnectionManager<SqliteConnection>>>() {
-//         match pool.get() {
-//             Ok(conn) => Ok(conn),
-//             Err(error) => Err(error::ErrorBadGateway(error)), // convert error into actix-web error
-//         }
-//     } else {
-//         Err(error::ErrorBadGateway(
-//             "[api][get_db_connection] Can't get db connection",
-//         ))
-//     }
-// }
+fn get_db_connection(
+    req: HttpRequest,
+) -> Result<PooledConnection<ConnectionManager<SqliteConnection>>, Error> {
+    if let Some(pool) = req.app_data::<Pool<ConnectionManager<SqliteConnection>>>() {
+        match pool.get() {
+            Ok(conn) => Ok(conn),
+            Err(error) => Err(error::ErrorBadGateway(error)), // convert error into actix-web error
+        }
+    } else {
+        Err(error::ErrorBadGateway(
+            "[api][get_db_connection] Can't get db connection",
+        ))
+    }
+}
 
 /// Default index page that shows the Hoive server version
 pub async fn index() -> HttpResponse {
@@ -88,9 +80,9 @@ pub async fn index() -> HttpResponse {
 }
 
 /// Register a new user with requested name (input via web form)
-pub fn register_user(user_name: &str, session_id: usize) -> Result<bool, Error> {
-    // Inefficient way, for now, to make progress
-    let mut conn = db::establish_connection();
+pub fn register_user(user_name: &str, session_id: usize, pool: &mut Pool<ConnectionManager<SqliteConnection>>) -> Result<bool, Error> {
+
+    let mut conn = pool.get().unwrap();
 
     // Check if the db contains a user with this name already
     match db::username_available(user_name, &mut conn) {
@@ -120,7 +112,7 @@ pub fn register_user(user_name: &str, session_id: usize) -> Result<bool, Error> 
 
 /// Delete the user from the db
 pub fn deregister_user(user_id: &usize) -> Result<(), Error> {
-    // Inefficient way, for now, to make progress
+    // This happens infrequently enough that it's easier to ignore pool and establish a new connection
     let mut conn = db::establish_connection();
 
     match db::remove_user(&user_id.to_string(), &mut conn) {
@@ -133,7 +125,7 @@ pub fn deregister_user(user_id: &usize) -> Result<(), Error> {
 
 /// Delete the game from the db
 pub fn deregister_game(session_id: &str) -> Result<(), Error> {
-    // Inefficient way, for now, to make progress
+    // This happens infrequently enough that it's easier to ignore pool and establish a new connection
     let mut conn = db::establish_connection();
 
     match db::remove_game(session_id, &mut conn) {
@@ -145,11 +137,10 @@ pub fn deregister_game(session_id: &str) -> Result<(), Error> {
 }
 
 /// Get user name based on an input user id
-pub async fn get_username(user_id: usize, req: HttpRequest) -> Result<HttpResponse, Error> {
-    println!("REQ: {:?}", req);
+pub async fn get_username(user_id: &str, req: HttpRequest) -> Result<HttpResponse, Error> {
 
-    // Inefficient way, for now, to make progress
-    let mut conn = db::establish_connection();
+    //let mut conn = db::establish_connection();
+    let mut conn = get_db_connection(req)?;
 
     match db::get_user_name(&user_id, &mut conn) {
         Ok(username) => Ok(HttpResponse::Ok().body(username)),
@@ -160,10 +151,9 @@ pub async fn get_username(user_id: usize, req: HttpRequest) -> Result<HttpRespon
 }
 
 /// Get user name based on an input user id
-pub fn is_user_dead(user_id: &str) -> Result<bool, Error> {
+pub fn is_user_dead(user_id: &str, pool: &mut Pool<ConnectionManager<SqliteConnection>>) -> Result<bool, Error> {
 
-    // Inefficient way, for now, to make progress
-    let mut conn = db::establish_connection();
+    let mut conn = pool.get().unwrap();
 
     match db::is_user_dead(user_id, &mut conn) {
         Ok(result) => Ok(result),
@@ -175,9 +165,9 @@ pub fn is_user_dead(user_id: &str) -> Result<bool, Error> {
 
 
 /// Create a new game
-pub fn new_game(user_id: &usize) -> Result<String, Error> {
-    // Inefficient way, for now, to make progress
-    let mut conn = db::establish_connection();
+pub fn new_game(user_id: &usize, pool: &mut Pool<ConnectionManager<SqliteConnection>>) -> Result<String, Error> {
+    
+    let mut conn = pool.get().unwrap();
 
     match db::create_session(user_id, &mut conn) {
         Ok(session_id) => {
@@ -191,9 +181,10 @@ pub fn new_game(user_id: &usize) -> Result<String, Error> {
 }
 
 /// Find a live session without a player 2
-pub fn find() -> Result<Option<GameState>, Error> {
-    // Inefficient way, for now, to make progress
-    let mut conn = db::establish_connection();
+pub fn find(pool: &mut Pool<ConnectionManager<SqliteConnection>>) -> Result<Option<GameState>, Error> {
+    
+    let mut conn = pool.get().unwrap();
+    
     match db::find_live_session(&mut conn) {
         Some(game_state) => Ok(Some(game_state)),
         None => Ok(None),
@@ -201,9 +192,9 @@ pub fn find() -> Result<Option<GameState>, Error> {
 }
 
 /// Join a session with given session_id
-pub fn join(session_id: &str, user_2_id: &usize) -> Result<(), Error> {
-    // Inefficient way, for now, to make progress
-    let mut conn = db::establish_connection();
+pub fn join(session_id: &str, user_2_id: &usize, pool: &mut Pool<ConnectionManager<SqliteConnection>>) -> Result<(), Error> {
+
+    let mut conn = pool.get().unwrap();
 
     match db::join_live_session(session_id, user_2_id, &mut conn) {
         Ok(0) => Err(error::ErrorNotFound(format!(
@@ -246,9 +237,10 @@ pub fn join(session_id: &str, user_2_id: &usize) -> Result<(), Error> {
 }
 
 /// Retrieve the game state of a session
-pub fn get_game_state(session_id: &str) -> Result<GameState, Error> {
-    // Inefficient way, for now, to make progress
-    let mut conn = db::establish_connection();
+pub fn get_game_state(session_id: &str, pool: &mut Pool<ConnectionManager<SqliteConnection>>) -> Result<GameState, Error> {
+
+    let mut conn = pool.get().unwrap();
+
     let res = db::get_game_state(session_id, &mut conn);
     match res {
         Ok(game_state) => Ok(game_state),
@@ -259,18 +251,23 @@ pub fn get_game_state(session_id: &str) -> Result<GameState, Error> {
 }
 
 /// Allow player to take some sort of action
-pub fn make_action(action: &BoardAction, session_id: &str) -> Result<MoveStatus, Error> {
-    // Inefficient way, for now, to make progress
-    let mut conn = db::establish_connection();
+pub fn make_action(action: &BoardAction, session_id: &str, pool: &mut Pool<ConnectionManager<SqliteConnection>>) -> Result<MoveStatus, Error> {
 
     // Retrieve the game_state
-    let game_state = get_game_state(session_id)?;
+    let game_state = get_game_state(session_id, pool)?;
+
+    let mut conn = pool.get().unwrap();
 
     // Find out if we have a special player action.
     match action.special.as_ref() {
-        Some(special) if special == "forfeit" => {
-            // Forfeit means active player is giving up
-            forfeit(game_state, session_id, &mut conn)
+        Some(special) if special.starts_with("forfeit") => {
+
+            // Get the forfeitting player's id
+            let v: Vec<&str> = special.splitn(2, ';').collect();
+            let loser_id = v[1];
+
+            // Try and make the loser forfeit
+            forfeit(game_state, session_id, loser_id, &mut conn)
         }
         Some(special) if special == "skip" => {
             // Try and skip the current player's turn
@@ -401,14 +398,12 @@ fn execute_win_on_db<T: Coord>(
                     .user_1
                     .as_ref()
                     .unwrap()
-                    .parse::<usize>()
-                    .expect("Couldn't parse user id to usize"),
+,
                 Team::White => game_state
                     .user_2
                     .as_ref()
                     .unwrap()
-                    .parse::<usize>()
-                    .expect("Couldn't parse user id to usize"),
+,
             };
 
             // Get the winner's name
@@ -484,14 +479,20 @@ fn skip_turn(
 fn forfeit(
     game_state: GameState,
     session_id: &str,
+    loser_id: &str,
     conn: &mut SqliteConnection,
 ) -> Result<MoveStatus, Error> {
-    // The winner is the team who didn't forfeit (the inactive team)
-    let winner_team = !game_state.which_team()?;
-    let winner_id = game_state
-        .inactive_user()?
-        .parse::<usize>()
-        .expect("Couldn't parse user id to usize");
+
+
+    let winner_id = game_state.not_this_user(loser_id)?;
+    let winner_team = game_state.which_team_user(&winner_id)?;
+
+    // // The winner is the team who didn't forfeit (the inactive team)
+    // let winner_team = !game_state.which_team()?;
+    // let winner_id = game_state
+    //     .inactive_user()?
+    //     .parse::<usize>()
+    //     .expect("Couldn't parse user id to usize");
 
     // Get the winner's name
     let winner_name = match db::get_user_name(&winner_id, conn) {
@@ -521,9 +522,8 @@ fn forfeit(
 }
 
 /// For debugging only. Delete the db on the server
-pub fn delete_all() -> Result<HttpResponse, Error> {
-    // Inefficient way, for now, to make progress
-    let mut conn = db::establish_connection();
+pub fn delete_all(pool: &mut Pool<ConnectionManager<SqliteConnection>>) -> Result<HttpResponse, Error> {
+    let mut conn = pool.get().unwrap();
 
     db::clean_db(&mut conn);
     println!("Database cleared");
@@ -532,9 +532,9 @@ pub fn delete_all() -> Result<HttpResponse, Error> {
 }
 
 /// For debugging, return list of all users and game ids
-pub fn get_all() -> Result<String, Error> {
-    // Inefficient way, for now, to make progress
-    let mut conn = db::establish_connection();
+pub fn get_all(pool: &mut Pool<ConnectionManager<SqliteConnection>>) -> Result<String, Error> {
+
+    let mut conn = pool.get().unwrap();
 
     match db::get_all(&mut conn) {
         Ok(result) => Ok(result

@@ -75,9 +75,9 @@ pub fn skip_turn(action: &mut BoardAction) {
     action.request = Req::Execute;
 }
 
-/// Forfeit
-pub fn forfeit(action: &mut BoardAction) {
-    action.special = Some("forfeit".to_string());
+/// Forfeit, the id states the player id of the forfeitter
+pub fn forfeit(action: &mut BoardAction, id: &usize) {
+    action.special = Some(format!("forfeit;{}",id));
     action.request = Req::Execute;
 }
 

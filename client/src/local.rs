@@ -104,7 +104,7 @@ pub fn action_prompts<T: Coord>(
         }
         _ if textin == "quit" => {
             // Forfeit the game
-            pmoore::forfeit(action);
+            pmoore::forfeit(action,&0);
         }
         _ if textin == "h" => {
             // Display help, abort action
@@ -142,7 +142,7 @@ pub fn try_execute_action<T: Coord>(
 
     // Try execute a special if one is requested, otherwise normal move
     match special_str {
-        Some(special) if special == "forfeit" => MoveStatus::Win(Some(!active_team)),
+        Some(special) if special.starts_with("forfeit") => MoveStatus::Win(Some(!active_team)),
         Some(special) if special == "skip" => board.try_skip_turn(active_team),
         Some(special) => pmoore::decode_specials(
             board,
