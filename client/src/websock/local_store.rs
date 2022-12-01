@@ -49,7 +49,7 @@ impl LGameSession {
     /// Get a string to say if it's your turn or not
     pub fn turn_string(&self) -> &'static str {
         match self.active {
-            true => "It's your turn: ",
+            true => "It's your turn.",
             false => "Waiting for other player to take turn...",
         }
     }

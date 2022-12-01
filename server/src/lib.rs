@@ -37,7 +37,7 @@ pub async fn start_server() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(servery.clone()))
-            .app_data(db::create_conn_pool())
+            .app_data(web::Data::new(db::create_conn_pool())) // Is this secure, is there even another way?
             .wrap(SessionMiddleware::new(
                 CookieSessionStore::default(),
                 secret_key.clone(),

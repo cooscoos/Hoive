@@ -59,10 +59,9 @@ pub struct WsGameSession {
 
     /// In-game: What team the player is on
     pub team: Team,
-
-    /// The one and only httprequest made by clients upon joining the server.
-    /// Used for pooled db connections.
-    pub req: HttpRequest,
+    
+    /// For pooled connections
+    pub pool: Pool<ConnectionManager<SqliteConnection>>,
 }
 
 impl WsGameSession {
@@ -233,7 +232,7 @@ fn main_lobby_parser(
                 } else {
                     // Try register the username on the game db.
                     let user_name = v[1];
-                    match api::register_user(user_name, gamesess.id, gamesess.req.to_owned())? {
+                    match api::register_user(user_name, gamesess.id, &mut gamesess.pool)? {
                         false => ctx.text("Username already exists. Pick another."),
                         true => {
                             // Assign username in the chat session
@@ -255,7 +254,7 @@ fn main_lobby_parser(
                 }
             }
             "/getall" => {
-                let result = api::get_all(gamesess.req.to_owned())?;
+                let result = api::get_all(&mut gamesess.pool)?;
                 ctx.text(format!("{result}"));
 
             }
@@ -265,7 +264,7 @@ fn main_lobby_parser(
             }
             "/wipe" => {
                 // For debug
-                match api::delete_all(gamesess.req.to_owned()) {
+                match api::delete_all(&mut gamesess.pool) {
                     Ok(_) => ctx.text("Database wiped"),
                     Err(err) => panic!("Error {}", err),
                 };
@@ -296,7 +295,7 @@ fn main_lobby_parser(
             }
             "/create" => {
                 // Create a new game on the db, register creator as user_1
-                let session_id = api::new_game(&gamesess.id, gamesess.req.to_owned())?;
+                let session_id = api::new_game(&gamesess.id, &mut gamesess.pool)?;
 
                 // Join the game session's chat room
                 gamesess.room = session_id.to_owned();
@@ -323,13 +322,13 @@ fn main_lobby_parser(
                     ctx.text("Joining specific games is unimplemented. Just type /join to see if any are available.");
                 } else {
                     // Join an empty game if one is available
-                    match api::find(gamesess.req.to_owned())? {
+                    match api::find(&mut gamesess.pool)? {
                         Some(game_state) => {
                             // The game_state's id will define the game room name
                             let session_id = game_state.id;
 
                             // Join on the sqlite db
-                            api::join(&session_id, &gamesess.id, gamesess.req.to_owned())?;
+                            api::join(&session_id, &gamesess.id, &mut gamesess.pool)?;
 
                             // Join in the chat
                             gamesess.room = session_id.to_owned();
@@ -345,7 +344,7 @@ fn main_lobby_parser(
                             ctx.text(format!("You joined game room {}", session_id));
 
                             // Get updated GameState and notify both players of what it is
-                            let game_state = api::get_game_state(&session_id, gamesess.req.to_owned())?;
+                            let game_state = api::get_game_state(&session_id, &mut gamesess.pool)?;
                             gamesess.addr.do_send(game_server::NewGame {
                                 session_id,
                                 game_state,
@@ -437,11 +436,11 @@ fn in_game_parser(
             }
             "/play" => {
                 // Get the gamestate from the db and make sure it is this player's turn
-                let gamestate = api::get_game_state(&gamesess.room, gamesess.req.to_owned())?;
+                let gamestate = api::get_game_state(&gamesess.room, &mut gamesess.pool)?;
 
                 if gamesess.id.to_string() != gamestate.last_user_id.unwrap() {
                     // This is the first thing a player does on their turn, so first, make sure the board is up to date
-                    let gamestate = api::get_game_state(&gamesess.room, gamesess.req.to_owned())?;
+                    let gamestate = api::get_game_state(&gamesess.room, &mut gamesess.pool)?;
 
                     // Save copy of the board to WsGameSession so that we don't have to keep querying the sqlite db
                     let mut board = Board::<Cube>::default();
@@ -461,7 +460,7 @@ fn in_game_parser(
 
                 let dead_opponent = v[1];
                 
-                if api::is_user_dead(dead_opponent, gamesess.req.to_owned())? {
+                if api::is_user_dead(dead_opponent, &mut gamesess.pool)? {
 
                     // Announce winner
                     gamesess.addr.do_send(game_server::Winner {
@@ -504,7 +503,7 @@ fn in_game_parser(
                     }
                     "/skip" => pmoore::skip_turn(&mut gamesess.action),
                     "/moveto" => pmoore::move_chip_prompts(&mut gamesess.action, v[1])?,
-                    "/forfeit" => pmoore::forfeit(&mut gamesess.action),
+                    //"/forfeit" => pmoore::forfeit(&mut gamesess.action, &gamesess.id),
                     _ => return Err("Unrecognised command".into()),
                 }
 
@@ -512,16 +511,16 @@ fn in_game_parser(
                 ctx.text(gamesess.action.request.to_string());
             }
             "/forfeit" => {
-                println!("X player want forfeit");
                 // This is split out from the above cmds so that player can forfeit when not their turn.
-                pmoore::forfeit(&mut gamesess.action);
+                pmoore::forfeit(&mut gamesess.action, &gamesess.id);
 
                 ctx.text(format!("//cmd;msg;{}", gamesess.action.message.to_owned()));
                 ctx.text(gamesess.action.request.to_string());
             }
             "/execute" => {
-                // Ask the server to execute the move and return the response
-                let result = api::make_action(&gamesess.action, &gamesess.room, gamesess.req.to_owned())?;
+                // Ask the server to execute the move and return the response. You can do this on not your turn because
+                // maybe you want to forfeit while it's not your turn. 
+                let result = api::make_action(&gamesess.action, &gamesess.room, &mut gamesess.pool)?;
                 match result {
                     MoveStatus::Success => {
                         // No longer this player's turn
@@ -530,7 +529,7 @@ fn in_game_parser(
 
                         // Update all players on what the new gamestate is
                         let session_id = gamesess.room.to_owned();
-                        let game_state = api::get_game_state(&session_id, gamesess.req.to_owned())?;
+                        let game_state = api::get_game_state(&session_id, &mut gamesess.pool)?;
 
                         // For debug
                         ctx.text(format!("Board in spiral is {:?}", game_state.board));
@@ -548,7 +547,7 @@ fn in_game_parser(
                         // Grab the winner's id off the game server
                         // update all player gamestates
                         let session_id = gamesess.room.to_owned();
-                        let game_state = api::get_game_state(&session_id, gamesess.req.to_owned())?;
+                        let game_state = api::get_game_state(&session_id, &mut gamesess.pool)?;
 
                         let winner = game_state.get_winner().unwrap();
                         // send a message to everyone saying who winner is
@@ -594,7 +593,7 @@ fn in_game_parser(
 
                 // reset the client and local boards
                 let session_id = gamesess.room.to_owned();
-                let game_state = api::get_game_state(&session_id, gamesess.req.to_owned())?;
+                let game_state = api::get_game_state(&session_id, &mut gamesess.pool)?;
 
                 ctx.text(format!("//cmd;upboard;{}", game_state.board.unwrap()));
                 ctx.text("//cmd;select");

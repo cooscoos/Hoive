@@ -225,7 +225,7 @@ pub fn update_game_and_winner(
 }
 
 /// Get the username of a user of given id
-pub fn get_user_name(user_id: &usize, conn: &mut SqliteConnection) -> QueryResult<String> {
+pub fn get_user_name(user_id: &str, conn: &mut SqliteConnection) -> QueryResult<String> {
     use schema::user::dsl::*;
 
     let result = user

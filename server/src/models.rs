@@ -30,6 +30,27 @@ pub struct GameState {
 }
 
 impl GameState {
+
+    /// Returns the player who does not have this user id
+    pub fn not_this_user(&self, id: &str) -> Result<String, Box<dyn Error>> {
+        match self.user_1.as_ref().unwrap() == &id.to_string() {
+            true => Ok(self.user_2.as_ref().unwrap().to_owned()),
+            false => Ok(self.user_1.as_ref().unwrap().to_owned()),
+        }
+    }
+
+    /// Returns the team of the given user id
+    pub fn which_team_user(&self, id: &str) -> Result<Team, Box<dyn Error>> {
+        // User 1 is black team, user 2 is white team
+        match id {
+           _ if id == self.user_1.as_ref().unwrap() => Ok(Team::Black),
+           _ if id == self.user_2.as_ref().unwrap() => Ok(Team::White),
+           _ => panic!("Team undefined"),
+        }
+
+    }
+
+
     /// Returns the team of the active player
     pub fn which_team(&self) -> Result<Team, Box<dyn Error>> {
         // Find which user went last and return the opposite team
