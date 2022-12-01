@@ -40,6 +40,8 @@ pub async fn chat_route(
     //     match pool.get() {
     //         Ok(conn) => {
 
+    //let pool = get_db_connection(req.clone())?;
+
     // start the websocket
     ws::start(
         game_session::WsGameSession {
@@ -52,6 +54,7 @@ pub async fn chat_route(
             board: Board::<Cube>::default(),
             team: Team::Black,
             addr: srv.get_ref().clone(),
+            req: req.clone(),
         },
         &req,
         stream,
@@ -67,20 +70,20 @@ pub async fn chat_route(
 }
 
 /// Get a connection to the db
-// fn get_db_connection(
-//     req: HttpRequest,
-// ) -> Result<PooledConnection<ConnectionManager<SqliteConnection>>, Error> {
-//     if let Some(pool) = req.app_data::<Pool<ConnectionManager<SqliteConnection>>>() {
-//         match pool.get() {
-//             Ok(conn) => Ok(conn),
-//             Err(error) => Err(error::ErrorBadGateway(error)), // convert error into actix-web error
-//         }
-//     } else {
-//         Err(error::ErrorBadGateway(
-//             "[api][get_db_connection] Can't get db connection",
-//         ))
-//     }
-// }
+fn get_db_connection(
+    req: HttpRequest,
+) -> Result<PooledConnection<ConnectionManager<SqliteConnection>>, Error> {
+    if let Some(pool) = req.app_data::<Pool<ConnectionManager<SqliteConnection>>>() {
+        match pool.get() {
+            Ok(conn) => Ok(conn),
+            Err(error) => Err(error::ErrorBadGateway(error)), // convert error into actix-web error
+        }
+    } else {
+        Err(error::ErrorBadGateway(
+            "[api][get_db_connection] Can't get db connection",
+        ))
+    }
+}
 
 /// Default index page that shows the Hoive server version
 pub async fn index() -> HttpResponse {
@@ -88,9 +91,11 @@ pub async fn index() -> HttpResponse {
 }
 
 /// Register a new user with requested name (input via web form)
-pub fn register_user(user_name: &str, session_id: usize) -> Result<bool, Error> {
-    // Inefficient way, for now, to make progress
-    let mut conn = db::establish_connection();
+pub fn register_user(user_name: &str, session_id: usize, req: HttpRequest) -> Result<bool, Error> {
+
+    //let mut conn = db::establish_connection();
+    let mut conn = get_db_connection(req)?;
+
 
     // Check if the db contains a user with this name already
     match db::username_available(user_name, &mut conn) {
@@ -120,8 +125,8 @@ pub fn register_user(user_name: &str, session_id: usize) -> Result<bool, Error> 
 
 /// Delete the user from the db
 pub fn deregister_user(user_id: &usize) -> Result<(), Error> {
-    // Inefficient way, for now, to make progress
     let mut conn = db::establish_connection();
+    //let mut conn = get_db_connection(req)?;
 
     match db::remove_user(&user_id.to_string(), &mut conn) {
         Ok(_) => Ok(()),
@@ -133,8 +138,8 @@ pub fn deregister_user(user_id: &usize) -> Result<(), Error> {
 
 /// Delete the game from the db
 pub fn deregister_game(session_id: &str) -> Result<(), Error> {
-    // Inefficient way, for now, to make progress
     let mut conn = db::establish_connection();
+    //let mut conn = get_db_connection(req)?;
 
     match db::remove_game(session_id, &mut conn) {
         Ok(_) => Ok(()),
@@ -146,10 +151,9 @@ pub fn deregister_game(session_id: &str) -> Result<(), Error> {
 
 /// Get user name based on an input user id
 pub async fn get_username(user_id: usize, req: HttpRequest) -> Result<HttpResponse, Error> {
-    println!("REQ: {:?}", req);
 
-    // Inefficient way, for now, to make progress
-    let mut conn = db::establish_connection();
+    //let mut conn = db::establish_connection();
+    let mut conn = get_db_connection(req)?;
 
     match db::get_user_name(&user_id, &mut conn) {
         Ok(username) => Ok(HttpResponse::Ok().body(username)),
@@ -160,10 +164,10 @@ pub async fn get_username(user_id: usize, req: HttpRequest) -> Result<HttpRespon
 }
 
 /// Get user name based on an input user id
-pub fn is_user_dead(user_id: &str) -> Result<bool, Error> {
+pub fn is_user_dead(user_id: &str, req: HttpRequest) -> Result<bool, Error> {
 
-    // Inefficient way, for now, to make progress
-    let mut conn = db::establish_connection();
+    //let mut conn = db::establish_connection();
+    let mut conn = get_db_connection(req)?;
 
     match db::is_user_dead(user_id, &mut conn) {
         Ok(result) => Ok(result),
@@ -175,9 +179,9 @@ pub fn is_user_dead(user_id: &str) -> Result<bool, Error> {
 
 
 /// Create a new game
-pub fn new_game(user_id: &usize) -> Result<String, Error> {
-    // Inefficient way, for now, to make progress
-    let mut conn = db::establish_connection();
+pub fn new_game(user_id: &usize, req: HttpRequest) -> Result<String, Error> {
+    //let mut conn = db::establish_connection();
+    let mut conn = get_db_connection(req)?;
 
     match db::create_session(user_id, &mut conn) {
         Ok(session_id) => {
@@ -191,9 +195,9 @@ pub fn new_game(user_id: &usize) -> Result<String, Error> {
 }
 
 /// Find a live session without a player 2
-pub fn find() -> Result<Option<GameState>, Error> {
-    // Inefficient way, for now, to make progress
-    let mut conn = db::establish_connection();
+pub fn find(req: HttpRequest) -> Result<Option<GameState>, Error> {
+    //let mut conn = db::establish_connection();
+    let mut conn = get_db_connection(req)?;
     match db::find_live_session(&mut conn) {
         Some(game_state) => Ok(Some(game_state)),
         None => Ok(None),
@@ -201,9 +205,9 @@ pub fn find() -> Result<Option<GameState>, Error> {
 }
 
 /// Join a session with given session_id
-pub fn join(session_id: &str, user_2_id: &usize) -> Result<(), Error> {
-    // Inefficient way, for now, to make progress
-    let mut conn = db::establish_connection();
+pub fn join(session_id: &str, user_2_id: &usize, req: HttpRequest) -> Result<(), Error> {
+    //let mut conn = db::establish_connection();
+    let mut conn = get_db_connection(req)?;
 
     match db::join_live_session(session_id, user_2_id, &mut conn) {
         Ok(0) => Err(error::ErrorNotFound(format!(
@@ -246,9 +250,9 @@ pub fn join(session_id: &str, user_2_id: &usize) -> Result<(), Error> {
 }
 
 /// Retrieve the game state of a session
-pub fn get_game_state(session_id: &str) -> Result<GameState, Error> {
-    // Inefficient way, for now, to make progress
-    let mut conn = db::establish_connection();
+pub fn get_game_state(session_id: &str, req: HttpRequest) -> Result<GameState, Error> {
+    //let mut conn = db::establish_connection();
+    let mut conn = get_db_connection(req)?;
     let res = db::get_game_state(session_id, &mut conn);
     match res {
         Ok(game_state) => Ok(game_state),
@@ -259,12 +263,14 @@ pub fn get_game_state(session_id: &str) -> Result<GameState, Error> {
 }
 
 /// Allow player to take some sort of action
-pub fn make_action(action: &BoardAction, session_id: &str) -> Result<MoveStatus, Error> {
-    // Inefficient way, for now, to make progress
-    let mut conn = db::establish_connection();
+pub fn make_action(action: &BoardAction, session_id: &str, req: HttpRequest) -> Result<MoveStatus, Error> {
 
     // Retrieve the game_state
-    let game_state = get_game_state(session_id)?;
+    let game_state = get_game_state(session_id, req.clone())?;
+
+
+    //let mut conn = db::establish_connection();
+    let mut conn = get_db_connection(req)?;
 
     // Find out if we have a special player action.
     match action.special.as_ref() {
@@ -521,9 +527,9 @@ fn forfeit(
 }
 
 /// For debugging only. Delete the db on the server
-pub fn delete_all() -> Result<HttpResponse, Error> {
-    // Inefficient way, for now, to make progress
-    let mut conn = db::establish_connection();
+pub fn delete_all(req: HttpRequest) -> Result<HttpResponse, Error> {
+    //let mut conn = db::establish_connection();
+    let mut conn = get_db_connection(req)?;
 
     db::clean_db(&mut conn);
     println!("Database cleared");
@@ -532,9 +538,9 @@ pub fn delete_all() -> Result<HttpResponse, Error> {
 }
 
 /// For debugging, return list of all users and game ids
-pub fn get_all() -> Result<String, Error> {
-    // Inefficient way, for now, to make progress
-    let mut conn = db::establish_connection();
+pub fn get_all(req: HttpRequest) -> Result<String, Error> {
+    //let mut conn = db::establish_connection();
+    let mut conn = get_db_connection(req)?;
 
     match db::get_all(&mut conn) {
         Ok(result) => Ok(result

@@ -11,7 +11,7 @@ The hoive directory contains the game logic.
 
 ## To do
 
-- Server: reinstate connection to db with pool
+- Server: Have reinstated connection to db with pool, but is this efficient?
 - Install on virtual machine to check and list dependencies
 - Play test to spot bugs in base game
 
