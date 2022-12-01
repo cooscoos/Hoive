@@ -18,9 +18,6 @@ The hoive directory contains the game logic.
 
 ### Low priority
 
-- Consider: Bevy, maybe with (egui)[https://github.com/emilk/egui] or Fyrox.
-- display you: for chat
-- fix colour of other players to random?
 - Option to select an empty game to join based on its id in websocket version so can play with friends on server
 
 
