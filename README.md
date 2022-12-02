@@ -9,7 +9,17 @@ The hoive directory contains the game logic.
 
 ![snapshot of the app](/misc/gameplay.png "snapshot of the app")
 
-## To do
+## Code examples
+
+If you're a developer, this repo contains examples of:
+
+- running a multiplayer game on a websocket server;
+- interacting with an sqlite database of game states;
+- using hexagonal coordinate systems (cubic, doubleheight, spiral) and translating between them;
+- morphological operations on hexagonal grids.
+
+
+## My to do list
 
 - Install on virtual machine to check and list dependencies
 - Play test to spot bugs in base game
@@ -20,9 +30,11 @@ The hoive directory contains the game logic.
 - Sqlite connections are done with pool, but is using appdata secure? Can pool be created somewhere else in the backend and grabbed by wsgamesessions?
 
 ### Useful references
+
+- [hexagonal grids](https://www.redblobgames.com/grids/hexagons/)
 - [websockets](https://github.com/actix/examples/tree/99d0afde28d14a0b641ac52de821d79fa244d50a/websockets/echo)
 - [http server games](https://github.com/vascokk/fullstack-rust/tree/main/server/src)
-- [actix and diesel](https://fdeantoni.medium.com/rust-actix-diesel-sqlite-d67a1c3ef0e)
+- [actix and diesel for sqlite](https://fdeantoni.medium.com/rust-actix-diesel-sqlite-d67a1c3ef0e)
 
 
 <!-- 
