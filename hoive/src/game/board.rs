@@ -356,6 +356,15 @@ where
             .collect()
     }
 
+    /// Get all chips that are in the hand of a given team
+    pub fn get_hand_chips(&self, team: Team) -> Vec<Chip> {
+        self.chips
+            .iter()
+            .filter(|(c, p)| (p.is_none()) & (c.team == team))
+            .map(|(c, _)| *c)
+            .collect()
+    }
+
     /// Return the Chip that is at a given position (None if location is empty)
     /// TODO: This will break if we move away from a 3-coordinate system (as may other fns)
     pub fn get_chip(&self, position: T) -> Option<Chip> {
