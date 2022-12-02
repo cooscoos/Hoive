@@ -15,7 +15,7 @@ If you're a developer, this repo contains examples of:
 
 - running a multiplayer game on a websocket server;
 - interacting with an sqlite database of game states;
-- using hexagonal coordinate systems (cubic, doubleheight, spiral) and translating between them;
+- using hexagonal coordinate systems (cubic, doubleheight, spiral) and translating between them, and;
 - morphological operations on hexagonal grids.
 
 
