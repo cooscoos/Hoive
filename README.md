@@ -21,7 +21,7 @@ If you're a developer, this repo contains examples of:
 
 ## My to do list
 
-- Install on virtual machine to check and list dependencies
+- Check and list dependencies in readme (e.g. lib sqlite)
 - Play test to spot bugs in base game
 
 ### Lower priority
