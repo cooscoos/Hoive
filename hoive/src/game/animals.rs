@@ -9,7 +9,7 @@ use crate::maths::{coord::Coord, morphops};
 /// MoveStatus::SmallGap.
 ///
 /// This function can also used by e.g. bees, spiders and pillbugs,
-/// but it's more efficient to use a beetle_check for those.
+/// but benchmarks show it's more efficient to use bee_check for those.
 pub fn ant_check<T: Coord>(board: &Board<T>, source: &T, dest: &T) -> MoveStatus {
     // Get current chip positions
     let mut chip_positions = board.get_placed_positions();
