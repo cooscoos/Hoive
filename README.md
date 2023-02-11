@@ -5,7 +5,7 @@ Choose one of the following directories and do `cargo run`:
 - **client**: play game locally (couch co-op), or on a websocket server.
 - **server**: host a websocket server.
 
-The hoive directory contains the game logic.
+The hoive directory contains the game logic (dive in at pmoore.rs).
 
 ![snapshot of the app](/misc/gameplay.png "snapshot of the app")
 
